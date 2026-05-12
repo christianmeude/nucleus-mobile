@@ -247,6 +247,7 @@ Builder findings report, `git status`, and `tsc` output are not required.
 
 Always instruct the builder to:
 - Read canonical docs before doing anything (`UI_OVERHAUL.md`, the latest handoff)
+- When creating or restructuring GitHub issues or milestones, follow `docs/conventions/github-issues.md` and `docs/conventions/github-milestones.md`.
 - Investigate codebase first and report findings before implementing
 - Never use local state workarounds to simulate server-side functionality
 - Run `npx tsc --noEmit` after changes
