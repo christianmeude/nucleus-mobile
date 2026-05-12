@@ -1,16 +1,16 @@
-# NUcleus Mobile — Session Handoff Context
+# NUcleus Mobile — Session Handoff Context (Post-Phase 10)
 
 ## Project Overview
 
-React Native Expo app (`capstone-nucleus-rn`) migrated from Express backend to direct Supabase integration. Migration is complete and stable. UI overhaul has been completed through Phase 10 and merged to `dev`. A new follow-on effort is being planned, with priority likely shifting to **mobile submit functionality** before reading-experience polish.
+React Native Expo app (`capstone-nucleus-rn`) is fully migrated from Express to direct Supabase integration, and the 10-phase UI overhaul is complete and validated. Work has now shifted to a new undertaking: **mobile submit functionality** with strict parity to the web flow.
 
-**Canonical docs in the repo:**
-- `docs/PROJECT_CONTEXT.md` — product identity, audience, navigation, domain types, principles
-- `docs/PRODUCT_ROADMAP.md` — UX and design direction reference
-- `docs/plans/SUPABASE_MIGRATION.md` — completed migration history, marked `[COMPLETED]`
-- `docs/plans/UI_OVERHAUL.md` — now completed baseline for the 10-phase UI effort
-- `docs/conventions/README.md` — process conventions index (issues, milestones, tags, commits, builder prompts)
-- `docs/handoffs/HANDOFF_U-O_PHASE-9.md` — prior baseline before Phase 10 closure
+**Canonical docs in repo:**
+- `docs/PROJECT_CONTEXT.md` — product/domain baseline
+- `docs/PRODUCT_ROADMAP.md` — design/product direction
+- `docs/plans/SUPABASE_MIGRATION.md` — completed backend migration baseline
+- `docs/plans/UI_OVERHAUL.md` — completed 10-phase UI execution baseline
+- `docs/conventions/README.md` — conventions index (issues, milestones, tags, commits, builder prompts)
+- `docs/handoffs/HANDOFF_U-O_PHASE-9.md` — previous baseline before Phase 10 closure
 
 **GitHub repo:** `christianmeude/capstone-nucleus-rn`
 
@@ -18,19 +18,14 @@ React Native Expo app (`capstone-nucleus-rn`) migrated from Express backend to d
 
 ## Migration Status
 
-✅ Complete and stable. All migration phases done, deferred migration issues resolved. See `docs/plans/SUPABASE_MIGRATION.md`.
+✅ Complete and stable. All migration phases done.  
+See `docs/plans/SUPABASE_MIGRATION.md`.
 
 ---
 
 ## UI Overhaul Status
 
-Branch execution path was:
-
-```text
-feat/ui-overhaul → dev
-```
-
-Current status:
+✅ Complete through Phase 10.
 
 - ✅ Phase 1 — Design system foundation
 - ✅ Phase 2 — Component system
@@ -40,18 +35,18 @@ Current status:
 - ✅ Phase 6 — Notifications overhaul
 - ✅ Phase 7 — Invitations overhaul
 - ✅ Phase 8 — ResearchDetail overhaul
-- ✅ Phase 9 — Polish and accessibility (including refinement pass)
-- ✅ Phase 10 — Validation and merge
+- ✅ Phase 9 — Polish + accessibility
+- ✅ Phase 10 — Validation + merge readiness
 
-`docs/plans/UI_OVERHAUL.md` has been updated to `[COMPLETED]`.
+`docs/plans/UI_OVERHAUL.md` is now marked `[COMPLETED]`.
 
 ---
 
 ## What Changed Since Phase 9 Handoff
 
-### Phase 10 closure
-- Phase 10 validation completed.
-- Frozen-layer diff guard confirmed clean against `origin/dev` scope:
+### 1) Phase 10 closure
+- Validation pass completed.
+- Frozen-layer diff guard completed against `origin/dev` for:
   - `src/api`
   - `src/context/AuthContext.tsx`
   - `src/lib/supabase.ts`
@@ -60,19 +55,19 @@ Current status:
   - `src/types`
   - `src/navigation/types.ts`
 - `npx tsc --noEmit` green.
-- On-device smoke pass completed.
+- On-device smoke checks confirmed working.
 
-### Plan alignment correction
-- `UI_OVERHAUL.md` Phase 10 item 7 wording was aligned with Issue #8 mitigation:
-  - `ResearchDetail` now documents **Open PDF only** behavior (Download UI removed pending backend `allow_download`).
+### 2) Plan wording correction
+- `UI_OVERHAUL.md` Phase 10 item 7 updated to match shipped behavior:
+  - `ResearchDetail` now documents Open PDF + view tracking (no Download flow in UI pending backend schema work for #8).
 
-### Merge to dev
-- `feat/ui-overhaul` merged into `dev` using the same local merge shape as prior supabase merge style.
-- Merge message pattern intentionally kept uniform with historical repo practice.
+### 3) Merge progression
+- `feat/ui-overhaul` merged into `dev` in the same local merge style used for supabase migration.
+- Post-merge docs/conventions commit landed on `dev`:
+  - `docs: add conventions index, GitHub issue templates, and handoff links`
+  - includes `.github/ISSUE_TEMPLATE/*` and `docs/conventions/*`
 
-### New process conventions added
-A conventions system was introduced and committed:
-
+### 4) Conventions system added
 - `docs/conventions/README.md`
 - `docs/conventions/github-issues.md`
 - `docs/conventions/github-milestones.md`
@@ -80,63 +75,56 @@ A conventions system was introduced and committed:
 - `docs/conventions/builder-prompts.md`
 - `docs/conventions/git-tags.md`
 
-And GitHub issue templates were added:
-
+Plus GitHub templates:
 - `.github/ISSUE_TEMPLATE/bug.md`
 - `.github/ISSUE_TEMPLATE/enhancement.md`
 - `.github/ISSUE_TEMPLATE/config.yml`
 
-Handoff docs were linked to conventions:
-- `docs/handoffs/HANDOFF_TEMPLATE.md` now references `docs/conventions/README.md`
-- `HANDOFF_U-O_PHASE-9.md` builder convention now points to issue/milestone convention docs
+Handoff/template links updated:
+- `docs/handoffs/HANDOFF_TEMPLATE.md` now includes `docs/conventions/README.md`
+- `HANDOFF_U-O_PHASE-9.md` builder convention references issues/milestones conventions
 
 ---
 
-## Critical Architectural Context (still active)
+## Critical Architectural Context (Still Active)
 
 ### Email-based RLS identity resolution
-All mobile RLS policies resolve ownership via email:
 ```sql
 user_id = (SELECT id FROM public.users WHERE email = auth.email())
 ```
 
 ### Auth architecture
 - Mobile uses anon key + RLS
-- Web backend uses service role key (bypasses RLS)
+- Web backend uses service role key
 - Never use service role key on mobile
-- `fetchAppUserProfile()` resolves by `auth.email()` against `public.users.email`
+- Profile resolution by `auth.email()` against `public.users.email`
 
-### users RLS recursion constraint
-- `public.users` SELECT policy cannot reference itself — causes infinite recursion error `42P17`
-- Cross-user profile reads go through `get_user_basic_info` SECURITY DEFINER RPC
+### users recursion constraint
+- `public.users` SELECT policy cannot reference itself (`42P17`)
+- Cross-user profile reads via `get_user_basic_info` SECURITY DEFINER RPC
 
 ### Android edge-to-edge note
-- `app.json` keeps `android.edgeToEdgeEnabled: true`
-- `ResearchDetail` top overlap fix remains custom header approach (`ResearchDetailHeader`) rather than navigator-wide top SafeArea wrapping.
+- `app.json` has `android.edgeToEdgeEnabled: true`
+- `ResearchDetail` top inset handled by custom stack header (`ResearchDetailHeader`) rather than global top SafeArea wrapper
 
 ---
 
 ## GitHub Issues Snapshot
 
-**Closed:**
-- ✅ #1
-- ✅ #2
-- ✅ #3
-- ✅ #4
+**Closed:** #1, #2, #3, #4  
+**Open:** #5, #6, #7, #8
 
-**Open:**
-- 🔴 #5 — Browse category UUID mismatch / backend category resolution
-- 🔴 #6 — Browse list/tile toggle enhancement
-- 🔴 #7 — Unknown author for non-owners (RLS cross-user read issue)
-- 🔴 #8 — `allow_download` missing in schema; mobile UI mitigation shipped
+Open issue intent:
+- #5 backend category UUID mismatch
+- #6 Browse list/tile enhancement
+- #7 cross-user author-name RLS visibility
+- #8 `allow_download` schema gap (UI mitigation already shipped: Download hidden)
 
-**Formatting standardization:**
-- Conventions now live in `docs/conventions/github-issues.md`
-- Canonical title format and body templates (bug/enhancement) are now documented for all future issue edits/creation.
+Issue formatting is now standardized under `docs/conventions/github-issues.md`.
 
 ---
 
-## Supabase RPCs (current)
+## Supabase RPCs (Current)
 
 - `increment_view_count(row_id uuid)` — SECURITY DEFINER
 - `increment_download_count(row_id uuid)` — SECURITY DEFINER
@@ -144,84 +132,77 @@ user_id = (SELECT id FROM public.users WHERE email = auth.email())
 
 ---
 
-## Current State of the Codebase
+## Current Codebase Baseline
 
-### UI overhaul outputs now considered stable baseline
-- Phase 9 motion/accessibility stack (`theme.motion`, `useReduceMotion`, animated skeleton/list entrance, accessibility labels, dynamic type, contrast pass) remains intact.
-- `ResearchDetail` remains in mitigated state for Issue #8:
-  - no Download button in UI
-  - Open PDF path preserved
-  - `trackDownload` call-site removed from screen layer (facade retained for future backend-enabled reintegration).
+### Stable from UI overhaul
+- Design system and component stack fully migrated
+- Motion/accessibility refinements shipped (`theme.motion`, `useReduceMotion`, list entrance, skeleton pulse, dynamic type cap, contrast pass)
+- `ResearchDetail`:
+  - compact metadata strip
+  - no top overlap (custom header)
+  - no Download button in UI pending #8 backend schema support
 
-### Conventions system is now first-class
-- Process guidance centralized under `docs/conventions/`
-- GitHub issue templates now available in `.github/ISSUE_TEMPLATE/`
+### Process baseline now centralized
+- Conventions are first-class in `docs/conventions/*`
+- GitHub issue templates now enforced through `.github/ISSUE_TEMPLATE/*`
 
 ---
 
-## Commit / Workflow Conventions (active)
+## Current Priority Shift (Important)
 
-### Commits
-Use:
+### New undertaking order
+1. **Submit research (mobile)** — now prioritized due to defense timeline
+2. Reading experience — deferred until submit flow stabilizes
+
+### Non-negotiable requirement for submit work
+Use web implementation as source of truth for parity:
+
+`C:\Users\Christian\Projects\capstone-nucleus\frontend\src\pages\student\SubmitResearch.jsx`
+
+Parity means mobile must mirror web on:
+- field schema
+- validation rules
+- payload shape
+- storage path conventions
+- initial status values
+- post-submit behavior
+
+No intentional feature downgrades for “bare minimum” are desired for this undertaking.
+
+---
+
+## Branch Workflow
+
+Current known path:
 ```text
-type(scope): short description
-
-Phase N: Label
-
-- Bullet one
-- Bullet two
-
-Refs #issue-number
-```
-Types: `feat`, `fix`, `docs`, `chore`, `refactor`.
-
-### Builder prompts
-Must follow `docs/conventions/builder-prompts.md` plus active plan constraints.
-
----
-
-## Current Git State
-
-Integration branch context:
-```text
-feat/ui-overhaul → dev → main
-```
-
-At time of this handoff:
-- UI overhaul is merged into `dev`.
-- Conventions + issue templates are committed on `dev`.
-- Tagging decision is intentionally parked for now (see `docs/conventions/git-tags.md` for standard process).
-
----
-
-## Next Steps (updated priority)
-
-1. Confirm whether to merge `dev → main` immediately or after first follow-on feature delivery.
-2. Start next implementation branch off `dev`.
-3. **Priority decision:** due to defense timeline, likely sequence is:
-   - `feat/submit-research` first (high-capability impact, demo value),
-   - `feat/reading-experience` second (polish + viewer/watermark + mode split).
-4. Create first-commit docs for the next effort:
-   - plan doc under `docs/plans/`
-   - kickoff handoff under `docs/handoffs/`
-5. Apply issue/milestone formatting unification for open issues #5–#8 per `docs/conventions/github-issues.md`.
-
----
-
-## Deferred / Parked Items
-
-- Git tag creation (explicitly parked).
-- Reading-experience kickoff (paused while next-priority decision finalizes).
-- Backend-dependent issues #5, #7, #8 remain open.
-
----
-
-## Branch Workflow (current and forward)
-
-```text
-feat/ui-overhaul → dev → main
-feat/submit-research (planned) → dev → main
-feat/reading-experience (planned) → dev → main
+feat/ui-overhaul → dev
 ```
 
-`main` release timing is now a strategy decision, not a technical blocker.
+Planned next path:
+```text
+feat/submit-research → dev → main
+```
+
+Reading experience remains planned but not first.
+
+---
+
+## Next Steps
+
+1. Finalize kickoff artifacts for submit work:
+   - `docs/plans/SUBMIT_RESEARCH.md`
+   - `docs/handoffs/HANDOFF_S-R_KICKOFF.md`
+2. Branch: `feat/submit-research` off latest `dev` (already started per current direction).
+3. Run parity discovery against web `SubmitResearch.jsx` before coding.
+4. Implement submit flow with parity-first scope.
+5. Validate cross-surface parity:
+   - mobile-submitted papers appear correctly in web admin/faculty
+   - web-submitted papers appear correctly in mobile student surfaces
+6. Defer `feat/reading-experience` until submit path is stable.
+
+---
+
+## Notes
+
+- Git tagging is documented but currently parked (`docs/conventions/git-tags.md`).
+- Commit/message/prompt formatting conventions are now centralized and should be treated as canonical for future sessions.
