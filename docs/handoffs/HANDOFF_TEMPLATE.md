@@ -9,6 +9,7 @@ React Native Expo app (`capstone-nucleus-rn`) [current architecture state in one
 - `docs/PRODUCT_ROADMAP.md` — UX and design direction reference
 - `docs/plans/SUPABASE_MIGRATION.md` — migration history and SQL/RLS policy reference
 - `docs/plans/UI_OVERHAUL.md` — active implementation plan (or latest UI execution baseline)
+- `docs/conventions/README.md` — process conventions (issues, milestones, tags, commits, builder prompts)
 
 **GitHub repo:** `christianmeude/capstone-nucleus-rn`
 
