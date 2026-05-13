@@ -85,7 +85,7 @@ Each phase declares scope and exit criteria; completed phases also record implem
 - ✅ Implemented dual draft lifecycle per frozen contract rule 8: local AsyncStorage at `submission_draft_${id|new}` plus best-effort server `submission_drafts` upsert on a 30-second interval; both cleared on successful submit. Local draft acts as the resilient fallback when the server table is RLS-blocked or unavailable.
 - ✅ Submit pipeline maps frozen multipart contract onto direct Supabase operations under the anon key: storage upload to `research-papers` at `${userId}/${uuid}.${ext}` (rule 5), `research_papers` upsert with `file_url` + `file_storage_path` and full column-mapped payload, deterministic status assignment `pending_faculty | pending_editor` from `facultyId` (rule 6), structured co-authors via `research_authors` upsert, and best-effort post-submit `co_author_invitations` insert (rule 9, non-blocking).
 - ✅ Resolved the matrix's product-decision blocker by implementing the **stricter adviser rule**: faculty adviser is required to confirm the checklist modal. The decision is documented under "Implementation decisions" below.
-- ✅ Faculty list, student search, server draft endpoint, and submission policy all gracefully degrade when blocked or unavailable: faculty/student inputs surface `InlineNotice` rather than silently failing, server drafts fall back to local-only with a status message, submission policy falls back to `{ maxFileSizeMb: 10, allowedFileTypes: ['pdf'] }`. None of these paths fake server behavior.
+- ✅ Faculty and student directory data use deployed `get_faculty_members` / `search_students` RPCs (see `docs/sql/submit_research_rpcs.sql`); empty RPC results surface the bottom-sheet `EmptyState` only—no separate faculty/student availability `InlineNotice`. Submission policy loads from `system_policy_settings` via `getSubmissionPolicy` when the anon read policy allows; `{ maxFileSizeMb: 10, allowedFileTypes: ['pdf'] }` is retained **only** as a client fallback when the policy read fails or returns unusable data. Server drafts remain best-effort with local AsyncStorage fallback and a status message when server persist fails. None of these paths fake server behavior.
 - ✅ Reused only existing UI primitives (`Button`, `Card`, `Chip`, `InlineNotice`, `EmptyState`, `Skeleton`, `BottomSheet`) — no bespoke styled components added.
 - ✅ Post-submit behavior matches web: success toast (`InlineNotice` success), draft cleanup (local + server), short delay, then `navigation.goBack()` to MyPapers (web parity for the `/student/my-research` redirect).
 
@@ -94,25 +94,24 @@ Each phase declares scope and exit criteria; completed phases also record implem
 - **Architectural delta forced by RN constraints:** the web flow targets `POST /research/submit` against an Express backend that uses the service role key to bypass RLS. The mobile runtime has no such backend reachable from anon+RLS. Frozen contract rule 1 ("preserve web key names exactly") therefore applies semantically: the multipart wire shape is mapped onto column names on `research_papers` (`facultyId → faculty_id`, `departmentId → department_id`, etc.) while every other rule (validators, status routing, storage path, post-submit side effects) is preserved verbatim.
 - **Adviser stricter rule (resolves matrix Blocker):** the checklist requires `facultyId`. Submission cannot be confirmed without an adviser. This is enforced client-side in the checklist modal. Server-side enforcement remains a future Supabase trigger / RPC concern.
 - **Status routing trade-off:** since there is no Express `submit.controller.js` between the client and the database under anon+RLS, the client computes `pending_faculty | pending_editor` from `facultyId` per frozen contract rule 6 and passes it in the insert payload. Logic is identical to the web backend; a database trigger or RPC would be the eventual full-parity hardening (flagged below).
-- **File picker dependency NOT added:** `expo-document-picker` is not in `package.json`. Per the prompt, no new dependencies were added. The screen renders a clear `InlineNotice (warning)` and a disabled "Choose file" button when picker is unavailable. All other form state, validation, drafts, status routing, picker UI, checklist modal, and submit pipeline are wired and typecheck-clean so a future picker drop-in is a one-line change. Resubmit without a new file remains exercisable today (file optional per rule 2).
 - **UUID dependency avoided:** storage path id is generated via a small UUID-v4-shaped helper (`generatePathId`) using `Math.random()` rather than adding a `uuid` dependency. Storage path uniqueness only — not security-critical.
-- **Storage upload mechanics:** `await fetch(uri).then(r => r.blob())` then `supabase.storage.upload(...)` — works without `expo-file-system`. The upload code path remains unreachable in this build until the file picker is approved; documented for the next phase.
-- **Picker UX without `@react-native-picker/picker`:** category, department, and faculty selection use the existing `BottomSheet` primitive with a tappable select-field row. No new picker dependency required.
+- **Storage upload mechanics:** `await fetch(uri).then((r) => r.blob())` then `supabase.storage.upload(...)` — works without `expo-file-system`. After follow-up wiring, `DocumentPicker.getDocumentAsync` (`expo-document-picker` ~14.0.8) supplies the `uri` for new-file submits on supported devices; resubmit with `id` and no replacement file remains supported per rule 2.
+- **BottomSheet selects + RPC directory + file attachment:** category, department, and faculty use the existing `BottomSheet` with tappable select rows (no `@react-native-picker/picker`). `submitApi.getFacultyMembers` / `searchStudents` call `get_faculty_members(p_department text, p_department_id uuid)` and `search_students(p_query text)` instead of direct `public.users` reads; empty UUID `p_department_id` coerces to `null`; RPC errors return `[]` with `console.warn`; student results post-filter self via `resolveCurrentStudentProfile()`; the mapper accepts split name fields or RPC `full_name`. File pick uses `DocumentPicker.getDocumentAsync` with policy-driven MIME hints (web `TYPE_TO_MIME` parity) and post-pick extension/size checks. Removed the stale "Submission is currently disabled in this build" notice, `filePickerAvailable`, and `facultyAvailable` / `studentSearchAvailable` heuristics—empty directory lists use the bottom-sheet `EmptyState` copy only ("No faculty available — try selecting a different department or contact your administrator.") because the API contract returns `[]` for both empty data and RPC failure.
 
 **Backend asks flagged for christian (RLS / SQL ownership)**
 
-- **File picker dependency approval:** add `expo-document-picker` (and optionally `expo-file-system`) so new submissions become reachable. Required for the new-submit code path to exercise; the rest of Phase 2 is shippable without it.
-- **`submission_drafts` RLS:** confirm policies allow author-scoped CRUD (`SELECT/INSERT/UPDATE/DELETE WHERE user_id = auth-resolved id`); current behavior degrades cleanly to local-only when blocked.
+- ✅ **File picker dependency approval:** `expo-document-picker` installed and wired (`~14.0.8` in `package.json`); file picker is live in `SubmitResearchScreen`.
+- ✅ **`submission_drafts` RLS:** four author-scoped policies applied (`SELECT` / `INSERT` / `UPDATE` / `DELETE`) using email-resolved `user_id` (`public.users` matched to `auth.email()`), matching project RLS convention; record in `docs/sql/submit_research_rls_policies.sql`.
 - **`co_author_invitations` insert from anon student:** confirm RLS allows insert when `inviter_id = auth-resolved id`; failures are non-blocking but invitations would silently no-op until policies are in place.
-- **Faculty / student directory under anon+RLS:** add `get_faculty_members` and `search_students` `SECURITY DEFINER` RPCs (or equivalent constrained views) for parity, since direct `users` reads from anon are recursion-sensitive (`42P17`). Current behavior shows an `InlineNotice` rather than faking results.
-- **Submission policy read:** confirm anon `SELECT` on `system_policy_settings` (or expose an RLS-safe RPC); current behavior falls back to `{ maxFileSizeMb: 10, allowedFileTypes: ['pdf'] }`.
+- ✅ **Faculty / student directory under anon+RLS:** `get_faculty_members(p_department text, p_department_id uuid)` and `search_students(p_query text)` deployed as `SECURITY DEFINER` with return columns using `character varying` / `text` aligned to `public.users` (`email`, `first_name`, `middle_name`, `last_name`, `department` as `character varying`; students include `program text`); `anon` and `authenticated` granted `EXECUTE`; record in `docs/sql/submit_research_rpcs.sql`.
+- ✅ **Submission policy read:** policy `anon can read submission policy` — `SELECT` on `system_policy_settings` for `anon`; app reads live values (e.g. **95 MB**, **`['pdf', 'doc']`**); record in `docs/sql/submit_research_rls_policies.sql`.
 - **Schema baseline:** confirm `research_papers` accepts `program_id`, `external_author_notes`, `file_storage_path`, `file_name`, `file_size` columns under the RN baseline; the web backend includes graceful fallbacks for missing columns and the mobile insert currently relies on the columns being present.
 - **Server-side enforcement of status routing:** consider a database trigger or RPC to enforce `pending_faculty | pending_editor` from `faculty_id` to fully remove client-side trust on this contract; mobile currently mirrors the web backend logic.
 
 **Parity checks satisfied vs matrix rows**
 
 - ✅ Core required fields (`title`, `abstract`, `category`)
-- ✅ File policy and upload (storage path + bucket parity; upload code wired; picker pending)
+- ✅ File policy and upload (storage path + bucket parity; upload code wired; picker live)
 - ✅ Resubmit by id (hydration + optional file)
 - ✅ Keywords (comma string client → array on insert)
 - ✅ Co-authors (structured search + external notes column mapping; rule 1 preserved)
@@ -122,8 +121,8 @@ Each phase declares scope and exit criteria; completed phases also record implem
 - ✅ Submission checklist modal (stricter adviser rule applied)
 - ✅ Co-author invitations post-submit (rule 9 best-effort)
 - ✅ Success behavior / navigation (web `/student/my-research` parity = `goBack()` to MyPapers)
-- ⚠️ Student search for co-authors (implemented; depends on RLS-safe directory access — flagged)
-- ⚠️ Faculty list filter (implemented; depends on RLS-safe directory access — flagged)
+- ✅ Student search for co-authors (live via `search_students` RPC; smoke-tested)
+- ✅ Faculty list filter (live via `get_faculty_members` RPC; smoke-tested — 3 faculty confirmed)
 - ⏭️ PDF metadata extraction (deferred per Phase 1 matrix; not implemented)
 - ⏭️ Drag/drop progress simulation (deferred per Phase 1 matrix; not applicable on RN)
 
@@ -135,7 +134,7 @@ Each phase declares scope and exit criteria; completed phases also record implem
 
 **Exit criteria met:**
 
-- ✅ Mobile submit flow supports all web-parity fields and required behaviors (with file picker gated on dep approval).
+- ✅ Mobile submit flow supports all web-parity fields and required behaviors (file picker live via `expo-document-picker` wired in `SubmitResearchScreen`).
 - ✅ Submission payload and request semantics match web contract semantically (multipart shape mapped onto direct Supabase column-equivalent under anon+RLS).
 - ✅ Status routing and storage-path semantics are preserved end-to-end.
 - ✅ `npx tsc --noEmit` is green.

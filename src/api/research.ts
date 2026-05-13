@@ -1,3 +1,5 @@
+import { File as ExpoFsFile } from 'expo-file-system';
+import { Platform } from 'react-native';
 import { fetchAppUserProfile } from '../auth/fetchAppUserProfile';
 import { supabase } from '../lib/supabase';
 import {
@@ -738,37 +740,48 @@ async function getDepartments(): Promise<DepartmentRow[]> {
   }
 }
 
+// Directory lookups go through SECURITY DEFINER RPCs deployed by christian
+// (get_faculty_members, search_students) because public.users is locked down to
+// self-read by email under mobile RLS. Direct cross-user reads of public.users
+// from anon would return zero rows and risk recursion (42P17). The RPCs accept
+// snake_case argument names (p_department, p_department_id, p_query) and may
+// return either separate name parts or a pre-built full_name; the mapping
+// below tolerates both shapes.
+
+function pickRpcDisplayName(row: any): string {
+  if (typeof row?.full_name === 'string' && row.full_name.trim().length > 0) {
+    return String(row.full_name).trim();
+  }
+  if (typeof row?.fullName === 'string' && row.fullName.trim().length > 0) {
+    return String(row.fullName).trim();
+  }
+  return buildDirectoryDisplayName(row || {});
+}
+
 async function getFacultyMembers(opts?: {
   department?: string | null;
   departmentId?: string | null;
 }): Promise<FacultyMember[]> {
   try {
-    let query = supabase
-      .from('users')
-      .select('id, email, first_name, middle_name, last_name, department, department_id')
-      .eq('role', 'faculty')
-      .order('last_name', { ascending: true });
-
-    if (opts?.departmentId) {
-      query = query.eq('department_id', opts.departmentId);
-    } else if (opts?.department) {
-      query = query.eq('department', opts.department);
-    }
-
-    const { data, error } = await query;
+    const { data, error } = await supabase.rpc('get_faculty_members', {
+      p_department: opts?.department || null,
+      p_department_id: opts?.departmentId || null,
+    });
 
     if (error) {
+      console.warn('[getFacultyMembers] RPC error:', error.message);
       return [];
     }
 
     return (Array.isArray(data) ? data : []).map((row: any) => ({
       id: row.id,
       email: row.email ?? undefined,
-      fullName: buildDirectoryDisplayName(row),
+      fullName: pickRpcDisplayName(row),
       department: row.department ?? null,
       department_id: row.department_id ?? null,
     }));
-  } catch {
+  } catch (error) {
+    console.warn('[getFacultyMembers] threw:', error);
     return [];
   }
 }
@@ -779,28 +792,25 @@ async function searchStudents(query: string): Promise<StudentSearchResult[]> {
 
   try {
     const profile = await resolveCurrentStudentProfile();
-    const escaped = trimmed.replace(/[%_,]/g, '');
-    const { data, error } = await supabase
-      .from('users')
-      .select('id, email, first_name, middle_name, last_name, program')
-      .eq('role', 'student')
-      .or(
-        `first_name.ilike.%${escaped}%,middle_name.ilike.%${escaped}%,last_name.ilike.%${escaped}%,email.ilike.%${escaped}%`
-      )
-      .neq('id', profile.id)
-      .limit(10);
+    const { data, error } = await supabase.rpc('search_students', {
+      p_query: trimmed,
+    });
 
     if (error) {
+      console.warn('[searchStudents] RPC error:', error.message);
       return [];
     }
 
-    return (Array.isArray(data) ? data : []).map((row: any) => ({
-      id: row.id,
-      email: row.email ?? undefined,
-      fullName: buildDirectoryDisplayName(row),
-      program: row.program ?? null,
-    }));
-  } catch {
+    return (Array.isArray(data) ? data : [])
+      .map((row: any) => ({
+        id: row.id,
+        email: row.email ?? undefined,
+        fullName: pickRpcDisplayName(row),
+        program: row.program ?? null,
+      }))
+      .filter((entry: StudentSearchResult) => entry.id !== profile.id);
+  } catch (error) {
+    console.warn('[searchStudents] threw:', error);
     return [];
   }
 }
@@ -877,8 +887,46 @@ async function deleteMyDraft(paperId: string | null): Promise<void> {
   }
 }
 
+const SUBMIT_STAGE_MSG_MAX = 500;
+
+/** Stage-prefixed submit errors for QA. `file read` uses native `File` I/O on iOS/Android (not RN `fetch(file://)`). */
+function throwSubmitStageError(stage: string, cause: unknown): never {
+  let raw = cause instanceof Error ? cause.message : String(cause);
+  raw = raw.replace(/\s+/g, ' ').trim();
+  if (raw.length > SUBMIT_STAGE_MSG_MAX) {
+    raw = `${raw.slice(0, SUBMIT_STAGE_MSG_MAX)}…`;
+  }
+  const label = `[submit] ${stage}:`;
+  console.warn(label, raw);
+  throw new Error(`${label} ${raw}`);
+}
+
+/** iOS/Android: native read via `expo-file-system` `File` (avoids RN `fetch(file://)` quirks). Web: `fetch` + `arrayBuffer`. */
+async function readSubmitFileBodyForUpload(fileUri: string): Promise<Uint8Array> {
+  if (Platform.OS === 'web') {
+    const response = await fetch(fileUri);
+    if (!response.ok) {
+      throw new Error(
+        `HTTP ${response.status}${response.statusText ? ` ${response.statusText}` : ''}`
+      );
+    }
+    return new Uint8Array(await response.arrayBuffer());
+  }
+
+  const fileRef = new ExpoFsFile(fileUri);
+  if (!fileRef.exists) {
+    throw new Error('Selected file is not readable from disk (missing or no access).');
+  }
+  return new Uint8Array(await fileRef.arrayBuffer());
+}
+
 async function submitResearch(input: SubmitInput): Promise<SubmitResult> {
-  const profile = await resolveCurrentStudentProfile();
+  let profile;
+  try {
+    profile = await resolveCurrentStudentProfile();
+  } catch (error) {
+    throwSubmitStageError('profile', error);
+  }
 
   // Frozen contract rule 2: file required for new submissions; optional on resubmit.
   if (!input.id && !input.file) {
@@ -896,17 +944,38 @@ async function submitResearch(input: SubmitInput): Promise<SubmitResult> {
     const ext = (input.file.name.split('.').pop() || 'pdf').toLowerCase();
     const path = `${profile.id}/${generatePathId()}.${ext}`;
 
-    const blob = await fetch(input.file.uri).then((response) => response.blob());
+    let uploadBody: Uint8Array;
+    try {
+      uploadBody = await readSubmitFileBodyForUpload(input.file.uri);
+    } catch (error) {
+      throwSubmitStageError('file read', error);
+    }
 
-    const { error: uploadError } = await supabase.storage
-      .from('research-papers')
-      .upload(path, blob, {
-        contentType: input.file.mimeType || 'application/pdf',
-        upsert: true,
+    const storageContentType = input.file.mimeType || 'application/pdf';
+
+    // `[submit] storage:` = Supabase Storage HTTP upload failed (transport / bucket / Storage API).
+    // Not `research_papers` upsert; that stage uses `[submit] database:`.
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('research-papers')
+        .upload(path, uploadBody, {
+          contentType: storageContentType,
+          upsert: true,
+        });
+
+      if (uploadError) {
+        throw new Error(uploadError.message || 'File upload failed.');
+      }
+    } catch (error) {
+      const pathSegments = path.split('/').filter(Boolean).length;
+      console.warn('[submit] storage context', {
+        bucket: 'research-papers',
+        pathSegments,
+        ext,
+        bodyBytes: uploadBody.byteLength,
+        contentType: storageContentType,
       });
-
-    if (uploadError) {
-      throw new Error(uploadError.message || 'File upload failed.');
+      throwSubmitStageError('storage', error);
     }
 
     const publicUrlResult = supabase.storage.from('research-papers').getPublicUrl(path);
@@ -949,14 +1018,20 @@ async function submitResearch(input: SubmitInput): Promise<SubmitResult> {
     ...(input.id ? {} : { status }),
   };
 
-  const { data: row, error: writeError } = await supabase
-    .from('research_papers')
-    .upsert(basePayload)
-    .select(PAPER_SELECT)
-    .single();
+  let row: unknown;
+  try {
+    const result = await supabase
+      .from('research_papers')
+      .upsert(basePayload)
+      .select(PAPER_SELECT)
+      .single();
 
-  if (writeError) {
-    throw new Error(writeError.message || 'Failed to save research record.');
+    if (result.error) {
+      throw new Error(result.error.message || 'Failed to save research record.');
+    }
+    row = result.data;
+  } catch (error) {
+    throwSubmitStageError('database', error);
   }
 
   const paperRow = row as unknown as ResearchPaperRow;

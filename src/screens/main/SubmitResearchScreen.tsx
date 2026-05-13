@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as DocumentPicker from 'expo-document-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -59,6 +60,24 @@ const EMPTY_FORM: SubmitDraftFormState = {
 const draftStorageKey = (resubmitPaperId?: string) =>
   `${DRAFT_KEY_PREFIX}${resubmitPaperId || 'new'}`;
 
+// Policy-driven MIME mapping mirrors the web `TYPE_TO_MIME` constant in
+// `frontend/src/pages/student/SubmitResearch.jsx`. We only constrain the picker
+// to known MIME types when policy lists supported entries; unknown extensions
+// fall back to '*/*' so the user can still select and we re-validate by
+// extension after pick.
+const TYPE_TO_MIME: Record<string, string> = {
+  pdf: 'application/pdf',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+};
+
+const pickerAcceptTypes = (allowed: string[]): string | string[] => {
+  const mimes = allowed
+    .map((entry) => TYPE_TO_MIME[entry.toLowerCase()])
+    .filter(Boolean);
+  return mimes.length > 0 ? mimes : '*/*';
+};
+
 const externalNotesFromPaper = (paper?: ResearchPaper | null): string => {
   const value = paper?.external_author_notes;
   if (!value) return '';
@@ -100,7 +119,6 @@ export const SubmitResearchScreen = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [departments, setDepartments] = useState<DepartmentRow[]>([]);
   const [facultyMembers, setFacultyMembers] = useState<FacultyMember[]>([]);
-  const [facultyAvailable, setFacultyAvailable] = useState(true);
   const [policy, setPolicy] = useState<SubmissionPolicy>({
     maxFileSizeMb: 10,
     allowedFileTypes: ['pdf'],
@@ -109,7 +127,6 @@ export const SubmitResearchScreen = () => {
   const [studentSearchQuery, setStudentSearchQuery] = useState('');
   const [studentSearchResults, setStudentSearchResults] = useState<StudentSearchResult[]>([]);
   const [studentSearchLoading, setStudentSearchLoading] = useState(false);
-  const [studentSearchAvailable, setStudentSearchAvailable] = useState(true);
 
   const [pickerOpen, setPickerOpen] = useState<PickerKind | null>(null);
   const [showChecklistModal, setShowChecklistModal] = useState(false);
@@ -225,6 +242,10 @@ export const SubmitResearchScreen = () => {
   }, [resubmitPaperId]);
 
   // ─── Faculty refetch when department changes ───
+  // Powered by the get_faculty_members SECURITY DEFINER RPC. Empty results may
+  // mean "no faculty in this department" or a silent RPC error; both surface
+  // through the picker's EmptyState rather than a dedicated availability flag,
+  // since the API contract returns [] in either case.
   useEffect(() => {
     let cancelled = false;
     const loadFaculty = async () => {
@@ -234,7 +255,6 @@ export const SubmitResearchScreen = () => {
       });
       if (cancelled) return;
       setFacultyMembers(list);
-      setFacultyAvailable(list.length > 0);
     };
     loadFaculty();
     return () => {
@@ -287,6 +307,10 @@ export const SubmitResearchScreen = () => {
   }, [resubmitPaperId]);
 
   // ─── Co-author search (debounced via input) ───
+  // Powered by the search_students SECURITY DEFINER RPC. As with faculty, the
+  // RPC contract returns [] for both "no matches" and silent error, so we do
+  // not show a separate availability notice; an empty dropdown is the
+  // consistent UX for both cases.
   useEffect(() => {
     const trimmed = studentSearchQuery.trim();
     if (trimmed.length < 2) {
@@ -301,16 +325,6 @@ export const SubmitResearchScreen = () => {
       if (cancelled) return;
       setStudentSearchResults(results);
       setStudentSearchLoading(false);
-      // If repeated 2+ char searches keep returning empty, surface a notice rather than
-      // silently failing. Heuristic only — backend may simply have no matches.
-      if (results.length === 0 && trimmed.length >= 3) {
-        // Keep `studentSearchAvailable` true unless we can detect an RLS issue. In RN
-        // we can't distinguish "no matches" from "RLS-blocked"; the empty-state copy
-        // covers both cases.
-        setStudentSearchAvailable(true);
-      } else {
-        setStudentSearchAvailable(true);
-      }
     }, 300);
 
     return () => {
@@ -446,19 +460,61 @@ export const SubmitResearchScreen = () => {
     await performSubmit();
   };
 
-  // The file picker dependency (e.g. expo-document-picker) is not yet installed in this build.
-  // Per builder prompt §2, we flag rather than fake. New submissions are gated on this dep.
-  const filePickerAvailable = false;
-  const handleChooseFile = () => {
-    // Intentionally no-op until expo-document-picker is approved and wired.
-  };
+  const handleChooseFile = useCallback(async () => {
+    setSubmitError('');
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: pickerAcceptTypes(policy.allowedFileTypes),
+        multiple: false,
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) {
+        return;
+      }
+
+      const asset = result.assets?.[0];
+      if (!asset?.uri) {
+        setSubmitError('Could not read the selected file. Please try again.');
+        return;
+      }
+
+      const inferredName = asset.name || asset.uri.split('/').pop() || 'document';
+      const ext = (inferredName.split('.').pop() || '').toLowerCase();
+      const allowed = policy.allowedFileTypes.map((entry) => entry.toLowerCase());
+      if (allowed.length > 0 && !allowed.includes(ext)) {
+        setSubmitError(
+          `Unsupported file type${ext ? ` ".${ext}"` : ''}. Allowed: ${allowed
+            .map((value) => `.${value}`)
+            .join(', ')}.`
+        );
+        return;
+      }
+
+      const sizeBytes = typeof asset.size === 'number' ? asset.size : 0;
+      const maxBytes = policy.maxFileSizeMb * 1024 * 1024;
+      if (sizeBytes > maxBytes) {
+        setSubmitError(
+          `File is too large (${(sizeBytes / (1024 * 1024)).toFixed(2)} MB). Max allowed is ${policy.maxFileSizeMb} MB.`
+        );
+        return;
+      }
+
+      setFile({
+        uri: asset.uri,
+        name: inferredName,
+        size: sizeBytes,
+        mimeType: asset.mimeType || TYPE_TO_MIME[ext] || 'application/octet-stream',
+      });
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error ? error.message : 'Could not open the file picker.'
+      );
+    }
+  }, [policy.allowedFileTypes, policy.maxFileSizeMb]);
 
   const submitDisabled =
-    bootstrapping ||
-    submitting ||
-    submitSuccess ||
-    !checklistComplete ||
-    (!isResubmit && !filePickerAvailable);
+    bootstrapping || submitting || submitSuccess || !checklistComplete;
 
   // ─── Render ───
   return (
@@ -498,15 +554,6 @@ export const SubmitResearchScreen = () => {
           </View>
         ) : (
           <>
-            {!filePickerAvailable && !isResubmit ? (
-              <InlineNotice
-                tone="warning"
-                message={
-                  'Submission is currently disabled in this build. The file picker dependency (expo-document-picker) is not installed. Contact your administrator to enable submissions.'
-                }
-              />
-            ) : null}
-
             {isResubmit && resubmitPaper?.revision_notes ? (
               <Card padding="md">
                 <Text style={styles.revisionTitle}>Reviewer revision notes</Text>
@@ -554,14 +601,10 @@ export const SubmitResearchScreen = () => {
                   <Text style={styles.policyLine}>{policyLine}</Text>
                   <View style={styles.fileButtonRow}>
                     <Button
-                      label={
-                        filePickerAvailable
-                          ? 'Choose file'
-                          : 'File picker unavailable'
-                      }
+                      label={isResubmit && resubmitPaper?.file_url ? 'Replace file' : 'Choose file'}
                       onPress={handleChooseFile}
                       variant="secondary"
-                      disabled={!filePickerAvailable}
+                      disabled={submitting}
                     />
                   </View>
                 </Card>
@@ -669,11 +712,11 @@ export const SubmitResearchScreen = () => {
             <View style={styles.section}>
               <Text style={styles.label}>Faculty adviser *</Text>
               <Pressable
-                onPress={() => (facultyAvailable ? setPickerOpen('faculty') : undefined)}
+                onPress={() => setPickerOpen('faculty')}
                 accessibilityRole="button"
                 accessibilityLabel="Select faculty adviser"
-                style={[styles.selectField, !facultyAvailable && styles.selectFieldDisabled]}
-                disabled={submitting || !facultyAvailable}
+                style={styles.selectField}
+                disabled={submitting}
               >
                 <Text
                   style={[
@@ -686,16 +729,9 @@ export const SubmitResearchScreen = () => {
                 </Text>
                 <Ionicons name="chevron-down" size={18} color={theme.colors.text.muted} />
               </Pressable>
-              {!facultyAvailable ? (
-                <InlineNotice
-                  tone="warning"
-                  message="Faculty list unavailable — contact administrator."
-                />
-              ) : (
-                <Text style={styles.helperText}>
-                  Required: your adviser is the first reviewer of your submission.
-                </Text>
-              )}
+              <Text style={styles.helperText}>
+                Required: your adviser is the first reviewer of your submission.
+              </Text>
             </View>
 
             {/* Co-authors search */}
@@ -729,19 +765,12 @@ export const SubmitResearchScreen = () => {
                   placeholderTextColor={theme.colors.text.disabled}
                   style={styles.searchInput}
                   accessibilityLabel="Search co-authors"
-                  editable={!submitting && studentSearchAvailable}
+                  editable={!submitting}
                 />
                 {studentSearchLoading ? (
                   <ActivityIndicator size="small" color={theme.colors.brand.primary} />
                 ) : null}
               </View>
-
-              {!studentSearchAvailable ? (
-                <InlineNotice
-                  tone="warning"
-                  message="Student search unavailable — contact administrator."
-                />
-              ) : null}
 
               {studentSearchResults.length > 0 ? (
                 <Card padding="sm">
@@ -1052,9 +1081,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     minHeight: 44,
-  },
-  selectFieldDisabled: {
-    opacity: 0.6,
   },
   selectFieldLabel: {
     ...theme.typography.body,
