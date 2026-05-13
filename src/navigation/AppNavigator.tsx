@@ -13,6 +13,7 @@ import { BrowseScreen } from '../screens/main/BrowseScreen';
 import { NotificationsScreen } from '../screens/main/NotificationsScreen';
 import { InvitationsScreen } from '../screens/main/InvitationsScreen';
 import { ResearchDetailScreen } from '../screens/main/ResearchDetailScreen';
+import { SubmitResearchScreen } from '../screens/main/SubmitResearchScreen';
 import { theme } from '../theme';
 import { Logo } from '../components/ui';
 import { ResearchDetailHeader } from './ResearchDetailHeader';
@@ -147,6 +148,11 @@ export const AppNavigator = () => {
                 title: 'Research Detail',
                 header: (props) => <ResearchDetailHeader {...props} />,
               }}
+            />
+            <Stack.Screen
+              name="SubmitResearch"
+              component={SubmitResearchScreen}
+              options={{ headerShown: false }}
             />
           </>
         )}

@@ -5,6 +5,7 @@ import {
   PaperAuthor,
   ResearchPaper,
   StructuredAuthorEntry,
+  SubmissionPolicy,
   WorkflowEntry,
 } from '../types/domain';
 import { getPrimaryAuthorName, paperDate } from '../utils/format';
@@ -573,4 +574,484 @@ export const researchApi = {
       records: papers,
     };
   },
+};
+
+// =============================================================================
+// Submit Research API (Phase 2)
+// -----------------------------------------------------------------------------
+// Maps the web parity contract (multipart POST /research/submit etc.) onto
+// direct Supabase operations under the mobile anon key + RLS, per
+// docs/plans/SUBMIT_RESEARCH_PARITY_MATRIX.md "Frozen Contract v1". The web
+// Express backend is not reachable from the mobile runtime, so the wire-level
+// multipart shape is replaced by column-mapped inserts that preserve the same
+// semantics (field names, validators, status routing, storage path, post-submit
+// side effects). Behavior of the existing researchApi above is unchanged.
+// =============================================================================
+
+export interface DepartmentRow {
+  id: string;
+  name: string;
+  code?: string | null;
+}
+
+export interface FacultyMember {
+  id: string;
+  email?: string;
+  fullName: string;
+  department?: string | null;
+  department_id?: string | null;
+}
+
+export interface StudentSearchResult {
+  id: string;
+  email?: string;
+  fullName: string;
+  program?: string | null;
+}
+
+export interface SubmitFileInput {
+  uri: string;
+  name: string;
+  size: number;
+  mimeType: string;
+}
+
+export interface SubmitDraftFormState {
+  title: string;
+  abstract: string;
+  keywords: string;
+  coAuthors: string;
+  category: string;
+  facultyId: string;
+  department: string;
+  departmentId: string;
+}
+
+export interface SubmitDraftPayload {
+  formData: SubmitDraftFormState;
+  selectedCoAuthors: StudentSearchResult[];
+  hasNewFile: boolean;
+  updatedAt: string;
+}
+
+interface SubmitDraftRow {
+  id: string;
+  user_id: string;
+  paper_id: string | null;
+  draft_data: SubmitDraftPayload | null;
+  updated_at: string;
+}
+
+export interface SubmitInput {
+  id?: string;
+  file?: SubmitFileInput | null;
+  title: string;
+  abstract: string;
+  keywords: string;
+  coAuthors: string;
+  externalAuthorNotes?: string;
+  category: string;
+  facultyId: string;
+  department: string;
+  departmentId: string;
+  programId?: string;
+  coAuthorIds?: string[];
+}
+
+export interface SubmitResult {
+  paper: ResearchPaper;
+}
+
+const SUBMISSION_POLICY_FALLBACK: SubmissionPolicy = {
+  maxFileSizeMb: 10,
+  allowedFileTypes: ['pdf'],
+};
+
+// Storage path uniqueness only — not cryptographic. Frozen contract rule 5
+// requires `${userId}/${uuid}.${ext}`; this helper produces a UUID-v4-shaped
+// string without adding a uuid dependency.
+function generatePathId(): string {
+  const hex = (n: number) =>
+    Math.floor(Math.random() * n)
+      .toString(16)
+      .padStart(1, '0');
+  const seg = (len: number) =>
+    Array.from({ length: len }, () => hex(16)).join('');
+  const variant = ['8', '9', 'a', 'b'][Math.floor(Math.random() * 4)];
+  return `${seg(8)}-${seg(4)}-4${seg(3)}-${variant}${seg(3)}-${seg(12)}`;
+}
+
+function buildDirectoryDisplayName(row: {
+  first_name?: string | null;
+  middle_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+}): string {
+  const parts = [row.first_name, row.middle_name, row.last_name].filter(Boolean) as string[];
+  const joined = parts.join(' ').replace(/\s+/g, ' ').trim();
+  return joined || String(row.email || '').trim();
+}
+
+async function getSubmissionPolicy(): Promise<SubmissionPolicy> {
+  try {
+    const { data, error } = await supabase
+      .from('system_policy_settings')
+      .select('max_file_size_mb, allowed_file_types')
+      .maybeSingle();
+
+    if (error || !data) {
+      return SUBMISSION_POLICY_FALLBACK;
+    }
+
+    const allowedRaw = (data as { allowed_file_types?: unknown }).allowed_file_types;
+    const allowed = Array.isArray(allowedRaw)
+      ? (allowedRaw as unknown[])
+          .map((value) => String(value || '').toLowerCase().replace(/^\./, ''))
+          .filter(Boolean)
+      : [];
+
+    return {
+      maxFileSizeMb:
+        Number((data as { max_file_size_mb?: unknown }).max_file_size_mb) ||
+        SUBMISSION_POLICY_FALLBACK.maxFileSizeMb,
+      allowedFileTypes: allowed.length ? allowed : SUBMISSION_POLICY_FALLBACK.allowedFileTypes,
+    };
+  } catch {
+    return SUBMISSION_POLICY_FALLBACK;
+  }
+}
+
+async function getDepartments(): Promise<DepartmentRow[]> {
+  try {
+    const { data, error } = await supabase
+      .from('departments')
+      .select('id, name, code')
+      .order('name', { ascending: true });
+
+    if (error) {
+      return [];
+    }
+
+    return (Array.isArray(data) ? data : []) as DepartmentRow[];
+  } catch {
+    return [];
+  }
+}
+
+async function getFacultyMembers(opts?: {
+  department?: string | null;
+  departmentId?: string | null;
+}): Promise<FacultyMember[]> {
+  try {
+    let query = supabase
+      .from('users')
+      .select('id, email, first_name, middle_name, last_name, department, department_id')
+      .eq('role', 'faculty')
+      .order('last_name', { ascending: true });
+
+    if (opts?.departmentId) {
+      query = query.eq('department_id', opts.departmentId);
+    } else if (opts?.department) {
+      query = query.eq('department', opts.department);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      return [];
+    }
+
+    return (Array.isArray(data) ? data : []).map((row: any) => ({
+      id: row.id,
+      email: row.email ?? undefined,
+      fullName: buildDirectoryDisplayName(row),
+      department: row.department ?? null,
+      department_id: row.department_id ?? null,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+async function searchStudents(query: string): Promise<StudentSearchResult[]> {
+  const trimmed = String(query || '').trim();
+  if (trimmed.length < 2) return [];
+
+  try {
+    const profile = await resolveCurrentStudentProfile();
+    const escaped = trimmed.replace(/[%_,]/g, '');
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, email, first_name, middle_name, last_name, program')
+      .eq('role', 'student')
+      .or(
+        `first_name.ilike.%${escaped}%,middle_name.ilike.%${escaped}%,last_name.ilike.%${escaped}%,email.ilike.%${escaped}%`
+      )
+      .neq('id', profile.id)
+      .limit(10);
+
+    if (error) {
+      return [];
+    }
+
+    return (Array.isArray(data) ? data : []).map((row: any) => ({
+      id: row.id,
+      email: row.email ?? undefined,
+      fullName: buildDirectoryDisplayName(row),
+      program: row.program ?? null,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+async function getMyDraft(paperId?: string | null): Promise<SubmitDraftPayload | null> {
+  try {
+    const profile = await resolveCurrentStudentProfile();
+    let query = supabase
+      .from('submission_drafts')
+      .select('id, user_id, paper_id, draft_data, updated_at')
+      .eq('user_id', profile.id)
+      .order('updated_at', { ascending: false })
+      .limit(1);
+
+    if (paperId) {
+      query = query.eq('paper_id', paperId);
+    } else {
+      query = query.is('paper_id', null);
+    }
+
+    const { data, error } = await query.maybeSingle();
+    if (error || !data) return null;
+
+    const row = data as unknown as SubmitDraftRow;
+    return row.draft_data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function saveMyDraft(
+  paperId: string | null,
+  payload: SubmitDraftPayload
+): Promise<{ persisted: boolean }> {
+  try {
+    const profile = await resolveCurrentStudentProfile();
+    const { error } = await supabase
+      .from('submission_drafts')
+      .upsert(
+        {
+          user_id: profile.id,
+          paper_id: paperId,
+          draft_data: payload,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id,paper_id' }
+      );
+
+    if (error) {
+      console.warn('[saveMyDraft] server draft save failed:', error.message);
+      return { persisted: false };
+    }
+    return { persisted: true };
+  } catch (error) {
+    console.warn('[saveMyDraft]', error);
+    return { persisted: false };
+  }
+}
+
+async function deleteMyDraft(paperId: string | null): Promise<void> {
+  try {
+    const profile = await resolveCurrentStudentProfile();
+    let query = supabase.from('submission_drafts').delete().eq('user_id', profile.id);
+
+    if (paperId) {
+      query = query.eq('paper_id', paperId);
+    } else {
+      query = query.is('paper_id', null);
+    }
+
+    await query;
+  } catch (error) {
+    console.warn('[deleteMyDraft]', error);
+  }
+}
+
+async function submitResearch(input: SubmitInput): Promise<SubmitResult> {
+  const profile = await resolveCurrentStudentProfile();
+
+  // Frozen contract rule 2: file required for new submissions; optional on resubmit.
+  if (!input.id && !input.file) {
+    throw new Error('A file is required for new submissions.');
+  }
+
+  // Frozen contract rule 3: title, abstract, category required.
+  if (!input.title?.trim() || !input.abstract?.trim() || !input.category?.trim()) {
+    throw new Error('Title, abstract, and category are required.');
+  }
+
+  let fileFields: Record<string, unknown> = {};
+
+  if (input.file) {
+    const ext = (input.file.name.split('.').pop() || 'pdf').toLowerCase();
+    const path = `${profile.id}/${generatePathId()}.${ext}`;
+
+    const blob = await fetch(input.file.uri).then((response) => response.blob());
+
+    const { error: uploadError } = await supabase.storage
+      .from('research-papers')
+      .upload(path, blob, {
+        contentType: input.file.mimeType || 'application/pdf',
+        upsert: true,
+      });
+
+    if (uploadError) {
+      throw new Error(uploadError.message || 'File upload failed.');
+    }
+
+    const publicUrlResult = supabase.storage.from('research-papers').getPublicUrl(path);
+
+    fileFields = {
+      file_url: publicUrlResult.data?.publicUrl,
+      file_storage_path: path,
+      file_name: input.file.name,
+      file_size: input.file.size,
+    };
+  }
+
+  // Frozen contract rule 4: keywords are sent as comma string and normalized server-side;
+  // mobile normalizes at insert boundary since there is no Express normalizer.
+  const trimmedKeywords = (input.keywords || '')
+    .split(',')
+    .map((token) => token.trim())
+    .filter(Boolean);
+
+  // Frozen contract rule 1: external notes mirror coAuthors when present (web sends both
+  // multipart keys with the same value; on mobile they target a single column).
+  const externalNotes = String(input.externalAuthorNotes ?? input.coAuthors ?? '').trim() || null;
+
+  // Frozen contract rule 6: deterministic status routing (identical to web backend logic).
+  const status = input.facultyId ? 'pending_faculty' : 'pending_editor';
+
+  const basePayload: Record<string, unknown> = {
+    ...(input.id ? { id: input.id } : {}),
+    title: input.title.trim(),
+    abstract: input.abstract.trim(),
+    keywords: trimmedKeywords,
+    external_author_notes: externalNotes,
+    category: input.category,
+    author_id: profile.id,
+    faculty_id: input.facultyId || null,
+    department: input.department || profile.department || null,
+    department_id: input.departmentId || profile.departmentId || null,
+    program_id: input.programId || profile.programId || null,
+    ...fileFields,
+    ...(input.id ? {} : { status }),
+  };
+
+  const { data: row, error: writeError } = await supabase
+    .from('research_papers')
+    .upsert(basePayload)
+    .select(PAPER_SELECT)
+    .single();
+
+  if (writeError) {
+    throw new Error(writeError.message || 'Failed to save research record.');
+  }
+
+  const paperRow = row as unknown as ResearchPaperRow;
+  const paperId = paperRow.id;
+
+  // Mirror web `research_authors` upsert pattern: ensure primary author + structured co-authors.
+  try {
+    await supabase.from('research_authors').upsert(
+      {
+        research_id: paperId,
+        user_id: profile.id,
+        is_primary: true,
+        author_order: 0,
+      },
+      { onConflict: 'research_id,user_id' }
+    );
+
+    if (input.coAuthorIds && input.coAuthorIds.length > 0) {
+      const coAuthorRows = input.coAuthorIds
+        .filter((authorId) => authorId && authorId !== profile.id)
+        .map((authorId, index) => ({
+          research_id: paperId,
+          user_id: authorId,
+          is_primary: false,
+          author_order: index + 1,
+        }));
+
+      if (coAuthorRows.length > 0) {
+        await supabase
+          .from('research_authors')
+          .upsert(coAuthorRows, { onConflict: 'research_id,user_id' });
+      }
+    }
+  } catch (error) {
+    // research_authors writes are best-effort — they don't gate primary submit success.
+    console.warn('[submitResearch] research_authors upsert warning:', error);
+  }
+
+  return { paper: toResearchPaper(paperRow) };
+}
+
+async function createCoAuthorInvitations(
+  researchId: string,
+  inviteeIds: string[]
+): Promise<{ created: number; skipped: number }> {
+  if (!Array.isArray(inviteeIds) || inviteeIds.length === 0) {
+    return { created: 0, skipped: 0 };
+  }
+
+  try {
+    const profile = await resolveCurrentStudentProfile();
+    const unique = Array.from(new Set(inviteeIds.filter(Boolean))).filter(
+      (id) => id !== profile.id
+    );
+
+    if (unique.length === 0) {
+      return { created: 0, skipped: 0 };
+    }
+
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const rows = unique.map((inviteeId) => ({
+      research_id: researchId,
+      inviter_id: profile.id,
+      invitee_id: inviteeId,
+      status: 'pending',
+      token: generatePathId(),
+      expires_at: expiresAt,
+    }));
+
+    const { data, error } = await supabase
+      .from('co_author_invitations')
+      .insert(rows)
+      .select('id');
+
+    if (error) {
+      console.warn('[createCoAuthorInvitations]', error.message);
+      return { created: 0, skipped: unique.length };
+    }
+
+    const createdCount = Array.isArray(data) ? data.length : 0;
+    return { created: createdCount, skipped: unique.length - createdCount };
+  } catch (error) {
+    console.warn('[createCoAuthorInvitations]', error);
+    return { created: 0, skipped: inviteeIds.length };
+  }
+}
+
+export const submitApi = {
+  getSubmissionPolicy,
+  getDepartments,
+  getFacultyMembers,
+  searchStudents,
+  getMyDraft,
+  saveMyDraft,
+  deleteMyDraft,
+  submitResearch,
+  createCoAuthorInvitations,
 };
