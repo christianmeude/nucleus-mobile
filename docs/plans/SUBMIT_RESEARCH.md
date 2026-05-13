@@ -24,7 +24,8 @@
 
 Submission behavior extracted from web `SubmitResearch.jsx` + web backend `submission.controller.js` / `research.routes.js`:
 
-- **Core fields:** `title`, `abstract`, `keywords`, `category`, `facultyId`, `department`, `departmentId`, optional `programId`, `coAuthors`, `externalAuthorNotes`, optional `id` (resubmission), and file.
+- **Core client-origin fields:** `title`, `abstract`, `keywords`, `category`, `facultyId`, `department`, `departmentId`, `coAuthors`, `externalAuthorNotes`, optional `id` (resubmission), and file.
+- **Server-supported but not currently client-origin:** `programId` (accepted by backend handlers but not emitted by current web submit page).
 - **Validation gates:**
   - New submission requires file; resubmission (`id` present) can proceed without new file.
   - Required text fields: `title`, `abstract`, `category`.
@@ -38,25 +39,36 @@ Submission behavior extracted from web `SubmitResearch.jsx` + web backend `submi
 
 ## 3. Phased plan
 
+Each phase declares scope and exit criteria; completed phases also record implementation summary and traceable outcomes.
+
 ### Phase 1 — Web parity mapping + contract freeze
 
-⏳ **NOT STARTED**
+✅ **COMPLETED (stable)**
 
-**What changes and why**
+**Implementation summary**
 
-Freeze the submission contract before implementation to prevent drift: document exact fields, validators, API keys, status transitions, storage path conventions, and post-submit side effects from web source.
+- ✅ Delivered parity artifact: `docs/plans/SUBMIT_RESEARCH_PARITY_MATRIX.md` as the Phase 1 review surface for web-to-mobile submit contract mapping.
+- ✅ Frozen contract v1 captured from verified web+backend behavior, including fields, validators, payload shape, storage semantics, initial status routing, resubmit behavior, draft lifecycle, and post-submit side effects.
+- ✅ Captured full client-origin request contract, including duplicate multipart keys `coAuthors` and `externalAuthorNotes`, and documented `programId` as server-supported but not currently emitted by the web submit page.
+- ✅ Recorded blockers, resolved ambiguities, and deferred items with owner suggestions so Phase 2 implementation can proceed without re-running parity discovery.
+- ✅ Recorded active scope tension that `PROJECT_CONTEXT.md` still describes submission as out-of-scope, without expanding that document in Phase 1.
 
-**Explicitly NOT changing**
+**Implementation decisions**
+
+- Chose a dedicated parity artifact (`SUBMIT_RESEARCH_PARITY_MATRIX.md`) instead of duplicating the full matrix in this plan file.
+- Kept §2 as a compact snapshot and used this phase block for completion traceability, including the `programId` correction context.
+
+**Original plan scope (reference)**
 
 - No mobile submission code yet.
 - No backend schema or SQL work from mobile side.
 - No route renames or role-model rewrites.
 
-**Exit criteria**
+**Exit criteria met:**
 
-- A parity matrix exists (web field/validator/payload/status/storage/behavior -> mobile target).
-- Ambiguities are resolved or explicitly tracked as blockers.
-- `npx tsc --noEmit` is green.
+- ✅ A parity matrix exists (web field/validator/payload/status/storage/behavior -> mobile target).
+- ✅ Ambiguities are resolved or explicitly tracked as blockers.
+- ✅ `npx tsc --noEmit` is green.
 
 ---
 
