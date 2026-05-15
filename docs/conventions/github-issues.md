@@ -11,18 +11,22 @@ Rules:
 - Do not add redundant `Screen` suffixes (use `ResearchDetail`, not `ResearchDetailScreen`).
 - Use `/` when two scopes apply equally.
 
-### Canonical issue titles (#1-#8)
+### Canonical issue titles (latest first)
 
 | # | Title |
 |---|---|
-| 1 | `ResearchDetail: view and download counts not persisting after navigation` |
-| 2 | `Mobile auth: UUID mismatch between auth.users and public.users breaks RLS` |
-| 3 | `co_author_invitations: PostgREST joins fail silently for research title and inviter name` |
-| 4 | `ResearchCard: published papers do not show view and download counts` |
-| 5 | `Browse: category filter shows unresolved UUIDs — categories not loading` |
-| 6 | `Browse: add toggleable list and tile view` |
-| 7 | `ResearchDetail / Browse: author name shows "Unknown" for non-uploaders` |
 | 8 | `ResearchDetail: Download button always visible — no allow_download column` |
+| 7 | `ResearchDetail / Browse: author name shows "Unknown" for non-uploaders` |
+| 6 | `Browse: add toggleable list and tile view` |
+| 5 | `Browse: category filter shows unresolved UUIDs — categories not loading` |
+| 4 | `ResearchCard: published papers do not show view and download counts` |
+| 3 | `co_author_invitations: PostgREST joins fail silently for research title and inviter name` |
+| 2 | `Mobile auth: UUID mismatch between auth.users and public.users breaks RLS` |
+| 1 | `ResearchDetail: view and download counts not persisting after navigation` |
+
+## Issue number discipline
+
+Do not invent GitHub issue numbers beyond #8 unless Christian creates new issues first and updates the canonical issue titles table above.
 
 ## Bug issue body template
 
@@ -85,7 +89,3 @@ Use these sections in this exact order:
 - `mobile` — React Native app surface or client runtime scope.
 - `backend` — API, schema, RPC, policy, or server-side dependencies.
 - Add additional labels only when they improve triage clarity (e.g., `auth`, `docs`, `ui`).
-
-## Issue number discipline
-
-Do not invent GitHub issue numbers beyond #8 unless christian creates new issues first.
