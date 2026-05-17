@@ -27,9 +27,7 @@ React Native Expo app (`capstone-nucleus-rn`) is on a stable post-migration, pos
 
 - Added `docs/handoffs/HANDOFF_S-R_KICKOFF.md` as the kickoff baseline for the Submit Research undertaking on branch `feat/submit-research` (off `dev`).
 - Added the active plan `docs/plans/SUBMIT_RESEARCH.md` and the Phase 1 parity artifact `docs/plans/SUBMIT_RESEARCH_PARITY_MATRIX.md` (frozen contract v1).
-- HIPO diagram refresh under `docs/diagrams/HIPO_GENERALIZED.md` and `docs/diagrams/HIPO_HIGHLIGHTED_MODULES.md` to add the Research Submission module and renumber downstream modules. **Currently uncommitted** in the working tree (see Current Git State).
-- `docs/handoffs/HANDOFF_TEMPLATE.md` modified in the working tree as part of producing this handoff. **Currently uncommitted.**
-- No new convention files added since Phase 10. `docs/conventions/*` already covered issues, milestones, commits, builder prompts, and tags.
+- Convention files under `docs/conventions/*` were expanded and standardized in this session: `builder-prompts.md` was rewritten with reading order, pre-implementation discipline, phase prompt structure with example, post-implementation requirements, and out-of-scope rules; `commits.md` had type descriptions and a full example commit added; `github-issues.md` had the canonical issue titles table inverted to latest-first and the issue number discipline clause updated to require table maintenance. These changes landed in commit `190b25e`.
 
 ### Phase 1 — Web parity mapping + contract freeze (✅ COMPLETED, commit `266c57b`)
 
@@ -421,34 +419,18 @@ All current SECURITY DEFINER RPCs in use by mobile:
 > Populated from `git log` on `feat/submit-research`.
 
 ```text
-78550f8 (HEAD -> feat/submit-research) fix(submit-research): unblock anon+RLS with RPCs, policies, and app wiring
+190b25e (HEAD -> feat/submit-research) docs(conventions): expand and standardize convention files
+78550f8 fix(submit-research): unblock anon+RLS with RPCs, policies, and app wiring
 99fe58f feat(submit-research): implement Phase 2 submission flow
 266c57b docs(submit-research): complete phase 1 parity contract freeze
 64f8fa7 docs: add submit research implementation plan
-1f9779f docs: add conventions index, GitHub issue templates, and handoff links
-3d03194 docs: add conventions index, GitHub issue templates, and handoff links
-5d6845f (dev) Merge branch 'feat/ui-overhaul' into dev
-4332723 (origin/feat/ui-overhaul) docs: close Phase 10 and mark UI overhaul complete
-f28e3fd docs(handoff): add handoff docs to close Phase 9
-dacc71c refactor(polish): refine card entrance and ResearchDetail layout
 ```
 
 ---
 
 ## Current Git State
 
-Branch: `feat/submit-research` — 5 commits ahead of `dev` (`5d6845f`), working tree has uncommitted changes.
-
-**Working tree (uncommitted):**
-
-- `M docs/diagrams/HIPO_GENERALIZED.md` — Research Submission module added to generalized HIPO
-- `M docs/diagrams/HIPO_HIGHLIGHTED_MODULES.md` — Submission added to highlighted modules; Level 1 HIPO for Submission added
-- `M docs/handoffs/HANDOFF_TEMPLATE.md` — template touched as part of this handoff iteration
-- `M package.json` — added `expo-file-system: ~19.0.22`
-- `M package-lock.json` — corresponding lockfile entry
-- `M src/api/research.ts` — `readSubmitFileBodyForUpload` (`expo-file-system` native binary read) replaces the failing `fetch(uri) → blob()` upload body; stage-prefixed error helper and `[submit] storage context` log; submit pipeline wraps profile / file read / storage / database in dedicated try/catch
-
-**Untracked:** none.
+Branch: `feat/submit-research` — working tree clean. Additional commits landed after this handoff was written (outside the handoff's context window); the working tree items previously listed as uncommitted have since been committed by Christian.
 
 **Intended branch workflow:**
 

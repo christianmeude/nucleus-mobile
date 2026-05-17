@@ -1,12 +1,13 @@
 # NUcleus Mobile
 
-NUcleus Mobile is a React Native (Expo) app for enrolled students at National University — Dasmariñas. It provides a mobile interface for browsing research, reading paper details, and managing student notifications and invitations.
+NUcleus Mobile is a React Native (Expo) app for enrolled students at National University — Dasmariñas. It provides a mobile interface for browsing research, submitting papers, reading paper details, and managing student notifications and invitations.
 
 ## Features
 
 - Student authentication and session persistence
-- Browse published research
+- Browse published research with search and category filters
 - View research details and PDF links
+- Submit and resubmit research papers with draft autosave
 - Access My Papers and dashboard summaries
 - Manage notifications and co-author invitations
 
@@ -35,33 +36,23 @@ EXPO_PUBLIC_SUPABASE_URL=your-supabase-url
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
-3. Run the app
+3. Start the development server
 
 ```bash
-npm run start
+npx expo start
 ```
 
-## Project Structure
+Scan the QR code with Expo Go (Android) or the Camera app (iOS) to run the app on your device. If you're on a network with connectivity issues, use tunnel mode:
 
-```text
-src/
-  api/
-  auth/
-  config/
-  context/
-  lib/
-  navigation/
-  screens/
-  storage/
-  types/
-  utils/
-docs/
-  PROJECT_CONTEXT.md
-  plans/
-    SUPABASE_MIGRATION.md
+```bash
+npx expo start --tunnel
 ```
 
 ## Documentation
 
 - [PROJECT_CONTEXT.md](./docs/PROJECT_CONTEXT.md)
+- [PRODUCT_ROADMAP.md](./docs/PRODUCT_ROADMAP.md)
 - [SUPABASE_MIGRATION.md](./docs/plans/SUPABASE_MIGRATION.md)
+- [UI_OVERHAUL.md](./docs/plans/UI_OVERHAUL.md)
+- [SUBMIT_RESEARCH.md](./docs/plans/SUBMIT_RESEARCH.md)
+- [Conventions](./docs/conventions/README.md)
