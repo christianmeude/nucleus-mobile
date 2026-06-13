@@ -1,7 +1,7 @@
 # [IN PROGRESS] NUcleus Mobile — Implementation Plan: Submit Research
 
 > **STATUS: IN PROGRESS** — Submit Research kickoff has started on branch `feat/submit-research`.
-> *This plan defines parity-first delivery of mobile research submission, using the web flow as the authoritative contract. It follows established documentation and process conventions in `docs/conventions/*`.*
+> *This plan defines parity-first delivery of mobile research submission, using the web flow as the authoritative contract. It follows established documentation and process conventions in `docs/CONVENTIONS.md`.*
 
 **Canonical product context:** [PROJECT_CONTEXT.md](../PROJECT_CONTEXT.md)  
 **Primary design reference:** [PRODUCT_ROADMAP.md](../PRODUCT_ROADMAP.md)  
@@ -16,7 +16,7 @@
 - **No MVP slicing of existing web capabilities.** If web does it in the current submit flow, mobile does it too.
 - **Architecture safety remains in force.** Migration and UI-overhaul baselines are treated as stable unless explicitly changed by this plan.
 - **Run** `npx tsc --noEmit` **after every code change.** Green typecheck is required at each phase exit.
-- **Commits are handled by christian.** Commit messages are out of plan scope (see `docs/conventions/commits.md`).
+- **Commits are handled by christian.** Commit messages are out of plan scope (see `docs/CONVENTIONS.md` §2).
 
 ---
 
@@ -83,11 +83,12 @@ Each phase declares scope and exit criteria; completed phases also record implem
 - ✅ Added `SubmitResearch: { resubmitPaperId?: string } | undefined` to [src/navigation/types.ts](../../src/navigation/types.ts) and wired the screen as a stack route alongside `ResearchDetail` in [src/navigation/AppNavigator.tsx](../../src/navigation/AppNavigator.tsx). All existing route names, params, tab order, and gating logic are preserved.
 - ✅ Added a small `Submit` entry-point Button to [src/screens/main/MyPapersScreen.tsx](../../src/screens/main/MyPapersScreen.tsx) (the only existing screen touched, and only for entry-point wiring matching web's `/student/my-research` host page).
 - ✅ Implemented dual draft lifecycle per frozen contract rule 8: local AsyncStorage at `submission_draft_${id|new}` plus best-effort server `submission_drafts` upsert on a 30-second interval; both cleared on successful submit. Local draft acts as the resilient fallback when the server table is RLS-blocked or unavailable.
-- ✅ Submit pipeline maps frozen multipart contract onto direct Supabase operations under the anon key: storage upload to `research-papers` at `${userId}/${uuid}.${ext}` (rule 5), `research_papers` upsert with `file_url` + `file_storage_path` and full column-mapped payload, deterministic status assignment `pending_faculty | pending_editor` from `facultyId` (rule 6), structured co-authors via `research_authors` upsert, and best-effort post-submit `co_author_invitations` insert (rule 9, non-blocking).
+- ✅ Submit pipeline maps frozen multipart contract onto direct Supabase operations under the anon key: storage upload to `research-papers` at `${userId}/${uuid}.${ext}` (rule 5), `research_papers` upsert with `file_url` + `file_storage_path` and full column-mapped payload, deterministic status assignment `pending_faculty | pending_editor` from `facultyId` (rule 6), structured co-authors via `research_authors` upsert, and best-effort post-submit `create_co_author_invitations` SECURITY DEFINER RPC (rule 9, non-blocking).
 - ✅ Resolved the matrix's product-decision blocker by implementing the **stricter adviser rule**: faculty adviser is required to confirm the checklist modal. The decision is documented under "Implementation decisions" below.
 - ✅ Faculty and student directory data use deployed `get_faculty_members` / `search_students` RPCs (see `docs/sql/submit_research_rpcs.sql`); empty RPC results surface the bottom-sheet `EmptyState` only—no separate faculty/student availability `InlineNotice`. Submission policy loads from `system_policy_settings` via `getSubmissionPolicy` when the anon read policy allows; `{ maxFileSizeMb: 10, allowedFileTypes: ['pdf'] }` is retained **only** as a client fallback when the policy read fails or returns unusable data. Server drafts remain best-effort with local AsyncStorage fallback and a status message when server persist fails. None of these paths fake server behavior.
 - ✅ Reused only existing UI primitives (`Button`, `Card`, `Chip`, `InlineNotice`, `EmptyState`, `Skeleton`, `BottomSheet`) — no bespoke styled components added.
 - ✅ Post-submit behavior matches web: success toast (`InlineNotice` success), draft cleanup (local + server), short delay, then `navigation.goBack()` to MyPapers (web parity for the `/student/my-research` redirect).
+- ✅ Added invitation-accept parity: accepting a co-author invitation now attempts a `research_authors` insert for the invitee, and `getMyPapers` merges co-authored papers (deduped by id).
 
 **Implementation decisions**
 
@@ -102,7 +103,7 @@ Each phase declares scope and exit criteria; completed phases also record implem
 
 - ✅ **File picker dependency approval:** `expo-document-picker` installed and wired (`~14.0.8` in `package.json`); file picker is live in `SubmitResearchScreen`.
 - ✅ **`submission_drafts` RLS:** four author-scoped policies applied (`SELECT` / `INSERT` / `UPDATE` / `DELETE`) using email-resolved `user_id` (`public.users` matched to `auth.email()`), matching project RLS convention; record in `docs/sql/submit_research_rls_policies.sql`.
-- **`co_author_invitations` insert from anon student:** confirm RLS allows insert when `inviter_id = auth-resolved id`; failures are non-blocking but invitations would silently no-op until policies are in place.
+- ✅ **Co-author invitation RPC migration:** `createCoAuthorInvitations` now calls deployed `create_co_author_invitations(p_research_id uuid, p_invitee_ids uuid[])`; mobile no longer generates tokens/expiry values, sets `inviter_id`, inserts directly into `co_author_invitations`, or depends on anon insert RLS for this path.
 - ✅ **Faculty / student directory under anon+RLS:** `get_faculty_members(p_department text, p_department_id uuid)` and `search_students(p_query text)` deployed as `SECURITY DEFINER` with return columns using `character varying` / `text` aligned to `public.users` (`email`, `first_name`, `middle_name`, `last_name`, `department` as `character varying`; students include `program text`); `anon` and `authenticated` granted `EXECUTE`; record in `docs/sql/submit_research_rpcs.sql`.
 - ✅ **Submission policy read:** policy `anon can read submission policy` — `SELECT` on `system_policy_settings` for `anon`; app reads live values (e.g. **95 MB**, **`['pdf', 'doc']`**); record in `docs/sql/submit_research_rls_policies.sql`.
 - **Schema baseline:** confirm `research_papers` accepts `program_id`, `external_author_notes`, `file_storage_path`, `file_name`, `file_size` columns under the RN baseline; the web backend includes graceful fallbacks for missing columns and the mobile insert currently relies on the columns being present.

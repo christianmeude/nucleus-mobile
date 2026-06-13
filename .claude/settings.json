@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "Bash(git stash list*)",
+      "Bash(npx tsc --noEmit)"
+    ],
+    "deny": [
+      "Edit(src/context/AuthContext.tsx)",
+      "Write(src/context/AuthContext.tsx)",
+      "Edit(src/lib/supabase.ts)",
+      "Write(src/lib/supabase.ts)",
+      "Edit(src/auth/**)",
+      "Write(src/auth/**)",
+      "Edit(src/storage/authStorage.ts)",
+      "Write(src/storage/authStorage.ts)",
+      "Edit(src/types/domain.ts)",
+      "Write(src/types/domain.ts)",
+      "Edit(src/navigation/types.ts)",
+      "Write(src/navigation/types.ts)",
+      "Edit(src/navigation/AppNavigator.tsx)",
+      "Write(src/navigation/AppNavigator.tsx)",
+      "Edit(src/screens/main/SubmitResearchScreen.tsx)",
+      "Write(src/screens/main/SubmitResearchScreen.tsx)",
+      "Edit(docs/sql/submit_research_rpcs.sql)",
+      "Write(docs/sql/submit_research_rpcs.sql)",
+      "Edit(docs/sql/submit_research_rls_policies.sql)",
+      "Write(docs/sql/submit_research_rls_policies.sql)"
+    ]
+  }
+}

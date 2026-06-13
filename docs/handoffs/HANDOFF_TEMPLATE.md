@@ -1,224 +1,181 @@
-# NUcleus Mobile — Session Handoff Context
+---
+undertaking: "[name, e.g. Submit Research]"
+phase: "[N or label, e.g. 3 or kickoff]"
+date: YYYY-MM-DD
+branch: "[current branch]"
+last_commit: "[type(scope): description]"
+status: in-progress | blocked | complete
+---
+
+# NUcleus Mobile — Session Handoff Context ([Undertaking] [Phase/Label])
 
 ## Project Overview
 
-React Native Expo app (`capstone-nucleus-rn`) [current architecture state in one sentence]. [Current undertaking] is in progress on branch `[feature-branch]`, [completed milestone range], [next milestone state].
+React Native Expo app (`capstone-nucleus-rn`) [current architecture state in one sentence]. [Current undertaking] is in progress on branch `[feature-branch]`, [completed phase range], [next phase state].
 
 **Canonical docs in the repo:**
 - `docs/PROJECT_CONTEXT.md` — product identity, audience, navigation, domain types, principles
 - `docs/PRODUCT_ROADMAP.md` — UX and design direction reference
+- `docs/CONVENTIONS.md` — all process conventions (commits, phase protocol, issues, SQL, handoffs)
 - `docs/plans/SUPABASE_MIGRATION.md` — migration history and SQL/RLS policy reference
-- `docs/plans/UI_OVERHAUL.md` — active implementation plan (or latest UI execution baseline)
-- `docs/conventions/README.md` — process conventions (issues, milestones, tags, commits, builder prompts)
+- `[active plan path]` — [active undertaking] implementation plan
 
 **GitHub repo:** `christianmeude/capstone-nucleus-rn`
 
 ---
 
-## [Undertaking A] Status
+## [Previous Undertaking] Status
 
-[Status line: complete/in progress/blocked]. [One-line confidence or stability statement]. See `[relevant-plan-doc]`.
+✅ Complete and stable. See `[relevant-plan-doc]`.
 
 ---
 
-## [Undertaking B] Status
+## [Active Undertaking] Status
 
 Currently on branch `[feature-branch]`, branched off `[base-branch]`.
 
 - ✅ Phase 1 — [Label]
 - ✅ Phase 2 — [Label]
-- ✅ Phase 3 — [Label]
+- 🔴 Phase 3 — [Label] ← blocked / in-progress
 - ⏳ Phase 4 — [Label]
-- ⏳ Phase 5 — [Label]
-- ⏳ Phase 6 — [Label]
 
-If not phase-based, keep the same completed/pending format and replace "Phase N" with milestone labels.
+---
+
+## What Changed Since [Previous Handoff Name]
+
+> Every delta since the last handoff, including Supabase changes made outside the codebase.
+
+### [Gap/Fix/Feature Title] ([status emoji + one word])
+
+**Root cause:** [what caused the issue or why the change was needed]
+
+**Fix applied:** [what was done; note if uncommitted]
+
+**Status:** [resolved / unresolved / partial; if unresolved, state the blocker]
 
 ---
 
 ## Critical Architectural Context
 
-### Email-based RLS identity resolution
-All mobile RLS policies resolve ownership via email:
-```sql
-user_id = (
-  SELECT id FROM public.users
-  WHERE email = auth.email()
-)
-```
+> This section is for **session-specific updates only**. Stable invariants (UUID mismatch, email-based RLS, SECURITY DEFINER pattern, mobile auth model) live in `CLAUDE.md` — do not duplicate them here unless there is an update, correction, or new nuance discovered this session.
 
-### Auth architecture
-- Mobile uses anon key + RLS
-- Web backend uses service role key (bypasses RLS)
-- Never use service role key on mobile
-- `[Profile resolution helper]` resolves by `auth.email()` against `public.users.email`
+### [New pattern or correction discovered this session]
 
-### users RLS recursion constraint
-- `public.users` SELECT policy cannot reference itself — causes infinite recursion error `42P17`
-- Cross-user profile reads go through `[security definer RPC name]` SECURITY DEFINER RPC
-
-### Domain type notes
-- `public.users` has no `auth_id` column — email is the only bridge
-- `User.fullName` is the only name field — first name derived via `user.fullName.trim().split(/\s+/)[0]`
-- `PaperStatus` includes both `approved` and `published` as distinct values
-- `statusToLabel()` in `src/utils/format.ts` is the canonical label source — `approved` maps to `"Approved"`, `published` maps to `"Published"`
+[Details]
 
 ---
 
 ## Resolved Issues
 
-### [Undertaking A] issues ([state, e.g., all closed])
-- ✅ Issue #[number] — [problem summary] ([resolution mechanism])
-- ✅ Issue #[number] — [problem summary] ([resolution mechanism])
-
-### [Undertaking B] issues
-- ✅ Issue #[number] — [problem summary] — [fix summary], closed
+- ✅ #[N] — [problem summary] — [resolution mechanism]
 
 ## Open Issues
-- 🔴 Issue #[number] — [description] — [owner / dependency / investigation note]
-- 🔴 Issue #[number] — [description] — [owner / dependency / investigation note]
+
+- 🔴 #[N] — [description] — [owner / dependency / investigation note]
+
+**Current cap: #[N]. Do not invent issue numbers beyond #[N].**
 
 ---
 
 ## Current RLS Policy State (Supabase)
 
-All policies use email-based resolution. See `docs/plans/SUPABASE_MIGRATION.md` for full SQL details.
+All policies use email-based resolution unless noted. See `docs/plans/SUPABASE_MIGRATION.md` for migration-era SQL and `docs/sql/` for snapshots.
 
-**Affected tables:** `[table_1]`, `[table_2]`, `[table_3]`, `[table_4]`, `[table_5]`, `public.users`
+**Tables with active policies:**
+
+- `[table]` — [policies: SELECT/INSERT/UPDATE/DELETE, scope notes]
 
 ---
 
 ## Supabase RPCs
 
-- `[rpc_1(signature)]` — SECURITY DEFINER
-- `[rpc_2(signature)]` — SECURITY DEFINER
-- `[rpc_3(signature)]` — SECURITY DEFINER, [purpose detail]
+All SECURITY DEFINER. All `SET search_path = public`. All `GRANT EXECUTE TO anon, authenticated`.
+
+- `[rpc_name(signature)]` — [purpose and language]
 
 ---
 
 ## Current State of the Codebase
 
 ### Design system
-- `src/theme/` — [tokens list / usage notes]
+
+- `src/theme/` — `colors`, `typography`, `spacing`, `shadows`, `radii`, `motion`, `index`
 - Fonts: [font stack]
-- All token consumption via direct `import { theme } from '../theme'` — no `useTheme()` hook
+- Token consumption via direct `import { theme } from '../theme'` — no `useTheme()` hook
 
 ### Component system
+
 - `src/components/ui/` — [UI primitives list]
 - `src/components/` — [feature components list]
 
-### [High-impact component] props (current state)
-- `[prop signature]` — [default/usage]
-- `[prop signature]` — [default/usage]
-- `[visual/behavior note]`
+### API facades
 
-### [Related component/module] exports
-- `[export_1]` — [meaning]
-- `[export_2]` — [meaning]
-- `[mapping note]`
+- `src/api/research.ts` — [key methods and state]
+- `src/api/invitations.ts` — [key methods and state]
+- `src/api/notifications.ts` — [key methods and state]
 
-### Screen-level prop conventions
-- `[Screen A]` — [prop usage convention]
-- `[Screen B]` — [prop usage convention]
-- `[Screen C]` — [prop usage convention]
+### Frozen files (do not touch without explicit plan scope)
 
-### Active Supabase facades (frozen)
-- `src/api/research.ts`
-- `src/api/notifications.ts`
-- `src/api/invitations.ts`
+[List per active plan and `CLAUDE.md`]
 
-### Auth (frozen)
-- `src/context/AuthContext.tsx`
-- `src/auth/fetchAppUserProfile.ts`
-- `src/lib/supabase.ts`
+### Field-level gotchas
 
-### Assets
-- `[assets/path]` — [asset state and wiring note]
+[Non-obvious field naming, type coercions, or data-shape surprises relevant to the active undertaking]
 
 ---
 
-## Commit History (most recent first)
+## Builder Changes (uncommitted, if any)
 
-```text
-[latest-sha] (HEAD -> [feature-branch]) [message]
-[sha] [message]
-[sha] ([base-branch]) [message]
-[sha] ([origin/main refs], main) [message]
-```
+- `[file]` — [what changed and why]
+
+### Dependency Changes (uncommitted, if any)
+
+- `[file]` — [what changed and why]
+
+### SQL Snapshot Files (untracked, if any)
+
+- `docs/sql/[file]` — [what it records]
+
+---
+
+## Issues Opened / Closed Since [Previous Handoff Name]
+
+- [No new GitHub issues filed. / List new issues.]
+- [No issues closed. / List closed issues with resolution.]
+- **Current cap: #[N]. Do not invent issue numbers beyond #[N].**
 
 ---
 
 ## Current Git State
 
-Branch: `[feature-branch]` — [ahead/behind summary], [working tree status].
+Branch: `[feature-branch]` — working tree [clean / has uncommitted changes].
 
-**Untracked:** `[path-or-none]` — [note]
+**Modified (uncommitted):**
+- `M [file]` — [note]
+
+**Untracked:**
+- `[file]` — [note]
 
 **Intended branch workflow:**
-```text
+```
 [feature-branch] → [integration-branch] → main
 ```
-`main` is not to be touched until [active undertaking] is complete and merged to `[integration-branch]`.
 
 ---
 
-## Next Steps
+## Commit History (most recent first)
 
-1. Begin [next phase/milestone] — [short action cue]
-2. Continue [remaining phases/milestones] per `[active-plan-doc]`
-3. [Integration or asset follow-up step]
-4. Investigate Issue #[number] ([topic]) after [dependency]
-5. Implement Issue #[number] ([enhancement]) as a post-[undertaking] item
-
----
-
-## Deferred Items (tracked as issues)
-
-- Issue #[number] — [deferred item] — [timing/dependency]
-- Issue #[number] — [deferred item] — [timing/dependency]
-
----
-
-## Documentation Conventions
-
-All implementation plan updates must follow the format established in `docs/plans/SUPABASE_MIGRATION.md`:
-- Phase status: `✅ **COMPLETED (stable)**` or `⏳ **NOT STARTED**`
-- Completed task bullets: `- ✅`
-- Pending task bullets: `- ⏳`
-- Past tense implementation summaries under `**Implementation summary**`
-- `**Exit criteria met:**` when phase is complete
-- No excessive nesting, no bold on every line
-
----
-
-## Commit Conventions
-
-```text
-type(scope): short description
-
-Phase N: Label
-
-- Bullet one
-- Bullet two
-
-Refs #issue-number
+```
+[sha] (HEAD -> [branch]) [message]
+[sha] [message]
+[sha] ([base-branch]) [message]
 ```
 
-Types: `feat`, `fix`, `docs`, `chore`, `refactor`
-
 ---
 
-## Builder Prompt Convention
+## Immediate Next Steps
 
-Always instruct the builder to:
-- Read canonical docs before doing anything
-- Investigate codebase first and report findings before implementing
-- Never use local state workarounds to simulate server-side functionality
-- Run `npx tsc --noEmit` after changes
-- Update `[active-plan-doc]` to reflect completion using established documentation conventions
-- Report findings before making any changes when diagnosing issues
-- Include what to expect when testing and what should not change in every phase prompt
-- Follow documentation conventions established in `[active-plan-doc]`
-- Do not include commit messages in builder prompts — commits are handled separately
-
-External factors (Supabase SQL, RLS policies, database queries, RPCs) are handled by the human directly — not the builder.
+1. [First action — specific and actionable]
+2. [Second action]
+3. [Third action]
+4. [Any backend/SQL actions Christian owns]
