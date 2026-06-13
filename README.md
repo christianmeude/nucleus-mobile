@@ -55,4 +55,4 @@ npx expo start --tunnel
 - [SUPABASE_MIGRATION.md](./docs/plans/SUPABASE_MIGRATION.md)
 - [UI_OVERHAUL.md](./docs/plans/UI_OVERHAUL.md)
 - [SUBMIT_RESEARCH.md](./docs/plans/SUBMIT_RESEARCH.md)
-- [Conventions](./docs/conventions/README.md)
+- [Conventions](./docs/CONVENTIONS.md)
