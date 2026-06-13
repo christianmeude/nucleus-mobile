@@ -277,7 +277,7 @@ Sections within the file are separated by:
 
 ### SQL ownership
 
-Christian deploys all SQL. Claude Code may draft SQL text and snapshot file contents for review — Christian verifies and deploys via the Supabase SQL editor. After deployment, Claude Code writes or updates the snapshot file in `docs/sql/`.
+Claude Code has Supabase MCP access and may execute SQL directly — but must brief Christian in plain terms before running any query, and must wait for explicit approval. Test/read-only queries (SELECT, EXPLAIN) should also be shown to Christian first. Destructive operations (DROP, DELETE, ALTER, policy drops) require extra explanation of consequences. After any deployed change, Claude Code writes or updates the snapshot file in `docs/sql/`.
 
 ---
 

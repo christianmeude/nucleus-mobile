@@ -1,5 +1,3 @@
-import { File as ExpoFsFile } from 'expo-file-system';
-import { Platform } from 'react-native';
 import { fetchAppUserProfile } from '../auth/fetchAppUserProfile';
 import { supabase } from '../lib/supabase';
 import {
@@ -337,19 +335,64 @@ function extractStoragePathFromUrl(fileUrl?: string | null) {
 async function loadResearchRows(selectQuery: string, filters?: ResearchListParams) {
   const profile = await resolveCurrentStudentProfile();
 
-  const query = supabase
+  const { data: primaryData, error: primaryError } = await supabase
     .from('research_papers')
     .select(selectQuery)
     .eq('author_id', profile.id);
 
-  const { data, error } = await query;
-
-  if (error) {
-    throw new Error(error.message || 'Unable to load research data.');
+  if (primaryError) {
+    throw new Error(primaryError.message || 'Unable to load research data.');
   }
 
-  const rows = Array.isArray(data) ? (data as unknown as ResearchPaperRow[]) : [];
-  return filterPublishedRows(rows, filters);
+  const primaryRows = Array.isArray(primaryData)
+    ? (primaryData as unknown as ResearchPaperRow[])
+    : [];
+
+  const { data: coAuthorData, error: coAuthorError } = await supabase
+    .from('research_authors')
+    .select('research_id')
+    .eq('user_id', profile.id)
+    .eq('is_primary', false);
+
+  if (coAuthorError) {
+    throw new Error(coAuthorError.message || 'Unable to load research data.');
+  }
+
+  const primaryIds = new Set(primaryRows.map((row) => row.id));
+  const coAuthorIds = Array.from(
+    new Set(
+      (Array.isArray(coAuthorData) ? coAuthorData : [])
+        .map((row: any) => row?.research_id)
+        .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0)
+    )
+  ).filter((id) => !primaryIds.has(id));
+
+  let coAuthoredRows: ResearchPaperRow[] = [];
+
+  if (coAuthorIds.length > 0) {
+    const { data: coAuthorRows, error: coAuthorRowsError } = await supabase
+      .from('research_papers')
+      .select(selectQuery)
+      .in('id', coAuthorIds);
+
+    if (coAuthorRowsError) {
+      throw new Error(coAuthorRowsError.message || 'Unable to load research data.');
+    }
+
+    coAuthoredRows = Array.isArray(coAuthorRows)
+      ? (coAuthorRows as unknown as ResearchPaperRow[])
+      : [];
+  }
+
+  const mergedRows = new Map<string, ResearchPaperRow>();
+  primaryRows.forEach((row) => mergedRows.set(row.id, row));
+  coAuthoredRows.forEach((row) => {
+    if (!mergedRows.has(row.id)) {
+      mergedRows.set(row.id, row);
+    }
+  });
+
+  return filterPublishedRows(Array.from(mergedRows.values()), filters);
 }
 
 export const researchApi = {
@@ -901,23 +944,13 @@ function throwSubmitStageError(stage: string, cause: unknown): never {
   throw new Error(`${label} ${raw}`);
 }
 
-/** iOS/Android: native read via `expo-file-system` `File` (avoids RN `fetch(file://)` quirks). Web: `fetch` + `arrayBuffer`. */
+/** Read a picked file URI into a byte array. Uses fetch — works uniformly across web and native (RN 0.85+). */
 async function readSubmitFileBodyForUpload(fileUri: string): Promise<Uint8Array> {
-  if (Platform.OS === 'web') {
-    const response = await fetch(fileUri);
-    if (!response.ok) {
-      throw new Error(
-        `HTTP ${response.status}${response.statusText ? ` ${response.statusText}` : ''}`
-      );
-    }
-    return new Uint8Array(await response.arrayBuffer());
-  }
-
-  const fileRef = new ExpoFsFile(fileUri);
-  if (!fileRef.exists) {
+  const response = await fetch(fileUri);
+  if (!response.ok) {
     throw new Error('Selected file is not readable from disk (missing or no access).');
   }
-  return new Uint8Array(await fileRef.arrayBuffer());
+  return new Uint8Array(await response.arrayBuffer());
 }
 
 async function submitResearch(input: SubmitInput): Promise<SubmitResult> {
@@ -1081,41 +1114,31 @@ async function createCoAuthorInvitations(
     return { created: 0, skipped: 0 };
   }
 
+  const unique = Array.from(new Set(inviteeIds.filter(Boolean)));
+
+  if (unique.length === 0) {
+    return { created: 0, skipped: 0 };
+  }
+
   try {
-    const profile = await resolveCurrentStudentProfile();
-    const unique = Array.from(new Set(inviteeIds.filter(Boolean))).filter(
-      (id) => id !== profile.id
-    );
-
-    if (unique.length === 0) {
-      return { created: 0, skipped: 0 };
-    }
-
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-    const rows = unique.map((inviteeId) => ({
-      research_id: researchId,
-      inviter_id: profile.id,
-      invitee_id: inviteeId,
-      status: 'pending',
-      token: generatePathId(),
-      expires_at: expiresAt,
-    }));
-
     const { data, error } = await supabase
-      .from('co_author_invitations')
-      .insert(rows)
-      .select('id');
+      .rpc('create_co_author_invitations', {
+        p_research_id: researchId,
+        p_invitee_ids: unique,
+      });
 
     if (error) {
       console.warn('[createCoAuthorInvitations]', error.message);
       return { created: 0, skipped: unique.length };
     }
 
-    const createdCount = Array.isArray(data) ? data.length : 0;
+    const createdCount = Array.isArray(data)
+      ? data.filter((row: { result?: string | null }) => row?.result === 'CREATED').length
+      : 0;
     return { created: createdCount, skipped: unique.length - createdCount };
   } catch (error) {
     console.warn('[createCoAuthorInvitations]', error);
-    return { created: 0, skipped: inviteeIds.length };
+    return { created: 0, skipped: unique.length };
   }
 }
 

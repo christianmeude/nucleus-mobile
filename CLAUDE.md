@@ -35,7 +35,12 @@ Run these steps in order. Do not act until all are done.
 
 1. **Investigate before implementing.** Read relevant source files, confirm component interfaces, check the frozen file list — then report findings before writing a single line of code.
 2. **Never touch frozen files.** Listed below and enforced in `.claude/settings.json`. If a change seems to require a frozen file, stop and report it.
-3. **SQL stays with Christian.** Draft SQL text and snapshot file contents for Christian to review. Christian deploys via the Supabase SQL editor. Never deploy SQL directly.
+3. **Supabase changes require a pre-flight brief.** Claude has Supabase MCP access and may run queries directly — but must explain every change in plain terms and wait for Christian's explicit approval before executing. Rules within this rule:
+   - **Brief first, run second.** State what the query does and why, in plain language. Wait for approval.
+   - **Test queries are encouraged** — run lightweight, read-only checks (SELECT, EXPLAIN) to validate assumptions before any write. Show the test query to Christian first so he can check it himself.
+   - **Destructive operations** (DROP, DELETE, ALTER, policy drops, schema changes) must be explained with extra care — what breaks if it goes wrong, and whether it is reversible. No exceptions.
+   - **Snapshot files** — after any deployed change, write or update the corresponding snapshot in `docs/sql/`. These remain the canonical record of what is live.
+   - **Never use the service role key.** All Supabase MCP operations run under the project's anon/authenticated context. RLS still applies.
 4. **Never use the service role key on mobile.** Anon key + RLS only.
 5. **tsc gate is non-negotiable.** Run `npx tsc --noEmit` after every code change. Green typecheck is required before reporting done.
 6. **Commits.** Stage specific files (never `git add .`), draft a message following `docs/CONVENTIONS.md` §2, and present for review. Do not commit without explicit user confirmation.
