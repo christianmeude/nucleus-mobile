@@ -19,8 +19,8 @@ Run these steps in order. Do not act until all are done.
 
 1. Read `docs/PROJECT_CONTEXT.md`
 2. Read `docs/CONVENTIONS.md`
-3. Read the active plan: `docs/plans/SUBMIT_RESEARCH.md`
-4. Read the latest handoff: `docs/handoffs/HANDOFF_S-R_PHASE-4.md`
+3. Read the latest completed plan: `docs/plans/SUBMIT_RESEARCH.md` — **next undertaking not yet chosen; step 3 must be updated when one is**
+4. Read the latest handoff: `docs/handoffs/HANDOFF_POST-SUBMIT-RESEARCH.md`
 5. Report:
    - Current project state (branch, phase, open blockers)
    - Open decisions or unresolved items
