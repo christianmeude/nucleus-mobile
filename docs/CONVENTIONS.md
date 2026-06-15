@@ -122,7 +122,7 @@ Issue numbers are canonical and fixed. Do not invent numbers beyond the current 
 | # | Title | Status |
 |---|---|---|
 | 8 | `ResearchDetail: Download button always visible — no allow_download column` | 🔴 Open |
-| 7 | `ResearchDetail / Browse: author name shows "Unknown" for non-uploaders` | 🔴 Open |
+| 7 | `ResearchDetail / Browse: author name shows "Unknown" for non-uploaders` | ✅ Closed |
 | 6 | `Browse: add toggleable list and tile view` | 🔴 Open |
 | 5 | `Browse: category filter shows unresolved UUIDs — categories not loading` | 🔴 Open |
 | 4 | `ResearchCard: published papers do not show view and download counts` | ✅ Closed |
