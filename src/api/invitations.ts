@@ -221,6 +221,73 @@ async function respondToInvitation(token: string, status: 'accepted' | 'declined
     const actionLabel = status === 'accepted' ? 'accept' : 'decline';
     throw new Error(error.message || `Unable to ${actionLabel} invitation.`);
   }
+
+  if (status === 'accepted') {
+    try {
+      const { data: invitationRow, error: invitationError } = await supabase
+        .from('co_author_invitations')
+        .select('research_id')
+        .eq('token', token)
+        .eq('invitee_id', profile.id)
+        .maybeSingle();
+
+      if (invitationError) {
+        throw new Error(invitationError.message || 'Unable to load invitation details.');
+      }
+
+      const researchId = invitationRow?.research_id;
+
+      if (!researchId) {
+        throw new Error('Unable to resolve the research record for this invitation.');
+      }
+
+      const { data: existingRow, error: existingError } = await supabase
+        .from('research_authors')
+        .select('id')
+        .eq('research_id', researchId)
+        .eq('user_id', profile.id)
+        .maybeSingle();
+
+      if (existingError) {
+        throw new Error(existingError.message || 'Unable to verify existing co-author.');
+      }
+
+      if (!existingRow) {
+        const { data: maxRow, error: maxError } = await supabase
+          .from('research_authors')
+          .select('author_order')
+          .eq('research_id', researchId)
+          .order('author_order', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (maxError) {
+          throw new Error(maxError.message || 'Unable to resolve author order.');
+        }
+
+        const maxOrder = typeof maxRow?.author_order === 'number' ? maxRow.author_order : 0;
+        const nextOrder = maxOrder + 1;
+
+        const { error: upsertError } = await supabase
+          .from('research_authors')
+          .upsert(
+            {
+              research_id: researchId,
+              user_id: profile.id,
+              is_primary: false,
+              author_order: nextOrder,
+            },
+            { onConflict: 'research_id,user_id' }
+          );
+
+        if (upsertError) {
+          throw new Error(upsertError.message || 'Unable to add co-author entry.');
+        }
+      }
+    } catch (authorError) {
+      console.warn('[respondToInvitation] research_authors insert warning:', authorError);
+    }
+  }
 }
 
 async function acceptInvitation(token: string) {

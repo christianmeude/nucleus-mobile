@@ -3,6 +3,7 @@ export type RootStackParamList = {
   UnsupportedRole: undefined;
   StudentTabs: undefined;
   ResearchDetail: { paperId: string };
+  SubmitResearch: { resubmitPaperId?: string } | undefined;
 };
 
 export type StudentTabsParamList = {

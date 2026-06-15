@@ -5,6 +5,7 @@ import {
   PaperAuthor,
   ResearchPaper,
   StructuredAuthorEntry,
+  SubmissionPolicy,
   WorkflowEntry,
 } from '../types/domain';
 import { getPrimaryAuthorName, paperDate } from '../utils/format';
@@ -334,19 +335,64 @@ function extractStoragePathFromUrl(fileUrl?: string | null) {
 async function loadResearchRows(selectQuery: string, filters?: ResearchListParams) {
   const profile = await resolveCurrentStudentProfile();
 
-  const query = supabase
+  const { data: primaryData, error: primaryError } = await supabase
     .from('research_papers')
     .select(selectQuery)
     .eq('author_id', profile.id);
 
-  const { data, error } = await query;
-
-  if (error) {
-    throw new Error(error.message || 'Unable to load research data.');
+  if (primaryError) {
+    throw new Error(primaryError.message || 'Unable to load research data.');
   }
 
-  const rows = Array.isArray(data) ? (data as unknown as ResearchPaperRow[]) : [];
-  return filterPublishedRows(rows, filters);
+  const primaryRows = Array.isArray(primaryData)
+    ? (primaryData as unknown as ResearchPaperRow[])
+    : [];
+
+  const { data: coAuthorData, error: coAuthorError } = await supabase
+    .from('research_authors')
+    .select('research_id')
+    .eq('user_id', profile.id)
+    .eq('is_primary', false);
+
+  if (coAuthorError) {
+    throw new Error(coAuthorError.message || 'Unable to load research data.');
+  }
+
+  const primaryIds = new Set(primaryRows.map((row) => row.id));
+  const coAuthorIds = Array.from(
+    new Set(
+      (Array.isArray(coAuthorData) ? coAuthorData : [])
+        .map((row: any) => row?.research_id)
+        .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0)
+    )
+  ).filter((id) => !primaryIds.has(id));
+
+  let coAuthoredRows: ResearchPaperRow[] = [];
+
+  if (coAuthorIds.length > 0) {
+    const { data: coAuthorRows, error: coAuthorRowsError } = await supabase
+      .from('research_papers')
+      .select(selectQuery)
+      .in('id', coAuthorIds);
+
+    if (coAuthorRowsError) {
+      throw new Error(coAuthorRowsError.message || 'Unable to load research data.');
+    }
+
+    coAuthoredRows = Array.isArray(coAuthorRows)
+      ? (coAuthorRows as unknown as ResearchPaperRow[])
+      : [];
+  }
+
+  const mergedRows = new Map<string, ResearchPaperRow>();
+  primaryRows.forEach((row) => mergedRows.set(row.id, row));
+  coAuthoredRows.forEach((row) => {
+    if (!mergedRows.has(row.id)) {
+      mergedRows.set(row.id, row);
+    }
+  });
+
+  return filterPublishedRows(Array.from(mergedRows.values()), filters);
 }
 
 export const researchApi = {
@@ -573,4 +619,527 @@ export const researchApi = {
       records: papers,
     };
   },
+};
+
+// =============================================================================
+// Submit Research API (Phase 2)
+// -----------------------------------------------------------------------------
+// Maps the web parity contract (multipart POST /research/submit etc.) onto
+// direct Supabase operations under the mobile anon key + RLS, per
+// docs/plans/SUBMIT_RESEARCH_PARITY_MATRIX.md "Frozen Contract v1". The web
+// Express backend is not reachable from the mobile runtime, so the wire-level
+// multipart shape is replaced by column-mapped inserts that preserve the same
+// semantics (field names, validators, status routing, storage path, post-submit
+// side effects). Behavior of the existing researchApi above is unchanged.
+// =============================================================================
+
+export interface DepartmentRow {
+  id: string;
+  name: string;
+  code?: string | null;
+}
+
+export interface FacultyMember {
+  id: string;
+  email?: string;
+  fullName: string;
+  department?: string | null;
+  department_id?: string | null;
+}
+
+export interface StudentSearchResult {
+  id: string;
+  email?: string;
+  fullName: string;
+  program?: string | null;
+}
+
+export interface SubmitFileInput {
+  uri: string;
+  name: string;
+  size: number;
+  mimeType: string;
+}
+
+export interface SubmitDraftFormState {
+  title: string;
+  abstract: string;
+  keywords: string;
+  coAuthors: string;
+  category: string;
+  facultyId: string;
+  department: string;
+  departmentId: string;
+}
+
+export interface SubmitDraftPayload {
+  formData: SubmitDraftFormState;
+  selectedCoAuthors: StudentSearchResult[];
+  hasNewFile: boolean;
+  updatedAt: string;
+}
+
+interface SubmitDraftRow {
+  id: string;
+  user_id: string;
+  paper_id: string | null;
+  draft_data: SubmitDraftPayload | null;
+  updated_at: string;
+}
+
+export interface SubmitInput {
+  id?: string;
+  file?: SubmitFileInput | null;
+  title: string;
+  abstract: string;
+  keywords: string;
+  coAuthors: string;
+  externalAuthorNotes?: string;
+  category: string;
+  facultyId: string;
+  department: string;
+  departmentId: string;
+  programId?: string;
+  coAuthorIds?: string[];
+}
+
+export interface SubmitResult {
+  paper: ResearchPaper;
+}
+
+const SUBMISSION_POLICY_FALLBACK: SubmissionPolicy = {
+  maxFileSizeMb: 10,
+  allowedFileTypes: ['pdf'],
+};
+
+// Storage path uniqueness only — not cryptographic. Frozen contract rule 5
+// requires `${userId}/${uuid}.${ext}`; this helper produces a UUID-v4-shaped
+// string without adding a uuid dependency.
+function generatePathId(): string {
+  const hex = (n: number) =>
+    Math.floor(Math.random() * n)
+      .toString(16)
+      .padStart(1, '0');
+  const seg = (len: number) =>
+    Array.from({ length: len }, () => hex(16)).join('');
+  const variant = ['8', '9', 'a', 'b'][Math.floor(Math.random() * 4)];
+  return `${seg(8)}-${seg(4)}-4${seg(3)}-${variant}${seg(3)}-${seg(12)}`;
+}
+
+function buildDirectoryDisplayName(row: {
+  first_name?: string | null;
+  middle_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+}): string {
+  const parts = [row.first_name, row.middle_name, row.last_name].filter(Boolean) as string[];
+  const joined = parts.join(' ').replace(/\s+/g, ' ').trim();
+  return joined || String(row.email || '').trim();
+}
+
+async function getSubmissionPolicy(): Promise<SubmissionPolicy> {
+  try {
+    const { data, error } = await supabase
+      .from('system_policy_settings')
+      .select('max_file_size_mb, allowed_file_types')
+      .maybeSingle();
+
+    if (error || !data) {
+      return SUBMISSION_POLICY_FALLBACK;
+    }
+
+    const allowedRaw = (data as { allowed_file_types?: unknown }).allowed_file_types;
+    const allowed = Array.isArray(allowedRaw)
+      ? (allowedRaw as unknown[])
+          .map((value) => String(value || '').toLowerCase().replace(/^\./, ''))
+          .filter(Boolean)
+      : [];
+
+    return {
+      maxFileSizeMb:
+        Number((data as { max_file_size_mb?: unknown }).max_file_size_mb) ||
+        SUBMISSION_POLICY_FALLBACK.maxFileSizeMb,
+      allowedFileTypes: allowed.length ? allowed : SUBMISSION_POLICY_FALLBACK.allowedFileTypes,
+    };
+  } catch {
+    return SUBMISSION_POLICY_FALLBACK;
+  }
+}
+
+async function getDepartments(): Promise<DepartmentRow[]> {
+  try {
+    const { data, error } = await supabase
+      .from('departments')
+      .select('id, name, code')
+      .order('name', { ascending: true });
+
+    if (error) {
+      return [];
+    }
+
+    return (Array.isArray(data) ? data : []) as DepartmentRow[];
+  } catch {
+    return [];
+  }
+}
+
+// Directory lookups go through SECURITY DEFINER RPCs deployed by christian
+// (get_faculty_members, search_students) because public.users is locked down to
+// self-read by email under mobile RLS. Direct cross-user reads of public.users
+// from anon would return zero rows and risk recursion (42P17). The RPCs accept
+// snake_case argument names (p_department, p_department_id, p_query) and may
+// return either separate name parts or a pre-built full_name; the mapping
+// below tolerates both shapes.
+
+function pickRpcDisplayName(row: any): string {
+  if (typeof row?.full_name === 'string' && row.full_name.trim().length > 0) {
+    return String(row.full_name).trim();
+  }
+  if (typeof row?.fullName === 'string' && row.fullName.trim().length > 0) {
+    return String(row.fullName).trim();
+  }
+  return buildDirectoryDisplayName(row || {});
+}
+
+async function getFacultyMembers(opts?: {
+  department?: string | null;
+  departmentId?: string | null;
+}): Promise<FacultyMember[]> {
+  try {
+    const { data, error } = await supabase.rpc('get_faculty_members', {
+      p_department: opts?.department || null,
+      p_department_id: opts?.departmentId || null,
+    });
+
+    if (error) {
+      console.warn('[getFacultyMembers] RPC error:', error.message);
+      return [];
+    }
+
+    return (Array.isArray(data) ? data : []).map((row: any) => ({
+      id: row.id,
+      email: row.email ?? undefined,
+      fullName: pickRpcDisplayName(row),
+      department: row.department ?? null,
+      department_id: row.department_id ?? null,
+    }));
+  } catch (error) {
+    console.warn('[getFacultyMembers] threw:', error);
+    return [];
+  }
+}
+
+async function searchStudents(query: string): Promise<StudentSearchResult[]> {
+  const trimmed = String(query || '').trim();
+  if (trimmed.length < 2) return [];
+
+  try {
+    const profile = await resolveCurrentStudentProfile();
+    const { data, error } = await supabase.rpc('search_students', {
+      p_query: trimmed,
+    });
+
+    if (error) {
+      console.warn('[searchStudents] RPC error:', error.message);
+      return [];
+    }
+
+    return (Array.isArray(data) ? data : [])
+      .map((row: any) => ({
+        id: row.id,
+        email: row.email ?? undefined,
+        fullName: pickRpcDisplayName(row),
+        program: row.program ?? null,
+      }))
+      .filter((entry: StudentSearchResult) => entry.id !== profile.id);
+  } catch (error) {
+    console.warn('[searchStudents] threw:', error);
+    return [];
+  }
+}
+
+async function getMyDraft(paperId?: string | null): Promise<SubmitDraftPayload | null> {
+  try {
+    const profile = await resolveCurrentStudentProfile();
+    let query = supabase
+      .from('submission_drafts')
+      .select('id, user_id, paper_id, draft_data, updated_at')
+      .eq('user_id', profile.id)
+      .order('updated_at', { ascending: false })
+      .limit(1);
+
+    if (paperId) {
+      query = query.eq('paper_id', paperId);
+    } else {
+      query = query.is('paper_id', null);
+    }
+
+    const { data, error } = await query.maybeSingle();
+    if (error || !data) return null;
+
+    const row = data as unknown as SubmitDraftRow;
+    return row.draft_data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function saveMyDraft(
+  paperId: string | null,
+  payload: SubmitDraftPayload
+): Promise<{ persisted: boolean }> {
+  try {
+    const profile = await resolveCurrentStudentProfile();
+    const { error } = await supabase
+      .from('submission_drafts')
+      .upsert(
+        {
+          user_id: profile.id,
+          paper_id: paperId,
+          draft_data: payload,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id,paper_id' }
+      );
+
+    if (error) {
+      console.warn('[saveMyDraft] server draft save failed:', error.message);
+      return { persisted: false };
+    }
+    return { persisted: true };
+  } catch (error) {
+    console.warn('[saveMyDraft]', error);
+    return { persisted: false };
+  }
+}
+
+async function deleteMyDraft(paperId: string | null): Promise<void> {
+  try {
+    const profile = await resolveCurrentStudentProfile();
+    let query = supabase.from('submission_drafts').delete().eq('user_id', profile.id);
+
+    if (paperId) {
+      query = query.eq('paper_id', paperId);
+    } else {
+      query = query.is('paper_id', null);
+    }
+
+    await query;
+  } catch (error) {
+    console.warn('[deleteMyDraft]', error);
+  }
+}
+
+const SUBMIT_STAGE_MSG_MAX = 500;
+
+/** Stage-prefixed submit errors for QA. `file read` uses native `File` I/O on iOS/Android (not RN `fetch(file://)`). */
+function throwSubmitStageError(stage: string, cause: unknown): never {
+  let raw = cause instanceof Error ? cause.message : String(cause);
+  raw = raw.replace(/\s+/g, ' ').trim();
+  if (raw.length > SUBMIT_STAGE_MSG_MAX) {
+    raw = `${raw.slice(0, SUBMIT_STAGE_MSG_MAX)}…`;
+  }
+  const label = `[submit] ${stage}:`;
+  console.warn(label, raw);
+  throw new Error(`${label} ${raw}`);
+}
+
+/** Read a picked file URI into a byte array. Uses fetch — works uniformly across web and native (RN 0.85+). */
+async function readSubmitFileBodyForUpload(fileUri: string): Promise<Uint8Array> {
+  const response = await fetch(fileUri);
+  if (!response.ok) {
+    throw new Error('Selected file is not readable from disk (missing or no access).');
+  }
+  return new Uint8Array(await response.arrayBuffer());
+}
+
+async function submitResearch(input: SubmitInput): Promise<SubmitResult> {
+  let profile;
+  try {
+    profile = await resolveCurrentStudentProfile();
+  } catch (error) {
+    throwSubmitStageError('profile', error);
+  }
+
+  // Frozen contract rule 2: file required for new submissions; optional on resubmit.
+  if (!input.id && !input.file) {
+    throw new Error('A file is required for new submissions.');
+  }
+
+  // Frozen contract rule 3: title, abstract, category required.
+  if (!input.title?.trim() || !input.abstract?.trim() || !input.category?.trim()) {
+    throw new Error('Title, abstract, and category are required.');
+  }
+
+  let fileFields: Record<string, unknown> = {};
+
+  if (input.file) {
+    const ext = (input.file.name.split('.').pop() || 'pdf').toLowerCase();
+    const path = `${profile.id}/${generatePathId()}.${ext}`;
+
+    let uploadBody: Uint8Array;
+    try {
+      uploadBody = await readSubmitFileBodyForUpload(input.file.uri);
+    } catch (error) {
+      throwSubmitStageError('file read', error);
+    }
+
+    const storageContentType = input.file.mimeType || 'application/pdf';
+
+    // `[submit] storage:` = Supabase Storage HTTP upload failed (transport / bucket / Storage API).
+    // Not `research_papers` upsert; that stage uses `[submit] database:`.
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('research-papers')
+        .upload(path, uploadBody, {
+          contentType: storageContentType,
+          upsert: true,
+        });
+
+      if (uploadError) {
+        throw new Error(uploadError.message || 'File upload failed.');
+      }
+    } catch (error) {
+      const pathSegments = path.split('/').filter(Boolean).length;
+      console.warn('[submit] storage context', {
+        bucket: 'research-papers',
+        pathSegments,
+        ext,
+        bodyBytes: uploadBody.byteLength,
+        contentType: storageContentType,
+      });
+      throwSubmitStageError('storage', error);
+    }
+
+    const publicUrlResult = supabase.storage.from('research-papers').getPublicUrl(path);
+
+    fileFields = {
+      file_url: publicUrlResult.data?.publicUrl,
+      file_storage_path: path,
+      file_name: input.file.name,
+      file_size: input.file.size,
+    };
+  }
+
+  // Frozen contract rule 4: keywords are sent as comma string and normalized server-side;
+  // mobile normalizes at insert boundary since there is no Express normalizer.
+  const trimmedKeywords = (input.keywords || '')
+    .split(',')
+    .map((token) => token.trim())
+    .filter(Boolean);
+
+  // Frozen contract rule 1: external notes mirror coAuthors when present (web sends both
+  // multipart keys with the same value; on mobile they target a single column).
+  const externalNotes = String(input.externalAuthorNotes ?? input.coAuthors ?? '').trim() || null;
+
+  // Frozen contract rule 6: deterministic status routing (identical to web backend logic).
+  const status = input.facultyId ? 'pending_faculty' : 'pending_editor';
+
+  const basePayload: Record<string, unknown> = {
+    ...(input.id ? { id: input.id } : {}),
+    title: input.title.trim(),
+    abstract: input.abstract.trim(),
+    keywords: trimmedKeywords,
+    external_author_notes: externalNotes,
+    category: input.category,
+    author_id: profile.id,
+    faculty_id: input.facultyId || null,
+    department: input.department || profile.department || null,
+    department_id: input.departmentId || profile.departmentId || null,
+    program_id: input.programId || profile.programId || null,
+    ...fileFields,
+    ...(input.id ? {} : { status }),
+  };
+
+  let row: unknown;
+  try {
+    const result = await supabase
+      .from('research_papers')
+      .upsert(basePayload)
+      .select(PAPER_SELECT)
+      .single();
+
+    if (result.error) {
+      throw new Error(result.error.message || 'Failed to save research record.');
+    }
+    row = result.data;
+  } catch (error) {
+    throwSubmitStageError('database', error);
+  }
+
+  const paperRow = row as unknown as ResearchPaperRow;
+  const paperId = paperRow.id;
+
+  // Web parity: on resubmission, clear accepted co-author rows so they can be re-invited fresh.
+  // Co-author rows are never inserted at submit time — they are created when invitees accept.
+  try {
+    if (input.id) {
+      await supabase
+        .from('research_authors')
+        .delete()
+        .eq('research_id', paperId)
+        .eq('is_primary', false);
+    }
+    await supabase.from('research_authors').upsert(
+      {
+        research_id: paperId,
+        user_id: profile.id,
+        is_primary: true,
+        author_order: 0,
+      },
+      { onConflict: 'research_id,user_id' }
+    );
+  } catch (error) {
+    console.warn('[submitResearch] research_authors upsert warning:', error);
+  }
+
+  return { paper: toResearchPaper(paperRow) };
+}
+
+async function createCoAuthorInvitations(
+  researchId: string,
+  inviteeIds: string[]
+): Promise<{ created: number; skipped: number }> {
+  if (!Array.isArray(inviteeIds) || inviteeIds.length === 0) {
+    return { created: 0, skipped: 0 };
+  }
+
+  const unique = Array.from(new Set(inviteeIds.filter(Boolean)));
+
+  if (unique.length === 0) {
+    return { created: 0, skipped: 0 };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .rpc('create_co_author_invitations', {
+        p_research_id: researchId,
+        p_invitee_ids: unique,
+      });
+
+    if (error) {
+      console.warn('[createCoAuthorInvitations]', error.message);
+      return { created: 0, skipped: unique.length };
+    }
+
+    const createdCount = Array.isArray(data)
+      ? data.filter((row: { result?: string | null }) => row?.result === 'CREATED').length
+      : 0;
+    return { created: createdCount, skipped: unique.length - createdCount };
+  } catch (error) {
+    console.warn('[createCoAuthorInvitations]', error);
+    return { created: 0, skipped: unique.length };
+  }
+}
+
+export const submitApi = {
+  getSubmissionPolicy,
+  getDepartments,
+  getFacultyMembers,
+  searchStudents,
+  getMyDraft,
+  saveMyDraft,
+  deleteMyDraft,
+  submitResearch,
+  createCoAuthorInvitations,
 };

@@ -20,7 +20,7 @@ import {
   ACTIVE_STATUSES,
   PUBLISHED_STATUSES,
 } from '../../components/PaperStatusChip';
-import { Chip, EmptyState, InlineNotice, Skeleton } from '../../components/ui';
+import { Button, Chip, EmptyState, InlineNotice, Skeleton } from '../../components/ui';
 
 type FilterKey = 'all' | 'active' | 'published' | 'action';
 
@@ -97,7 +97,16 @@ export const MyPapersScreen = () => {
         />
       }
     >
-      <Text style={styles.title}>My Papers</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>My Papers</Text>
+        <Button
+          label="Submit"
+          onPress={() => navigation.navigate('SubmitResearch')}
+          variant="primary"
+          size="sm"
+          accessibilityLabel="Submit new research"
+        />
+      </View>
 
       <View style={styles.searchWrap}>
         <Ionicons name="search-outline" size={18} color={theme.colors.text.muted} />
@@ -182,9 +191,16 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
     gap: theme.spacing.md,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing.sm,
+  },
   title: {
     ...theme.typography.h1,
     color: theme.colors.text.primary,
+    flex: 1,
   },
   searchWrap: {
     flexDirection: 'row',
