@@ -20,6 +20,25 @@ main
 
 Merge direction: `feat/* → dev → main`. Never skip levels. Use `git merge --no-ff` to preserve branch history.
 
+### Merge commit format (undertaking-level merges only)
+
+Use a structured body for `feat/* → dev` merges. Chore and hotfix merges do not require a body.
+
+```
+Merge branch 'feat/[undertaking]' into dev
+
+[Undertaking name] — [one-line outcome statement]
+
+- Phase 1: label
+- Phase 2: label
+- Phase N: label
+```
+
+**Rules:**
+- Subject line is the standard git merge subject — do not alter it
+- Outcome statement: past-tense summary of what the undertaking delivered
+- Phase list: one line per phase, matching the labels in the plan doc
+
 ---
 
 ## 2. Commit Format
