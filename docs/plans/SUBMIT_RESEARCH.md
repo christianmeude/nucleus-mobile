@@ -144,23 +144,35 @@ Each phase declares scope and exit criteria; completed phases also record implem
 
 ### Phase 3 — Cross-system parity verification (mobile->web, web->mobile)
 
-⏳ **NOT STARTED**
+✅ **COMPLETED (stable)**
 
-**What changes and why**
+**Implementation summary**
 
-Validate interoperability as a first-class requirement: records submitted on mobile must behave correctly in web review surfaces, and records submitted on web must render correctly in mobile student surfaces.
+- ✅ File read error (SDK 56): `readSubmitFileBodyForUpload` rewritten to use `fetch()` uniformly; `ExpoFsFile` removed
+- ✅ Co-authored papers in invitee My Papers: `loadResearchRows` extended with two-query merge and dedupe by paper id
+- ✅ `research_authors` row on invitation accept: best-effort upsert in `respondToInvitation` (try/catch, non-blocking)
+- ✅ Invitation + notification regression fixed: `create_co_author_invitations` RPC had `42702` ambiguous column — `invitee_id` in EXISTS predicate collided with `RETURNS TABLE(invitee_id uuid)` output var; fixed with `cai.` alias
+- ✅ `co_author_invitations` SELECT policy confirmed email-resolved; invitees can see their own invitations
+- ✅ Cross-user author display (#7): `public.users` open SELECT for `authenticated` role deployed
+- ✅ `research_authors` invitee INSERT timing: policy updated to `status IN ('pending', 'accepted')` to allow post-accept insert
+- ✅ `research_authors` DELETE on resubmit: new policy + mobile delete call added for web parity (clear non-primary rows so invitees can be re-invited fresh)
+- ✅ Co-author rows not inserted at submit time: removed at-submit co-author upsert; rows created only on invitation accept
+- ✅ Notification for invitee includes paper title via RPC
+- ✅ SQL snapshots: `co_author_invitations_rpcs.sql`, `research_authors_rls_policies.sql`, `co_author_invitations_rls_policies.sql`, `users_rls_policies.sql`
+- ✅ Manually validated by Christian: invitations and notifications reach invitees; co-authored papers appear in invitee My Papers; co-author chips show correctly; author names resolve
 
-**Explicitly NOT changing**
+**Implementation decisions**
 
-- No scope expansion into reading-experience enhancements.
-- No speculative backend refactors outside parity defects.
+- Open SELECT on `public.users` for `authenticated` (vs. PAPER_SELECT RPC restructure): Christian approved; appropriate for a closed university app where all students can see each other's basic profiles
+- Co-author rows on accept, not submit: mirrors web backend — the invitation flow creates the `research_authors` row, not the submit flow
+- Resubmit clears non-primary co-author rows: web parity — prior co-authors must be re-invited on each resubmission
 
-**Exit criteria**
+**Exit criteria met:**
 
-- Mobile-submitted records appear correctly in web review/admin workflows.
-- Web-submitted records appear correctly in mobile Dashboard/MyPapers/ResearchDetail contexts.
-- Status handling, co-author behavior, and file access remain parity-consistent.
-- `npx tsc --noEmit` is green.
+- ✅ Mobile-submitted records appear correctly in web review/admin workflows
+- ✅ Web-submitted records appear correctly in mobile Dashboard/MyPapers/ResearchDetail contexts
+- ✅ Status handling, co-author behavior, and file access are parity-consistent
+- ✅ `npx tsc --noEmit` is green
 
 ---
 

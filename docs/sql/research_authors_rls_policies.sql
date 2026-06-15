@@ -1,7 +1,8 @@
 -- ============================================================
 -- RECORD: research_authors RLS policies
 -- Deployed to allow anon+RLS reads and student-owned writes
--- Required for PAPER_SELECT structured_authors join and research_authors upsert on submit and invitation accept
+-- Required for PAPER_SELECT structured_authors join and research_authors insert/delete on submit and invitation accept
+-- Email-resolved user_id matches public.users to auth.email() (project convention)
 -- This file is a snapshot of deployed definitions, not a migration script.
 -- ============================================================
 
@@ -53,11 +54,26 @@ WITH CHECK (
   )
   AND EXISTS (
     SELECT 1 FROM public.co_author_invitations cai
-    WHERE cai.research_id = research_id
+    WHERE cai.research_id = research_authors.research_id
       AND cai.invitee_id = (
         SELECT u.id FROM public.users u
         WHERE u.email = auth.email()
       )
       AND cai.status IN ('pending', 'accepted')
+  )
+);
+
+-- DELETE: student may delete non-primary co-author rows for papers they own
+-- Required for resubmission web parity: web backend clears co-author rows on resubmit
+-- so previously-accepted co-authors can be re-invited fresh via create_co_author_invitations.
+CREATE POLICY "Students can delete research_authors for own papers"
+ON public.research_authors
+FOR DELETE
+USING (
+  research_id IN (
+    SELECT rp.id FROM public.research_papers rp
+    WHERE rp.author_id = (
+      SELECT u.id FROM public.users u WHERE u.email = auth.email()
+    )
   )
 );

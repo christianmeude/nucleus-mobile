@@ -97,44 +97,17 @@ All SECURITY DEFINER. All `SET search_path = public`. All `GRANT EXECUTE TO anon
 
 ## Current State of the Codebase
 
-### Design system
+> **Claude Code note:** Design system, component inventory, API facade method lists, and frozen file lists are all derivable by reading the codebase directly. Omit those sections unless there is a non-obvious gotcha that cannot be found by reading the code. Include only what a reader cannot derive on their own.
 
-- `src/theme/` — `colors`, `typography`, `spacing`, `shadows`, `radii`, `motion`, `index`
-- Fonts: [font stack]
-- Token consumption via direct `import { theme } from '../theme'` — no `useTheme()` hook
+### Field-level gotchas (include only if non-obvious)
 
-### Component system
-
-- `src/components/ui/` — [UI primitives list]
-- `src/components/` — [feature components list]
-
-### API facades
-
-- `src/api/research.ts` — [key methods and state]
-- `src/api/invitations.ts` — [key methods and state]
-- `src/api/notifications.ts` — [key methods and state]
-
-### Frozen files (do not touch without explicit plan scope)
-
-[List per active plan and `CLAUDE.md`]
-
-### Field-level gotchas
-
-[Non-obvious field naming, type coercions, or data-shape surprises relevant to the active undertaking]
+[Non-obvious field naming, type coercions, or data-shape surprises that would cost time to rediscover — skip this section if there are none]
 
 ---
 
-## Builder Changes (uncommitted, if any)
+## Uncommitted Changes (if any)
 
-- `[file]` — [what changed and why]
-
-### Dependency Changes (uncommitted, if any)
-
-- `[file]` — [what changed and why]
-
-### SQL Snapshot Files (untracked, if any)
-
-- `docs/sql/[file]` — [what it records]
+- `[file]` — [what changed and why; note if SQL snapshot or dependency]
 
 ---
 

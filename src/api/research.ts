@@ -1070,8 +1070,16 @@ async function submitResearch(input: SubmitInput): Promise<SubmitResult> {
   const paperRow = row as unknown as ResearchPaperRow;
   const paperId = paperRow.id;
 
-  // Mirror web `research_authors` upsert pattern: ensure primary author + structured co-authors.
+  // Web parity: on resubmission, clear accepted co-author rows so they can be re-invited fresh.
+  // Co-author rows are never inserted at submit time — they are created when invitees accept.
   try {
+    if (input.id) {
+      await supabase
+        .from('research_authors')
+        .delete()
+        .eq('research_id', paperId)
+        .eq('is_primary', false);
+    }
     await supabase.from('research_authors').upsert(
       {
         research_id: paperId,
@@ -1081,25 +1089,7 @@ async function submitResearch(input: SubmitInput): Promise<SubmitResult> {
       },
       { onConflict: 'research_id,user_id' }
     );
-
-    if (input.coAuthorIds && input.coAuthorIds.length > 0) {
-      const coAuthorRows = input.coAuthorIds
-        .filter((authorId) => authorId && authorId !== profile.id)
-        .map((authorId, index) => ({
-          research_id: paperId,
-          user_id: authorId,
-          is_primary: false,
-          author_order: index + 1,
-        }));
-
-      if (coAuthorRows.length > 0) {
-        await supabase
-          .from('research_authors')
-          .upsert(coAuthorRows, { onConflict: 'research_id,user_id' });
-      }
-    }
   } catch (error) {
-    // research_authors writes are best-effort — they don't gate primary submit success.
     console.warn('[submitResearch] research_authors upsert warning:', error);
   }
 
