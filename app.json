@@ -27,9 +27,16 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "expo-dev-client",
       "expo-web-browser",
       "expo-font",
       "expo-status-bar"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "cfc58fb4-9bdc-4fd8-91ed-44a201032d8d"
+      }
+    },
+    "owner": "christianmeude"
   }
 }
