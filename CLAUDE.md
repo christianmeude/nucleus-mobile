@@ -19,7 +19,7 @@ Run these steps in order. Do not act until all are done.
 
 1. Read `docs/PROJECT_CONTEXT.md`
 2. Read `docs/CONVENTIONS.md`
-3. Read the latest completed plan: `docs/plans/SUBMIT_RESEARCH.md` — **next undertaking not yet chosen; step 3 must be updated when one is**
+3. Read the active plan: `docs/plans/UX_REMODEL.md` (current undertaking: Mobile UX Remodel)
 4. Read the latest handoff: `docs/handoffs/HANDOFF_POST-SUBMIT-RESEARCH.md`
 5. Report:
    - Current project state (branch, phase, open blockers)
@@ -119,7 +119,7 @@ The `public.users` SELECT policy cannot reference itself — triggers `42P17`. C
 |---|---|
 | `docs/PROJECT_CONTEXT.md` | Product scope, navigation model, access control, principles |
 | `docs/CONVENTIONS.md` | All conventions: commits, phase protocol, issues, SQL, handoffs |
-| `docs/plans/SUBMIT_RESEARCH.md` | Active undertaking plan |
+| `docs/plans/UX_REMODEL.md` | Active undertaking plan |
 | `docs/handoffs/HANDOFF_TEMPLATE.md` | Handoff structure template |
 | `docs/sql/` | Deployed SQL snapshots (RLS policies + RPC definitions) |
 | `src/types/domain.ts` | Canonical domain types (frozen) |
