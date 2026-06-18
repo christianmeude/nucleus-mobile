@@ -1,7 +1,41 @@
+/**
+ * NUcleus motion tokens.
+ *
+ * Original Phase 1 tokens (skeleton + list entrance) are preserved for existing
+ * consumers (Skeleton, ListEntranceItem). The UX remodel adds a fuller system:
+ * durations, reanimated spring presets, press feedback, and entrance config.
+ * Spring presets are plain configs consumable by reanimated `withSpring`.
+ */
 export const motion = {
+  // — original (do not change; consumed by Skeleton / ListEntranceItem) —
   skeletonCycleDuration: 900,
   listItemDuration: 320,
   listStaggerDelay: 60,
+
+  // — durations (ms) —
+  duration: {
+    fast: 150,
+    base: 240,
+    slow: 360,
+    sheet: 320,
+  },
+
+  // — reanimated withSpring presets —
+  spring: {
+    press: { damping: 18, stiffness: 320, mass: 0.6 },
+    gentle: { damping: 20, stiffness: 180, mass: 1 },
+    sheet: { damping: 24, stiffness: 240, mass: 0.9 },
+  },
+
+  // — interaction —
+  pressScale: 0.97,
+
+  // — list / element entrance —
+  entrance: {
+    distance: 12,
+    duration: 360,
+    stagger: 60,
+  },
 } as const;
 
 export type Motion = typeof motion;
