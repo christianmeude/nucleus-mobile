@@ -42,7 +42,7 @@ The **mobile UX remodel is the first move**: 100% mobile-owned, no backend or co
 ✅ **COMPLETED (stable)** — Brief and signature confirmed with Christian via mockups; monospace and background watermark rejected and removed; two-typeface direction locked. Recorded in §2.
 
 ### Phase 1 — Design foundation (tokens + native deps)
-⏳ **IN PROGRESS**
+✅ **COMPLETED (stable)**
 
 - Extend `src/theme` (additive — existing cool-slate screens unaffected):
   - `colors.ts` — `palette.warm` group + `surface.paper*` + `border.warm*`.

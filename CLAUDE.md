@@ -20,7 +20,7 @@ Run these steps in order. Do not act until all are done.
 1. Read `docs/PROJECT_CONTEXT.md`
 2. Read `docs/CONVENTIONS.md`
 3. Read the active plan: `docs/plans/UX_REMODEL.md` (current undertaking: Mobile UX Remodel)
-4. Read the latest handoff: `docs/handoffs/HANDOFF_POST-SUBMIT-RESEARCH.md`
+4. Read the latest handoff: `docs/handoffs/HANDOFF_UX-R_PHASE-1.md`
 5. Report:
    - Current project state (branch, phase, open blockers)
    - Open decisions or unresolved items
