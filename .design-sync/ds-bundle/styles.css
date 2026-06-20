@@ -1,0 +1,24 @@
+/* ============================================================
+   NUcleus Mobile — Design Token Bundle
+   Entry point: imports fonts + all token partials.
+   ============================================================ */
+
+@import url('./fonts/fonts.css');
+@import url('./tokens/colors.css');
+@import url('./tokens/typography.css');
+@import url('./tokens/spacing.css');
+@import url('./tokens/shadows.css');
+
+/* --- Base resets for NUcleus designs --- */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-ui);
+  font-size: var(--text-size-body);
+  line-height: var(--text-lh-body);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface-paper);
+  -webkit-font-smoothing: antialiased;
+}
