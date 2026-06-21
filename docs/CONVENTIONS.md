@@ -356,10 +356,11 @@ See `docs/handoffs/HANDOFF_TEMPLATE.md` for the full section template.
 ### Closing procedure
 
 1. Confirm with Christian that a close point has been reached
-2. Draft the handoff using `docs/handoffs/HANDOFF_TEMPLATE.md`
+2. Draft the handoff using `docs/handoffs/HANDOFF_TEMPLATE.md` — name it `HANDOFF_<SHORT>_<PHASE>.md` using the undertaking's registry short code, so resume can discover it
 3. Present the draft for review — do not commit before approval
 4. Once approved: stage the handoff file, draft the commit message (`docs(handoff): add HANDOFF_[NAME]`), present for confirmation
 5. After commit: confirm the next session opening state matches the handoff's "Immediate Next Steps"
+6. Update the undertaking's `Status` in the CLAUDE.md Undertaking Registry (active / parked / complete) if it changed this session
 
 ### What makes a good handoff
 
