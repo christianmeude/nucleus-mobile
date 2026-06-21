@@ -59,10 +59,11 @@ The **web project already implements faculty access** end-to-end (reviewed on it
 | Declare conflict | removed from queue → reassignment | writes `faculty_conflict_declarations` |
 
 **v1 read path (the only data work this round):**
-- The faculty queue needs author display names — joining `research_papers` → `public.users` from an anon/RLS context hits the **42P17 recursion trap**. The established fix is a **SECURITY DEFINER read RPC**.
-- **Plan:** `get_faculty_assigned_papers()` — `SECURITY DEFINER`, `SET search_path = public`, `GRANT EXECUTE TO anon, authenticated`; resolves caller via `auth.email()` → `public.users.id`; returns papers where `faculty_id = <resolved id>` plus author display fields, in one shot. Workload stats computed **client-side** from this result (as web does), so no separate workload RPC.
-- Review detail reuses `researchApi.getResearchById` **if** current RLS permits faculty to read a single assigned paper + workflow history; **if RLS blocks it**, add a parallel SECURITY DEFINER detail read. Confirmed by the Phase 2 RLS verification — not assumed.
-- **Diagnosis-first:** before writing any SQL, verify what `research_papers` SELECT RLS currently grants the authenticated path (brief Christian; read-only SELECT/EXPLAIN via Supabase MCP). The web's sample faculty policy uses `auth.uid() = faculty_id`, which **fails here** (UUID mismatch) — so a working faculty read almost certainly does not exist yet.
+- **Diagnosis complete (2026-06-22, read-only Supabase MCP): existing deployed RLS already supports faculty reads — no new SQL/RPC needed.**
+- `research_papers` SELECT (`Combined research read access`) is email-resolved and grants faculty access for any status: `faculty_id = (SELECT id FROM users WHERE email = auth.email())`.
+- `users` SELECT has `Allow authenticated users to read all profiles → USING (true)`, so author/co-author names resolve via plain PostgREST joins — the 42P17 concern does not apply; no SECURITY DEFINER read RPC, no new policy.
+- `facultyApi.getAssignedPapers()` is therefore a plain `from('research_papers').select(...).eq('faculty_id', <email-resolved id>)`; workload via client-side `summarizeFacultyWorkload()`. Faculty resolves its own profile (the student resolver rejects non-students).
+- **Still to verify (Phase 5):** `approval_workflow` SELECT access for faculty (detail-view workflow history). The queue and dashboard do not need it.
 
 ---
 
@@ -117,10 +118,13 @@ The **web project already implements faculty access** end-to-end (reviewed on it
 **Exit criteria met:** `npx tsc --noEmit` green; faculty surface wired and isolated; no student-screen or shared-`ui/` edits.
 ⏳ Runtime check still pending on a dev build: faculty user → `FacultyTabs`; dean/staff → `UnsupportedRole`; student → unchanged.
 
-### Phase 2 — Data layer (read-only) ⏳ **NOT STARTED**
-- ⏳ Brief Christian → verify deployed `research_papers` SELECT RLS for the authenticated path.
-- ⏳ Author + deploy `get_faculty_assigned_papers()` (+ detail read path only if needed); snapshot to `docs/sql/faculty_access_rpcs.sql`.
-- ⏳ Build `facultyApi.getAssignedPapers()` / `getReviewDetail()` + faculty types. `tsc` green.
+### Phase 2 — Data layer (read-only) ✅ **COMPLETED (stable)**
+**Implementation summary**
+- Diagnosis (read-only Supabase MCP): existing deployed RLS already supports faculty reads — **no new SQL** (see §4). The planned `get_faculty_assigned_papers()` RPC is not needed.
+- Added `src/api/faculty.ts`: self-contained `facultyApi.getAssignedPapers()` + `summarizeFacultyWorkload()` + faculty-only types (`FacultyAssignedPaper`, `FacultyWorkloadSummary`), with its own faculty profile resolver.
+- `getReviewDetail()` deferred to **Phase 5** (pending the `approval_workflow` RLS check), where the detail screen is built.
+
+**Exit criteria met:** `npx tsc --noEmit` green; faculty read path works under existing RLS with zero backend changes.
 
 ### Phase 3 — Faculty Dashboard ⏳ **NOT STARTED**
 - ⏳ Workload stats (client-computed) + recent assigned papers using `Stat`/`Card`/`Surface` + tokens. Loading/empty/error states.
