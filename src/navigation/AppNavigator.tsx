@@ -14,6 +14,8 @@ import { NotificationsScreen } from '../screens/main/NotificationsScreen';
 import { InvitationsScreen } from '../screens/main/InvitationsScreen';
 import { ResearchDetailScreen } from '../screens/main/ResearchDetailScreen';
 import { SubmitResearchScreen } from '../screens/main/SubmitResearchScreen';
+import { FacultyTabs } from './FacultyTabs';
+import { FacultyReviewDetailScreen } from '../screens/faculty/FacultyReviewDetailScreen';
 import { theme } from '../theme';
 import { Logo } from '../components/ui';
 import { ResearchDetailHeader } from './ResearchDetailHeader';
@@ -128,13 +130,7 @@ export const AppNavigator = () => {
             component={LoginScreen}
             options={{ headerShown: false }}
           />
-        ) : user.role !== 'student' ? (
-          <Stack.Screen
-            name="UnsupportedRole"
-            component={UnsupportedRoleScreen}
-            options={{ headerShown: false }}
-          />
-        ) : (
+        ) : user.role === 'student' ? (
           <>
             <Stack.Screen
               name="StudentTabs"
@@ -155,6 +151,25 @@ export const AppNavigator = () => {
               options={{ headerShown: false }}
             />
           </>
+        ) : user.role === 'faculty' ? (
+          <>
+            <Stack.Screen
+              name="FacultyTabs"
+              component={FacultyTabs}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="FacultyReviewDetail"
+              component={FacultyReviewDetailScreen}
+              options={{ title: 'Paper Review' }}
+            />
+          </>
+        ) : (
+          <Stack.Screen
+            name="UnsupportedRole"
+            component={UnsupportedRoleScreen}
+            options={{ headerShown: false }}
+          />
         )}
       </Stack.Navigator>
     </NavigationContainer>
