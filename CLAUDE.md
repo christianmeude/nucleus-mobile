@@ -15,19 +15,49 @@ GitHub repo: `christianmeude/capstone-nucleus-rn`
 
 ## Session Opening Protocol
 
-Run these steps in order. Do not act until all are done.
+Work runs as parallel **undertakings**, each with its own branch, plan, handoff
+lineage, and (optionally) a git worktree. Resume is routed by undertaking — say
+"resume faculty access" or "resume ux remodel" and this protocol loads that
+undertaking's state. Run these steps in order; do not act until all are done.
 
 1. Read `docs/PROJECT_CONTEXT.md`
 2. Read `docs/CONVENTIONS.md`
-3. Read the latest completed plan: `docs/plans/SUBMIT_RESEARCH.md` — **next undertaking not yet chosen; step 3 must be updated when one is**
-4. Read the latest handoff: `docs/handoffs/HANDOFF_POST-SUBMIT-RESEARCH.md`
+3. **Resolve the target undertaking.** Match the user's opening message (e.g.
+   "resume faculty access") against the Undertaking Registry below. If the user
+   named none, list the non-`complete` undertakings and ask which to resume —
+   do not assume.
+4. **Load that undertaking's state.** Check out its branch (or open its
+   worktree), then read its Plan and its latest handoff — the most recent
+   `docs/handoffs/HANDOFF_<SHORT>_*.md` for that undertaking's short code.
 5. Report:
-   - Current project state (branch, phase, open blockers)
+   - Current project state (undertaking, branch, phase, open blockers)
    - Open decisions or unresolved items
    - Proposed first action
 6. Stop and wait for confirmation before doing anything
 
-> When the active undertaking changes, update steps 3–4 to point to the new plan and latest handoff.
+### Undertaking Registry
+
+Routing table for resume. The name→short→branch→plan mapping is stable; the only
+recurring upkeep is `Status` (updated at session close, CONVENTIONS §9). The
+latest handoff is discovered by recency on the branch, not tracked here.
+
+| Undertaking | Short | Branch | Plan | Status |
+|---|---|---|---|---|
+| Submit Research | `S-R` | merged → `main` | `docs/plans/SUBMIT_RESEARCH.md` | complete |
+| UX Remodel | `UX-R` | `feat/ux-remodel` | `docs/plans/UX_REMODEL.md` | parked |
+| Faculty Access | `FAC` | `feat/faculty-access` | `docs/plans/FACULTY_ACCESS.md` | active |
+
+> A plan/handoff path resolves once you are on that undertaking's branch (each
+> lives on its own branch). Add a new undertaking = add a row + a plan doc; it
+> becomes resumable automatically.
+
+### Worktrees (optional, for simultaneous work)
+
+Active/parked undertakings may each have a git worktree pinned to their branch,
+so two undertakings run at once without checkout churn. "Resume <undertaking>" =
+open its worktree, or check out its branch in the main dir. Run
+`git worktree list` for the current map; the main repo dir tracks whichever
+undertaking is currently active.
 
 ---
 
