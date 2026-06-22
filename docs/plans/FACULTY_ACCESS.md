@@ -1,6 +1,6 @@
 # NUcleus Mobile — Implementation Plan: Faculty Access (Read-Only v1)
 
-> **STATUS: READ-ONLY v1 FEATURE-COMPLETE** — Branch `feat/faculty-access`, cut from `dev` (sibling to `feat/ux-remodel`). Phases 0–5 done and committed; runtime verification on a dev build + merge pending. Shipped with **zero backend changes** (existing RLS sufficed).
+> **STATUS: READ-ONLY v1 VERIFIED ✅ — v2 (web parity) in progress** — Branch `feat/faculty-access` (v2 continues in this same branch; commit scope **`faculty-access-v2`**). v1 (Phases 0–5) runtime-verified by Christian on a dev build and committed; shipped with **zero backend changes** (existing RLS sufficed). **Do not merge until Christian explicitly instructs** (after absolute web parity). The nav-file deny stays lifted during v2; re-freeze it at that merge. v2 scope = §8.
 > Opens the app's student-only foundation to a **separate, isolated faculty surface**: faculty get their own navigation, screens, and read path. Built entirely on shared tokens + `ui/` primitives so it absorbs the UX remodel at merge. **Read-only v1** — decision actions and richer review tooling are deferred (§8).
 
 **Canonical product context:** [PROJECT_CONTEXT.md](../PROJECT_CONTEXT.md)

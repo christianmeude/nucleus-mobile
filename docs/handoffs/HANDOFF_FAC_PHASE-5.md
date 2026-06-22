@@ -93,10 +93,9 @@ Branch workflow: `feat/faculty-access → dev → main` (all local).
 
 ## Immediate next steps
 
-1. **Runtime verification on a dev build** (the one outstanding gate; needs a device/emulator):
-   - Sign in as faculty → lands in `FacultyTabs`; dashboard counts match the queue; queue filters/search work; detail shows metadata + workflow history; **Open PDF** opens a paper.
-   - Regression: dean/staff/admin → `UnsupportedRole`; student → unchanged.
-2. **Re-freeze** the two nav files in `.claude/settings.json` when merging.
-3. **Merge** `feat/faculty-access → dev → main` once verified (Christian owns pushes).
-4. **(Optional clean-up, deferred)** archive/prune completed-undertaking handoffs (`S-R_*`, `U-O_*`).
-5. **(Future v2)** faculty write actions — service-role-equivalent via SECURITY DEFINER write RPCs (plan §4/§8), in-app PDF + annotations, other roles.
+> **v1 runtime-verified ✅ (2026-06-22)** by Christian on a dev build — faculty surface, dashboard, queue, detail, and Open PDF all work; student/other-role gating unchanged. **v2 (web parity) now continues in this same branch.**
+
+1. **v2 — toward absolute web parity** (commit scope **`faculty-access-v2`**, e.g. `feat(faculty-access-v2): ...`): faculty write actions (approve / reject / request-revision / declare-conflict). These re-enter the service-role problem and need **SECURITY DEFINER write RPCs** mirroring plan §4 (brief → Christian deploys → snapshot to `docs/sql/`), plus the email-on-action parity gap. Then in-app PDF rendering, annotations, and any remaining web-faculty features. Scope = plan §8.
+2. **Do NOT merge** `feat/faculty-access` until Christian **explicitly instructs** (after absolute parity).
+3. **At that merge:** re-freeze `types.ts` + `AppNavigator.tsx` in `.claude/settings.json`; then `feat/faculty-access → dev → main` (Christian owns pushes).
+4. **(Optional, deferred)** archive/prune completed-undertaking handoffs (`S-R_*`, `U-O_*`).
