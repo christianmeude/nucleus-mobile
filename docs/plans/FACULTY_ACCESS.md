@@ -140,9 +140,13 @@ The **web project already implements faculty access** end-to-end (reviewed on it
 
 **Exit criteria met:** `npx tsc --noEmit` green. Runtime check pending on a dev build.
 
-### Phase 5 — Faculty Review Detail (read-only) ⏳ **NOT STARTED**
-- ⏳ Metadata + workflow history (reuse `researchApi.getResearchById`) + open-PDF (reuse `researchApi.getResearchFile`).
-- ⏳ **No action buttons**; calm affordance that review decisions are coming later. (In-app PDF + annotations remain deferred.)
+### Phase 5 — Faculty Review Detail (read-only) ✅ **COMPLETED (stable)**
+**Implementation summary**
+- Diagnosis (read-only Supabase MCP): `approval_workflow` SELECT is `USING (true)` and the `research-papers` storage bucket is publicly readable — workflow history + PDF open work for faculty with **no new SQL**.
+- Added `facultyApi.getReviewDetail()` + `getReviewFile()` to `faculty.ts` (self-contained; the `researchApi` equivalents are student-gated).
+- `FacultyReviewDetailScreen` rebuilt from placeholder: status badge, title/author/dept/date, revision/rejection notices, **Open PDF** (signed URL via `Linking`), abstract, keywords, review-history timeline (`Card` per `approval_workflow` entry), and a calm "review decisions coming later" notice. No action buttons.
+
+**Exit criteria met:** `npx tsc --noEmit` green. Runtime check pending on a dev build.
 
 ### Phase 6 — Polish + handoff ⏳ **NOT STARTED**
 - ⏳ Empty/loading/error pass, accessibility, final `tsc` gate, draft handoff (`HANDOFF_FAC_*`).

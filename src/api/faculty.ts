@@ -41,6 +41,43 @@ export interface FacultyWorkloadSummary {
   totalAssigned: number;
 }
 
+export interface FacultyWorkflowEntry {
+  id: string;
+  reviewerRole?: string | null;
+  actionType?: string | null;
+  status?: string | null;
+  comments?: string | null;
+  previousStatus?: string | null;
+  newStatus?: string | null;
+  reviewedAt?: string | null;
+  createdAt?: string | null;
+  reviewerName?: string | null;
+}
+
+export interface FacultyReviewDetail {
+  id: string;
+  title: string;
+  abstract: string;
+  status: PaperStatus;
+  category?: string | null;
+  keywords?: string[] | null;
+  submissionDate?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  revisionNotes?: string | null;
+  rejectionReason?: string | null;
+  department?: string | null;
+  authorName: string;
+  authorEmail?: string | null;
+  fileUrl?: string | null;
+  workflow: FacultyWorkflowEntry[];
+}
+
+export interface FacultyReviewFile {
+  fileUrl: string;
+  isSigned: boolean;
+}
+
 // Statuses that mean "this paper has moved past my (faculty) review stage."
 // Broader than the web FacultyReview filter (which omits pending_dean /
 // pending_program_chair); faculty approval routes a paper to dean/chair first,
@@ -161,6 +198,124 @@ function toFacultyAssignedPaper(row: FacultyPaperRow): FacultyAssignedPaper {
   };
 }
 
+interface FacultyWorkflowRow {
+  id: string;
+  reviewer_role?: string | null;
+  action_type?: string | null;
+  status?: string | null;
+  comments?: string | null;
+  previous_status?: string | null;
+  new_status?: string | null;
+  reviewed_at?: string | null;
+  created_at?: string | null;
+  reviewer?: FacultyAuthorRelation;
+}
+
+interface FacultyDetailRow extends FacultyPaperRow {
+  rejection_reason?: string | null;
+  file_url?: string | null;
+  approval_workflow?: FacultyWorkflowRow[] | null;
+}
+
+const FACULTY_DETAIL_SELECT = `
+  ${FACULTY_PAPER_SELECT},
+  rejection_reason,
+  file_url,
+  approval_workflow:approval_workflow!approval_workflow_research_id_fkey(
+    id,
+    reviewer_role,
+    action_type,
+    status,
+    comments,
+    previous_status,
+    new_status,
+    reviewed_at,
+    created_at,
+    reviewer:users!approval_workflow_reviewer_id_fkey(
+      id,
+      email,
+      first_name,
+      middle_name,
+      last_name
+    )
+  )
+`;
+
+function toFacultyWorkflowEntry(row: FacultyWorkflowRow): FacultyWorkflowEntry {
+  const reviewer = pickAuthor(row.reviewer);
+  return {
+    id: row.id,
+    reviewerRole: row.reviewer_role ?? null,
+    actionType: row.action_type ?? null,
+    status: row.status ?? null,
+    comments: row.comments ?? null,
+    previousStatus: row.previous_status ?? null,
+    newStatus: row.new_status ?? null,
+    reviewedAt: row.reviewed_at ?? null,
+    createdAt: row.created_at ?? null,
+    reviewerName: reviewer ? buildFullName(reviewer) : null,
+  };
+}
+
+function workflowTime(entry: FacultyWorkflowEntry): number {
+  return new Date(entry.reviewedAt || entry.createdAt || 0).getTime();
+}
+
+function toFacultyReviewDetail(row: FacultyDetailRow): FacultyReviewDetail {
+  const author = resolveAuthorRow(row);
+  const workflow = Array.isArray(row.approval_workflow)
+    ? row.approval_workflow
+        .map(toFacultyWorkflowEntry)
+        .sort((left, right) => workflowTime(right) - workflowTime(left))
+    : [];
+
+  return {
+    id: row.id,
+    title: row.title,
+    abstract: row.abstract,
+    status: row.status,
+    category: row.category ?? null,
+    keywords: row.keywords ?? null,
+    submissionDate: row.submission_date ?? null,
+    createdAt: row.created_at ?? null,
+    updatedAt: row.updated_at ?? null,
+    revisionNotes: row.revision_notes ?? null,
+    rejectionReason: row.rejection_reason ?? null,
+    department: row.department ?? null,
+    authorName: buildFullName(author) || 'Unknown author',
+    authorEmail: author?.email ?? null,
+    fileUrl: row.file_url ?? null,
+    workflow,
+  };
+}
+
+function extractStoragePathFromUrl(fileUrl?: string | null): string | null {
+  if (!fileUrl) return null;
+  const trimmed = fileUrl.trim();
+  if (!trimmed) return null;
+
+  if (!/^https?:\/\//i.test(trimmed)) {
+    return trimmed.replace(/^\/+/, '') || null;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    const marker = '/object/public/research-papers/';
+    const markerIndex = parsed.pathname.indexOf(marker);
+    if (markerIndex >= 0) {
+      return parsed.pathname.slice(markerIndex + marker.length).replace(/^\//, '') || null;
+    }
+    const segments = parsed.pathname.split('/research-papers/');
+    if (segments.length > 1) {
+      return segments[1].replace(/^\//, '') || null;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
 function paperSortTime(paper: FacultyAssignedPaper): number {
   return new Date(paper.submissionDate || paper.createdAt || 0).getTime();
 }
@@ -228,5 +383,61 @@ export const facultyApi = {
 
     const rows = Array.isArray(data) ? (data as unknown as FacultyPaperRow[]) : [];
     return rows.map(toFacultyAssignedPaper).sort((left, right) => paperSortTime(right) - paperSortTime(left));
+  },
+
+  /** Full review detail for one assigned paper (metadata + workflow history). RLS-scoped. */
+  getReviewDetail: async (paperId: string): Promise<FacultyReviewDetail> => {
+    await resolveCurrentFacultyProfile();
+
+    const { data, error } = await supabase
+      .from('research_papers')
+      .select(FACULTY_DETAIL_SELECT)
+      .eq('id', paperId)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(error.message || 'Unable to load the paper.');
+    }
+    if (!data) {
+      throw new Error('Paper not found, or it is not assigned to you.');
+    }
+
+    return toFacultyReviewDetail(data as unknown as FacultyDetailRow);
+  },
+
+  /** Resolve an openable URL for a paper's PDF (signed URL, falling back to the stored URL). */
+  getReviewFile: async (paperId: string): Promise<FacultyReviewFile> => {
+    await resolveCurrentFacultyProfile();
+
+    const { data: paperRow, error } = await supabase
+      .from('research_papers')
+      .select('id, file_url')
+      .eq('id', paperId)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(error.message || 'Unable to load the paper file.');
+    }
+    if (!paperRow) {
+      throw new Error('Paper not found.');
+    }
+
+    const fileUrl = (paperRow as { file_url?: string | null }).file_url ?? null;
+    const storagePath = extractStoragePathFromUrl(fileUrl);
+
+    if (storagePath) {
+      const signed = await supabase.storage
+        .from('research-papers')
+        .createSignedUrl(storagePath, 3600);
+      if (!signed.error && signed.data?.signedUrl) {
+        return { fileUrl: signed.data.signedUrl, isSigned: true };
+      }
+    }
+
+    if (fileUrl) {
+      return { fileUrl, isSigned: false };
+    }
+
+    throw new Error('No file is attached to this paper.');
   },
 };
