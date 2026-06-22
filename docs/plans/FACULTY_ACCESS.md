@@ -126,8 +126,12 @@ The **web project already implements faculty access** end-to-end (reviewed on it
 
 **Exit criteria met:** `npx tsc --noEmit` green; faculty read path works under existing RLS with zero backend changes.
 
-### Phase 3 — Faculty Dashboard ⏳ **NOT STARTED**
-- ⏳ Workload stats (client-computed) + recent assigned papers using `Stat`/`Card`/`Surface` + tokens. Loading/empty/error states.
+### Phase 3 — Faculty Dashboard ✅ **COMPLETED (stable)**
+**Implementation summary**
+- `FacultyDashboardScreen` rebuilt from placeholder: 2×2 workload `Stat` grid (`summarizeFacultyWorkload`), recent-assignments list (`PressableCard` → `FacultyReviewDetail`), loading (`Skeleton`) / empty (`EmptyState`) / error (`InlineNotice`) states, themed pull-to-refresh.
+- Reads via `facultyApi.getAssignedPapers()`; theme tokens + `ui/` primitives only; no SQL.
+
+**Exit criteria met:** `npx tsc --noEmit` green. Runtime check pending on a dev build.
 
 ### Phase 4 — Faculty Review queue ⏳ **NOT STARTED**
 - ⏳ Filterable list (Needs Review / Revisions / Approved by You / All), search, status chips, navigate to detail — mirroring the web queue's information model with `Card`/`Chip`/`EmptyState`/`Skeleton`.
