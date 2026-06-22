@@ -15,26 +15,11 @@ import {
   type FacultyAssignedPaper,
   type FacultyWorkloadSummary,
 } from '../../api/faculty';
+import { facultyStatusLabel } from './facultyStatus';
 import { RootStackParamList } from '../../navigation/types';
 import { theme } from '../../theme';
 
 const RECENT_LIMIT = 5;
-
-const STATUS_LABELS: Record<string, string> = {
-  pending_faculty: 'Awaiting your review',
-  revision_required: 'Revision requested',
-  pending_dean: 'With Dean',
-  pending_program_chair: 'With Program Chair',
-  pending_editor: 'With Editor',
-  pending_admin: 'With Admin',
-  approved: 'Approved',
-  published: 'Published',
-  rejected: 'Rejected',
-};
-
-function statusLabel(status: string): string {
-  return STATUS_LABELS[status] ?? status;
-}
 
 function formatDate(value?: string | null): string {
   if (!value) return '—';
@@ -159,7 +144,7 @@ export const FacultyDashboardScreen = () => {
                     {paper.title}
                   </Text>
                   <Text style={styles.paperMeta} numberOfLines={1}>
-                    {paper.authorName} · {statusLabel(paper.status)} ·{' '}
+                    {paper.authorName} · {facultyStatusLabel(paper.status)} ·{' '}
                     {formatDate(paper.submissionDate || paper.createdAt)}
                   </Text>
                 </PressableCard>

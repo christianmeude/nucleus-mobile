@@ -133,8 +133,12 @@ The **web project already implements faculty access** end-to-end (reviewed on it
 
 **Exit criteria met:** `npx tsc --noEmit` green. Runtime check pending on a dev build.
 
-### Phase 4 — Faculty Review queue ⏳ **NOT STARTED**
-- ⏳ Filterable list (Needs Review / Revisions / Approved by You / All), search, status chips, navigate to detail — mirroring the web queue's information model with `Card`/`Chip`/`EmptyState`/`Skeleton`.
+### Phase 4 — Faculty Review queue ✅ **COMPLETED (stable)**
+**Implementation summary**
+- `FacultyReviewScreen` rebuilt from placeholder: filter pills (Needs Review / Revisions / Approved by You / All) with live counts (`Chip` filter variant), search over title/author/keywords, per-paper status badge (`Chip` status variant), `PressableCard` rows → `FacultyReviewDetail`, loading/empty/error states + pull-to-refresh.
+- Extracted shared `src/screens/faculty/facultyStatus.ts` (status labels, badge tones, queue-filter buckets); the `approved` bucket reuses `FACULTY_ADVANCED_STATUSES` (now exported from `faculty.ts`) so the queue count matches the dashboard stat. Dashboard refactored onto `facultyStatusLabel`.
+
+**Exit criteria met:** `npx tsc --noEmit` green. Runtime check pending on a dev build.
 
 ### Phase 5 — Faculty Review Detail (read-only) ⏳ **NOT STARTED**
 - ⏳ Metadata + workflow history (reuse `researchApi.getResearchById`) + open-PDF (reuse `researchApi.getResearchFile`).

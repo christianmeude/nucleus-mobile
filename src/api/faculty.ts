@@ -45,7 +45,7 @@ export interface FacultyWorkloadSummary {
 // Broader than the web FacultyReview filter (which omits pending_dean /
 // pending_program_chair); faculty approval routes a paper to dean/chair first,
 // so those count as advanced-by-you here.
-const FACULTY_ADVANCED_STATUSES = new Set([
+export const FACULTY_ADVANCED_STATUSES = new Set([
   'pending_dean',
   'pending_program_chair',
   'pending_editor',
