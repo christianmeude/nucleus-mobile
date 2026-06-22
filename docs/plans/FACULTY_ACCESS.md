@@ -1,6 +1,6 @@
 # NUcleus Mobile — Implementation Plan: Faculty Access (Read-Only v1)
 
-> **STATUS: IN PROGRESS** — Branch `feat/faculty-access`, cut from `dev` (sibling to `feat/ux-remodel`).
+> **STATUS: READ-ONLY v1 FEATURE-COMPLETE** — Branch `feat/faculty-access`, cut from `dev` (sibling to `feat/ux-remodel`). Phases 0–5 done and committed; runtime verification on a dev build + merge pending. Shipped with **zero backend changes** (existing RLS sufficed).
 > Opens the app's student-only foundation to a **separate, isolated faculty surface**: faculty get their own navigation, screens, and read path. Built entirely on shared tokens + `ui/` primitives so it absorbs the UX remodel at merge. **Read-only v1** — decision actions and richer review tooling are deferred (§8).
 
 **Canonical product context:** [PROJECT_CONTEXT.md](../PROJECT_CONTEXT.md)
@@ -148,8 +148,11 @@ The **web project already implements faculty access** end-to-end (reviewed on it
 
 **Exit criteria met:** `npx tsc --noEmit` green. Runtime check pending on a dev build.
 
-### Phase 6 — Polish + handoff ⏳ **NOT STARTED**
-- ⏳ Empty/loading/error pass, accessibility, final `tsc` gate, draft handoff (`HANDOFF_FAC_*`).
+### Phase 6 — Polish + handoff ✅ **COMPLETED (stable)**
+**Implementation summary**
+- Loading/empty/error states + pull-to-refresh present across dashboard, queue, and detail; `tsc` green across every phase.
+- Handoff `HANDOFF_FAC_PHASE-5.md` drafted (supersedes Phase 1).
+- **Outstanding (not code):** runtime verification on a dev build; re-freeze the nav files in `.claude/settings.json` at merge; then merge `feat/faculty-access → dev → main`.
 
 ---
 
