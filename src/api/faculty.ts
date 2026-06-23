@@ -78,6 +78,16 @@ export interface FacultyReviewFile {
   isSigned: boolean;
 }
 
+export type FacultyApproverRole = 'dean' | 'program_chair';
+
+/** A forward target for faculty approval — an active dean or program chair. */
+export interface FacultyApprover {
+  id: string;
+  name: string;
+  role: FacultyApproverRole;
+  department?: string | null;
+}
+
 // Statuses that mean "this paper has moved past my (faculty) review stage."
 // Broader than the web FacultyReview filter (which omits pending_dean /
 // pending_program_chair); faculty approval routes a paper to dean/chair first,
@@ -320,6 +330,26 @@ function paperSortTime(paper: FacultyAssignedPaper): number {
   return new Date(paper.submissionDate || paper.createdAt || 0).getTime();
 }
 
+interface DeanChairRow {
+  id: string;
+  email?: string | null;
+  first_name?: string | null;
+  middle_name?: string | null;
+  last_name?: string | null;
+  role?: string | null;
+  department?: string | null;
+  department_id?: string | null;
+}
+
+function toFacultyApprover(row: DeanChairRow): FacultyApprover {
+  return {
+    id: row.id,
+    name: buildFullName(row) || 'Unnamed reviewer',
+    role: row.role === 'dean' ? 'dean' : 'program_chair',
+    department: row.department ?? null,
+  };
+}
+
 async function resolveCurrentFacultyProfile() {
   const { data: userData, error: userError } = await supabase.auth.getUser();
 
@@ -439,5 +469,78 @@ export const facultyApi = {
     }
 
     throw new Error('No file is attached to this paper.');
+  },
+
+  /** Active deans + program chairs — the forward-target options for Approve. */
+  getDeanChairMembers: async (): Promise<FacultyApprover[]> => {
+    await resolveCurrentFacultyProfile();
+
+    const { data, error } = await supabase.rpc('get_dean_chair_members');
+
+    if (error) {
+      throw new Error(error.message || 'Unable to load deans and program chairs.');
+    }
+
+    const rows = Array.isArray(data) ? (data as DeanChairRow[]) : [];
+    return rows.map(toFacultyApprover);
+  },
+
+  /**
+   * Approve an assigned paper and forward it to a dean or program chair.
+   * Calls the SECURITY DEFINER faculty_approve_paper RPC, which re-validates faculty
+   * ownership and the pending_faculty gate server-side. Returns the new paper status.
+   */
+  approvePaper: async (
+    paperId: string,
+    targetUserId: string,
+    targetRole: FacultyApproverRole,
+    comments?: string,
+  ): Promise<string> => {
+    await resolveCurrentFacultyProfile();
+
+    const { data, error } = await supabase.rpc('faculty_approve_paper', {
+      p_paper_id: paperId,
+      p_target_user_id: targetUserId,
+      p_target_role: targetRole,
+      p_comments: comments?.trim() || null,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Unable to approve the paper.');
+    }
+
+    return String(data ?? '');
+  },
+
+  /** Send an assigned paper back to the student for revision. Returns the new status. */
+  requestRevision: async (paperId: string, notes: string): Promise<string> => {
+    await resolveCurrentFacultyProfile();
+
+    const { data, error } = await supabase.rpc('faculty_request_revision', {
+      p_paper_id: paperId,
+      p_notes: notes,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Unable to request revision.');
+    }
+
+    return String(data ?? 'revision_required');
+  },
+
+  /** Reject an assigned paper. Returns the new status. */
+  rejectPaper: async (paperId: string, reason: string): Promise<string> => {
+    await resolveCurrentFacultyProfile();
+
+    const { data, error } = await supabase.rpc('faculty_reject_paper', {
+      p_paper_id: paperId,
+      p_reason: reason,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Unable to reject the paper.');
+    }
+
+    return String(data ?? 'rejected');
   },
 };
