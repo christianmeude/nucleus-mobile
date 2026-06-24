@@ -226,12 +226,12 @@ the deferred email/push issue (§8) and the Christian-gated merge.
   (Phases 7–9) as SECURITY DEFINER write RPCs mirroring web's transitions (§4), with full
   in-app notification parity (author + co-authors + next reviewer on approve). Declare-conflict
   is **dropped** (not a faculty-facing action in web).
-- **Email + push notifications on review actions** — remaining parity gap. Web sends SMTP
+- **Email + push notifications on review actions** (**#9**) — remaining parity gap. Web sends SMTP
   server-side; mobile cannot. To be implemented later **together with push** (DB trigger /
-  edge function coordinated with web/backend). Tracked as a new issue (Christian opens).
-- **Review depth** — in-app PDF rendering (read-only viewer), then annotation threads (needs annotation RPCs/RLS + touch UI). v1 is metadata + open-PDF only.
-- **Additional faculty tabs** — Notifications, Repository (browse published), Profile.
-- **Other non-student roles** — dean, program_chair, staff, admin surfaces.
+  edge function coordinated with web/backend).
+- **Review depth** — in-app PDF rendering (read-only viewer) (**#10**), then annotation threads (**#11**) (needs annotation RPCs/RLS + touch UI). v1 is metadata + open-PDF only.
+- **Additional faculty tabs** — Notifications, Repository (browse published), Profile (**#12**).
+- **Other non-student roles** — dean, program_chair, staff, admin surfaces. (Outside current mobile product scope; not yet tracked as an issue.)
 
 ---
 

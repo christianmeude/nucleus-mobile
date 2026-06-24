@@ -134,12 +134,16 @@ Use these markers exactly when updating plan docs:
 
 ### Issue number discipline
 
-Issue numbers are canonical and fixed. Do not invent numbers beyond the current cap. New issues are created by Christian only; update the table below when new ones are opened.
+Issue numbers are canonical and fixed. **Claude Code is authorized to create and update issues directly** (since 2026-06-24), as long as they follow the formats in this section; it may open issues beyond the current cap. **Whenever a feature is deferred, file an issue for it.** Keep the table below and the cap line in sync whenever an issue is opened or its status changes.
 
 ### Canonical issues (latest first)
 
 | # | Title | Status |
 |---|---|---|
+| 12 | `faculty: additional tabs (Notifications, Repository, Profile)` | 🔴 Open |
+| 11 | `faculty review: annotation threads on papers` | 🔴 Open |
+| 10 | `faculty review: in-app PDF rendering (read-only viewer)` | 🔴 Open |
+| 9 | `faculty review actions: email and push notifications not sent on mobile` | 🔴 Open |
 | 8 | `ResearchDetail: Download button always visible — no allow_download column` | 🔴 Open |
 | 7 | `ResearchDetail / Browse: author name shows "Unknown" for non-uploaders` | ✅ Closed |
 | 6 | `Browse: add toggleable list and tile view` | 🔴 Open |
@@ -149,7 +153,7 @@ Issue numbers are canonical and fixed. Do not invent numbers beyond the current 
 | 2 | `Mobile auth: UUID mismatch between auth.users and public.users breaks RLS` | ✅ Closed |
 | 1 | `ResearchDetail: view and download counts not persisting after navigation` | ✅ Closed |
 
-**Current cap: #8. Do not invent issue numbers beyond #8.**
+**Current cap: #12.**
 
 ### Issue title format
 
