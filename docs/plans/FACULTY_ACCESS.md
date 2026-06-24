@@ -1,6 +1,6 @@
 # NUcleus Mobile — Implementation Plan: Faculty Access (Read-Only v1)
 
-> **STATUS: READ-ONLY v1 VERIFIED ✅ — v2 (web parity) in progress** — Branch `feat/faculty-access` (v2 continues in this same branch; commit scope **`faculty-access-v2`**). v1 (Phases 0–5) runtime-verified by Christian on a dev build and committed; shipped with **zero backend changes** (existing RLS sufficed). **Do not merge until Christian explicitly instructs** (after absolute web parity). The nav-file deny stays lifted during v2; re-freeze it at that merge. v2 scope = §8.
+> **STATUS: v1 VERIFIED ✅ · v2 write actions VERIFIED ✅ (Phase 10 in progress)** — Branch `feat/faculty-access` (commit scope **`faculty-access-v2`**). v1 (Phases 0–6) and v2's three faculty decisions — Approve / Request Revision / Reject (Phases 7–9) — are runtime-verified by Christian and committed. v2 added SECURITY DEFINER write RPCs (snapshot `docs/sql/faculty_access_rpcs.sql`); declare-conflict is **out of scope** (not a faculty-facing action in web). **Do not merge until Christian explicitly instructs** (after absolute web parity). The nav-file deny stays lifted during v2; re-freeze it at that merge. Remaining deferred scope = §8.
 > Opens the app's student-only foundation to a **separate, isolated faculty surface**: faculty get their own navigation, screens, and read path. Built entirely on shared tokens + `ui/` primitives so it absorbs the UX remodel at merge. **Read-only v1** — decision actions and richer review tooling are deferred (§8).
 
 **Canonical product context:** [PROJECT_CONTEXT.md](../PROJECT_CONTEXT.md)
@@ -156,9 +156,79 @@ The **web project already implements faculty access** end-to-end (reviewed on it
 
 ---
 
-## 8. Deferred scope (in the plan, not built in v1)
+## 7B. Phased plan — v2 (web parity: faculty write actions)
 
-- **Faculty write actions** — approve / reject / request-revision / declare-conflict, each a **SECURITY DEFINER write RPC** mirroring web's exact transitions (§4); in-app notifications only. **Email-on-action parity is a known gap** (web sends SMTP server-side; mobile cannot — would need a DB trigger / edge function coordinated with the web/backend, out of mobile scope).
+> Commit scope `faculty-access-v2`. Delivers the three faculty review decisions from the web
+> product — **Approve, Request Revision, Reject**. Unlike v1 reads, writes re-enter the
+> service-role problem, so each action is a **SECURITY DEFINER write RPC** mirroring web's
+> exact transitions (§4). Notifications: **full in-app parity** (author + co-authors + next
+> reviewer); email/push parity deferred (§8). **Declare-conflict is out of scope** — it is not
+> a faculty-facing action in the web product.
+
+### Phase 7 — Faculty review write RPCs (SQL) ✅ **COMPLETED (stable)**
+**Implementation summary**
+- Pre-flight read-only schema inspection confirmed exact columns/types/defaults on
+  `research_papers`, `approval_workflow`, `notifications`, `research_authors`, `users`.
+- Deployed (Christian-authorized, executed by Claude via Supabase MCP) and snapshotted to
+  `docs/sql/faculty_access_rpcs.sql`:
+  - `get_dean_chair_members()` — active dean/program_chair directory for the Approve picker
+    (global, no department filter; `is_active = true` so suspended reviewers are excluded).
+  - `faculty_approve_paper` / `faculty_request_revision` / `faculty_reject_paper` — SECURITY
+    DEFINER writes that re-validate faculty identity (`auth.email()`), ownership (`faculty_id`),
+    and the `status = 'pending_faculty'` gate; each mirrors the web transition, writes an
+    `approval_workflow` event, and fans out in-app notifications.
+  - `faculty_notify_paper_parties` — internal notify helper; default PUBLIC EXECUTE revoked.
+- Verified live: all `SECURITY DEFINER`, grants correct, picker returns active deans/chairs.
+
+**Exit criteria met:** RPCs deployed + verified; snapshot in `docs/sql/`; no new RLS policies needed.
+
+### Phase 8 — Mobile API write methods ✅ **COMPLETED (stable)**
+**Implementation summary**
+- Added to `src/api/faculty.ts`: `FacultyApprover` type + `getDeanChairMembers`, `approvePaper`,
+  `requestRevision`, `rejectPaper` — house-style `supabase.rpc(...)` with faculty-profile
+  resolution and error propagation.
+
+**Exit criteria met:** `npx tsc --noEmit` green.
+
+### Phase 9 — Faculty review decision UI ✅ **COMPLETED (stable)**
+**Implementation summary**
+- `FacultyReviewDetailScreen`: replaced the "coming later" placeholder with Approve /
+  Request Revision / Reject, shown only while `status = 'pending_faculty'`. Each opens a
+  `BottomSheet`: Reject/Revision take a required note; Approve requires picking a dean or
+  program chair (lazy-loaded via `getDeanChairMembers`) + an optional comment. Per-action
+  loading, inline validation/error, and return-to-queue (`navigation.goBack()`) on success.
+- Switched the faculty queue + dashboard from mount-only `useEffect` to `useFocusEffect` so
+  they refresh on return.
+
+**Exit criteria met:** `npx tsc --noEmit` green; runtime-verified by Christian on a dev build.
+
+### Phase 10 — Polish + handoff ✅ **COMPLETED (stable)**
+**Implementation summary**
+- v2 write actions runtime-verified by Christian on a dev build (approve / request-revision /
+  reject all work; status transitions, notifications, and return-to-queue confirmed).
+- Loading / inline-validation / error states present across all three decision flows; `tsc`
+  green at every v2 phase exit.
+- Proposed a new GitHub issue for the **email + push notification parity gap** (Christian opens
+  and assigns the number; current cap #8).
+- Handoff `HANDOFF_FAC_PHASE-10.md` drafted (supersedes `HANDOFF_FAC_PHASE-5.md`).
+
+**Outstanding (not code, Christian-gated):** at the eventual v2 merge — re-freeze `types.ts` +
+`AppNavigator.tsx` in `.claude/settings.json`, then merge `feat/faculty-access → dev → main`.
+
+**Exit criteria met:** v2 feature-complete and verified; plan + handoff current; remaining work is
+the deferred email/push issue (§8) and the Christian-gated merge.
+
+---
+
+## 8. Deferred scope (beyond what v1 + v2 build)
+
+- ✅ **Faculty write actions (Approve / Request Revision / Reject)** — **DELIVERED in v2**
+  (Phases 7–9) as SECURITY DEFINER write RPCs mirroring web's transitions (§4), with full
+  in-app notification parity (author + co-authors + next reviewer on approve). Declare-conflict
+  is **dropped** (not a faculty-facing action in web).
+- **Email + push notifications on review actions** — remaining parity gap. Web sends SMTP
+  server-side; mobile cannot. To be implemented later **together with push** (DB trigger /
+  edge function coordinated with web/backend). Tracked as a new issue (Christian opens).
 - **Review depth** — in-app PDF rendering (read-only viewer), then annotation threads (needs annotation RPCs/RLS + touch UI). v1 is metadata + open-PDF only.
 - **Additional faculty tabs** — Notifications, Repository (browse published), Profile.
 - **Other non-student roles** — dean, program_chair, staff, admin surfaces.
