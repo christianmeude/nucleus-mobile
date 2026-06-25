@@ -10,13 +10,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useRoute } from '@react-navigation/native';
-import * as WebBrowser from 'expo-web-browser';
 import { researchApi } from '../../api/research';
 import { RootStackParamList } from '../../navigation/types';
 import { ResearchPaper, WorkflowEntry } from '../../types/domain';
 import { useAuth } from '../../context/AuthContext';
 import { theme } from '../../theme';
-import { Button, Card, Chip, EmptyState, InlineNotice } from '../../components/ui';
+import { Card, Chip, EmptyState, InlineNotice } from '../../components/ui';
+import { PdfViewer } from '../../components/PdfViewer';
 import {
   formatDate,
   formatRelativeTime,
@@ -34,7 +34,8 @@ export const ResearchDetailScreen = () => {
   const [paper, setPaper] = useState<ResearchPaper | null>(null);
   const [workflow, setWorkflow] = useState<WorkflowEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [openingFile, setOpeningFile] = useState(false);
+  const [pdfUri, setPdfUri] = useState<string | null>(null);
+  const [pdfError, setPdfError] = useState('');
   const [error, setError] = useState('');
   const [coAuthorsExpanded, setCoAuthorsExpanded] = useState(false);
 
@@ -58,33 +59,25 @@ export const ResearchDetailScreen = () => {
     run();
   }, [paperId]);
 
-  const openFile = async () => {
-    if (!paper) return;
-
-    setOpeningFile(true);
-
-    try {
-      // Track view only when opening PDF
+  useEffect(() => {
+    let active = true;
+    (async () => {
       try {
-        await researchApi.trackView(paperId);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unable to track view.');
+        setPdfError('');
+        const resolved = await researchApi.getResearchFile(paperId);
+        if (active) setPdfUri(resolved.fileUrl || null);
+      } catch (_error) {
+        if (active) setPdfError('Unable to load paper file.');
       }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [paperId]);
 
-      const resolved = await researchApi.getResearchFile(paperId);
-      const url = resolved.fileUrl || paper.file_url;
-
-      if (!url) {
-        setError('File URL is unavailable for this paper.');
-        return;
-      }
-
-      await WebBrowser.openBrowserAsync(url);
-    } catch (_error) {
-      setError('Unable to open paper file.');
-    } finally {
-      setOpeningFile(false);
-    }
+  // Track a view the first time the PDF actually renders (replaces the old open-PDF tap).
+  const handlePdfFirstLoad = () => {
+    researchApi.trackView(paperId).catch(() => undefined);
   };
 
   if (loading) {
@@ -123,6 +116,7 @@ export const ResearchDetailScreen = () => {
     : [];
   const coAuthorCount = coAuthorList.length;
   const coAuthorLabel = `+${coAuthorCount} co-author${coAuthorCount === 1 ? '' : 's'}`;
+  const pdfSource = pdfUri ?? paper.file_url ?? null;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.surface.base }} edges={['bottom']}>
@@ -199,15 +193,18 @@ export const ResearchDetailScreen = () => {
           </View>
         ) : null}
 
-        <View style={styles.actionsRow}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Paper</Text>
           {/* Download is intentionally hidden pending backend allow_download support (Issue #8). */}
-          <Button
-            label="Open PDF"
-            variant="primary"
-            onPress={openFile}
-            loading={openingFile}
-            disabled={openingFile}
-          />
+          {pdfSource ? (
+            <PdfViewer uri={pdfSource} onFirstLoad={handlePdfFirstLoad} />
+          ) : pdfError ? (
+            <InlineNotice tone="danger" message={pdfError} />
+          ) : (
+            <View style={styles.pdfLoading}>
+              <ActivityIndicator size="large" color={theme.colors.brand.primary} />
+            </View>
+          )}
         </View>
 
         {error ? <InlineNotice tone="danger" message={error} /> : null}
@@ -362,9 +359,12 @@ const styles = StyleSheet.create({
     ...theme.typography.bodySmall,
     color: theme.colors.text.secondary,
   },
-  actionsRow: {
-    marginTop: theme.spacing.sm,
-    gap: theme.spacing.sm,
+  pdfLoading: {
+    height: 460,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: theme.radii.lg,
+    backgroundColor: theme.colors.surface.sunken,
   },
   section: {
     marginTop: theme.spacing.md,

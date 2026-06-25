@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  Alert,
-  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,6 +10,7 @@ import {
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BottomSheet, Button, Card, Chip, InlineNotice, Skeleton } from '../../components/ui';
+import { PdfViewer } from '../../components/PdfViewer';
 import { facultyApi, type FacultyApprover, type FacultyReviewDetail } from '../../api/faculty';
 import { facultyStatusLabel, facultyStatusTone } from './facultyStatus';
 import { RootStackParamList } from '../../navigation/types';
@@ -39,7 +38,8 @@ export const FacultyReviewDetailScreen = () => {
   const { paperId } = route.params;
   const [detail, setDetail] = useState<FacultyReviewDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [openingFile, setOpeningFile] = useState(false);
+  const [fileUri, setFileUri] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   // Review-action state
   const [sheet, setSheet] = useState<SheetKind | null>(null);
@@ -72,20 +72,22 @@ export const FacultyReviewDetailScreen = () => {
     };
   }, [paperId]);
 
-  const openPdf = useCallback(async () => {
-    setOpeningFile(true);
-    try {
-      const file = await facultyApi.getReviewFile(paperId);
-      const canOpen = await Linking.canOpenURL(file.fileUrl);
-      if (!canOpen) {
-        throw new Error('No app is available to open this file.');
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        setFileError(null);
+        const file = await facultyApi.getReviewFile(paperId);
+        if (active) setFileUri(file.fileUrl);
+      } catch (err) {
+        if (active) {
+          setFileError(err instanceof Error ? err.message : 'Unable to load the paper file.');
+        }
       }
-      await Linking.openURL(file.fileUrl);
-    } catch (err) {
-      Alert.alert('Unable to open PDF', err instanceof Error ? err.message : 'Please try again.');
-    } finally {
-      setOpeningFile(false);
-    }
+    })();
+    return () => {
+      active = false;
+    };
   }, [paperId]);
 
   const closeSheet = useCallback(() => {
@@ -210,13 +212,16 @@ export const FacultyReviewDetailScreen = () => {
           <InlineNotice tone="danger" message={`Rejection reason: ${detail.rejectionReason}`} />
         ) : null}
 
-        <Button
-          label="Open PDF"
-          variant="secondary"
-          onPress={openPdf}
-          loading={openingFile}
-          accessibilityLabel="Open the paper PDF"
-        />
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Paper</Text>
+          {fileError ? (
+            <InlineNotice tone="danger" message={fileError} />
+          ) : fileUri ? (
+            <PdfViewer uri={fileUri} />
+          ) : (
+            <Skeleton height={460} radius="lg" />
+          )}
+        </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Abstract</Text>

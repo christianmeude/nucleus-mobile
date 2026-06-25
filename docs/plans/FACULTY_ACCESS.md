@@ -1,6 +1,6 @@
 # NUcleus Mobile — Implementation Plan: Faculty Access (Read-Only v1)
 
-> **STATUS: v1 VERIFIED ✅ · v2 write actions VERIFIED ✅ (Phase 10 in progress)** — Branch `feat/faculty-access` (commit scope **`faculty-access-v2`**). v1 (Phases 0–6) and v2's three faculty decisions — Approve / Request Revision / Reject (Phases 7–9) — are runtime-verified by Christian and committed. v2 added SECURITY DEFINER write RPCs (snapshot `docs/sql/faculty_access_rpcs.sql`); declare-conflict is **out of scope** (not a faculty-facing action in web). **Do not merge until Christian explicitly instructs** (after absolute web parity). The nav-file deny stays lifted during v2; re-freeze it at that merge. Remaining deferred scope = §8.
+> **STATUS: v1 VERIFIED ✅ · v2 write actions VERIFIED ✅ · embedded PDF viewer built (Phase 11, pending EAS dev build)** — Branch `feat/faculty-access` (commit scope **`faculty-access-v2`**). v1 (Phases 0–6) and v2's three faculty decisions — Approve / Request Revision / Reject (Phases 7–9) — are runtime-verified by Christian and committed. v2 added SECURITY DEFINER write RPCs (snapshot `docs/sql/faculty_access_rpcs.sql`); declare-conflict is **out of scope** (not a faculty-facing action in web). **Do not merge until Christian explicitly instructs** (after absolute web parity). The nav-file deny stays lifted during v2; re-freeze it at that merge. Remaining deferred scope = §8.
 > Opens the app's student-only foundation to a **separate, isolated faculty surface**: faculty get their own navigation, screens, and read path. Built entirely on shared tokens + `ui/` primitives so it absorbs the UX remodel at merge. **Read-only v1** — decision actions and richer review tooling are deferred (§8).
 
 **Canonical product context:** [PROJECT_CONTEXT.md](../PROJECT_CONTEXT.md)
@@ -218,6 +218,24 @@ The **web project already implements faculty access** end-to-end (reviewed on it
 **Exit criteria met:** v2 feature-complete and verified; plan + handoff current; remaining work is
 the deferred email/push issue (§8) and the Christian-gated merge.
 
+### Phase 11 — Shared in-app embedded PDF viewer (student + faculty) ✅ **COMPLETED (stable)**
+**Cross-role note:** this feature spans **both** the student `ResearchDetailScreen` and the faculty
+review detail, so it consciously **waives the plan's "don't modify student screens" coexistence rule**
+(Christian's call; it arguably warranted its own branch but was folded into this undertaking). Tracked in **#10**.
+
+**Implementation summary**
+- Added `react-native-pdf` + `react-native-blob-util` (+ `@config-plugins/*`); Expo config plugins
+  auto-registered in `app.json`. **Native module → a new EAS dev build is required to run it.**
+- New shared `src/components/PdfViewer.tsx`: inline native `<Pdf>` panel (scroll/zoom) + a fullscreen
+  in-app modal; loading + error states with an "open in browser" fallback. Theme tokens / `ui/` only.
+- Faculty `FacultyReviewDetailScreen`: replaced the external `Linking.openURL` "Open PDF" with the inline
+  `PdfViewer` (signed URL via `facultyApi.getReviewFile`).
+- Student `ResearchDetailScreen`: replaced the `WebBrowser` open with the inline `PdfViewer` (signed URL
+  via `researchApi.getResearchFile`); `trackView` now fires on the PDF's first successful load.
+
+**Exit criteria met:** `npx tsc --noEmit` green.
+**Outstanding (not code):** a new **EAS dev build** to runtime-verify embedded rendering on Android + iOS.
+
 ---
 
 ## 8. Deferred scope (beyond what v1 + v2 build)
@@ -229,7 +247,7 @@ the deferred email/push issue (§8) and the Christian-gated merge.
 - **Email + push notifications on review actions** (**#9**) — remaining parity gap. Web sends SMTP
   server-side; mobile cannot. To be implemented later **together with push** (DB trigger /
   edge function coordinated with web/backend).
-- **Review depth** — in-app PDF rendering (read-only viewer) (**#10**), then annotation threads (**#11**) (needs annotation RPCs/RLS + touch UI). v1 is metadata + open-PDF only.
+- **Review depth** — ✅ in-app **embedded PDF viewer** (**#10**) **DELIVERED** (Phase 11; cross-role student + faculty; pending EAS dev-build verification). Annotation threads (**#11**) still deferred (needs annotation RPCs/RLS + touch UI).
 - **Additional faculty tabs** — Notifications, Repository (browse published), Profile (**#12**).
 - **Other non-student roles** — dean, program_chair, staff, admin surfaces. (Outside current mobile product scope; not yet tracked as an issue.)
 
@@ -239,7 +257,7 @@ the deferred email/push issue (§8) and the Christian-gated merge.
 
 - `npx tsc --noEmit` green at every phase exit (non-negotiable).
 - **Zero hardcoded colors/spacing** — only theme tokens + `ui/` primitives, so faculty inherits the UX remodel at merge.
-- **Never modify** a shared `ui/` component or any student screen; faculty code is additive and self-contained under `src/screens/faculty/` + `src/api/faculty.ts`.
+- **Never modify** a shared `ui/` component or any student screen; faculty code is additive and self-contained under `src/screens/faculty/` + `src/api/faculty.ts`. (**Exception — Phase 11:** the cross-role `PdfViewer` consciously touches the student `ResearchDetailScreen`; Christian-approved, see §7B Phase 11.)
 - **No service role**, ever. Anon + RLS + SECURITY DEFINER read RPC only.
 - **SQL discipline:** read-only/additive only this round; pre-flight brief → Christian deploys → snapshot to `docs/sql/`. No write/destructive ops in v1.
 - `domain.ts` untouched; faculty types live in `faculty.ts`.
