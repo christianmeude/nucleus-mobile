@@ -104,7 +104,7 @@ Do not use client-side workarounds to simulate server-side behavior. If a change
 
 ### When SQL is needed
 
-Write the SQL text and specify the target snapshot file path. Christian reviews and deploys via the Supabase SQL editor. Never deploy SQL directly. See §7 for the snapshot file format.
+Break the SQL down in plain, simple language (what it does, what it touches, whether it is destructive/reversible, and the data-security impact) and wait for Christian's explicit per-change approval. **Once approved, Claude deploys it via the Supabase MCP** (`apply_migration` for DDL, `execute_sql` for data/reads), then writes/updates the snapshot (§7). Read-only checks (SELECT/EXPLAIN) may be run freely but shown first. _(As of 2026-06-25 this supersedes the prior "Christian deploys via the SQL editor / never deploy directly" rule.)_
 
 ### After implementing
 
@@ -296,7 +296,7 @@ Sections within the file are separated by:
 
 ### SQL ownership
 
-Claude Code has Supabase MCP access and may execute SQL directly — but must brief Christian in plain terms before running any query, and must wait for explicit approval. Test/read-only queries (SELECT, EXPLAIN) should also be shown to Christian first. Destructive operations (DROP, DELETE, ALTER, policy drops) require extra explanation of consequences. After any deployed change, Claude Code writes or updates the snapshot file in `docs/sql/`.
+Claude Code has Supabase MCP access and **deploys SQL itself after approval** — but must first **break every change down in plain, simple language** (what it does, what it touches, whether it is destructive and reversible, and the data-security impact) and wait for Christian's explicit per-change approval (2026-06-25). The MCP connection is privileged (runs DDL; not constrained by RLS) and the DB is shared with web, so changes must be additive-only where possible, with RLS + least-privilege on anything new. Read-only queries (SELECT, EXPLAIN) may be run freely but shown first. Destructive operations (DROP, DELETE, ALTER, policy drops) require extra explanation of consequences. Deploy DDL via `apply_migration`, data/reads via `execute_sql`. After any deployed change, Claude Code writes or updates the snapshot file in `docs/sql/` — the canonical record of what is live.
 
 ---
 
