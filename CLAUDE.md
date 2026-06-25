@@ -46,6 +46,7 @@ latest handoff is discovered by recency on the branch, not tracked here.
 | Submit Research | `S-R` | merged → `main` | `docs/plans/SUBMIT_RESEARCH.md` | complete |
 | UX Remodel | `UX-R` | `feat/ux-remodel` | `docs/plans/UX_REMODEL.md` | parked |
 | Faculty Access | `FAC` | `feat/faculty-access` | `docs/plans/FACULTY_ACCESS.md` | active |
+| Hybrid Search | `H-S` | `feat/hybrid-search` | `docs/plans/HYBRID_SEARCH.md` | active |
 
 > A plan/handoff path resolves once you are on that undertaking's branch (each
 > lives on its own branch). Add a new undertaking = add a row + a plan doc; it
