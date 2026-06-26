@@ -1,33 +1,133 @@
 import { useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
-import Pdf from 'react-native-pdf';
+import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { theme } from '../theme';
 import { Button, InlineNotice } from './ui';
 
-// Shared, native, read-only PDF viewer used by both the student ResearchDetail and the
-// faculty review detail. Renders the document inline (scroll/zoom) and offers a fullscreen
-// in-app modal — no browser/external handoff. Falls back to opening in the in-app browser
-// if native rendering fails. react-native-pdf is a native module, so the app must run on a
-// dev build that includes it.
+// Shared, read-only PDF viewer used by both the student ResearchDetail and the faculty review
+// detail. It renders the document inline (scroll/zoom) plus a fullscreen in-app modal — no
+// external browser handoff in the happy path.
+//
+// Why a WebView + pdf.js (not react-native-pdf): under this app's RN 0.85 + New-Architecture
+// build, the native PDF/download modules (react-native-pdf, react-native-blob-util) fail their
+// own native HTTP fetch before a single byte transfers ("Download interrupted"), while the
+// system WebView loads the same signed URL fine. So pdf.js runs inside a WebView and fetches the
+// signed URL through the WebView's own (working) network stack, range-streaming the file instead
+// of pre-downloading it. The pdf.js *library* loads from a pinned CDN; the PDF bytes themselves
+// never leave the device <-> Supabase channel (no third-party document viewer). If anything
+// fails, it falls back to opening the PDF in the in-app browser and surfaces the error.
+
+const PDFJS_VERSION = '3.11.174';
+
+/** Self-contained HTML that pulls pdf.js from a CDN and renders the signed URL to canvases. */
+const buildViewerHtml = (uri: string): string => `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=4, user-scalable=yes" />
+<style>
+  html, body { margin: 0; padding: 0; background: ${theme.colors.surface.sunken}; }
+  #container { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px; }
+  canvas { width: 100%; height: auto; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+</style>
+</head>
+<body>
+<div id="container"></div>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.min.js"></script>
+<script>
+(function () {
+  var post = function (obj) {
+    if (window.ReactNativeWebView) { window.ReactNativeWebView.postMessage(JSON.stringify(obj)); }
+  };
+  var fail = function (e) { post({ type: 'error', message: (e && e.message) ? e.message : String(e) }); };
+  try {
+    var url = ${JSON.stringify(uri)};
+    var pdfjsLib = window.pdfjsLib;
+    if (!pdfjsLib) { fail('pdf.js failed to load'); return; }
+    // Browsers block cross-origin Workers, so fetch the worker source (CDN sends CORS *) and run
+    // it as a same-origin Blob URL.
+    fetch('https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.js')
+      .then(function (r) { return r.text(); })
+      .then(function (src) {
+        var blob = new Blob([src], { type: 'text/javascript' });
+        pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
+        return pdfjsLib.getDocument({ url: url }).promise;
+      })
+      .then(function (pdf) {
+        var container = document.getElementById('container');
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        var width = container.clientWidth || window.innerWidth;
+        var firstDone = false;
+        var chain = Promise.resolve();
+        for (var i = 1; i <= pdf.numPages; i++) {
+          (function (pageNum) {
+            chain = chain.then(function () {
+              return pdf.getPage(pageNum).then(function (page) {
+                var unscaled = page.getViewport({ scale: 1 });
+                var viewport = page.getViewport({ scale: (width / unscaled.width) * dpr });
+                var canvas = document.createElement('canvas');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                container.appendChild(canvas);
+                return page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise
+                  .then(function () {
+                    if (!firstDone) { firstDone = true; post({ type: 'loaded', pages: pdf.numPages }); }
+                  });
+              });
+            });
+          })(i);
+        }
+        return chain;
+      })
+      .catch(fail);
+  } catch (e) { fail(e); }
+})();
+</script>
+</body>
+</html>`;
 
 interface PdfSurfaceProps {
   uri: string;
-  /** Fired the first time this surface finishes loading. */
+  /** Fired the first time a page finishes rendering. */
   onLoaded?: () => void;
 }
 
-/** A single native PDF render surface with its own loading + error handling. */
+/** Renders the PDF via a pdf.js-in-WebView surface with its own loading + error handling. */
 const PdfSurface = ({ uri, onLoaded }: PdfSurfaceProps) => {
-  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
   const [errored, setErrored] = useState(false);
+  const [errorText, setErrorText] = useState<string | null>(null);
+  const firedFirstLoad = useRef(false);
+
+  const handleMessage = (event: WebViewMessageEvent) => {
+    let payload: { type?: string; message?: string } = {};
+    try {
+      payload = JSON.parse(event.nativeEvent.data);
+    } catch {
+      return;
+    }
+    if (payload.type === 'loaded') {
+      console.log('[PdfViewer] rendered', payload);
+      setLoaded(true);
+      if (!firedFirstLoad.current) {
+        firedFirstLoad.current = true;
+        onLoaded?.();
+      }
+    } else if (payload.type === 'error') {
+      console.log('[PdfViewer] render error', payload.message);
+      setErrored(true);
+      setErrorText(payload.message ?? null);
+    }
+  };
 
   if (errored) {
     return (
       <View style={styles.overlay}>
         <InlineNotice tone="warning" message="This PDF could not be displayed in the app." />
+        {errorText ? <Text style={styles.errorDetail}>{errorText}</Text> : null}
         <Button
           label="Open in browser"
           variant="secondary"
@@ -40,32 +140,35 @@ const PdfSurface = ({ uri, onLoaded }: PdfSurfaceProps) => {
   }
 
   return (
-    <>
-      <Pdf
-        source={{ uri, cache: true }}
-        trustAllCerts={false}
-        onLoadComplete={() => {
-          setLoading(false);
-          onLoaded?.();
-        }}
-        onError={() => {
-          setLoading(false);
+    <View style={StyleSheet.absoluteFill}>
+      <WebView
+        key={uri}
+        source={{ html: buildViewerHtml(uri), baseUrl: 'https://localhost/' }}
+        originWhitelist={['*']}
+        javaScriptEnabled
+        domStorageEnabled
+        setSupportMultipleWindows={false}
+        androidLayerType="hardware"
+        nestedScrollEnabled
+        onMessage={handleMessage}
+        onError={(e) => {
           setErrored(true);
+          setErrorText(e.nativeEvent.description || 'WebView failed to load.');
         }}
-        style={StyleSheet.absoluteFill}
+        style={styles.webview}
       />
-      {loading ? (
+      {!loaded ? (
         <View style={styles.overlay} pointerEvents="none">
           <ActivityIndicator size="large" color={theme.colors.brand.primary} />
         </View>
       ) : null}
-    </>
+    </View>
   );
 };
 
 interface PdfViewerProps {
   uri: string;
-  /** Fired once, the first time the inline PDF finishes loading (e.g. to track a view). */
+  /** Fired once, the first time the inline PDF finishes rendering (e.g. to track a view). */
   onFirstLoad?: () => void;
   /** Inline panel height. Defaults to 460. */
   height?: number;
@@ -73,18 +176,11 @@ interface PdfViewerProps {
 
 export const PdfViewer = ({ uri, onFirstLoad, height = 460 }: PdfViewerProps) => {
   const [fullscreen, setFullscreen] = useState(false);
-  const firstLoadFired = useRef(false);
-
-  const handleFirstLoad = () => {
-    if (firstLoadFired.current) return;
-    firstLoadFired.current = true;
-    onFirstLoad?.();
-  };
 
   return (
     <View>
       <View style={[styles.panel, { height }]}>
-        <PdfSurface uri={uri} onLoaded={handleFirstLoad} />
+        <PdfSurface uri={uri} onLoaded={onFirstLoad} />
         <Pressable
           onPress={() => setFullscreen(true)}
           accessibilityRole="button"
@@ -126,6 +222,10 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.border.subtle,
   },
+  webview: {
+    flex: 1,
+    backgroundColor: theme.colors.surface.sunken,
+  },
   overlay: {
     position: 'absolute',
     top: 0,
@@ -137,6 +237,11 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
     padding: theme.spacing.lg,
     backgroundColor: theme.colors.surface.sunken,
+  },
+  errorDetail: {
+    ...theme.typography.caption,
+    color: theme.colors.text.muted,
+    textAlign: 'center',
   },
   expandButton: {
     position: 'absolute',
