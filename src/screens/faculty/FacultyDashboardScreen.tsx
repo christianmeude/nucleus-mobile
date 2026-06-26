@@ -4,6 +4,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   EmptyState,
+  IconButton,
   InlineNotice,
   PressableCard,
   Skeleton,
@@ -18,6 +19,7 @@ import {
 import { facultyStatusLabel } from './facultyStatus';
 import { RootStackParamList } from '../../navigation/types';
 import { theme } from '../../theme';
+import { useAuth } from '../../context/AuthContext';
 
 const RECENT_LIMIT = 5;
 
@@ -71,6 +73,8 @@ const DashboardSkeleton = () => (
 
 export const FacultyDashboardScreen = () => {
   const navigation = useNavigation<FacultyNavigation>();
+  const { signOut, user } = useAuth();
+  const firstName = user?.fullName?.trim().split(/\s+/)[0] ?? '';
   const [papers, setPapers] = useState<FacultyAssignedPaper[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -113,6 +117,18 @@ export const FacultyDashboardScreen = () => {
         />
       }
     >
+      <View style={styles.headerRow}>
+        <Text style={styles.headerTitle}>
+          {firstName ? `Welcome, ${firstName}.` : 'Welcome.'}
+        </Text>
+        <IconButton
+          icon="log-out-outline"
+          color={theme.colors.brand.primary}
+          onPress={signOut}
+          accessibilityLabel="Sign out"
+        />
+      </View>
+
       {error ? <InlineNotice tone="danger" message={error} /> : null}
 
       {papers === null ? (
@@ -167,6 +183,17 @@ const styles = StyleSheet.create({
   content: {
     padding: theme.spacing.lg,
     gap: theme.spacing.lg,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing.sm,
+  },
+  headerTitle: {
+    ...theme.typography.h1,
+    color: theme.colors.text.primary,
+    flex: 1,
   },
   grid: {
     flexDirection: 'row',
