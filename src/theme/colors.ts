@@ -50,13 +50,6 @@ export const palette = {
     800: '#1E293B',
     900: '#0F172A',
   },
-  warm: {
-    page: '#F7F3EA',
-    card: '#FFFDF8',
-    sunken: '#FCFAF4',
-    border: '#E9E2D3',
-    borderSubtle: '#EFE9DC',
-  },
   success: {
     100: '#D1FAE5',
     500: '#059669',
@@ -99,17 +92,12 @@ export const colors = {
     base: palette.slate[50],
     raised: palette.slate[0],
     sunken: palette.slate[100],
-    paper: palette.warm.page,
-    paperRaised: palette.warm.card,
-    paperSunken: palette.warm.sunken,
     overlay: 'rgba(15, 23, 42, 0.45)',
   },
   border: {
     subtle: palette.slate[200],
     strong: palette.slate[300],
     focus: palette.navy[400],
-    warm: palette.warm.border,
-    warmSubtle: palette.warm.borderSubtle,
   },
   state: {
     success: palette.success[600],
