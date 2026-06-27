@@ -393,6 +393,171 @@ export function summarizeFacultyWorkload(papers: FacultyAssignedPaper[]): Facult
   return { pendingReview, revisionRequired, approvedByYou, totalAssigned: papers.length };
 }
 
+// =============================================================================
+// Annotations (read-only, #11)
+// -----------------------------------------------------------------------------
+// Faculty view prior reviewers' annotations over the PDF. The web stores each
+// annotation in research_comments as a meta-in-text envelope:
+//   [[meta]]{json}[[/meta]]\n<note>
+// where json carries annotationType (comment | note | draw), pageNumber,
+// %-based highlightRects / anchorPercent, highlightColor, and a flattened-PNG
+// drawImageUrl. Spike (2026-06-27) confirmed faculty read these directly under
+// the deployed RLS: every annotation is is_internal = false and the
+// research_comments SELECT policy grants NOT-is_internal rows to authenticated
+// callers — so no SECURITY DEFINER RPC and no new SQL. Drawing PNGs live in the
+// public research-papers bucket, so their URLs load unsigned. Page-less rows
+// (null pageNumber / coords) are general comments; positioned rows overlay the
+// PDF. The data layer carries both; the UI decides presentation.
+// =============================================================================
+
+export type FacultyAnnotationType = 'comment' | 'note' | 'draw';
+
+/** A highlight rectangle, in page-percentage units (0–100). */
+export interface FacultyAnnotationRect {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+/** A note pin's anchor on the page, in page-percentage units (0–100). */
+export interface FacultyAnnotationPoint {
+  x: number;
+  y: number;
+}
+
+export interface FacultyAnnotation {
+  id: string;
+  parentId: string | null;
+  annotationType: FacultyAnnotationType;
+  note: string;
+  pageNumber: number | null;
+  highlightColor: string | null;
+  sectionLabel: string | null;
+  selectedText: string | null;
+  highlightRects: FacultyAnnotationRect[] | null;
+  anchorPercent: FacultyAnnotationPoint | null;
+  drawImageUrl: string | null;
+  createdAt: string | null;
+  reviewerName: string;
+  reviewerRole: string | null;
+}
+
+interface FacultyAnnotationUserRow extends FacultyAuthorRow {
+  role?: string | null;
+}
+
+interface FacultyAnnotationRow {
+  id: string;
+  comment?: string | null;
+  parent_id?: string | null;
+  created_at?: string | null;
+  reviewer?: FacultyAnnotationUserRow | FacultyAnnotationUserRow[] | null;
+}
+
+const FACULTY_ANNOTATION_SELECT = `
+  id,
+  comment,
+  parent_id,
+  created_at,
+  reviewer:users!research_comments_user_id_fkey(
+    id,
+    email,
+    first_name,
+    middle_name,
+    last_name,
+    role
+  )
+`;
+
+const ANNOTATION_META_OPEN = '[[meta]]';
+const ANNOTATION_META_CLOSE = '[[/meta]]';
+
+function clampPercent(value: unknown): number | null {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  return Math.min(100, Math.max(0, n));
+}
+
+function sanitizeHighlightRects(input: unknown): FacultyAnnotationRect[] | null {
+  if (!Array.isArray(input)) return null;
+  const out: FacultyAnnotationRect[] = [];
+  for (const raw of input.slice(0, 80)) {
+    if (!raw || typeof raw !== 'object') continue;
+    const rect = raw as Record<string, unknown>;
+    const left = clampPercent(rect.left);
+    const top = clampPercent(rect.top);
+    const width = clampPercent(rect.width);
+    const height = clampPercent(rect.height);
+    if (left === null || top === null || width === null || height === null) continue;
+    if (width <= 0 || height <= 0) continue;
+    out.push({ left, top, width, height });
+  }
+  return out.length ? out : null;
+}
+
+function sanitizeAnchorPercent(input: unknown): FacultyAnnotationPoint | null {
+  if (!input || typeof input !== 'object') return null;
+  const point = input as Record<string, unknown>;
+  const x = clampPercent(point.x);
+  const y = clampPercent(point.y);
+  if (x === null || y === null) return null;
+  return { x, y };
+}
+
+function normalizeAnnotationType(value: unknown): FacultyAnnotationType {
+  return value === 'draw' || value === 'note' ? value : 'comment';
+}
+
+function pickReviewer(
+  rel?: FacultyAnnotationUserRow | FacultyAnnotationUserRow[] | null,
+): FacultyAnnotationUserRow | null {
+  if (!rel) return null;
+  return Array.isArray(rel) ? rel[0] ?? null : rel;
+}
+
+function toFacultyAnnotation(row: FacultyAnnotationRow): FacultyAnnotation {
+  const reviewer = pickReviewer(row.reviewer);
+  const text = String(row.comment ?? '');
+
+  let meta: Record<string, unknown> = {};
+  let note = text;
+  const metaStart = text.indexOf(ANNOTATION_META_OPEN);
+  const metaEnd = text.indexOf(ANNOTATION_META_CLOSE);
+  if (metaStart === 0 && metaEnd > ANNOTATION_META_OPEN.length) {
+    try {
+      meta = JSON.parse(text.slice(ANNOTATION_META_OPEN.length, metaEnd)) as Record<string, unknown>;
+    } catch {
+      meta = {};
+    }
+    note = text.slice(metaEnd + ANNOTATION_META_CLOSE.length).trim();
+  }
+
+  const pageRaw = Number(meta.pageNumber);
+  const pageNumber = Number.isFinite(pageRaw) && pageRaw >= 1 ? Math.floor(pageRaw) : null;
+  const drawImageUrl =
+    typeof meta.drawImageUrl === 'string' && /^https?:\/\//i.test(meta.drawImageUrl)
+      ? meta.drawImageUrl.slice(0, 2048)
+      : null;
+
+  return {
+    id: row.id,
+    parentId: row.parent_id ?? null,
+    annotationType: normalizeAnnotationType(meta.annotationType),
+    note,
+    pageNumber,
+    highlightColor: typeof meta.highlightColor === 'string' ? meta.highlightColor : null,
+    sectionLabel: typeof meta.sectionLabel === 'string' ? meta.sectionLabel : null,
+    selectedText: typeof meta.selectedText === 'string' ? meta.selectedText : null,
+    highlightRects: sanitizeHighlightRects(meta.highlightRects),
+    anchorPercent: sanitizeAnchorPercent(meta.anchorPercent),
+    drawImageUrl,
+    createdAt: row.created_at ?? null,
+    reviewerName: (reviewer ? buildFullName(reviewer) : '') || 'Reviewer',
+    reviewerRole: reviewer?.role ?? null,
+  };
+}
+
 export const facultyApi = {
   /**
    * Papers assigned to the signed-in faculty member (any status), newest first.
@@ -542,5 +707,29 @@ export const facultyApi = {
     }
 
     return String(data ?? 'rejected');
+  },
+
+  /**
+   * Prior reviewers' annotations for one paper (read-only, #11). Reads
+   * research_comments directly under the deployed RLS — every annotation is
+   * non-internal and the SELECT policy grants those to authenticated callers, so
+   * no RPC is needed. Returns chronological order (oldest first); the caller
+   * groups replies via parentId.
+   */
+  getAnnotations: async (paperId: string): Promise<FacultyAnnotation[]> => {
+    await resolveCurrentFacultyProfile();
+
+    const { data, error } = await supabase
+      .from('research_comments')
+      .select(FACULTY_ANNOTATION_SELECT)
+      .eq('research_id', paperId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      throw new Error(error.message || 'Unable to load annotations.');
+    }
+
+    const rows = Array.isArray(data) ? (data as unknown as FacultyAnnotationRow[]) : [];
+    return rows.map(toFacultyAnnotation);
   },
 };

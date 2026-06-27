@@ -252,6 +252,40 @@ Faculty sign-out (separate, outside the phased plan) shipped.
 
 ---
 
+## 7C. Phased plan — annotation viewing (#11)
+
+> Commit scope `faculty-access`. Lets faculty toggle on prior reviewers' annotations over the PDF.
+> **Read-only** and **zero new SQL** — the spike (2026-06-27) confirmed faculty read
+> `research_comments` directly under the deployed RLS, and drawing PNGs sit in the public
+> `research-papers` bucket so they load unsigned. Annotations are the web's meta-in-text envelope:
+> `[[meta]]{json}[[/meta]]\n<note>`.
+
+### Phase 12 — Annotation read path (data layer) ✅ **COMPLETED (stable)**
+**Implementation summary**
+- Read-only spike (Supabase MCP): the `research_comments` SELECT policy is
+  `(NOT is_internal) OR privileged-by-auth.uid()`. The privileged branch is **dead** here (the
+  project-wide `auth.uid()` UUID mismatch), but every annotation is `is_internal = false`, so faculty
+  read all annotations directly — **no SECURITY DEFINER RPC, no new SQL.** Live data: 33 rows, 0
+  internal, all meta-enveloped (5 draw / 14 note / 10 comment, 9 replies). Drawing PNGs are public.
+- Added to `src/api/faculty.ts`: `FacultyAnnotation` + `FacultyAnnotationType` / `…Rect` / `…Point`
+  types and `facultyApi.getAnnotations(paperId)` — a plain `research_comments` select plus a faithful
+  port of the web meta parser (clamps %-coords, validates the draw-image URL, builds reviewer name).
+  Carries page-less general comments and positioned annotations alike; replies via `parentId`.
+
+**Exit criteria met:** `npx tsc --noEmit` green; faculty annotation read works under existing RLS.
+
+### Phase 13 — Annotation overlays in the PDF viewer ⏳ **NOT STARTED**
+- Extend the shared `PdfViewer.tsx` with an optional `annotations` prop + a "See annotations" toggle
+  (default off); render overlays **inside** the pdf.js WebView per page: %-positioned highlight rects,
+  note pins (`anchorPercent`), and full-page drawing PNGs. Additive optional prop ⇒ the student
+  `ResearchDetailScreen` is unaffected (Phase 11 precedent).
+
+### Phase 14 — Wire-up + polish ⏳ **NOT STARTED**
+- `FacultyReviewDetailScreen` loads annotations lazily on toggle; a list panel surfaces page-less
+  comments + reply threads (`parentId`); loading / empty / error states. Runtime-verify on a dev build.
+
+---
+
 ## 8. Deferred scope (beyond what v1 + v2 build)
 
 - ✅ **Faculty write actions (Approve / Request Revision / Reject)** — **DELIVERED in v2**
@@ -261,7 +295,7 @@ Faculty sign-out (separate, outside the phased plan) shipped.
 - **Email + push notifications on review actions** (**#9**) — remaining parity gap. Web sends SMTP
   server-side; mobile cannot. To be implemented later **together with push** (DB trigger /
   edge function coordinated with web/backend).
-- **Review depth** — in-app **embedded PDF viewer** (**#10**) ✅ **delivered** (Phase 11; cross-role) via WebView + pdf.js; #10 closed. Annotation **viewing** (**#11**) is the recommended next step: the web stores annotations in `research_comments` (meta-in-text — `annotationType` of `comment`/`note`/`draw`, %-based `highlightRects` / `anchorPercent`, and a flattened-PNG `drawImageUrl` for drawings). Mobile **view-only** (a "See annotations" toggle, default off) is feasible because coords are percentage-based and drawings are pre-rendered images — no stroke/coordinate replication. Gated on a read-path spike: is `research_comments` SELECT-able by faculty under RLS, or does it need a SECURITY DEFINER RPC (+ confirm drawing-PNG URL readability).
+- **Review depth** — in-app **embedded PDF viewer** (**#10**) ✅ **delivered** (Phase 11; cross-role) via WebView + pdf.js; #10 closed. Annotation **viewing** (**#11**) is the recommended next step: the web stores annotations in `research_comments` (meta-in-text — `annotationType` of `comment`/`note`/`draw`, %-based `highlightRects` / `anchorPercent`, and a flattened-PNG `drawImageUrl` for drawings). Mobile **view-only** (a "See annotations" toggle, default off) is feasible because coords are percentage-based and drawings are pre-rendered images — no stroke/coordinate replication. **Spike done (2026-06-27): faculty read `research_comments` directly under RLS (all annotations non-internal) and drawing PNGs are public — no RPC/SQL.** Now in progress under §7C (Phase 12 read path landed).
 - **Additional faculty tabs** — Notifications, Repository (browse published), Profile (**#12**).
 - **Other non-student roles** — dean, program_chair, staff, admin surfaces. (Outside current mobile product scope; not yet tracked as an issue.)
 
