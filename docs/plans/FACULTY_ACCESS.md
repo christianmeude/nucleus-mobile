@@ -1,6 +1,6 @@
 # NUcleus Mobile — Implementation Plan: Faculty Access (Read-Only v1)
 
-> **STATUS: v1 VERIFIED ✅ · v2 write actions VERIFIED ✅ · embedded PDF viewer 🔴 BLOCKED (Phase 11 — inline render fails on device, debugging)** — Branch `feat/faculty-access` (commit scope **`faculty-access-v2`**). v1 (Phases 0–6) and v2's three faculty decisions — Approve / Request Revision / Reject (Phases 7–9) — are runtime-verified by Christian and committed. v2 added SECURITY DEFINER write RPCs (snapshot `docs/sql/faculty_access_rpcs.sql`); declare-conflict is **out of scope** (not a faculty-facing action in web). **Do not merge until Christian explicitly instructs** (after absolute web parity). The nav-file deny stays lifted during v2; re-freeze it at that merge. Remaining deferred scope = §8.
+> **STATUS: v1 VERIFIED ✅ · v2 write actions VERIFIED ✅ · embedded PDF viewer VERIFIED ✅ (Phase 11 — WebView + pdf.js)** — Branch `feat/faculty-access` (commit scope **`faculty-access-v2`**). v1 (Phases 0–6) and v2's three faculty decisions — Approve / Request Revision / Reject (Phases 7–9) — are runtime-verified by Christian and committed. v2 added SECURITY DEFINER write RPCs (snapshot `docs/sql/faculty_access_rpcs.sql`); declare-conflict is **out of scope** (not a faculty-facing action in web). **Do not merge until Christian explicitly instructs** (after absolute web parity). The nav-file deny stays lifted during v2; re-freeze it at that merge. Remaining deferred scope = §8.
 > Opens the app's student-only foundation to a **separate, isolated faculty surface**: faculty get their own navigation, screens, and read path. Built entirely on shared tokens + `ui/` primitives so it absorbs the UX remodel at merge. **Read-only v1** — decision actions and richer review tooling are deferred (§8).
 
 **Canonical product context:** [PROJECT_CONTEXT.md](../PROJECT_CONTEXT.md)
@@ -218,29 +218,37 @@ The **web project already implements faculty access** end-to-end (reviewed on it
 **Exit criteria met:** v2 feature-complete and verified; plan + handoff current; remaining work is
 the deferred email/push issue (§8) and the Christian-gated merge.
 
-### Phase 11 — Shared in-app embedded PDF viewer (student + faculty) 🔴 **BLOCKED (inline render fails on device)**
+### Phase 11 — Shared in-app embedded PDF viewer (student + faculty) ✅ **COMPLETED (stable)**
 **Cross-role note:** this feature spans **both** the student `ResearchDetailScreen` and the faculty
 review detail, so it consciously **waives the plan's "don't modify student screens" coexistence rule**
-(Christian's call; it arguably warranted its own branch but was folded into this undertaking). Tracked in **#10**.
+(Christian's call; it arguably warranted its own branch but was folded into this undertaking). Tracked in **#10 (closed)**.
 
 **Implementation summary**
-- Added `react-native-pdf` + `react-native-blob-util` (+ `@config-plugins/*`); Expo config plugins
-  auto-registered in `app.json`. **Native module → a new EAS dev build is required to run it.**
-- New shared `src/components/PdfViewer.tsx`: inline native `<Pdf>` panel (scroll/zoom) + a fullscreen
-  in-app modal; loading + error states with an "open in browser" fallback. Theme tokens / `ui/` only.
+- New shared `src/components/PdfViewer.tsx`: inline PDF panel (scroll/zoom) + fullscreen in-app modal;
+  loading + error states with an "open in browser" fallback. Theme tokens / `ui/` only. Stable public API
+  (`uri` / `onFirstLoad` / `height`) consumed unchanged by both screens.
 - Faculty `FacultyReviewDetailScreen`: replaced the external `Linking.openURL` "Open PDF" with the inline
   `PdfViewer` (signed URL via `facultyApi.getReviewFile`).
 - Student `ResearchDetailScreen`: replaced the `WebBrowser` open with the inline `PdfViewer` (signed URL
-  via `researchApi.getResearchFile`); `trackView` now fires on the PDF's first successful load.
+  via `researchApi.getResearchFile`); `trackView` now fires on the PDF's first successful render.
 
-**Runtime finding (EAS dev build, Android):** `react-native-pdf` does **not** render inline — both the
-student and faculty detail fall back to the "open in browser" path. A download-to-local attempt
-(`react-native-blob-util`) + on-screen error surfacing is **uncommitted in `PdfViewer.tsx`** and still
-fails. The fullscreen modal + fallback work; `tsc` is green. **Next:** capture the actual error text the
-fallback now prints, then likely **pivot off `react-native-pdf`** to a WebView-based renderer
-(`react-native-webview` + pdf.js, or a hosted pdf.js/Google gview viewer). See `HANDOFF_FAC_PHASE-11.md` + #10.
+**Render engine — pivoted to WebView + pdf.js (the fix).** The first cut used `react-native-pdf` (+
+`react-native-blob-util` to pre-download). On this app's RN 0.85 + New-Architecture build, **both native
+HTTP downloaders fail before transferring a byte** (`Download interrupted`, 0% progress, every attempt),
+while the system WebView loads the same signed URL fine — proving the failure was the *download*, not the
+renderer (rn-pdf never received a file). Fix: `PdfViewer` now hosts **pdf.js inside a `react-native-webview`**,
+fetching the signed URL through the WebView's own network stack (CORS `*`, `Accept-Ranges: bytes` → range-streamed,
+not pre-downloaded). The pdf.js *library* loads from a pinned CDN (jsDelivr); the PDF bytes stay device ↔ Supabase
+(no third-party document viewer). Commit `6c2ece9`.
 
-**Status:** 🔴 inline rendering blocked (debugging). Faculty sign-out (separate, outside the phased plan) shipped.
+**Runtime finding (EAS dev build, Android):** ✅ verified — a 65-page paper renders inline
+(`[PdfViewer] rendered {pages: 65}`), the fullscreen modal works, and student `trackView` fires on first render.
+
+**Follow-up (deferred, not blocking):** `react-native-pdf` + `react-native-blob-util` and their two `app.json`
+config plugins are now dead code — remove them and fold the native drop into the next EAS build.
+
+**Exit criteria met:** inline PDF renders reliably on a dev build for both roles; `tsc` green; #10 closed.
+Faculty sign-out (separate, outside the phased plan) shipped.
 
 ---
 
@@ -253,7 +261,7 @@ fallback now prints, then likely **pivot off `react-native-pdf`** to a WebView-b
 - **Email + push notifications on review actions** (**#9**) — remaining parity gap. Web sends SMTP
   server-side; mobile cannot. To be implemented later **together with push** (DB trigger /
   edge function coordinated with web/backend).
-- **Review depth** — in-app **embedded PDF viewer** (**#10**) built (Phase 11; cross-role) but 🔴 **inline rendering BLOCKED on device** — `react-native-pdf` falls back; pivot to a WebView renderer likely. Annotation threads (**#11**) still deferred (needs annotation RPCs/RLS + touch UI).
+- **Review depth** — in-app **embedded PDF viewer** (**#10**) ✅ **delivered** (Phase 11; cross-role) via WebView + pdf.js; #10 closed. Annotation **viewing** (**#11**) is the recommended next step: the web stores annotations in `research_comments` (meta-in-text — `annotationType` of `comment`/`note`/`draw`, %-based `highlightRects` / `anchorPercent`, and a flattened-PNG `drawImageUrl` for drawings). Mobile **view-only** (a "See annotations" toggle, default off) is feasible because coords are percentage-based and drawings are pre-rendered images — no stroke/coordinate replication. Gated on a read-path spike: is `research_comments` SELECT-able by faculty under RLS, or does it need a SECURITY DEFINER RPC (+ confirm drawing-PNG URL readability).
 - **Additional faculty tabs** — Notifications, Repository (browse published), Profile (**#12**).
 - **Other non-student roles** — dean, program_chair, staff, admin surfaces. (Outside current mobile product scope; not yet tracked as an issue.)
 

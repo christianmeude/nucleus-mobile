@@ -1,24 +1,24 @@
 ---
 undertaking: "Faculty Access"
-phase: "11 (embedded PDF viewer — inline render BLOCKED)"
-date: 2026-06-26
+phase: "11 (embedded PDF viewer — RESOLVED) → next: annotations viewing (#11)"
+date: 2026-06-27
 branch: feat/faculty-access
-last_commit: "feat(faculty): add sign-out button on faculty dashboard"
-status: blocked
+last_commit: "fix(pdf-viewer): render inline PDF via WebView + pdf.js"
+status: complete
 ---
 
-# NUcleus Mobile — Session Handoff Context (Faculty Access, Phase 11)
+# NUcleus Mobile — Session Handoff Context (Faculty Access, Phase 11 resolved)
 
 ## Project Overview
 
-React Native Expo app (`capstone-nucleus-rn`). **Work now happens in a git worktree:** the main folder
+React Native Expo app (`capstone-nucleus-rn`). **Work happens in a git worktree:** the main folder
 `capstone-nucleus-rn` stays on `dev`; this undertaking lives in the sibling worktree
-**`capstone-nucleus-rn-faculty-access`** on branch `feat/faculty-access`. **Run Metro / tsc / git from the
-worktree.** Each worktree needs its own `npm install` (already done here).
+**`capstone-nucleus-rn-faculty-access`** on branch `feat/faculty-access`. **Run Metro / tsc / git / eas from the
+worktree.** Each worktree has its own `npm install` (done).
 
-Faculty Access **v1 (read-only) and v2 (write actions: Approve / Request Revision / Reject) are complete and
-runtime-verified.** Phase 11 added a cross-role **embedded PDF viewer** (#10) — and that is the **one open
-blocker**: it does not render inline on device.
+Faculty Access **v1 (read-only), v2 (write actions: Approve / Request Revision / Reject), and the cross-role
+embedded PDF viewer (Phase 11) are all complete and runtime-verified.** Phase 11's blocker from the previous
+handoff is **resolved**. No open blockers.
 
 **Read first:** `docs/plans/FACULTY_ACCESS.md` (§7B Phase 11 + §8), `CLAUDE.md`. Stable invariants live in `CLAUDE.md`.
 
@@ -27,84 +27,150 @@ blocker**: it does not render inline on device.
 ## Faculty Access status
 
 - ✅ Phases 0–6 — read-only v1 (verified)
-- ✅ Phases 7–10 — v2 write actions: RPCs, API, decision UI, polish/handoff (verified)
-- 🔴 Phase 11 — embedded PDF viewer (#10): built, but **inline rendering fails on device** (see below)
-- ✅ Faculty sign-out — added this session (verified working), outside the phased plan
+- ✅ Phases 7–10 — v2 write actions: RPCs, API, decision UI, polish (verified)
+- ✅ Phase 11 — embedded PDF viewer (#10), cross-role — **RESOLVED this session** (WebView + pdf.js, verified)
+- ✅ Faculty sign-out — shipped (verified), outside the phased plan
 
 ---
 
-## What changed since HANDOFF_FAC_PHASE-10
+## What changed since HANDOFF_FAC_PHASE-11 (blocked version)
 
-1. **Phase 11 — embedded PDF viewer (#10), cross-role.** New `src/components/PdfViewer.tsx` (inline native
-   `<Pdf>` panel + fullscreen in-app modal + "open in browser" fallback). Wired into faculty
-   `FacultyReviewDetailScreen` and **student** `ResearchDetailScreen` (consciously waiving the "don't touch
-   student screens" rule — Christian-approved; §9 + §7B note). Student `trackView` now fires on the PDF's
-   first load. Added `react-native-pdf` + `react-native-blob-util` + `@config-plugins/*`; plugins auto-added
-   to `app.json`. Committed: `e174068` (deps), `cb64abf` (component + screens + plan). **An EAS Android dev
-   build was cut and installed.**
-2. **Faculty sign-out (this session, verified).** `FacultyDashboardScreen` header now has a `log-out-outline`
-   `IconButton` → `useAuth().signOut`, mirroring the student `DashboardScreen` (faculty previously had NO way
-   to log out). **Committed with this handoff.**
-3. **Issue authority + worktree workflow** are now standing rules (see memory + `CONVENTIONS.md` §4).
-   Issues #9–#12 track the deferred features.
+### Embedded PDF viewer (#10) — ✅ RESOLVED
 
----
+**Root cause (diagnosed this session):** the viewer wasn't failing at the *render* step — it was failing at the
+*download*. On this app's RN 0.85.3 + New-Architecture-enforced build, **both native HTTP downloaders fail before
+transferring a single byte**: `react-native-pdf`'s internal fetch (v1) and the `react-native-blob-util`
+pre-download (v2) both threw `Download interrupted` at 0% on every attempt. Meanwhile `curl` and the system
+in-app browser load the exact same signed URL fine — proving the server/URL/network are healthy and the broken
+layer is the third-party native HTTP modules. `react-native-pdf`'s renderer was never even reached.
 
-## 🔴 THE BLOCKER — embedded PDF does not render inline
+**Fix applied (committed `6c2ece9`):** rewrote `src/components/PdfViewer.tsx` to host **pdf.js inside a
+`react-native-webview`**. pdf.js fetches the signed URL through the WebView's own (working) network stack —
+CORS is `*` and Supabase sends `Accept-Ranges: bytes`, so it **range-streams** the file instead of pre-downloading
+~9 MB. The pdf.js *library* loads from a pinned CDN (jsDelivr `pdfjs-dist@3.11.174`); the cross-origin worker is
+run as a same-origin Blob URL. **PDF bytes never leave the device ↔ Supabase channel** (no Google/Mozilla viewer).
+`PdfViewer`'s public API is unchanged (`uri` / `onFirstLoad` / `height`) so **neither consuming screen changed**.
+Added `react-native-webview@13.16.1` (native → required a new EAS dev build).
 
-**Symptom (EAS dev build, Android):** opening a paper shows the PdfViewer panel, then it falls back to
-"This PDF could not be displayed in the app." + "Open in browser". The in-app browser fallback works; the
-inline `<Pdf>` never renders. Reproduced on the faculty review detail (and applies to student detail too).
-
-**What's been tried:**
-- v1 (committed `cb64abf`): `<Pdf source={{ uri: signedUrl, cache: true }} trustAllCerts={false} />` rendering
-  the remote signed URL directly → fell back.
-- v2 (**uncommitted**, current working tree in `PdfViewer.tsx`): download the signed URL to a local file via
-  `react-native-blob-util` (`config({fileCache:true, appendExt:'pdf'}).fetch('GET', uri)`), then render the
-  local `file://` path. Also **surfaces the real error text** in the fallback. **Still failing** — but the
-  user had not yet pasted the on-screen error when the session closed.
-
-**Environment that matters:** Expo SDK 56, **RN 0.85.3, New Architecture ENFORCED (no bridge fallback)**.
-`react-native-pdf` v7.0.4 claims Fabric support (FabricExample on RN 0.81) but 0.85 is newer — a New-Arch
-incompatibility in the native view is a live suspect.
-
-### NEXT SESSION — do these in order
-1. **Get the actual error first** (diagnosis before prescription). Reload the dev app from the worktree
-   (`npx expo start --dev-client`) and read the error text the fallback now prints, and/or `adb logcat`.
-   - If it's an **HTTP/TLS/download error** (e.g. `Download failed (HTTP 401/403)`, cert error) → the signed
-     URL / blob-util request is the problem; fix the fetch (headers, redirects, `trustAllCerts`, URL).
-   - If it's a **native render error / silent onError with the file present** → it's `react-native-pdf` under
-     New Arch. **Pivot (the "radical" approach):**
-2. **Radical pivot — drop `react-native-pdf`, render via WebView:**
-   - `react-native-webview` (Expo-supported, far more battle-tested on new RN) hosting **pdf.js** — either
-     bundle the pdf.js viewer as a local asset, or load the signed URL through a hosted viewer
-     (Mozilla pdf.js `viewer.html?file=<urlencoded signed url>`, or Google gview
-     `https://docs.google.com/gview?embedded=true&url=<urlencoded>`). Renders inline, fully in-app, no native
-     Fabric dependency. **Adds `react-native-webview` (native) → needs a new EAS dev build.**
-   - Keep the same `PdfViewer` public API (`uri`, `onFirstLoad`, fullscreen modal) so the two screens don't change.
-3. Once it renders reliably (the user's bar: "99% of the time"), remove the temporary error-text surfacing,
-   re-verify both roles on a dev build, then **close #10**.
+**Status:** ✅ verified on an EAS Android dev build — a 65-page paper renders inline
+(`[PdfViewer] rendered {pages: 65}`), fullscreen modal works, student `trackView` fires on first render. #10 closed.
 
 ---
 
-## Uncommitted changes (intentional)
+## Critical Architectural Context (session-specific)
 
-- `src/components/PdfViewer.tsx` — the **download-to-local + error-surfacing attempt** (still failing). Left
-  uncommitted on purpose; the worktree persists. Either build on it or revert when pivoting to WebView.
+### Native HTTP modules are unreliable under this RN 0.85 + New-Arch build
+
+`react-native-pdf` and `react-native-blob-util` both fail their own native downloads here (0 bytes,
+`Download interrupted`). **Avoid third-party native HTTP/file modules for fetching Supabase content.** RN core
+`fetch` and the system WebView's network stack both work. Prefer rendering/fetching remote assets through a
+WebView (as the PDF viewer now does) rather than native downloaders.
 
 ---
 
-## Open issues
-#5, #6, #8 (pre-existing) + #9 (email/push), #10 (PDF viewer — **the blocker**), #11 (annotations),
-#12 (faculty tabs). Cap #12. Claude is authorized to create/update issues (CONVENTIONS §4).
+## Resolved Issues
 
-## Current git state
-Worktree `capstone-nucleus-rn-faculty-access` on `feat/faculty-access`. After this handoff's commit, the only
-uncommitted file is `src/components/PdfViewer.tsx` (WIP, above). All branches local — **pushes held by Christian.**
-**Do NOT merge `feat/faculty-access`** until Christian instructs (and re-freeze `types.ts` + `AppNavigator.tsx`
-in `.claude/settings.json` at that merge).
+- ✅ #10 — in-app embedded PDF viewer (student + faculty) — delivered via WebView + pdf.js (commit `6c2ece9`)
 
-## Immediate next steps
-1. Reload the dev app from the worktree and capture the PdfViewer fallback's error text → decide download-fix vs WebView pivot.
-2. Most likely: implement the **WebView + pdf.js** renderer behind the existing `PdfViewer` API; new EAS dev build; verify both roles.
-3. Close #10 when inline rendering is reliable; then the v2 + PDF work is done pending the Christian-gated merge.
+## Open Issues
+
+- 🔴 #5 — Browse category filter shows unresolved UUIDs (student-side)
+- 🔴 #6 — Browse list/tile toggle (student-side enhancement)
+- 🔴 #8 — ResearchDetail download button always visible / no `allow_download` (student-side)
+- 🔴 #9 — email + push notifications on review actions (parity gap; needs backend/edge-function coordination)
+- 🔴 #11 — faculty annotations (recommended next — see Immediate Next Steps)
+- 🔴 #12 — additional faculty tabs (Notifications / Repository / Profile)
+
+**Current cap: #12. Do not invent issue numbers beyond #12.**
+
+---
+
+## Current RLS Policy State (Supabase)
+
+No RLS changes this session (the WebView fix is client-only). Faculty read/write paths unchanged from
+HANDOFF_FAC_PHASE-10. **Not yet checked (next session):** `research_comments` SELECT for faculty — see next steps.
+
+## Supabase RPCs
+
+No RPC changes this session. v2 faculty write RPCs unchanged (snapshot `docs/sql/faculty_access_rpcs.sql`).
+
+---
+
+## Current State of the Codebase
+
+### Field-level gotchas (non-obvious)
+
+- **Annotations are encoded meta-in-text.** The web has no annotation geometry columns; `research_comments.comment`
+  is `[[meta]]{json}[[/meta]]\n<note>`. The JSON holds `annotationType` (`comment` | `note` | `draw`),
+  `pageNumber`, `highlightRects` (%-based left/top/width/height), `anchorPercent` (`{x,y}` %), `highlightColor`,
+  and `drawImageUrl` (URL to a flattened page+ink PNG). `is_internal` rows are reviewer-only. Threading via `parent_id`.
+  Reference: web `backend/src/controllers/annotation.controller.js`, `frontend/src/components/pdf/*`.
+
+---
+
+## Uncommitted Changes
+
+- `M docs/plans/FACULTY_ACCESS.md` — Phase 11 marked complete + §8 deferred-scope refreshed (part of this close-out commit).
+
+---
+
+## Issues Opened / Closed Since HANDOFF_FAC_PHASE-11 (blocked)
+
+- Closed: **#10** (PDF viewer — delivered).
+- No new issues filed.
+- **Current cap: #12. Do not invent issue numbers beyond #12.**
+
+---
+
+## Current Git State
+
+Branch: `feat/faculty-access` in worktree `capstone-nucleus-rn-faculty-access`.
+
+**Modified (uncommitted):**
+- `M docs/plans/FACULTY_ACCESS.md` — this handoff's companion plan update.
+
+(`PdfViewer.tsx` + `package.json` + `package-lock.json` already committed as `6c2ece9`.)
+
+All branches local — **pushes held by Christian.** **Do NOT merge `feat/faculty-access`** until Christian
+instructs (and at that merge: re-freeze `types.ts` + `AppNavigator.tsx` in `.claude/settings.json`).
+
+**Intended branch workflow:**
+```
+feat/faculty-access → dev → main
+```
+
+---
+
+## Commit History (most recent first)
+
+```
+6c2ece9 (HEAD -> feat/faculty-access) fix(pdf-viewer): render inline PDF via WebView + pdf.js
+d8fdcfe feat(faculty): add sign-out button on faculty dashboard
+cb64abf feat(pdf-viewer): add shared in-app embedded PDF viewer (student + faculty)
+e174068 chore(deps): add react-native-pdf for in-app PDF rendering
+878514f docs: authorize Claude issue creation; track v2 deferrals as #9-#12
+```
+
+---
+
+## Immediate Next Steps
+
+Recommended next undertaking work: **annotation viewing (#11)** — let faculty toggle on prior reviewers'
+annotations over the PDF. View-only is feasible because the web's coords are percentage-based and drawings are
+pre-rendered PNGs (no stroke/coordinate replication).
+
+1. **Spike (read-only, do first).** Check whether `research_comments` is SELECT-able by an authenticated faculty
+   user under RLS for their assigned papers, or whether it needs a SECURITY DEFINER RPC (established pattern).
+   Confirm the `drawImageUrl` PNGs are readable (public bucket vs. needs signing). Brief Christian before any SQL.
+2. **MVP build.** A "See annotations" toggle (default off) in the existing pdf.js WebView: overlay highlight rects
+   (%-positioned), note pins (`anchorPercent`), and viewable drawing PNGs per page. Overlays live inside the
+   WebView HTML (where the pages are); pass annotation data in via the page/injected JS. New `facultyApi` read method.
+3. **Later iteration.** Reply threads (`parent_id`), tap-to-read note popovers.
+4. **If the spike turns gnarly,** pivot that session to **#12 (faculty tabs — Notifications first;** faculty likely
+   already receive notifications with nowhere to read them) as the safe win, and return to annotations afterward.
+
+### Housekeeping carried forward
+- **Dead-dep cleanup:** remove `react-native-pdf` + `react-native-blob-util` and their two `app.json` config
+  plugins; fold the native drop into the next EAS dev build (whenever one is next cut).
+- **At eventual merge** (`feat/faculty-access → dev → main`, Christian-gated): re-freeze `types.ts` +
+  `AppNavigator.tsx` in `.claude/settings.json`.
