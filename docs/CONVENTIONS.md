@@ -20,6 +20,10 @@ main
 
 Merge direction: `feat/* → dev → main`. Never skip levels. Use `git merge --no-ff` to preserve branch history.
 
+### Where conventions and docs live
+
+Project-wide rules and docs (`CONVENTIONS.md`, `CLAUDE.md`, `PROJECT_CONTEXT.md`, the handoff template) are **canonical on `dev`** and propagate to feature branches via `git merge dev` — pull them in at session/phase start. Author project-wide changes on `dev` (or a `chore/*` branch → `dev`), never only on a feature branch, or they drift apart. **Branch-scoped** files are *not* synced and stay on their branch: each undertaking's plan and handoffs, its SQL snapshots, and `.claude/settings.json` (its frozen-file guardrails reflect what *that* undertaking may touch).
+
 ### Merge commit format (undertaking-level merges only)
 
 Use a structured body for `feat/* → dev` merges. Chore and hotfix merges do not require a body.
@@ -104,7 +108,7 @@ Do not use client-side workarounds to simulate server-side behavior. If a change
 
 ### When SQL is needed
 
-Write the SQL text and specify the target snapshot file path. Christian reviews and deploys via the Supabase SQL editor. Never deploy SQL directly. See §7 for the snapshot file format.
+Break the SQL down in plain, simple language (what it does, what it touches, whether it is destructive/reversible, and the data-security impact) and wait for Christian's explicit per-change approval. **Once approved, Claude deploys it via the Supabase MCP** (`apply_migration` for DDL, `execute_sql` for data/reads), then writes/updates the snapshot (§7). Read-only checks (SELECT/EXPLAIN) may be run freely but shown first. _(As of 2026-06-25 this supersedes the prior "Christian deploys via the SQL editor / never deploy directly" rule.)_
 
 ### After implementing
 
@@ -140,9 +144,10 @@ Issue numbers are canonical and fixed. **Claude Code is authorized to create and
 
 | # | Title | Status |
 |---|---|---|
+| 13 | `research detail: related papers via semantic search (replace client-side heuristic)` | 🔴 Open |
 | 12 | `faculty: additional tabs (Notifications, Repository, Profile)` | 🔴 Open |
 | 11 | `faculty review: annotation threads on papers` | 🔴 Open |
-| 10 | `faculty review: in-app PDF rendering (read-only viewer)` | 🔴 Open |
+| 10 | `research detail: in-app embedded PDF viewer (student + faculty)` | ✅ Closed |
 | 9 | `faculty review actions: email and push notifications not sent on mobile` | 🔴 Open |
 | 8 | `ResearchDetail: Download button always visible — no allow_download column` | 🔴 Open |
 | 7 | `ResearchDetail / Browse: author name shows "Unknown" for non-uploaders` | ✅ Closed |
@@ -153,7 +158,7 @@ Issue numbers are canonical and fixed. **Claude Code is authorized to create and
 | 2 | `Mobile auth: UUID mismatch between auth.users and public.users breaks RLS` | ✅ Closed |
 | 1 | `ResearchDetail: view and download counts not persisting after navigation` | ✅ Closed |
 
-**Current cap: #12.**
+**Current cap: #13.**
 
 ### Issue title format
 
@@ -300,7 +305,7 @@ Sections within the file are separated by:
 
 ### SQL ownership
 
-Claude Code has Supabase MCP access and may execute SQL directly — but must brief Christian in plain terms before running any query, and must wait for explicit approval. Test/read-only queries (SELECT, EXPLAIN) should also be shown to Christian first. Destructive operations (DROP, DELETE, ALTER, policy drops) require extra explanation of consequences. After any deployed change, Claude Code writes or updates the snapshot file in `docs/sql/`.
+Claude Code has Supabase MCP access and **deploys SQL itself after approval** — but must first **break every change down in plain, simple language** (what it does, what it touches, whether it is destructive and reversible, and the data-security impact) and wait for Christian's explicit per-change approval (2026-06-25). The MCP connection is privileged (runs DDL; not constrained by RLS) and the DB is shared with web, so changes must be additive-only where possible, with RLS + least-privilege on anything new. Read-only queries (SELECT, EXPLAIN) may be run freely but shown first. Destructive operations (DROP, DELETE, ALTER, policy drops) require extra explanation of consequences. Deploy DDL via `apply_migration`, data/reads via `execute_sql`. After any deployed change, Claude Code writes or updates the snapshot file in `docs/sql/` — the canonical record of what is live.
 
 ---
 
@@ -362,7 +367,7 @@ See `docs/handoffs/HANDOFF_TEMPLATE.md` for the full section template.
 1. Confirm with Christian that a close point has been reached
 2. Draft the handoff using `docs/handoffs/HANDOFF_TEMPLATE.md` — name it `HANDOFF_<SHORT>_<PHASE>.md` using the undertaking's registry short code, so resume can discover it
 3. Present the draft for review — do not commit before approval
-4. Once approved: stage the handoff file, draft the commit message (`docs(handoff): add HANDOFF_[NAME]`), present for confirmation
+4. Once approved: **bundle the handoff into the session's final commit** (the phase-close or last logical commit) — present that commit for confirmation. Make a standalone `docs(handoff): add HANDOFF_[NAME]` commit **only** when the session ends with no other commit to attach it to.
 5. After commit: confirm the next session opening state matches the handoff's "Immediate Next Steps"
 6. Update the undertaking's `Status` in the CLAUDE.md Undertaking Registry (active / parked / complete) if it changed this session
 
