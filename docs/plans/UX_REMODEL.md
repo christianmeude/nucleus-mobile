@@ -73,7 +73,17 @@ The earlier "25% NUcleus / 75% Anthropic warm-paper" brief and its locks are **r
 **Exit criteria met:** `npx tsc --noEmit` green (worktree tsc). Satisfies Issue #6 via the tile grid (design commits to tiles only — no list/tile toggle). On-device dev-client visual check recommended before merge.
 
 ### Phase 3 — Hero screen: ResearchDetail (+ related papers)
-⏳ **NOT STARTED** — `ResearchDetailScreen.tsx`: serif title-page → meta → keywords → **"Read paper"** → abstract → **Related papers** (client-side: same category + shared keywords) → workflow (owner-only). Bookmark/collection buttons deferred to Phase 5. Opens a GitHub issue logging that semantic related-papers is deferred to the Hybrid Search merge.
+✅ **COMPLETED (stable)** — visual title-page + related papers landed; in-app PDF viewer sequenced after the faculty-access mini-merge (see below).
+
+**Implementation summary**
+- ✅ `ResearchDetailScreen.tsx` rebuilt to the Hybrid "title page" reading view: navy category eyebrow (Issue #5 UUID guard) → serif title → *italic* serif authors (primary + co-authors) → department affiliation → meta row (date / views / downloads) with bottom rule → **"Read paper"** button → square keyword tags → serif abstract → **Related papers** → workflow history as index rows with a gold bar on the current step (shown only to the owner while the paper is still in review; hidden once approved/published, so the public Browse view never exposes reviewer comments).
+- ✅ **Related papers** — client-side heuristic: `getPublishedPapers()` scored by same-category (×2) + shared-keyword count, top 3, excludes current paper; tap `push`es a new ResearchDetail. Opened **Issue #13** logging the deferral to semantic/hybrid search.
+- ✅ Data honesty: dropped mock-only fields with no backing data (reference ID, "Peer-reviewed", "Cited by"); affiliation uses real `paper.department`.
+- ✅ Bookmark/collection buttons deferred to Phase 5.
+
+**PDF viewer sequencing (decided this session):** the "Read paper" button keeps the existing system-browser open for now (pure JS, testable on the current dev-client). Next, a **mini-merge `feat/ux-remodel` ↔ `feat/faculty-access`** syncs the shared `PdfViewer` + `react-native-webview` dep across both branches, followed by one EAS dev-client rebuild (QA both student/faculty roles). Then branch back to ux-remodel to wire "Read paper" → the in-app fullscreen `PdfViewer` and finish Phases 4–6. The `openFile` handler is isolated so this swap is a one-spot change.
+
+**Exit criteria met:** `npx tsc --noEmit` green (worktree tsc). On-device dev-client visual check recommended before merge.
 
 ### Phase 4 — Save features backend (Supabase)
 ⏳ **NOT STARTED** — Pre-flight brief required (CLAUDE.md rule 3). Unified model: `collections` + `collection_papers` (bookmark = membership in default "Saved" collection). Email-resolved RLS + SECURITY DEFINER RPCs. New facade `src/api/collections.ts`. Snapshots to `docs/sql/`.
