@@ -61,7 +61,16 @@ The earlier "25% NUcleus / 75% Anthropic warm-paper" brief and its locks are **r
 **Exit criteria met:** `npx tsc --noEmit` green. On-device dev-client visual check recommended before merge.
 
 ### Phase 2 — Hero screen: Browse (Hybrid)
-⏳ **NOT STARTED** — `BrowseScreen.tsx`: navy featured hero → search → filter/sort → **2-column tile grid**. New `ResearchTile` component; keep `ResearchCard` for single-column lists. Reuse `researchApi`. Carries Issue #5 UUID guard; satisfies Issue #6 (tile view).
+✅ **COMPLETED (stable)** — Faithful port of the fetched `browse/hybrid.html` design (Claude Design project `NUcleus Mobile`) onto cool-slate tokens.
+
+**Implementation summary**
+- ✅ New `src/components/ResearchTile.tsx` — compact 2-col tile: color-dot category eyebrow, Source Serif 4 title, author, views · date footer, subtle press scale. `ResearchCard` left untouched for single-column lists.
+- ✅ `src/screens/main/BrowseScreen.tsx` rebuilt to the Hybrid layout: search → **filter bar** (`Filters` button + active-count badge → category `BottomSheet`; `Sort` control → Newest / Most viewed `BottomSheet`) → navy **featured hero** (gold "Featured Paper" badge, serif title, faint concentric rings) → `N Papers` row head → **2-column tile grid**.
+- ✅ Featured = most-viewed published paper, shown only on the unfiltered default view and excluded from the grid; hidden once a search/category filter is active.
+- ✅ Issue #5 UUID guard carried via `categoryNameForDisplay` (bare, UUID-guarded name); category dot colors drawn from a navy/blue set so **gold stays once-per-screen** (hero badge). Loading = hero + 2-col tile skeletons; empty/error/refresh states preserved.
+- Reused `researchApi.getPublishedPapers` / `getCategories`, `ui/BottomSheet`, `ui/Chip` (search Clear), `Skeleton`, `EmptyState`, `InlineNotice`.
+
+**Exit criteria met:** `npx tsc --noEmit` green (worktree tsc). Satisfies Issue #6 via the tile grid (design commits to tiles only — no list/tile toggle). On-device dev-client visual check recommended before merge.
 
 ### Phase 3 — Hero screen: ResearchDetail (+ related papers)
 ⏳ **NOT STARTED** — `ResearchDetailScreen.tsx`: serif title-page → meta → keywords → **"Read paper"** → abstract → **Related papers** (client-side: same category + shared keywords) → workflow (owner-only). Bookmark/collection buttons deferred to Phase 5. Opens a GitHub issue logging that semantic related-papers is deferred to the Hybrid Search merge.
