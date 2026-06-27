@@ -44,8 +44,9 @@ latest handoff is discovered by recency on the branch, not tracked here.
 | Undertaking | Short | Branch | Plan | Status |
 |---|---|---|---|---|
 | Submit Research | `S-R` | merged → `main` | `docs/plans/SUBMIT_RESEARCH.md` | complete |
-| UX Remodel | `UX-R` | `feat/ux-remodel` | `docs/plans/UX_REMODEL.md` | parked |
+| UX Remodel | `UX-R` | `feat/ux-remodel` | `docs/plans/UX_REMODEL.md` | active |
 | Faculty Access | `FAC` | `feat/faculty-access` | `docs/plans/FACULTY_ACCESS.md` | active |
+| Hybrid Search | `H-S` | `feat/hybrid-search` | `docs/plans/HYBRID_SEARCH.md` | active |
 
 > A plan/handoff path resolves once you are on that undertaking's branch (each
 > lives on its own branch). Add a new undertaking = add a row + a plan doc; it
@@ -65,12 +66,12 @@ undertaking is currently active.
 
 1. **Investigate before implementing.** Read relevant source files, confirm component interfaces, check the frozen file list — then report findings before writing a single line of code.
 2. **Never touch frozen files.** Listed below and enforced in `.claude/settings.json`. If a change seems to require a frozen file, stop and report it.
-3. **Supabase changes require a pre-flight brief.** Claude has Supabase MCP access and may run queries directly — but must explain every change in plain terms and wait for Christian's explicit approval before executing. Rules within this rule:
-   - **Brief first, run second.** State what the query does and why, in plain language. Wait for approval.
+3. **Supabase changes require a plain-language brief, then Claude deploys.** Claude has Supabase MCP access and (as of 2026-06-25) **deploys SQL itself after approval — including DDL/migrations** — but must first explain every change in **plain, simple language** and wait for Christian's explicit per-change approval before deploying. Rules within this rule:
+   - **Explain simply, then deploy.** Break the change down in plain language — what it does, what it touches, whether it is destructive/reversible, and the data-security impact — so Christian understands it before it lands. Wait for approval, then deploy via MCP (`apply_migration` for DDL, `execute_sql` for data/reads).
    - **Test queries are encouraged** — run lightweight, read-only checks (SELECT, EXPLAIN) to validate assumptions before any write. Show the test query to Christian first so he can check it himself.
    - **Destructive operations** (DROP, DELETE, ALTER, policy drops, schema changes) must be explained with extra care — what breaks if it goes wrong, and whether it is reversible. No exceptions.
    - **Snapshot files** — after any deployed change, write or update the corresponding snapshot in `docs/sql/`. These remain the canonical record of what is live.
-   - **Never use the service role key.** All Supabase MCP operations run under the project's anon/authenticated context. RLS still applies.
+   - **Mobile never uses the service role key** (anon + RLS only — see rule 4). Note the **MCP connection itself is privileged**: it can run DDL and is **not** limited by RLS (confirmed 2026-06-25 — it returns non-public rows). That is exactly why every change goes through the explain-and-approve gate, and why any new object must enforce its own RLS + least-privilege grants.
 4. **Never use the service role key on mobile.** Anon key + RLS only.
 5. **tsc gate is non-negotiable.** Run `npx tsc --noEmit` after every code change. Green typecheck is required before reporting done.
 6. **Commits.** Stage specific files (never `git add .`), draft a message following `docs/CONVENTIONS.md` §2, and present for review. Do not commit without explicit user confirmation.
@@ -94,6 +95,8 @@ Never edit or create files at these paths. Also enforced in `.claude/settings.js
 | `src/screens/main/SubmitResearchScreen.tsx` | Locked after Submit Research Phase 2 |
 | `docs/sql/submit_research_rpcs.sql` | Deployed SQL snapshot |
 | `docs/sql/submit_research_rls_policies.sql` | Deployed SQL snapshot |
+
+**Frozen is the project-wide default, enforced per branch.** An undertaking whose scope genuinely requires a listed file may unfreeze that one entry **in its own branch's `.claude/settings.json`** — a deliberate, scoped exception for that work, not a project-wide unfreeze (e.g. an undertaking that owns navigation changes unfreezes the navigation files on its branch). The session-critical core — `AuthContext.tsx`, `supabase.ts`, `src/auth/`, `authStorage.ts`, `domain.ts` — stays frozen on every branch, no exceptions.
 
 ---
 
@@ -128,7 +131,7 @@ When direct anon + RLS writes fail due to `42P17` recursion, UUID mismatch, or u
 - `LANGUAGE plpgsql`, `SECURITY DEFINER`, `SET search_path = public`
 - `GRANT EXECUTE ON FUNCTION ... TO anon, authenticated`
 
-Current RPCs using this pattern: `increment_view_count`, `increment_download_count`, `get_user_basic_info`, `get_faculty_members`, `search_students`, `create_co_author_invitations`
+Representative RPCs using this pattern: `increment_view_count`, `get_faculty_members`, `create_co_author_invitations`. Not exhaustive — each undertaking adds its own; the canonical deployed set lives in `docs/sql/`.
 
 ### `public.users` recursion trap
 
@@ -149,7 +152,7 @@ The `public.users` SELECT policy cannot reference itself — triggers `42P17`. C
 |---|---|
 | `docs/PROJECT_CONTEXT.md` | Product scope, navigation model, access control, principles |
 | `docs/CONVENTIONS.md` | All conventions: commits, phase protocol, issues, SQL, handoffs |
-| `docs/plans/UX_REMODEL.md` | Active undertaking plan |
+| `docs/plans/` | Per-undertaking plans — see the Undertaking Registry for the active set |
 | `docs/handoffs/HANDOFF_TEMPLATE.md` | Handoff structure template |
 | `docs/sql/` | Deployed SQL snapshots (RLS policies + RPC definitions) |
 | `src/types/domain.ts` | Canonical domain types (frozen) |
