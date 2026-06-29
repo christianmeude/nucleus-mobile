@@ -86,7 +86,16 @@ The earlier "25% NUcleus / 75% Anthropic warm-paper" brief and its locks are **r
 **Exit criteria met:** `npx tsc --noEmit` green (worktree tsc). On-device dev-client visual check recommended before merge.
 
 ### Phase 4 — Save features backend (Supabase)
-⏳ **NOT STARTED** — Pre-flight brief required (CLAUDE.md rule 3). Unified model: `collections` + `collection_papers` (bookmark = membership in default "Saved" collection). Email-resolved RLS + SECURITY DEFINER RPCs. New facade `src/api/collections.ts`. Snapshots to `docs/sql/`.
+✅ **COMPLETED (stable)** — Unified model: `collections` + `collection_papers` (bookmark = membership in default "Saved" collection). Email-resolved RLS + SECURITY DEFINER RPCs. New facade `src/api/collections.ts`. Snapshot at `docs/sql/collections_rls_rpcs.sql`.
+
+**Implementation summary**
+- ✅ `collections` table (id, user_id, name, is_default, created_at) — unique index enforces one default "Saved" per user; RLS enabled
+- ✅ `collection_papers` table (id, collection_id, paper_id, added_at) — ON DELETE CASCADE on both FKs; RLS enabled
+- ✅ SELECT-only RLS policies on both tables (email-resolved project convention); direct writes blocked by default
+- ✅ `toggle_paper_saved(p_paper_id uuid) RETURNS boolean` SECURITY DEFINER RPC — creates "Saved" collection on first call, toggles membership, returns current saved state; `GRANT … TO anon, authenticated`
+- ✅ `src/api/collections.ts` — `togglePaperSaved`, `getSavedPaperIds`, `getMyCollections`
+
+**Exit criteria met:** `npx tsc --noEmit` green.
 
 ### Phase 5 — Save UI + Dashboard (Launch-pad)
 ⏳ **NOT STARTED** — ResearchDetail bookmark toggle + "Save to collection" bottom sheet (no new routes — nav frozen). `DashboardScreen.tsx` rebuilt to launch-pad: greeting + quick actions + single status line + recent submissions + notifications/invitations peek + Saved section. **Sign-out retained** in header.
