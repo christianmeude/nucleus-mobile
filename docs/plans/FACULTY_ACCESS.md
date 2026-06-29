@@ -294,9 +294,22 @@ Faculty sign-out (separate, outside the phased plan) shipped.
 
 **Exit criteria met:** `npx tsc --noEmit` green; additive optional prop; student screen unaffected.
 
-### Phase 14 — Wire-up + polish ⏳ **NOT STARTED**
-- `FacultyReviewDetailScreen` loads annotations lazily on toggle; a list panel surfaces page-less
-  comments + reply threads (`parentId`); loading / empty / error states. Runtime-verify on a dev build.
+### Phase 14 — Wire-up + polish ✅ **COMPLETED (stable)**
+**Implementation summary**
+- `FacultyReviewDetailScreen`: added `annotations` + `annotationsError` state; loads
+  `facultyApi.getAnnotations(paperId)` on mount (parallel with detail + file). `useMemo` derives
+  `overlays: PdfAnnotationOverlay[]` (mapped from `FacultyAnnotation`) and `pagelessAnnotations`
+  (pageNumber === null, top-level). `getReplies(parentId)` filters reply threads.
+- `<PdfViewer uri={fileUri} annotations={overlays} />` — the eye-icon toggle appears automatically
+  once positioned annotations are available (driven entirely by Phase 13 infrastructure).
+- New "Reviewer comments" section (between Review history and Your decision): skeleton while loading,
+  error notice on failure, "No general reviewer comments." when empty, or `Card`-per-root-annotation
+  list with hairline-separated replies nested inside. Uses `titleCase(ann.reviewerRole)` + `formatDate`.
+- `annotationReply` style added (top border, gap, spacing).
+
+**Exit criteria met:** `npx tsc --noEmit` green; loading/empty/error states present; positioned
+annotations drive the PdfViewer toggle; page-less comments + replies surface in the list panel.
+Runtime verification pending on next EAS dev build.
 
 ---
 
