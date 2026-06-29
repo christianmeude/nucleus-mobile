@@ -109,7 +109,18 @@ The earlier "25% NUcleus / 75% Anthropic warm-paper" brief and its locks are **r
 **Exit criteria met:** `npx tsc --noEmit` green.
 
 ### Phase 6 — Polish + pitch packaging
-⏳ **NOT STARTED** — Cross-screen QA, a11y/contrast, hero screenshots/recordings for the pitch, optional cool-mockup sync to the Claude Design project, handoff.
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- ✅ Cross-screen QA: all three hero screens reviewed — palette discipline, a11y labels, edge/empty states, token consistency all clean
+- ✅ A11y: `accessibilityRole` and `accessibilityLabel` confirmed on all interactive elements across Browse, ResearchDetail, Dashboard
+- ✅ `npx tsc --noEmit` green across all phases
+- ✅ Hero screenshots/recordings dropped by request
+- ✅ DesignSync mockup sync skipped (requires interactive terminal)
+- ✅ Issue #6 (Browse list/tile view) to be closed manually — satisfied by Phase 2 Hybrid tile grid
+- ✅ Handoff written
+
+**Exit criteria met:** `npx tsc --noEmit` green. Branch `feat/ux-remodel` is merge-ready.
 
 ---
 
