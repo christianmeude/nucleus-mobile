@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import * as WebBrowser from 'expo-web-browser';
 import { researchApi } from '../../api/research';
+import { getSavedPaperIds, togglePaperSaved } from '../../api/collections';
 import { RootStackParamList } from '../../navigation/types';
 import { Category, ResearchPaper, WorkflowEntry } from '../../types/domain';
 import { useAuth } from '../../context/AuthContext';
@@ -51,6 +52,8 @@ export const ResearchDetailScreen = () => {
   const [published, setPublished] = useState<ResearchPaper[]>([]);
   const [loading, setLoading] = useState(true);
   const [openingFile, setOpeningFile] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [savePending, setSavePending] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -61,15 +64,17 @@ export const ResearchDetailScreen = () => {
       try {
         // Related papers are a client-side heuristic for now (same category + shared
         // keywords); semantic relatedness is deferred to the Hybrid Search merge.
-        const [detail, categoryRows, publishedRows] = await Promise.all([
+        const [detail, categoryRows, publishedRows, savedIds] = await Promise.all([
           researchApi.getResearchById(paperId),
           researchApi.getCategories(),
           researchApi.getPublishedPapers(),
+          getSavedPaperIds().catch(() => [] as string[]),
         ]);
         setPaper(detail.paper);
         setWorkflow(detail.workflowHistory || []);
         setCategories(categoryRows);
         setPublished(publishedRows);
+        setSaved(savedIds.includes(paperId));
       } catch (_error) {
         setError('Unable to load paper details.');
       } finally {
@@ -120,6 +125,20 @@ export const ResearchDetailScreen = () => {
       .slice(0, MAX_RELATED)
       .map((entry) => entry.paper);
   }, [paper, published]);
+
+  const handleToggleSave = async () => {
+    if (savePending) return;
+    setSavePending(true);
+    setSaved((prev) => !prev);
+    try {
+      const nowSaved = await togglePaperSaved(paperId);
+      setSaved(nowSaved);
+    } catch {
+      setSaved((prev) => !prev);
+    } finally {
+      setSavePending(false);
+    }
+  };
 
   const openFile = async () => {
     if (!paper) return;
@@ -207,15 +226,30 @@ export const ResearchDetailScreen = () => {
           <Text style={styles.metaText}>{paper.download_count || 0} downloads</Text>
         </View>
 
-        <View style={styles.readBtn}>
-          {/* Download is intentionally hidden pending backend allow_download support (Issue #8). */}
-          <Button
-            label="Read paper"
-            variant="primary"
-            onPress={openFile}
-            loading={openingFile}
-            disabled={openingFile}
-          />
+        {/* Download is intentionally hidden pending backend allow_download support (Issue #8). */}
+        <View style={styles.readRow}>
+          <View style={styles.readBtn}>
+            <Button
+              label="Read paper"
+              variant="primary"
+              onPress={openFile}
+              loading={openingFile}
+              disabled={openingFile}
+            />
+          </View>
+          <Pressable
+            style={({ pressed }) => [styles.bookmarkBtn, pressed && styles.bookmarkPressed]}
+            onPress={handleToggleSave}
+            disabled={savePending}
+            accessibilityRole="button"
+            accessibilityLabel={saved ? 'Remove from saved' : 'Save paper'}
+          >
+            <Ionicons
+              name={saved ? 'bookmark' : 'bookmark-outline'}
+              size={22}
+              color={saved ? theme.colors.brand.accent : theme.colors.text.muted}
+            />
+          </Pressable>
         </View>
 
         {error ? <InlineNotice tone="danger" message={error} /> : null}
@@ -381,8 +415,26 @@ const styles = StyleSheet.create({
     ...theme.typography.metadata,
     color: theme.colors.border.strong,
   },
-  readBtn: {
+  readRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
     marginTop: theme.spacing.lg,
+  },
+  readBtn: {
+    flex: 1,
+  },
+  bookmarkBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border.subtle,
+    borderRadius: theme.radii.md,
+  },
+  bookmarkPressed: {
+    opacity: 0.6,
   },
   section: {
     marginTop: theme.spacing.xl,

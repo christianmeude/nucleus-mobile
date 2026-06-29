@@ -66,3 +66,23 @@ export async function getMyCollections(): Promise<Collection[]> {
   if (error) throw error;
   return (data ?? []) as Collection[];
 }
+
+export interface SavedPaper {
+  id: string;
+  title: string | null;
+}
+
+/**
+ * Returns basic info for up to `limit` papers in the caller's default "Saved" collection.
+ * Returns an empty array when nothing is saved or the collection does not exist yet.
+ */
+export async function getSavedPapers(limit = 5): Promise<SavedPaper[]> {
+  const ids = await getSavedPaperIds();
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase
+    .from('research_papers')
+    .select('id, title')
+    .in('id', ids.slice(0, limit));
+  if (error) throw error;
+  return (data ?? []) as SavedPaper[];
+}
