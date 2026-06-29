@@ -274,11 +274,25 @@ Faculty sign-out (separate, outside the phased plan) shipped.
 
 **Exit criteria met:** `npx tsc --noEmit` green; faculty annotation read works under existing RLS.
 
-### Phase 13 — Annotation overlays in the PDF viewer ⏳ **NOT STARTED**
-- Extend the shared `PdfViewer.tsx` with an optional `annotations` prop + a "See annotations" toggle
-  (default off); render overlays **inside** the pdf.js WebView per page: %-positioned highlight rects,
-  note pins (`anchorPercent`), and full-page drawing PNGs. Additive optional prop ⇒ the student
-  `ResearchDetailScreen` is unaffected (Phase 11 precedent).
+### Phase 13 — Annotation overlays in the PDF viewer ✅ **COMPLETED (stable)**
+**Implementation summary**
+- Exported `PdfAnnotationOverlay` interface from `src/components/PdfViewer.tsx` (public prop type;
+  calling code maps from `FacultyAnnotation` in Phase 14). Fields: `id`, `pageNumber | null`,
+  `annotationType`, `highlightColor`, `highlightRects`, `anchorPercent`, `drawImageUrl`.
+- HTML overlay infrastructure: pages now render inside `<div class="page-wrapper">` (position:
+  relative) so overlays can be absolutely positioned. Three WebView-side functions injected via JS:
+  `__buildOverlays(jsonStr)` — creates hidden overlay elements per annotation type (highlight rects
+  as colored divs, note pins as circle divs, draw annotations as `<img>`), `__showAnnotations()`,
+  `__hideAnnotations()`.
+- `PdfSurface` gains `annotations?` + `showAnnotations?` props and a `webViewRef`. Two `useEffect`s:
+  (1) when loaded+annotations change → inject `__buildOverlays` with positioned annotations; (2)
+  when loaded+showAnnotations changes → inject show/hide command.
+- `PdfViewer` gains `annotations?` prop + internal `showAnnotations` state (default `false`). Derives
+  `hasPositionedAnnotations`; when true, renders an eye-icon toggle button next to the expand button
+  (grouped in a `controls` row). Both inline and fullscreen `PdfSurface` receive `annotations` +
+  `showAnnotations`. Student `ResearchDetailScreen` passes no `annotations` — toggle never appears.
+
+**Exit criteria met:** `npx tsc --noEmit` green; additive optional prop; student screen unaffected.
 
 ### Phase 14 — Wire-up + polish ⏳ **NOT STARTED**
 - `FacultyReviewDetailScreen` loads annotations lazily on toggle; a list panel surfaces page-less
