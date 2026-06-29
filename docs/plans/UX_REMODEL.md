@@ -98,7 +98,15 @@ The earlier "25% NUcleus / 75% Anthropic warm-paper" brief and its locks are **r
 **Exit criteria met:** `npx tsc --noEmit` green.
 
 ### Phase 5 — Save UI + Dashboard (Launch-pad)
-⏳ **NOT STARTED** — ResearchDetail bookmark toggle + "Save to collection" bottom sheet (no new routes — nav frozen). `DashboardScreen.tsx` rebuilt to launch-pad: greeting + quick actions + single status line + recent submissions + notifications/invitations peek + Saved section. **Sign-out retained** in header.
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- ✅ ResearchDetailScreen: gold bookmark icon button alongside "Read paper"; optimistic toggle via `togglePaperSaved` RPC; saved state loaded in parallel with paper data (`.catch(() => [])` so failure is silent)
+- ✅ DashboardScreen rebuilt to launch-pad: greeting + single status line (urgent = semibold, not gold) + quick action cards (Submit / Browse) + notifications row with unread badge + recent papers (3) + Saved section (gold bookmark icons — screen's one gold element); sign-out retained in header
+- ✅ `Promise.allSettled` in `loadData` — a failed sub-fetch never blocks the rest of the screen
+- ✅ `collections.ts`: added `SavedPaper` type and `getSavedPapers` facade
+
+**Exit criteria met:** `npx tsc --noEmit` green.
 
 ### Phase 6 — Polish + pitch packaging
 ⏳ **NOT STARTED** — Cross-screen QA, a11y/contrast, hero screenshots/recordings for the pitch, optional cool-mockup sync to the Claude Design project, handoff.
