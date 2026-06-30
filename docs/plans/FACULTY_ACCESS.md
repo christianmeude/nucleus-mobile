@@ -313,6 +313,62 @@ Runtime verification pending on next EAS dev build.
 
 ---
 
+## 7D. Phased plan — additional faculty tabs (#12)
+
+> Commit scope `faculty-access-v4`. Delivers the three remaining faculty tabs deferred since
+> v1: **Notifications**, **Repository** (browse published papers), **Profile** (account info +
+> sign out). **Zero new SQL** — verified live (read-only, 2026-06-30): `notifications`
+> SELECT/UPDATE is role-agnostic (`user_id` = email-resolved `public.users.id`, no role check),
+> and `research_papers` has a standalone `Public can read published papers` policy
+> (`status = 'published'`, `TO public`) alongside the existing `Combined research read access`
+> policy — both already cover faculty. Each new read goes through its own `facultyApi` function
+> (mirrors the v1 pattern: the student facades `notificationsApi` / `researchApi.getPublishedPapers`
+> hard-reject non-students via their own profile resolvers, so faculty cannot reuse them directly).
+> Decisions confirmed with Christian: Repository paper taps open a new lightweight read-only
+> **`FacultyPaperDetailScreen`** (not `FacultyReviewDetailScreen`, which is purpose-built for the
+> assigned-review workflow); Profile shows minimal account info + sign out, and sign-out is
+> relocated off the Dashboard header into Profile.
+
+### Phase 15 — Data layer (read-only) ✅ **COMPLETED (stable)**
+**Implementation summary**
+- Added to `src/api/faculty.ts`: `getPublishedPapers` (reuses `FACULTY_PAPER_SELECT` /
+  `toFacultyAssignedPaper`, just queries `status = 'published'` instead of `faculty_id`) and
+  `getNotifications` / `markNotificationRead` / `markAllNotificationsRead` (faculty-resolved,
+  mirrors `notificationsApi`'s row shape exactly via `NotificationItem` from `domain.ts`).
+- Repository's paper-detail screen (Phase 18) will reuse the existing `getReviewDetail` /
+  `getReviewFile` directly — both already query by `id` with no `faculty_id` filter, relying on
+  RLS, so they work unmodified for any paper the signed-in faculty member can read (assigned or
+  published). No separate `getPaperDetail` / `getPaperFile` needed.
+- `getCategories` reused directly from `researchApi` (no role gate) — no faculty wrapper needed.
+
+**Exit criteria met:** `npx tsc --noEmit` green; no new SQL; faculty reads published papers and
+their own notifications under existing RLS.
+
+### Phase 16 — Navigation surface ⏳ **NOT STARTED**
+- `navigation/types.ts` (frozen, approved-additive): add `FacultyNotifications`, `FacultyRepository`
+  to `FacultyTabsParamList`; add `FacultyPaperDetail: { paperId: string }` to `RootStackParamList`.
+- `FacultyTabs.tsx`: add the two new tab screens + icons; Profile is a 5th tab.
+- Placeholder screens stubbed with `EmptyState`, modeled on the Phase-1 pattern.
+
+### Phase 17 — Faculty Notifications screen ⏳ **NOT STARTED**
+- `FacultyNotificationsScreen`, ported from the student `NotificationsScreen` onto the new
+  faculty-resolved facade functions. Same UX: unread count, mark-all-read, mark-on-open,
+  navigate to `FacultyPaperDetail` when a notification references a paper.
+
+### Phase 18 — Faculty Repository + paper detail ⏳ **NOT STARTED**
+- `FacultyRepositoryScreen`, ported from the student `BrowseScreen` (search + category filter)
+  onto the faculty-resolved `getPublishedPapers` + reused `researchApi.getCategories`.
+- New `FacultyPaperDetailScreen`: read-only metadata + `PdfViewer` (no review chrome, no
+  decision actions, no annotations — those are review-workflow-specific).
+
+### Phase 19 — Faculty Profile + polish + handoff ⏳ **NOT STARTED**
+- New `FacultyProfileScreen`: account info from `useAuth().user` (name, email, role, department/
+  program) + sign-out button.
+- Remove the sign-out `IconButton` from `FacultyDashboardScreen`'s header (single entry point now).
+- `npx tsc --noEmit` green across all phases; handoff drafted.
+
+---
+
 ## 8. Deferred scope (beyond what v1 + v2 build)
 
 - ✅ **Faculty write actions (Approve / Request Revision / Reject)** — **DELIVERED in v2**

@@ -1,6 +1,6 @@
 import { fetchAppUserProfile } from '../auth/fetchAppUserProfile';
 import { supabase } from '../lib/supabase';
-import { PaperStatus } from '../types/domain';
+import { NotificationItem, PaperStatus } from '../types/domain';
 
 // =============================================================================
 // Faculty API (read-only v1)
@@ -558,6 +558,41 @@ function toFacultyAnnotation(row: FacultyAnnotationRow): FacultyAnnotation {
   };
 }
 
+// =============================================================================
+// Repository + Notifications (read-only, #12)
+// -----------------------------------------------------------------------------
+// Same self-contained-facade rule as the rest of this file: researchApi.getPublishedPapers
+// and notificationsApi both hard-reject non-students via their own profile resolvers, so
+// faculty needs its own read path. The underlying tables are role-agnostic under RLS —
+// `research_papers` has a standalone "Public can read published papers" policy
+// (status = 'published', TO public) and `notifications` SELECT/UPDATE is plain
+// user_id = email-resolved public.users.id with no role check — so no new SQL is needed.
+// =============================================================================
+
+interface FacultyNotificationRow {
+  id: string;
+  user_id: string;
+  research_id?: string | null;
+  type?: string | null;
+  title?: string | null;
+  message?: string | null;
+  is_read: boolean;
+  created_at: string;
+}
+
+function toFacultyNotificationItem(row: FacultyNotificationRow): NotificationItem {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    research_id: row.research_id ?? null,
+    type: row.type ?? undefined,
+    title: row.title ?? undefined,
+    message: row.message ?? undefined,
+    is_read: row.is_read,
+    created_at: row.created_at,
+  };
+}
+
 export const facultyApi = {
   /**
    * Papers assigned to the signed-in faculty member (any status), newest first.
@@ -731,5 +766,70 @@ export const facultyApi = {
 
     const rows = Array.isArray(data) ? (data as unknown as FacultyAnnotationRow[]) : [];
     return rows.map(toFacultyAnnotation);
+  },
+
+  /** Published papers, newest first — same Repository content students browse. RLS-scoped. */
+  getPublishedPapers: async (): Promise<FacultyAssignedPaper[]> => {
+    await resolveCurrentFacultyProfile();
+
+    const { data, error } = await supabase
+      .from('research_papers')
+      .select(FACULTY_PAPER_SELECT)
+      .eq('status', 'published');
+
+    if (error) {
+      throw new Error(error.message || 'Unable to load published papers.');
+    }
+
+    const rows = Array.isArray(data) ? (data as unknown as FacultyPaperRow[]) : [];
+    return rows.map(toFacultyAssignedPaper).sort((left, right) => paperSortTime(right) - paperSortTime(left));
+  },
+
+  /** The signed-in faculty member's notifications, newest first. RLS-scoped (own user_id only). */
+  getNotifications: async (limit = 100): Promise<NotificationItem[]> => {
+    const profile = await resolveCurrentFacultyProfile();
+
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('id, user_id, research_id, type, title, message, is_read, created_at')
+      .eq('user_id', profile.id)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      throw new Error(error.message || 'Unable to load notifications.');
+    }
+
+    return (Array.isArray(data) ? (data as unknown as FacultyNotificationRow[]) : []).map(
+      toFacultyNotificationItem
+    );
+  },
+
+  markNotificationRead: async (notificationId: string): Promise<void> => {
+    const profile = await resolveCurrentFacultyProfile();
+
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('id', notificationId)
+      .eq('user_id', profile.id);
+
+    if (error) {
+      throw new Error(error.message || 'Unable to mark notification as read.');
+    }
+  },
+
+  markAllNotificationsRead: async (): Promise<void> => {
+    const profile = await resolveCurrentFacultyProfile();
+
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('user_id', profile.id)
+      .eq('is_read', false);
+
+    if (error) {
+      throw new Error(error.message || 'Unable to mark notifications as read.');
+    }
   },
 };
