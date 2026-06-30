@@ -144,6 +144,8 @@ Issue numbers are canonical and fixed. **Claude Code is authorized to create and
 
 | # | Title | Status |
 |---|---|---|
+| 15 | `faculty: verify annotation overlays on papers returned from dean or program chair` | 🔴 Open |
+| 14 | `faculty: annotation creation — write path for review comments` | 🔴 Open |
 | 13 | `research detail: related papers via semantic search (replace client-side heuristic)` | 🔴 Open |
 | 12 | `faculty: additional tabs (Notifications, Repository, Profile)` | 🔴 Open |
 | 11 | `faculty review: annotation threads on papers` | 🔴 Open |
@@ -158,7 +160,7 @@ Issue numbers are canonical and fixed. **Claude Code is authorized to create and
 | 2 | `Mobile auth: UUID mismatch between auth.users and public.users breaks RLS` | ✅ Closed |
 | 1 | `ResearchDetail: view and download counts not persisting after navigation` | ✅ Closed |
 
-**Current cap: #13.**
+**Current cap: #15.**
 
 ### Issue title format
 
