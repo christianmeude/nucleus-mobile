@@ -29,10 +29,12 @@ The earlier "25% NUcleus / 75% Anthropic warm-paper" brief and its locks are **r
 
 ## 2. Design foundation
 
-**Governing skills** (installed at `~/.claude/skills/`, precedence order):
-1. **frontend-design** (master) — one signature element per screen, spend boldness there, keep the rest quiet; serif used with restraint; structure encodes meaning, not decoration; minimal = precision in spacing/type.
-2. **brand-guidelines** — *method only*; its Anthropic colors/fonts do not apply (NUcleus navy/gold win).
-3. **theme-factory** (reference only).
+**Governing skills** (installed at `~/.claude/skills/`, precedence for this RN/Expo app). The earlier web/artifact skills (`frontend-design`, `brand-guidelines`, `theme-factory`) were **removed 2026-06-30** — too web-aligned and a source of styling drift in the native app. Replaced with a mobile stack:
+
+1. **building-native-ui** (Expo — primary) — RN/Expo styling + behavior standards. Apply: flex `gap` over margin/padding; account for top **and** bottom safe-area insets (`ScrollView`/`FlatList` `contentInsetAdjustmentBehavior="automatic"`, padding via `contentContainerStyle`); entering/exiting animations on state changes; `borderCurve: 'continuous'` on rounded corners (not capsules); the `boxShadow` style prop, never legacy `shadow*`/`elevation`; `selectable` on data/error `Text`; `fontVariant: ['tabular-nums']` on counts/metrics; iOS haptics. **Ignore its routing half** — it assumes expo-router file-routing + `NativeTabs` + `Link`; NUcleus uses classic React Navigation and navigation is frozen. Its `expo-router` `Color` / SF-Symbols / glass library prefs are optional, not mandates.
+2. **mobile-app-ui-design** (design lens) — structure-first: primary actions in the **thumb zone** (bottom third — validates the My Papers FAB), reduce interaction cost, empty states as guided opportunities with a CTA, peak-end emotional polish. Visual: 60/30/10 color (slate base / ink / navy+gold accent), hierarchy via size + weight + opacity, soft tinted shadows, ≥44×44 tap targets, 8-pt spacing. **Two NUcleus overrides:** (a) it caps "two font families" — we are exactly at two (Source Serif 4 + IBM Plex Sans), so no third; (b) it suggests *monospace* for large numbers — we ship no monospace (design reset), so use `tabular-nums` on IBM Plex Sans instead.
+3. **material-3** (reference only) — Android/Compose-first; a pattern catalogue for FABs, bottom sheets, segmented controls, tonal elevation, and shape/8dp tokens. **Not a styling authority:** its dynamic-color + Roboto type system does **not** apply — NUcleus navy/gold + Source Serif 4 / IBM Plex Sans win. Useful mainly to keep Android-flavored components feeling native.
+4. **swiftui-skills** — parked for a future iOS build; dormant on Windows (`os: ["darwin"]`, needs `xcodebuild`).
 
 **Approved brief (reset):**
 - **Surface — cool slate:** page `slate-50 #F8FAFC` · card `#FFFFFF` · sunken `slate-100 #F1F5F9` · dividers `slate-200/300` · ink `slate-900 #0F172A`. (Aligns with [PRODUCT_ROADMAP.md](../PRODUCT_ROADMAP.md) §2; deliberately **not** the warm-cream AI-default.)
