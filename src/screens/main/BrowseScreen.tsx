@@ -8,11 +8,12 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
 import { Category, ResearchPaper } from '../../types/domain';
-import { getPrimaryAuthorName, paperDate } from '../../utils/format';
+import { formatDate, getPrimaryAuthorName, paperDate } from '../../utils/format';
 import { theme } from '../../theme';
 import { ResearchTile } from '../../components/ResearchTile';
 import { BottomSheet, Chip, EmptyState, InlineNotice, Skeleton } from '../../components/ui';
@@ -38,12 +39,13 @@ const timeOf = (paper: ResearchPaper) => new Date(paperDate(paper) || 0).getTime
 
 export const BrowseScreen = () => {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [sort, setSort] = useState<SortKey>('newest');
-  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [sortSheetOpen, setSortSheetOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -151,7 +153,7 @@ export const BrowseScreen = () => {
     <>
       <ScrollView
         style={styles.container}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + theme.spacing.md }]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -187,46 +189,90 @@ export const BrowseScreen = () => {
           </View>
         </View>
 
-        <View style={styles.filterBar}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsRow}
+        >
           <Pressable
-            style={styles.filterBtn}
-            onPress={() => setFilterSheetOpen(true)}
+            style={[styles.topicChip, !categoryFilter && styles.topicChipActive]}
+            onPress={() => setCategoryFilter('')}
             accessibilityRole="button"
-            accessibilityLabel="Filters"
+            accessibilityLabel="All categories"
           >
-            <Ionicons name="options-outline" size={16} color={theme.colors.text.secondary} />
-            <Text style={styles.filterBtnText}>Filters</Text>
-            {categoryFilter ? (
-              <View style={styles.countBadge}>
-                <Text style={styles.countBadgeText}>1</Text>
-              </View>
-            ) : null}
+            <Text style={[styles.topicChipText, !categoryFilter && styles.topicChipTextActive]}>
+              All
+            </Text>
           </Pressable>
+          {categories.map((category) => {
+            const active = categoryFilter === category.id;
+            return (
+              <Pressable
+                key={category.id}
+                style={[styles.topicChip, active && styles.topicChipActive]}
+                onPress={() => setCategoryFilter(active ? '' : category.id)}
+                accessibilityRole="button"
+                accessibilityLabel={category.name}
+              >
+                <Text style={[styles.topicChipText, active && styles.topicChipTextActive]}>
+                  {category.name}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
 
-          <Pressable
-            style={styles.sortBtn}
-            onPress={() => setSortSheetOpen(true)}
-            accessibilityRole="button"
-            accessibilityLabel={`Sort: ${sortLabel}`}
-          >
-            <Text style={styles.sortLabel}>Sort: </Text>
-            <Text style={styles.sortValue}>{sortLabel}</Text>
-            <Ionicons name="chevron-down" size={14} color={theme.colors.brand.primary} />
-          </Pressable>
+        <View style={styles.subbar}>
+          <Text style={styles.resultCount}>
+            {sorted.length} {sorted.length === 1 ? 'Paper' : 'Papers'}
+          </Text>
+          <View style={styles.subbarRight}>
+            <Pressable
+              style={styles.sortLink}
+              onPress={() => setSortSheetOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel={`Sort: ${sortLabel}`}
+            >
+              <Text style={styles.sortLinkText}>{sortLabel}</Text>
+              <Ionicons name="chevron-down" size={13} color={theme.colors.brand.primary} />
+            </Pressable>
+            <View style={styles.viewToggle}>
+              <Pressable
+                style={[styles.vt, viewMode === 'list' && styles.vtActive]}
+                onPress={() => setViewMode('list')}
+                accessibilityRole="button"
+                accessibilityLabel="List view"
+              >
+                <Ionicons
+                  name="reorder-three-outline"
+                  size={17}
+                  color={viewMode === 'list' ? theme.colors.brand.primary : theme.colors.text.muted}
+                />
+              </Pressable>
+              <Pressable
+                style={[styles.vt, viewMode === 'grid' && styles.vtActive]}
+                onPress={() => setViewMode('grid')}
+                accessibilityRole="button"
+                accessibilityLabel="Grid view"
+              >
+                <Ionicons
+                  name="grid-outline"
+                  size={15}
+                  color={viewMode === 'grid' ? theme.colors.brand.primary : theme.colors.text.muted}
+                />
+              </Pressable>
+            </View>
+          </View>
         </View>
 
         {error ? <InlineNotice tone="danger" message={error} /> : null}
 
         {loading ? (
           <View style={styles.loadingWrap}>
-            <Skeleton height={148} />
-            <View style={styles.grid}>
-              {[0, 1, 2, 3].map((key) => (
-                <View key={key} style={styles.gridCell}>
-                  <Skeleton height={132} />
-                </View>
-              ))}
-            </View>
+            <Skeleton height={140} />
+            <Skeleton height={84} />
+            <Skeleton height={84} />
+            <Skeleton height={84} />
           </View>
         ) : sorted.length === 0 ? (
           <EmptyState
@@ -263,65 +309,52 @@ export const BrowseScreen = () => {
               </Pressable>
             ) : null}
 
-            <Text style={styles.rowHead}>
-              {sorted.length} {sorted.length === 1 ? 'Paper' : 'Papers'}
-            </Text>
-
-            <View style={styles.grid}>
-              {gridItems.map((paper) => (
-                <View key={paper.id} style={styles.gridCell}>
-                  <ResearchTile
-                    paper={paper}
-                    category={resolveCategoryName(paper.category, categoryNameById)}
-                    categoryColor={colorForCategory(paper.category)}
-                    onPress={() => openDetail(paper.id)}
-                  />
-                </View>
-              ))}
-            </View>
+            {viewMode === 'grid' ? (
+              <View style={styles.grid}>
+                {gridItems.map((paper) => (
+                  <View key={paper.id} style={styles.gridCell}>
+                    <ResearchTile
+                      paper={paper}
+                      category={resolveCategoryName(paper.category, categoryNameById)}
+                      categoryColor={colorForCategory(paper.category)}
+                      onPress={() => openDetail(paper.id)}
+                    />
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.list}>
+                {gridItems.map((paper) => {
+                  const categoryColor = colorForCategory(paper.category);
+                  const categoryName = resolveCategoryName(paper.category, categoryNameById);
+                  return (
+                    <Pressable
+                      key={paper.id}
+                      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+                      onPress={() => openDetail(paper.id)}
+                      accessibilityRole="button"
+                      accessibilityLabel={paper.title || 'Untitled paper'}
+                    >
+                      <View style={styles.cardCatRow}>
+                        <View style={[styles.dot, { backgroundColor: categoryColor }]} />
+                        <Text style={[styles.cardCat, { color: categoryColor }]} numberOfLines={1}>
+                          {categoryName || 'Research'}
+                        </Text>
+                      </View>
+                      <Text style={styles.cardTitle} numberOfLines={2}>
+                        {paper.title}
+                      </Text>
+                      <Text style={styles.cardMeta} numberOfLines={1}>
+                        {getPrimaryAuthorName(paper)} · {formatDate(paperDate(paper))}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
           </>
         )}
       </ScrollView>
-
-      <BottomSheet visible={filterSheetOpen} onClose={() => setFilterSheetOpen(false)}>
-        <Text style={styles.sheetTitle}>Category</Text>
-        <ScrollView style={styles.sheetScroll}>
-          <Pressable
-            style={styles.sheetRow}
-            onPress={() => {
-              setCategoryFilter('');
-              setFilterSheetOpen(false);
-            }}
-          >
-            <Text style={[styles.sheetRowText, !categoryFilter ? styles.sheetRowActive : null]}>
-              All categories
-            </Text>
-            {!categoryFilter ? (
-              <Ionicons name="checkmark" size={18} color={theme.colors.brand.primary} />
-            ) : null}
-          </Pressable>
-          {categories.map((category) => {
-            const active = categoryFilter === category.id;
-            return (
-              <Pressable
-                key={category.id}
-                style={styles.sheetRow}
-                onPress={() => {
-                  setCategoryFilter(category.id);
-                  setFilterSheetOpen(false);
-                }}
-              >
-                <Text style={[styles.sheetRowText, active ? styles.sheetRowActive : null]}>
-                  {category.name}
-                </Text>
-                {active ? (
-                  <Ionicons name="checkmark" size={18} color={theme.colors.brand.primary} />
-                ) : null}
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      </BottomSheet>
 
       <BottomSheet visible={sortSheetOpen} onClose={() => setSortSheetOpen(false)}>
         <Text style={styles.sheetTitle}>Sort by</Text>
@@ -360,7 +393,9 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
   },
   title: {
-    ...theme.typography.h1,
+    fontFamily: theme.fontFamilies.display.semibold,
+    fontSize: 26,
+    lineHeight: 32,
     color: theme.colors.text.primary,
   },
   searchWrap: {
@@ -368,7 +403,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 44,
     borderWidth: 1,
-    borderColor: theme.colors.border.strong,
+    borderColor: theme.colors.border.subtle,
     borderRadius: theme.radii.md,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: 0,
@@ -408,7 +443,7 @@ const styles = StyleSheet.create({
     height: 36,
     paddingHorizontal: theme.spacing.md,
     borderWidth: 1,
-    borderColor: theme.colors.border.strong,
+    borderColor: theme.colors.border.subtle,
     borderRadius: theme.radii.sm,
     backgroundColor: theme.colors.surface.raised,
   },
@@ -538,5 +573,117 @@ const styles = StyleSheet.create({
   sheetRowActive: {
     color: theme.colors.brand.primary,
     fontFamily: theme.fontFamilies.ui.semibold,
+  },
+  chipsRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    paddingRight: theme.spacing.lg,
+  },
+  topicChip: {
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.radii.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border.subtle,
+    backgroundColor: theme.colors.surface.raised,
+  },
+  topicChipActive: {
+    backgroundColor: theme.colors.brand.primary,
+    borderColor: theme.colors.brand.primary,
+  },
+  topicChipText: {
+    fontFamily: theme.fontFamilies.ui.medium,
+    fontSize: 13,
+    color: theme.colors.text.secondary,
+  },
+  topicChipTextActive: {
+    color: theme.colors.text.onBrand,
+  },
+  subbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  resultCount: {
+    fontFamily: theme.fontFamilies.ui.semibold,
+    fontSize: 12,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: theme.colors.text.disabled,
+  },
+  subbarRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+  },
+  sortLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  sortLinkText: {
+    fontFamily: theme.fontFamilies.ui.medium,
+    fontSize: 13,
+    color: theme.colors.brand.primary,
+  },
+  viewToggle: {
+    flexDirection: 'row',
+    backgroundColor: theme.colors.surface.sunken,
+    borderRadius: theme.radii.pill,
+    padding: 3,
+    gap: 2,
+  },
+  vt: {
+    width: 30,
+    height: 26,
+    borderRadius: theme.radii.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vtActive: {
+    backgroundColor: theme.colors.surface.raised,
+  },
+  list: {
+    gap: theme.spacing.sm,
+  },
+  card: {
+    backgroundColor: theme.colors.surface.raised,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border.subtle,
+    borderRadius: theme.radii.lg,
+    borderCurve: 'continuous',
+    padding: theme.spacing.lg,
+    gap: 6,
+  },
+  cardPressed: {
+    opacity: 0.7,
+  },
+  cardCatRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: theme.radii.pill,
+  },
+  cardCat: {
+    fontFamily: theme.fontFamilies.ui.semibold,
+    fontSize: 10,
+    letterSpacing: 0.7,
+    textTransform: 'uppercase',
+    flex: 1,
+  },
+  cardTitle: {
+    fontFamily: theme.fontFamilies.display.semibold,
+    fontSize: 16,
+    lineHeight: 21,
+    color: theme.colors.text.primary,
+  },
+  cardMeta: {
+    fontFamily: theme.fontFamilies.ui.regular,
+    fontSize: 12,
+    color: theme.colors.text.muted,
   },
 });

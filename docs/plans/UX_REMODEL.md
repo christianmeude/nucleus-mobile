@@ -152,7 +152,7 @@ Phases 1–6 delivered the three hero screens but were **not merged**. The under
 - ✅ `src/navigation/AppNavigator.tsx` — `MyPapers` tab `headerShown: false`.
 - Skills applied: thumb-zone gold FAB, one-column list + whitespace, `tabular-nums` meta, `borderCurve: 'continuous'`, ≥44×44 targets, safe-area top inset via `useSafeAreaInsets`.
 
-**Headerless rollout:** Decision = headerless across all 5 tabs, reached incrementally so no un-remodeled screen is left jammed under the status bar: ✅ My Papers (Phase 8), ✅ Notifications (Phase 9), ✅ Invitations (Phase 10), ⏳ Dashboard + Browse (later step). Each tab hides its native header only when it gains an in-body title + safe-area inset.
+**Headerless rollout:** Decision = headerless across all 5 tabs, reached incrementally so no un-remodeled screen is left jammed under the status bar: ✅ My Papers (Phase 8), ✅ Notifications (Phase 9), ✅ Invitations (Phase 10), ✅ Browse + Dashboard (Phase 12). **Complete — all 5 tabs headerless with in-body serif titles.** Each tab hides its native header only when it gains an in-body title + safe-area inset.
 
 **Exit criteria met:** `npx tsc --noEmit` green.
 
@@ -188,6 +188,18 @@ Phases 1–6 delivered the three hero screens but were **not merged**. The under
 - Skills applied: carded sections, thumb-zone sticky CTA, `borderCurve: 'continuous'`, safe-area insets.
 
 **Exit criteria met:** `npx tsc --noEmit` green.
+
+### Phase 12 — Browse refinement + headerless completion
+✅ **COMPLETED (stable)** — Browse rebuilt to the calmer one-column direction (Refinement B, dot variant); headerless rollout completed across Browse + Dashboard.
+
+**Implementation summary**
+- ✅ `src/screens/main/BrowseScreen.tsx` — addressed the text-heavy / two-column feedback: **default one-column** cards (category dot + colored category + serif title + author·date — lighter, more whitespace) with a **1-/2-column view toggle** (grid mode reuses `ResearchTile`); scrolling category **topic chips** replace the Filters bottom sheet; slim subbar (count + Sort link + toggle); navy featured hero kept; serif "Browse" title; headerless + safe-area inset. Sort bottom sheet retained. Reuses `resolveCategoryName` / `colorForCategory`.
+- ✅ `src/screens/main/DashboardScreen.tsx` — headerless + safe-area inset (final tab).
+- ✅ `src/navigation/AppNavigator.tsx` — `Browse` and `Dashboard` tabs `headerShown: false` → **all 5 student tabs now headerless**.
+- Satisfies **Issue #6** (toggleable list/tile view) properly — the 1-/2-column toggle is implemented (close on GitHub as delivered).
+- Skills applied: reduce density + whitespace, one-column default, `borderCurve: 'continuous'`, safe-area insets, ≥44×44 targets.
+
+**Exit criteria met:** `npx tsc --noEmit` green. **All UX Remodel screens (Phases 7–12) complete.**
 
 ---
 

@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
@@ -30,6 +31,7 @@ import {
 
 export const DashboardScreen = () => {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -110,7 +112,7 @@ export const DashboardScreen = () => {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + theme.spacing.md }]}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
