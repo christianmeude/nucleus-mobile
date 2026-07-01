@@ -88,7 +88,7 @@ const StudentTabs = () => {
       <Tabs.Screen
         name="Invitations"
         component={InvitationsScreen}
-        options={{ title: 'Invites' }}
+        options={{ title: 'Invites', headerShown: false }}
       />
     </Tabs.Navigator>
   );

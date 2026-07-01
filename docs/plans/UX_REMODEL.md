@@ -152,7 +152,7 @@ Phases 1–6 delivered the three hero screens but were **not merged**. The under
 - ✅ `src/navigation/AppNavigator.tsx` — `MyPapers` tab `headerShown: false`.
 - Skills applied: thumb-zone gold FAB, one-column list + whitespace, `tabular-nums` meta, `borderCurve: 'continuous'`, ≥44×44 targets, safe-area top inset via `useSafeAreaInsets`.
 
-**Headerless rollout:** Decision = headerless across all 5 tabs, reached incrementally so no un-remodeled screen is left jammed under the status bar: ✅ My Papers (Phase 8), ✅ Notifications (Phase 9), ⏳ Invitations (Phase 10), ⏳ Dashboard + Browse (later step). Each tab hides its native header only when it gains an in-body title + safe-area inset.
+**Headerless rollout:** Decision = headerless across all 5 tabs, reached incrementally so no un-remodeled screen is left jammed under the status bar: ✅ My Papers (Phase 8), ✅ Notifications (Phase 9), ✅ Invitations (Phase 10), ⏳ Dashboard + Browse (later step). Each tab hides its native header only when it gains an in-body title + safe-area inset.
 
 **Exit criteria met:** `npx tsc --noEmit` green.
 
@@ -164,6 +164,17 @@ Phases 1–6 delivered the three hero screens but were **not merged**. The under
 - ✅ `src/screens/main/NotificationsScreen.tsx` — headerless serif title + "Mark all read" link + "N unread / You're all caught up" subtitle; notifications bucketed into Today / This week / Earlier. All logic preserved (loadData, openNotification mark-read + navigate, markAllAsRead, unreadCount).
 - ✅ `src/navigation/AppNavigator.tsx` — `Notifications` tab `headerShown: false`.
 - Skills applied: distinct per-type icons for fast scanning, calm utility screen (no forced gold), `borderCurve: 'continuous'`, safe-area top inset, preserved empty/loading/error.
+
+**Exit criteria met:** `npx tsc --noEmit` green.
+
+### Phase 10 — Invitations (direction B)
+✅ **COMPLETED (stable)** — Inviter-avatar cards with inline navy Accept pill + subtle Decline link; expired cards recede; headerless.
+
+**Implementation summary**
+- ✅ `src/components/InvitationCard.tsx` — rebuilt to direction B: inviter initials avatar + name + sub-line (Invited/Expired date — inviter affiliation is not in the data) + status pill (pending→warning, accepted→success, declined→danger, expired→neutral) + serif research title + "Expires in N days" + inline actions: navy **Accept** pill (spinner + "Accepting" while acting) and subtle **Decline** text link. Expired cards recede (grey avatar/title) with disabled actions. `Card`/`Button` dropped for a custom Pressable layout.
+- ✅ `src/screens/main/InvitationsScreen.tsx` — headerless serif "Invitations" title + pending subtitle; all logic preserved (loadData, runAction accept/decline, isExpired→status coercion, counts, actingToken).
+- ✅ `src/navigation/AppNavigator.tsx` — `Invitations` tab `headerShown: false`.
+- Skills applied: inline actions, navy Accept / neutral Decline (palette discipline — no green/red), `borderCurve: 'continuous'`, safe-area inset, ≥44×44 targets, preserved empty/loading/error.
 
 **Exit criteria met:** `npx tsc --noEmit` green.
 
