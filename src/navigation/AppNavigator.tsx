@@ -16,6 +16,7 @@ import { ResearchDetailScreen } from '../screens/main/ResearchDetailScreen';
 import { SubmitResearchScreen } from '../screens/main/SubmitResearchScreen';
 import { FacultyTabs } from './FacultyTabs';
 import { FacultyReviewDetailScreen } from '../screens/faculty/FacultyReviewDetailScreen';
+import { FacultyPaperDetailScreen } from '../screens/faculty/FacultyPaperDetailScreen';
 import { theme } from '../theme';
 import { Logo } from '../components/ui';
 import { ResearchDetailHeader } from './ResearchDetailHeader';
@@ -162,6 +163,11 @@ export const AppNavigator = () => {
               name="FacultyReviewDetail"
               component={FacultyReviewDetailScreen}
               options={{ title: 'Paper Review' }}
+            />
+            <Stack.Screen
+              name="FacultyPaperDetail"
+              component={FacultyPaperDetailScreen}
+              options={{ title: 'Research Detail' }}
             />
           </>
         ) : (

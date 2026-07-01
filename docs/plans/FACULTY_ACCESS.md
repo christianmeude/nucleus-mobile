@@ -1,6 +1,6 @@
 # NUcleus Mobile — Implementation Plan: Faculty Access (Read-Only v1)
 
-> **STATUS: v1 VERIFIED ✅ · v2 write actions VERIFIED ✅ · embedded PDF viewer VERIFIED ✅ (Phase 11 — WebView + pdf.js)** — Branch `feat/faculty-access` (commit scope **`faculty-access-v2`**). v1 (Phases 0–6) and v2's three faculty decisions — Approve / Request Revision / Reject (Phases 7–9) — are runtime-verified by Christian and committed. v2 added SECURITY DEFINER write RPCs (snapshot `docs/sql/faculty_access_rpcs.sql`); declare-conflict is **out of scope** (not a faculty-facing action in web). **Do not merge until Christian explicitly instructs** (after absolute web parity). The nav-file deny stays lifted during v2; re-freeze it at that merge. Remaining deferred scope = §8.
+> **STATUS: v1 VERIFIED ✅ · v2 write actions VERIFIED ✅ · embedded PDF viewer VERIFIED ✅ (Phase 11 — WebView + pdf.js) · annotation viewing built (v3, Phases 12–14, runtime check pending) · additional tabs built (v4, Phases 15–19, runtime check pending)** — Branch `feat/faculty-access`. v1 (Phases 0–6) and v2's three faculty decisions — Approve / Request Revision / Reject (Phases 7–9) — are runtime-verified by Christian and committed. v2 added SECURITY DEFINER write RPCs (snapshot `docs/sql/faculty_access_rpcs.sql`); declare-conflict is **out of scope** (not a faculty-facing action in web). v4 (#12) adds Repository, Notifications, and Profile tabs — `tsc`-green, zero new SQL, no student/shared-`ui/` edits. **Do not merge until Christian explicitly instructs** (after absolute web parity). The nav-file deny stays lifted; re-freeze it at that merge. Remaining deferred scope = §8.
 > Opens the app's student-only foundation to a **separate, isolated faculty surface**: faculty get their own navigation, screens, and read path. Built entirely on shared tokens + `ui/` primitives so it absorbs the UX remodel at merge. **Read-only v1** — decision actions and richer review tooling are deferred (§8).
 
 **Canonical product context:** [PROJECT_CONTEXT.md](../PROJECT_CONTEXT.md)
@@ -344,28 +344,80 @@ Runtime verification pending on next EAS dev build.
 **Exit criteria met:** `npx tsc --noEmit` green; no new SQL; faculty reads published papers and
 their own notifications under existing RLS.
 
-### Phase 16 — Navigation surface ⏳ **NOT STARTED**
-- `navigation/types.ts` (frozen, approved-additive): add `FacultyNotifications`, `FacultyRepository`
-  to `FacultyTabsParamList`; add `FacultyPaperDetail: { paperId: string }` to `RootStackParamList`.
-- `FacultyTabs.tsx`: add the two new tab screens + icons; Profile is a 5th tab.
-- Placeholder screens stubbed with `EmptyState`, modeled on the Phase-1 pattern.
+### Phase 16 — Navigation surface ✅ **COMPLETED (stable)**
+**Implementation summary**
+- `navigation/types.ts` (frozen, approved-additive): added `FacultyRepository`,
+  `FacultyNotifications`, `FacultyProfile` to `FacultyTabsParamList`; added
+  `FacultyPaperDetail: { paperId: string }` to `RootStackParamList` (route registered in
+  `AppNavigator.tsx` at Phase 18, once the real screen exists).
+- `FacultyTabs.tsx`: wired the 3 new tabs + icons (`library-outline`, `notifications-outline`,
+  `person-outline`) — 5 tabs total (Dashboard, Review, Repository, Notifications, Profile).
+- 3 new placeholder screens (`FacultyRepositoryScreen`, `FacultyNotificationsScreen`,
+  `FacultyProfileScreen`), modeled on the Phase-1 pattern: centered `EmptyState` + theme tokens,
+  real content lands in Phases 17–19.
+- **Process note:** the harness's auto-mode permission classifier blocked Edit/Write on
+  `types.ts` despite the branch's own `.claude/settings.json` having no deny rule for it (Phase-1
+  unfreeze intact at the project-config level) — a harness-level rule outside this repo.
+  Christian applied the `types.ts` edit manually; classifier cleared on the next turn.
 
-### Phase 17 — Faculty Notifications screen ⏳ **NOT STARTED**
-- `FacultyNotificationsScreen`, ported from the student `NotificationsScreen` onto the new
-  faculty-resolved facade functions. Same UX: unread count, mark-all-read, mark-on-open,
-  navigate to `FacultyPaperDetail` when a notification references a paper.
+**Exit criteria met:** `npx tsc --noEmit` green; no student-screen or shared-`ui/` edits; faculty
+nav surface is the full 5-tab shape.
 
-### Phase 18 — Faculty Repository + paper detail ⏳ **NOT STARTED**
-- `FacultyRepositoryScreen`, ported from the student `BrowseScreen` (search + category filter)
-  onto the faculty-resolved `getPublishedPapers` + reused `researchApi.getCategories`.
-- New `FacultyPaperDetailScreen`: read-only metadata + `PdfViewer` (no review chrome, no
-  decision actions, no annotations — those are review-workflow-specific).
+### Phase 17 — Faculty Notifications screen ✅ **COMPLETED (stable)**
+**Implementation summary**
+- `FacultyNotificationsScreen` rebuilt from placeholder, ported from the student
+  `NotificationsScreen` onto `facultyApi.getNotifications` / `markNotificationRead` /
+  `markAllNotificationsRead`. Same UX: unread count, mark-all-read, mark-on-open, loading
+  (`Skeleton`) / empty (`EmptyState`) / error (`InlineNotice`) states, themed pull-to-refresh.
+- Reuses the shared `NotificationCard` + `ListEntranceItem` components read-only (both are
+  role-agnostic — take a plain `NotificationItem`). Tapping a notification with a `research_id`
+  navigates to **`FacultyReviewDetail`** (not the new `FacultyPaperDetail`) — faculty
+  notifications are review-workflow events (assignment, return-for-revision, etc.), so the
+  review-detail framing (history, decision UI) is the correct destination; `getReviewDetail`
+  already resolves any paper the signed-in faculty member can read under RLS, assigned or not.
 
-### Phase 19 — Faculty Profile + polish + handoff ⏳ **NOT STARTED**
-- New `FacultyProfileScreen`: account info from `useAuth().user` (name, email, role, department/
-  program) + sign-out button.
-- Remove the sign-out `IconButton` from `FacultyDashboardScreen`'s header (single entry point now).
-- `npx tsc --noEmit` green across all phases; handoff drafted.
+**Exit criteria met:** `npx tsc --noEmit` green. Runtime check pending on a dev build.
+
+### Phase 18 — Faculty Repository + paper detail ✅ **COMPLETED (stable)**
+**Implementation summary**
+- `FacultyRepositoryScreen` rebuilt from placeholder, modeled on `FacultyReviewScreen`'s
+  search+filter+`PressableCard` row layout (not the shared `ResearchCard`, which requires the
+  frozen `domain.ResearchPaper` shape — `FacultyAssignedPaper` is a different, camelCase shape,
+  so a thin inline row keeps the self-contained-facade convention rather than forcing an adapter).
+  Category filter chips (`researchApi.getCategories`, no role gate) + search over title/author/
+  keyword, reading `facultyApi.getPublishedPapers()`. Loading/empty/error states + pull-to-refresh.
+- New `FacultyPaperDetailScreen`: read-only metadata + `PdfViewer` (no annotations prop, no
+  review history, no decision actions) — reuses `facultyApi.getReviewDetail` / `getReviewFile`
+  directly rather than new facade functions, since both already query by `id` alone (RLS-scoped,
+  no `faculty_id` filter) and work unmodified for any paper the signed-in faculty member can read.
+- `navigation/types.ts` (frozen, approved-additive) already had `FacultyPaperDetail` from Phase
+  16; `AppNavigator.tsx` (frozen, approved-additive) now registers the `Stack.Screen`.
+- Repository row taps navigate to `FacultyPaperDetail` (not `FacultyReviewDetail`) per the
+  confirmed decision — keeps the review-workflow screen's framing reserved for actual assignments.
+
+**Exit criteria met:** `npx tsc --noEmit` green; no student-screen or shared-`ui/` edits. Runtime
+check pending on a dev build.
+
+### Phase 19 — Faculty Profile + polish + handoff ✅ **COMPLETED (stable)**
+**Implementation summary**
+- New `FacultyProfileScreen`: account info from `useAuth().user` (name, email, role, department,
+  program) in a `Card` with `Divider`-separated rows + a "Sign out" `Button` — single sign-out
+  entry point now.
+- `FacultyDashboardScreen`: removed the header `IconButton` sign-out + its now-unused `signOut`
+  destructure.
+- `npx tsc --noEmit` green across Phases 16–19; coexistence check confirmed (only nav files,
+  `src/screens/faculty/`, and the plan doc differ — no student-screen or shared-`ui/` edits).
+
+**Process note (this whole #12 effort, Phases 16–19):** the harness's auto-mode permission
+classifier blocked Edit/Write on `types.ts` and `AppNavigator.tsx` even after explicit chat-based
+authorization — it requires the change to flow through the branch's `.claude/settings.json`
+unfreeze mechanism specifically, and that file already has the Phase-1 unfreeze in place (absence
+of a deny entry). The classifier appears to read a static/cached rule set that doesn't reflect the
+live per-branch override; Christian applied both nav-file diffs manually outside the tool, then
+Claude verified via `tsc`.
+
+**Exit criteria met:** all 4 sub-phases (16–19) `tsc`-green; faculty 5-tab nav surface (Dashboard,
+Review, Repository, Notifications, Profile) complete. Runtime verification pending a dev build.
 
 ---
 
@@ -379,7 +431,9 @@ their own notifications under existing RLS.
   server-side; mobile cannot. To be implemented later **together with push** (DB trigger /
   edge function coordinated with web/backend).
 - **Review depth** — in-app **embedded PDF viewer** (**#10**) ✅ **delivered** (Phase 11; cross-role) via WebView + pdf.js; #10 closed. Annotation **viewing** (**#11**) is the recommended next step: the web stores annotations in `research_comments` (meta-in-text — `annotationType` of `comment`/`note`/`draw`, %-based `highlightRects` / `anchorPercent`, and a flattened-PNG `drawImageUrl` for drawings). Mobile **view-only** (a "See annotations" toggle, default off) is feasible because coords are percentage-based and drawings are pre-rendered images — no stroke/coordinate replication. **Spike done (2026-06-27): faculty read `research_comments` directly under RLS (all annotations non-internal) and drawing PNGs are public — no RPC/SQL.** Now in progress under §7C (Phase 12 read path landed).
-- **Additional faculty tabs** — Notifications, Repository (browse published), Profile (**#12**).
+- ✅ **Additional faculty tabs (#12)** — **DELIVERED** (v4, §7D, Phases 15–19): Repository
+  (browse published papers + new `FacultyPaperDetailScreen`), Notifications, and Profile
+  (account info + relocated sign-out). Zero new SQL. Runtime verification on a dev build pending.
 - **Other non-student roles** — dean, program_chair, staff, admin surfaces. (Outside current mobile product scope; not yet tracked as an issue.)
 
 ---

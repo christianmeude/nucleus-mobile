@@ -4,7 +4,6 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   EmptyState,
-  IconButton,
   InlineNotice,
   PressableCard,
   Skeleton,
@@ -73,7 +72,7 @@ const DashboardSkeleton = () => (
 
 export const FacultyDashboardScreen = () => {
   const navigation = useNavigation<FacultyNavigation>();
-  const { signOut, user } = useAuth();
+  const { user } = useAuth();
   const firstName = user?.fullName?.trim().split(/\s+/)[0] ?? '';
   const [papers, setPapers] = useState<FacultyAssignedPaper[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -121,12 +120,6 @@ export const FacultyDashboardScreen = () => {
         <Text style={styles.headerTitle}>
           {firstName ? `Welcome, ${firstName}.` : 'Welcome.'}
         </Text>
-        <IconButton
-          icon="log-out-outline"
-          color={theme.colors.brand.primary}
-          onPress={signOut}
-          accessibilityLabel="Sign out"
-        />
       </View>
 
       {error ? <InlineNotice tone="danger" message={error} /> : null}

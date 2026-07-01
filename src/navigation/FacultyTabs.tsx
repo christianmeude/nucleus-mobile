@@ -4,6 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { FacultyTabsParamList } from './types';
 import { FacultyDashboardScreen } from '../screens/faculty/FacultyDashboardScreen';
 import { FacultyReviewScreen } from '../screens/faculty/FacultyReviewScreen';
+import { FacultyRepositoryScreen } from '../screens/faculty/FacultyRepositoryScreen';
+import { FacultyNotificationsScreen } from '../screens/faculty/FacultyNotificationsScreen';
+import { FacultyProfileScreen } from '../screens/faculty/FacultyProfileScreen';
 import { theme } from '../theme';
 
 const Tabs = createBottomTabNavigator<FacultyTabsParamList>();
@@ -11,6 +14,9 @@ const Tabs = createBottomTabNavigator<FacultyTabsParamList>();
 const tabIcons: Record<keyof FacultyTabsParamList, keyof typeof Ionicons.glyphMap> = {
   FacultyDashboard: 'speedometer-outline',
   FacultyReview: 'document-text-outline',
+  FacultyRepository: 'library-outline',
+  FacultyNotifications: 'notifications-outline',
+  FacultyProfile: 'person-outline',
 };
 
 export const FacultyTabs = () => {
@@ -61,6 +67,21 @@ export const FacultyTabs = () => {
         name="FacultyReview"
         component={FacultyReviewScreen}
         options={{ title: 'Review' }}
+      />
+      <Tabs.Screen
+        name="FacultyRepository"
+        component={FacultyRepositoryScreen}
+        options={{ title: 'Repository' }}
+      />
+      <Tabs.Screen
+        name="FacultyNotifications"
+        component={FacultyNotificationsScreen}
+        options={{ title: 'Notifications' }}
+      />
+      <Tabs.Screen
+        name="FacultyProfile"
+        component={FacultyProfileScreen}
+        options={{ title: 'Profile' }}
       />
     </Tabs.Navigator>
   );
