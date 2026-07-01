@@ -152,7 +152,18 @@ Phases 1–6 delivered the three hero screens but were **not merged**. The under
 - ✅ `src/navigation/AppNavigator.tsx` — `MyPapers` tab `headerShown: false`.
 - Skills applied: thumb-zone gold FAB, one-column list + whitespace, `tabular-nums` meta, `borderCurve: 'continuous'`, ≥44×44 targets, safe-area top inset via `useSafeAreaInsets`.
 
-**Headerless rollout:** Decision = headerless across all 5 tabs, reached incrementally so no un-remodeled screen is left jammed under the status bar: ✅ My Papers (Phase 8), ⏳ Notifications (Phase 9), ⏳ Invitations (Phase 10), ⏳ Dashboard + Browse (later step). Each tab hides its native header only when it gains an in-body title + safe-area inset.
+**Headerless rollout:** Decision = headerless across all 5 tabs, reached incrementally so no un-remodeled screen is left jammed under the status bar: ✅ My Papers (Phase 8), ✅ Notifications (Phase 9), ⏳ Invitations (Phase 10), ⏳ Dashboard + Browse (later step). Each tab hides its native header only when it gains an in-body title + safe-area inset.
+
+**Exit criteria met:** `npx tsc --noEmit` green.
+
+### Phase 9 — Notifications (directions A + B)
+✅ **COMPLETED (stable)** — Date-grouped list combining A's tinted type-icons with B's soft-navy unread band; headerless.
+
+**Implementation summary**
+- ✅ `src/components/NotificationCard.tsx` — rebuilt to the combined row: tinted rounded-square type icon (invite→navy, comment/revision→amber, publish/approved→green, else slate bell — keyed off `NotificationItem.type`), body (primary text + optional secondary + relative time), navy unread dot, soft-navy unread band. `Badge`/`PressableCard` dropped.
+- ✅ `src/screens/main/NotificationsScreen.tsx` — headerless serif title + "Mark all read" link + "N unread / You're all caught up" subtitle; notifications bucketed into Today / This week / Earlier. All logic preserved (loadData, openNotification mark-read + navigate, markAllAsRead, unreadCount).
+- ✅ `src/navigation/AppNavigator.tsx` — `Notifications` tab `headerShown: false`.
+- Skills applied: distinct per-type icons for fast scanning, calm utility screen (no forced gold), `borderCurve: 'continuous'`, safe-area top inset, preserved empty/loading/error.
 
 **Exit criteria met:** `npx tsc --noEmit` green.
 
