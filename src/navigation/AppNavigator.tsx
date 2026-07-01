@@ -14,6 +14,7 @@ import { NotificationsScreen } from '../screens/main/NotificationsScreen';
 import { InvitationsScreen } from '../screens/main/InvitationsScreen';
 import { ResearchDetailScreen } from '../screens/main/ResearchDetailScreen';
 import { SubmitResearchScreen } from '../screens/main/SubmitResearchScreen';
+import { ProfileScreen } from '../screens/main/ProfileScreen';
 import { theme } from '../theme';
 import { Logo } from '../components/ui';
 import { ResearchDetailHeader } from './ResearchDetailHeader';
@@ -153,6 +154,11 @@ export const AppNavigator = () => {
               name="SubmitResearch"
               component={SubmitResearchScreen}
               options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="Profile"
+              component={ProfileScreen}
+              options={{ title: 'Profile' }}
             />
           </>
         )}

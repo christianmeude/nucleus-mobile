@@ -126,19 +126,38 @@ The earlier "25% NUcleus / 75% Anthropic warm-paper" brief and its locks are **r
 
 ---
 
+## 3b. Extension — full-app coherence (2026-07-01)
+
+Phases 1–6 delivered the three hero screens but were **not merged**. The undertaking is extended to bring the whole app to one coherent system: remodel the remaining screens (My Papers, Notifications, Invitations, Submit) and add a new **Profile** section, from fresh Claude Design mockups (project `NUcleus Mobile`). Chosen directions: **Profile C · My Papers B · Notifications A+B · Invitations B · Submit A (core, +b/c) · Browse B (refinement)**. Governed by the mobile skill stack (§2). Navigation is unfrozen on this branch to add the Profile route.
+
+### Phase 7 — Profile (new) + navigation wiring
+✅ **COMPLETED (stable)** — New account section, reached via an initials-avatar in the Dashboard header.
+
+**Implementation summary**
+- ✅ `src/screens/main/ProfileScreen.tsx` (new) — ported from `profile/direction-c`: soft-navy header band (navy initials avatar + serif name + role pill) → overlapping stats card (Papers / Saved via `getMyPapers` + `getSavedPaperIds`, `Promise.allSettled`) → Account card (Email / Department / Program / Member since — the gold dot on Member since is the screen's one gold accent) → App preferences placeholder card (non-functional rows) → subtle Sign out text link.
+- ✅ `src/navigation/types.ts` — added `Profile: undefined` to `RootStackParamList` (scoped nav unfreeze).
+- ✅ `src/navigation/AppNavigator.tsx` — registered the `Profile` stack screen (native header, title "Profile").
+- ✅ `src/screens/main/DashboardScreen.tsx` — sign-out `IconButton` replaced with an initials-avatar button → `navigate('Profile')`; sign-out now lives in Profile.
+- ✅ `src/utils/format.ts` — `formatMonthYear` helper for "Member since".
+- Skills applied: flex `gap`, `borderCurve: 'continuous'`, `tabular-nums` on stats, ≥44×44 tap targets, `selectable` email, native-header safe area.
+
+**Exit criteria met:** `npx tsc --noEmit` green.
+
+---
+
 ## 4. Constraints
 
 - `npx tsc --noEmit` green at every phase exit.
 - Palette discipline: navy + gold + slate only; gold once per screen; never Anthropic orange/blue/green.
 - Two typefaces only: **Source Serif 4 + IBM Plex Sans**.
 - Token changes keep non-remodeled screens working.
-- **Navigation frozen → no new routes**; collections surface via bottom sheets / in-screen sections only.
+- **Navigation** unfrozen on this branch only to add the `Profile` route (Phase 7); no further routes without cause. Collections still surface via bottom sheets / in-screen sections.
 - New types live in API facades, not `domain.ts` (frozen).
 - Commits staged specifically and presented for review (CONVENTIONS §2); no Co-Authored-By trailer.
 
 ## 5. Frozen files (do not touch)
 
-`AppNavigator.tsx`, `navigation/types.ts` (no new routes), `SubmitResearchScreen.tsx`, `AuthContext.tsx`, `supabase.ts`, `domain.ts`, `src/auth/`, `src/storage/authStorage.ts`, deployed SQL snapshots.
+`SubmitResearchScreen.tsx`, `AuthContext.tsx`, `supabase.ts`, `domain.ts`, `src/auth/`, `src/storage/authStorage.ts`, deployed SQL snapshots. (Navigation files `AppNavigator.tsx` / `navigation/types.ts` were unfrozen on this branch as of Phase 7 for the Profile route.)
 
 ## 6. Success criteria
 

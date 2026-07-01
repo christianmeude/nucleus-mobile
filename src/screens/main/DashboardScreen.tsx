@@ -20,7 +20,6 @@ import { ResearchCard } from '../../components/ResearchCard';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
 import {
   EmptyState,
-  IconButton,
   InlineNotice,
   Skeleton,
 } from '../../components/ui';
@@ -31,7 +30,7 @@ import {
 
 export const DashboardScreen = () => {
   const navigation = useNavigation<any>();
-  const { signOut, user } = useAuth();
+  const { user } = useAuth();
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [savedPapers, setSavedPapers] = useState<SavedPaper[]>([]);
@@ -72,6 +71,14 @@ export const DashboardScreen = () => {
     const fullName = user?.fullName?.trim();
     if (!fullName) return '';
     return fullName.split(/\s+/)[0] || '';
+  }, [user?.fullName]);
+
+  const initials = useMemo(() => {
+    const fullName = user?.fullName?.trim();
+    if (!fullName) return '?';
+    const parts = fullName.split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }, [user?.fullName]);
 
   const statusLine = useMemo(() => {
@@ -124,12 +131,14 @@ export const DashboardScreen = () => {
             </Text>
           ) : null}
         </View>
-        <IconButton
-          icon="log-out-outline"
-          color={theme.colors.brand.primary}
-          onPress={signOut}
-          accessibilityLabel="Sign out"
-        />
+        <Pressable
+          style={({ pressed }) => [styles.avatarButton, pressed && styles.avatarButtonPressed]}
+          onPress={() => navigation.navigate('Profile')}
+          accessibilityRole="button"
+          accessibilityLabel="Open profile"
+        >
+          <Text style={styles.avatarButtonText}>{initials}</Text>
+        </Pressable>
       </View>
 
       {error ? <InlineNotice tone="danger" message={error} /> : null}
@@ -242,6 +251,23 @@ const styles = StyleSheet.create({
   headerLeft: {
     flex: 1,
     gap: theme.spacing.xs,
+  },
+  avatarButton: {
+    width: 44,
+    height: 44,
+    borderRadius: theme.radii.pill,
+    borderCurve: 'continuous',
+    backgroundColor: theme.colors.brand.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarButtonPressed: {
+    opacity: 0.7,
+  },
+  avatarButtonText: {
+    fontFamily: theme.fontFamilies.ui.semibold,
+    fontSize: 14,
+    color: theme.colors.text.onBrand,
   },
   greeting: {
     ...theme.typography.h1,
