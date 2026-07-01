@@ -77,7 +77,7 @@ const StudentTabs = () => {
       <Tabs.Screen
         name="MyPapers"
         component={MyPapersScreen}
-        options={{ title: 'My Papers' }}
+        options={{ title: 'My Papers', headerShown: false }}
       />
       <Tabs.Screen name="Browse" component={BrowseScreen} options={{ title: 'Browse' }} />
       <Tabs.Screen

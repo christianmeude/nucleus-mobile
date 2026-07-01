@@ -143,6 +143,19 @@ Phases 1–6 delivered the three hero screens but were **not merged**. The under
 
 **Exit criteria met:** `npx tsc --noEmit` green.
 
+### Phase 8 — My Papers (direction B)
+✅ **COMPLETED (stable)** — Status-led list with a gold Submit FAB; first tab converted to the headerless in-body-title model.
+
+**Implementation summary**
+- ✅ `src/components/MyPaperCard.tsx` (new) — status-led row: left status color-bar (tone-matched via `state.*` / navy), category eyebrow (UUID-guarded), `PaperStatusChip`, serif title, meta line (Submitted/Published date + views·downloads for published).
+- ✅ `src/screens/main/MyPapersScreen.tsx` — rebuilt to direction B: in-body serif title + computed subtitle ("N submissions · M need your attention") → sunken search → status filter chips (All / In review / Needs revision / Published) → `MyPaperCard` list → **gold "+ Submit" FAB** (screen's one gold accent) replacing the header button. Categories fetched for name resolution (`Promise.allSettled`, best-effort). Skeleton / empty / error preserved.
+- ✅ `src/navigation/AppNavigator.tsx` — `MyPapers` tab `headerShown: false`.
+- Skills applied: thumb-zone gold FAB, one-column list + whitespace, `tabular-nums` meta, `borderCurve: 'continuous'`, ≥44×44 targets, safe-area top inset via `useSafeAreaInsets`.
+
+**Headerless rollout:** Decision = headerless across all 5 tabs, reached incrementally so no un-remodeled screen is left jammed under the status bar: ✅ My Papers (Phase 8), ⏳ Notifications (Phase 9), ⏳ Invitations (Phase 10), ⏳ Dashboard + Browse (later step). Each tab hides its native header only when it gains an in-body title + safe-area inset.
+
+**Exit criteria met:** `npx tsc --noEmit` green.
+
 ---
 
 ## 4. Constraints
