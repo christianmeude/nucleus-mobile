@@ -178,6 +178,17 @@ Phases 1–6 delivered the three hero screens but were **not merged**. The under
 
 **Exit criteria met:** `npx tsc --noEmit` green.
 
+### Phase 11 — Submit Research (direction A, visual-only)
+✅ **COMPLETED (stable)** — Frozen file unfrozen on this branch (deny lifted + restart). Re-skinned into carded sections; **no field reordered, no handler touched**.
+
+**Implementation summary**
+- ✅ `src/screens/main/SubmitResearchScreen.tsx` — visual-only restyle: added a local `FormSection` (numbered navy badge + uppercase title + carded body) and grouped the existing fields into **1 Attachment** (dashed upload Pressable → existing `handleChooseFile`), **2 Paper details** (title/abstract/keywords), **3 Classification** (category/department/faculty pickers → existing bottom sheets), **4 Co-authors** (search + chips), **5 Notes**. Serif header title + green **autosave** indicator (fed by `draftSyncMessage`); field borders softened to `border.subtle`; sticky **gold "Review & submit"** footer (screen's one gold accent) → existing `handleSubmitPress` → checklist modal; safe-area top/bottom insets. Bottom-sheet pickers + checklist modal unchanged. Inline Cancel dropped (header back covers it).
+- All state, effects, autosave, draft-sync, and submit/checklist logic preserved exactly.
+- ⚠️ `SubmitResearchScreen.tsx` deny removed from this branch's `.claude/settings.json` (scoped unfreeze, mirroring the Phase 7 navigation unfreeze).
+- Skills applied: carded sections, thumb-zone sticky CTA, `borderCurve: 'continuous'`, safe-area insets.
+
+**Exit criteria met:** `npx tsc --noEmit` green.
+
 ---
 
 ## 4. Constraints
@@ -192,7 +203,7 @@ Phases 1–6 delivered the three hero screens but were **not merged**. The under
 
 ## 5. Frozen files (do not touch)
 
-`SubmitResearchScreen.tsx`, `AuthContext.tsx`, `supabase.ts`, `domain.ts`, `src/auth/`, `src/storage/authStorage.ts`, deployed SQL snapshots. (Navigation files `AppNavigator.tsx` / `navigation/types.ts` were unfrozen on this branch as of Phase 7 for the Profile route.)
+`AuthContext.tsx`, `supabase.ts`, `domain.ts`, `src/auth/`, `src/storage/authStorage.ts`, deployed SQL snapshots. (Navigation files and `SubmitResearchScreen.tsx` were unfrozen on this branch — Phases 7 and 11 — for the Profile route and the Submit restyle; the session-critical core stays frozen.)
 
 ## 6. Success criteria
 

@@ -19,8 +19,6 @@
       "Write(src/storage/authStorage.ts)",
       "Edit(src/types/domain.ts)",
       "Write(src/types/domain.ts)",
-      "Edit(src/screens/main/SubmitResearchScreen.tsx)",
-      "Write(src/screens/main/SubmitResearchScreen.tsx)",
       "Edit(docs/sql/submit_research_rpcs.sql)",
       "Write(docs/sql/submit_research_rpcs.sql)",
       "Edit(docs/sql/submit_research_rls_policies.sql)",

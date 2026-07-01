@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DocumentPicker from 'expo-document-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -104,11 +105,32 @@ const structuredCoAuthorsFromPaper = (paper?: ResearchPaper | null): StudentSear
     }));
 };
 
+const FormSection = ({
+  number,
+  title,
+  children,
+}: {
+  number: number;
+  title: string;
+  children: ReactNode;
+}) => (
+  <View style={styles.card}>
+    <View style={styles.cardHead}>
+      <View style={styles.cardNum}>
+        <Text style={styles.cardNumText}>{number}</Text>
+      </View>
+      <Text style={styles.cardHeadText}>{title}</Text>
+    </View>
+    <View style={styles.cardBody}>{children}</View>
+  </View>
+);
+
 export const SubmitResearchScreen = () => {
   const navigation = useNavigation<SubmitNav>();
   const route = useRoute<SubmitRoute>();
   const resubmitPaperId = route.params?.resubmitPaperId;
   const isResubmit = Boolean(resubmitPaperId);
+  const insets = useSafeAreaInsets();
 
   const [formData, setFormData] = useState<SubmitDraftFormState>(EMPTY_FORM);
   const [selectedCoAuthors, setSelectedCoAuthors] = useState<StudentSearchResult[]>([]);
@@ -526,16 +548,24 @@ export const SubmitResearchScreen = () => {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.headerRow}>
-          <Pressable
-            onPress={() => (navigation.canGoBack() ? navigation.goBack() : null)}
-            accessibilityLabel="Back"
-            accessibilityRole="button"
-            style={styles.backButton}
-          >
-            <Ionicons name="chevron-back" size={22} color={theme.colors.brand.primary} />
-            <Text style={styles.backLabel}>Back</Text>
-          </Pressable>
+        <View style={[styles.headerRow, { paddingTop: insets.top + theme.spacing.xs }]}>
+          <View style={styles.navRow}>
+            <Pressable
+              onPress={() => (navigation.canGoBack() ? navigation.goBack() : null)}
+              accessibilityLabel="Back"
+              accessibilityRole="button"
+              style={styles.backButton}
+            >
+              <Ionicons name="chevron-back" size={22} color={theme.colors.brand.primary} />
+              <Text style={styles.backLabel}>Back</Text>
+            </Pressable>
+            {draftSyncMessage ? (
+              <View style={styles.autosave}>
+                <View style={styles.autosaveDot} />
+                <Text style={styles.autosaveText}>{draftSyncMessage}</Text>
+              </View>
+            ) : null}
+          </View>
           <Text style={styles.title}>
             {isResubmit ? 'Resubmit Research' : 'Submit Research'}
           </Text>
@@ -561,56 +591,58 @@ export const SubmitResearchScreen = () => {
               </Card>
             ) : null}
 
-            {/* File section */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                Research file{!isResubmit ? ' *' : ''}
-              </Text>
+            {/* Attachment */}
+            <FormSection number={1} title="Attachment">
               {file ? (
-                <Card padding="md">
-                  <View style={styles.fileRow}>
-                    <Ionicons
-                      name="document-text-outline"
-                      size={28}
-                      color={theme.colors.brand.primary}
-                    />
-                    <View style={styles.fileMeta}>
-                      <Text style={styles.fileName} numberOfLines={1}>
-                        {file.name}
-                      </Text>
-                      <Text style={styles.fileSize}>
-                        {(file.size / (1024 * 1024)).toFixed(2)} MB
-                      </Text>
-                    </View>
-                    <Pressable
-                      onPress={() => setFile(null)}
-                      accessibilityLabel="Remove file"
-                      accessibilityRole="button"
-                    >
-                      <Ionicons name="close" size={20} color={theme.colors.text.muted} />
-                    </Pressable>
+                <View style={styles.fileRow}>
+                  <Ionicons
+                    name="document-text-outline"
+                    size={28}
+                    color={theme.colors.brand.primary}
+                  />
+                  <View style={styles.fileMeta}>
+                    <Text style={styles.fileName} numberOfLines={1}>
+                      {file.name}
+                    </Text>
+                    <Text style={styles.fileSize}>
+                      {(file.size / (1024 * 1024)).toFixed(2)} MB
+                    </Text>
                   </View>
-                </Card>
+                  <Pressable
+                    onPress={() => setFile(null)}
+                    accessibilityLabel="Remove file"
+                    accessibilityRole="button"
+                  >
+                    <Ionicons name="close" size={20} color={theme.colors.text.muted} />
+                  </Pressable>
+                </View>
               ) : (
-                <Card padding="md">
-                  <Text style={styles.fileEmpty}>
-                    {isResubmit && resubmitPaper?.file_url
-                      ? 'Keeping current file unless replaced.'
-                      : 'No file attached.'}
-                  </Text>
-                  <Text style={styles.policyLine}>{policyLine}</Text>
-                  <View style={styles.fileButtonRow}>
-                    <Button
-                      label={isResubmit && resubmitPaper?.file_url ? 'Replace file' : 'Choose file'}
-                      onPress={handleChooseFile}
-                      variant="secondary"
-                      disabled={submitting}
-                    />
+                <Pressable
+                  onPress={handleChooseFile}
+                  disabled={submitting}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    isResubmit && resubmitPaper?.file_url ? 'Replace file' : 'Upload your paper'
+                  }
+                  style={({ pressed }) => [styles.upload, pressed && styles.uploadPressed]}
+                >
+                  <View style={styles.uploadIcon}>
+                    <Ionicons name="cloud-upload-outline" size={22} color={theme.colors.brand.primary} />
                   </View>
-                </Card>
+                  <Text style={styles.uploadPrompt}>
+                    {isResubmit && resubmitPaper?.file_url ? 'Replace file' : 'Upload your paper'}
+                  </Text>
+                  <Text style={styles.uploadHint}>
+                    {isResubmit && resubmitPaper?.file_url
+                      ? 'Keeping current file unless replaced'
+                      : policyLine}
+                  </Text>
+                </Pressable>
               )}
-            </View>
+            </FormSection>
 
+            {/* Paper details */}
+            <FormSection number={2} title="Paper details">
             {/* Title */}
             <View style={styles.section}>
               <Text style={styles.label}>Research title *</Text>
@@ -659,6 +691,10 @@ export const SubmitResearchScreen = () => {
               <Text style={styles.helperText}>Separate with commas — improves discoverability.</Text>
             </View>
 
+            </FormSection>
+
+            {/* Classification */}
+            <FormSection number={3} title="Classification">
             {/* Category */}
             <View style={styles.section}>
               <Text style={styles.label}>Research category *</Text>
@@ -734,6 +770,10 @@ export const SubmitResearchScreen = () => {
               </Text>
             </View>
 
+            </FormSection>
+
+            {/* Co-authors */}
+            <FormSection number={4} title="Co-authors">
             {/* Co-authors search */}
             <View style={styles.section}>
               <Text style={styles.label}>Co-authors</Text>
@@ -807,6 +847,10 @@ export const SubmitResearchScreen = () => {
               ) : null}
             </View>
 
+            </FormSection>
+
+            {/* Notes */}
+            <FormSection number={5} title="Notes">
             {/* External author notes */}
             <View style={styles.section}>
               <Text style={styles.label}>External / non-system co-author notes</Text>
@@ -823,10 +867,7 @@ export const SubmitResearchScreen = () => {
                 Stored separately from structured co-authorship.
               </Text>
             </View>
-
-            {draftSyncMessage ? (
-              <Text style={styles.draftStatus}>{draftSyncMessage}</Text>
-            ) : null}
+            </FormSection>
 
             {submitError ? <InlineNotice tone="danger" message={submitError} /> : null}
             {submitSuccess ? (
@@ -839,24 +880,32 @@ export const SubmitResearchScreen = () => {
                 }
               />
             ) : null}
-
-            <View style={styles.actionRow}>
-              <Button
-                label="Cancel"
-                onPress={() => (navigation.canGoBack() ? navigation.goBack() : null)}
-                variant="subtle"
-              />
-              <Button
-                label={isResubmit ? 'Update Research' : 'Submit for Review'}
-                onPress={handleSubmitPress}
-                variant="primary"
-                disabled={submitDisabled}
-                loading={submitting}
-              />
-            </View>
           </>
         )}
       </ScrollView>
+
+      {!bootstrapping ? (
+        <View style={[styles.footer, { paddingBottom: insets.bottom + theme.spacing.md }]}>
+          <Pressable
+            onPress={handleSubmitPress}
+            disabled={submitDisabled}
+            style={({ pressed }) => [
+              styles.submit,
+              submitDisabled && styles.submitDisabled,
+              pressed && !submitDisabled && styles.submitPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={isResubmit ? 'Review and update' : 'Review and submit'}
+          >
+            {submitting ? (
+              <ActivityIndicator size="small" color={theme.colors.text.onBrand} />
+            ) : null}
+            <Text style={[styles.submitText, submitDisabled && styles.submitTextDisabled]}>
+              {isResubmit ? 'Review & update' : 'Review & submit'}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
 
       {/* Pickers */}
       <BottomSheet visible={pickerOpen === 'category'} onClose={() => setPickerOpen(null)}>
@@ -1014,10 +1063,11 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: theme.spacing.lg,
+    paddingBottom: theme.spacing['3xl'] + 40,
     gap: theme.spacing.lg,
   },
   headerRow: {
-    gap: theme.spacing.xs,
+    gap: theme.spacing.sm,
   },
   backButton: {
     flexDirection: 'row',
@@ -1030,7 +1080,9 @@ const styles = StyleSheet.create({
     color: theme.colors.brand.primary,
   },
   title: {
-    ...theme.typography.h1,
+    fontFamily: theme.fontFamilies.display.semibold,
+    fontSize: 22,
+    lineHeight: 28,
     color: theme.colors.text.primary,
   },
   subtitle: {
@@ -1059,7 +1111,7 @@ const styles = StyleSheet.create({
     ...theme.typography.body,
     color: theme.colors.text.primary,
     borderWidth: 1,
-    borderColor: theme.colors.border.strong,
+    borderColor: theme.colors.border.subtle,
     borderRadius: theme.radii.md,
     backgroundColor: theme.colors.surface.raised,
     paddingHorizontal: theme.spacing.md,
@@ -1075,7 +1127,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: theme.colors.border.strong,
+    borderColor: theme.colors.border.subtle,
     borderRadius: theme.radii.md,
     backgroundColor: theme.colors.surface.raised,
     paddingHorizontal: theme.spacing.md,
@@ -1096,7 +1148,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: theme.spacing.sm,
     borderWidth: 1,
-    borderColor: theme.colors.border.strong,
+    borderColor: theme.colors.border.subtle,
     borderRadius: theme.radii.md,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
@@ -1247,5 +1299,129 @@ const styles = StyleSheet.create({
   checklistLabel: {
     ...theme.typography.label,
     color: theme.colors.text.primary,
+  },
+  navRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 32,
+  },
+  autosave: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  autosaveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: theme.radii.pill,
+    backgroundColor: theme.colors.state.success,
+  },
+  autosaveText: {
+    fontFamily: theme.fontFamilies.ui.medium,
+    fontSize: 12,
+    color: theme.colors.state.success,
+  },
+  card: {
+    backgroundColor: theme.colors.surface.raised,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border.subtle,
+    borderRadius: theme.radii.lg,
+    borderCurve: 'continuous',
+    padding: theme.spacing.lg,
+  },
+  cardHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  },
+  cardNum: {
+    width: 20,
+    height: 20,
+    borderRadius: theme.radii.pill,
+    backgroundColor: theme.colors.brand.primarySurface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardNumText: {
+    fontFamily: theme.fontFamilies.ui.semibold,
+    fontSize: 11,
+    color: theme.colors.brand.primary,
+  },
+  cardHeadText: {
+    fontFamily: theme.fontFamilies.ui.semibold,
+    fontSize: 13,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    color: theme.colors.text.secondary,
+  },
+  cardBody: {
+    gap: theme.spacing.md,
+  },
+  upload: {
+    borderWidth: 1.5,
+    borderColor: theme.colors.border.strong,
+    borderStyle: 'dashed',
+    borderRadius: theme.radii.md,
+    borderCurve: 'continuous',
+    paddingVertical: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.lg,
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  uploadPressed: {
+    opacity: 0.7,
+  },
+  uploadIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: theme.radii.md,
+    borderCurve: 'continuous',
+    backgroundColor: theme.colors.brand.primarySurface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  uploadPrompt: {
+    fontFamily: theme.fontFamilies.ui.medium,
+    fontSize: 14,
+    color: theme.colors.brand.primary,
+  },
+  uploadHint: {
+    fontFamily: theme.fontFamilies.ui.regular,
+    fontSize: 12,
+    color: theme.colors.text.muted,
+    textAlign: 'center',
+  },
+  footer: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.border.subtle,
+    backgroundColor: theme.colors.surface.raised,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+  },
+  submit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    backgroundColor: theme.colors.brand.accent,
+    borderRadius: theme.radii.md,
+    borderCurve: 'continuous',
+    paddingVertical: theme.spacing.md,
+  },
+  submitDisabled: {
+    backgroundColor: theme.colors.border.subtle,
+  },
+  submitPressed: {
+    opacity: 0.9,
+  },
+  submitText: {
+    fontFamily: theme.fontFamilies.ui.semibold,
+    fontSize: 15,
+    color: theme.colors.text.onBrand,
+  },
+  submitTextDisabled: {
+    color: theme.colors.text.muted,
   },
 });
