@@ -378,3 +378,24 @@ See `docs/handoffs/HANDOFF_TEMPLATE.md` for the full section template.
 A handoff is the **delta** since the last handoff plus the **current-state snapshot**. A future session reading only CLAUDE.md and the latest handoff should be able to fully resume work without needing any other context from this conversation.
 
 Stable invariants (UUID mismatch, email-based RLS, SECURITY DEFINER pattern) live in `CLAUDE.md`. Include in the handoff only if there are session-specific updates or corrections to those patterns — do not copy them verbatim every time.
+
+---
+
+## 10. Project-Wide Standards
+
+Some changes establish a standard the **entire app** must follow — not just the branch that introduced them. These belong in canonical docs (this file / `CLAUDE.md`, canonical on `dev`) so they propagate to every feature branch on `git merge dev`, **including `feat/faculty-access`**. When you introduce or change such a standard, document it here in the same change — a standard that lives only in a feature branch's plan or code will drift and the rest of the app won't follow it.
+
+### Shared utilities (reuse over duplication)
+
+Cross-cutting helpers live in `src/utils/` and are the single source of truth — never re-implement them per screen. When a helper is copied a second time, extract it. Canonical examples:
+
+- `src/utils/category.ts` — `resolveCategoryName` / `buildCategoryNameById` / `UUID_PATTERN`: the only sanctioned way to turn a paper's `category` into a display name (UUID-guarded, Issue #5). Every papers-facing surface (Browse, ResearchDetail, My Papers, and any faculty equivalent) must use it.
+- `src/utils/format.ts` — dates, relative time, status labels, author-name resolution.
+
+### Design system (single visual standard)
+
+The cool-slate + navy/gold system with Source Serif 4 (display) + IBM Plex Sans (UI), realized in `src/theme/`, is the canonical visual standard for the whole app. Always consume theme tokens from `src/theme` — never hardcode colors, fonts, spacing, or radii. New screens and features on **any** branch (student or faculty) must adopt it. It is governed by the mobile skill stack documented in the active undertaking's design-foundation section.
+
+### Applicability to faculty
+
+`feat/faculty-access` inherits these standards when it merges `dev`. The faculty workflow — its screens, cards, and utilities — follows the same shared utilities and design system; it does not get a parallel set of conventions.
