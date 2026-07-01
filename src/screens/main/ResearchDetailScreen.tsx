@@ -26,10 +26,9 @@ import {
   paperDate,
   statusToLabel,
 } from '../../utils/format';
+import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
 
 type DetailRouteProp = RouteProp<RootStackParamList, 'ResearchDetail'>;
-
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const MAX_RELATED = 3;
 
@@ -85,23 +84,7 @@ export const ResearchDetailScreen = () => {
     run();
   }, [paperId]);
 
-  const categoryNameById = useMemo(
-    () => new Map(categories.map((item) => [item.id, item.name])),
-    [categories]
-  );
-
-  /** Display-only category name, UUID-guarded (Issue #5). Null when nothing resolves. */
-  const categoryNameForDisplay = useMemo(() => {
-    return (value?: string | null): string | null => {
-      if (!value) return null;
-      if (categoryNameById.has(value)) {
-        const name = categoryNameById.get(value);
-        return name && name.trim() ? name : null;
-      }
-      if (!UUID_PATTERN.test(value)) return value;
-      return null;
-    };
-  }, [categoryNameById]);
+  const categoryNameById = useMemo(() => buildCategoryNameById(categories), [categories]);
 
   /** Same category (weighted) + shared keywords; excludes the current paper. */
   const related = useMemo(() => {
@@ -198,7 +181,7 @@ export const ResearchDetailScreen = () => {
   const showWorkflow =
     isOwner && paper.status !== 'approved' && paper.status !== 'published';
   const keywords = Array.isArray(paper.keywords) ? paper.keywords.filter(Boolean) : [];
-  const categoryName = categoryNameForDisplay(paper.category);
+  const categoryName = resolveCategoryName(paper.category, categoryNameById);
   const authorName = getPrimaryAuthorName(paper);
   const coAuthorNames = listCoAuthorNames(paper);
   const coAuthorList =
@@ -277,7 +260,7 @@ export const ResearchDetailScreen = () => {
             <Text style={styles.sectionLabel}>Related papers</Text>
             <View style={styles.relatedList}>
               {related.map((item) => {
-                const relatedCategory = categoryNameForDisplay(item.category);
+                const relatedCategory = resolveCategoryName(item.category, categoryNameById);
                 const relatedYear = yearOf(item);
                 return (
                   <Pressable

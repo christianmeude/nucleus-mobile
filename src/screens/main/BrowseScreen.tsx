@@ -16,8 +16,7 @@ import { getPrimaryAuthorName, paperDate } from '../../utils/format';
 import { theme } from '../../theme';
 import { ResearchTile } from '../../components/ResearchTile';
 import { BottomSheet, Chip, EmptyState, InlineNotice, Skeleton } from '../../components/ui';
-
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
 
 type SortKey = 'newest' | 'most_viewed';
 
@@ -80,9 +79,7 @@ export const BrowseScreen = () => {
     }, [loadData])
   );
 
-  const categoryNameById = useMemo(() => {
-    return new Map(categories.map((item) => [item.id, item.name]));
-  }, [categories]);
+  const categoryNameById = useMemo(() => buildCategoryNameById(categories), [categories]);
 
   const categoryColorById = useMemo(() => {
     const map = new Map<string, string>();
@@ -91,21 +88,6 @@ export const BrowseScreen = () => {
     });
     return map;
   }, [categories]);
-
-  /** Display-only category name, UUID-guarded (Issue #5). Null when nothing resolves. */
-  const categoryNameForDisplay = useCallback(
-    (value?: string | null): string | null => {
-      if (!value) return null;
-      if (categoryNameById.has(value)) {
-        const name = categoryNameById.get(value);
-        if (!name || !name.trim()) return null;
-        return name;
-      }
-      if (!UUID_PATTERN.test(value)) return value;
-      return null;
-    },
-    [categoryNameById]
-  );
 
   const colorForCategory = useCallback(
     (value?: string | null) => {
@@ -290,7 +272,7 @@ export const BrowseScreen = () => {
                 <View key={paper.id} style={styles.gridCell}>
                   <ResearchTile
                     paper={paper}
-                    category={categoryNameForDisplay(paper.category)}
+                    category={resolveCategoryName(paper.category, categoryNameById)}
                     categoryColor={colorForCategory(paper.category)}
                     onPress={() => openDetail(paper.id)}
                   />

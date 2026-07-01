@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
 import { Category, PaperStatus, ResearchPaper } from '../../types/domain';
+import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
 import { theme } from '../../theme';
 import { MyPaperCard } from '../../components/MyPaperCard';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
@@ -24,9 +25,6 @@ import {
 import { Chip, EmptyState, InlineNotice, Skeleton } from '../../components/ui';
 
 type FilterKey = 'all' | 'active' | 'published' | 'action';
-
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const isFilterMatch = (status: PaperStatus, filter: FilterKey) => {
   if (filter === 'all') return true;
@@ -78,23 +76,7 @@ export const MyPapersScreen = () => {
     }, [loadData])
   );
 
-  const categoryNameById = useMemo(
-    () => new Map(categories.map((item) => [item.id, item.name])),
-    [categories]
-  );
-
-  /** Display-only category name, UUID-guarded (Issue #5). Null when nothing resolves. */
-  const categoryNameForDisplay = useCallback(
-    (value?: string | null): string | null => {
-      if (!value) return null;
-      if (categoryNameById.has(value)) {
-        const name = categoryNameById.get(value);
-        return name && name.trim() ? name : null;
-      }
-      return UUID_PATTERN.test(value) ? null : value;
-    },
-    [categoryNameById]
-  );
+  const categoryNameById = useMemo(() => buildCategoryNameById(categories), [categories]);
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -212,7 +194,7 @@ export const MyPapersScreen = () => {
               <ListEntranceItem key={paper.id} index={index}>
                 <MyPaperCard
                   paper={paper}
-                  category={categoryNameForDisplay(paper.category)}
+                  category={resolveCategoryName(paper.category, categoryNameById)}
                   onPress={() => navigation.navigate('ResearchDetail', { paperId: paper.id })}
                 />
               </ListEntranceItem>
