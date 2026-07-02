@@ -65,9 +65,22 @@ Each phase is one session turn (house Phase Protocol: investigate → report →
 build with the new UI font loaded.
 
 ### Phase 1 — Student "Read paper" → in-app PdfViewer
-⏳ **NOT STARTED** — Port FAC's pattern into UX-R's rebuilt ResearchDetail: resolve
-file on mount, inline `<PdfViewer>`, `trackView` on first render; drop the
-`WebBrowser.openBrowserAsync` path. No rebuild (webview already baked in).
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- Ported FAC's pattern into UX-R's `ResearchDetailScreen`: a mount effect resolves
+  the (signed) file URL via `getResearchFile` into `fileUri`/`fileError`; a new
+  "Paper" section renders the shared `<PdfViewer>` inline (loading→`Skeleton`,
+  failure→`InlineNotice`). `trackView` moved from button-tap to the viewer's
+  `onFirstLoad` (fires once on first render).
+- Dropped the `WebBrowser.openBrowserAsync` path, the "Read paper" `Button`, and
+  the `openFile`/`openingFile` machinery. Bookmark control kept, right-aligned in
+  its own row (option A). `expo-web-browser` stays — `PdfViewer` still uses it for
+  its error fallback (Phase 2 removal decision unaffected).
+- `npx tsc --noEmit` **green**; no orphaned references.
+
+**Exit criteria met:** student ResearchDetail reads PDFs in-app via the same shared
+viewer as faculty; no external-browser handoff in the happy path.
 
 ### Phase 2 — Dead-dependency cleanup
 ⏳ **NOT STARTED** — Remove `react-native-pdf`, `react-native-blob-util`, both

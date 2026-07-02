@@ -10,14 +10,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-import * as WebBrowser from 'expo-web-browser';
 import { researchApi } from '../../api/research';
 import { getSavedPaperIds, togglePaperSaved } from '../../api/collections';
 import { RootStackParamList } from '../../navigation/types';
 import { Category, ResearchPaper, WorkflowEntry } from '../../types/domain';
 import { useAuth } from '../../context/AuthContext';
 import { theme } from '../../theme';
-import { Button, EmptyState, InlineNotice } from '../../components/ui';
+import { EmptyState, InlineNotice, Skeleton } from '../../components/ui';
+import { PdfViewer } from '../../components/PdfViewer';
 import {
   formatDate,
   formatRelativeTime,
@@ -50,7 +50,8 @@ export const ResearchDetailScreen = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [published, setPublished] = useState<ResearchPaper[]>([]);
   const [loading, setLoading] = useState(true);
-  const [openingFile, setOpeningFile] = useState(false);
+  const [fileUri, setFileUri] = useState<string | null>(null);
+  const [fileError, setFileError] = useState('');
   const [saved, setSaved] = useState(false);
   const [savePending, setSavePending] = useState(false);
   const [error, setError] = useState('');
@@ -82,6 +83,24 @@ export const ResearchDetailScreen = () => {
     };
 
     run();
+  }, [paperId]);
+
+  // Resolve the (possibly signed) file URL on mount so the inline PdfViewer can render it.
+  // trackView is deferred to the viewer's first-render callback (see onFirstLoad below).
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        setFileError('');
+        const resolved = await researchApi.getResearchFile(paperId);
+        if (active) setFileUri(resolved.fileUrl);
+      } catch (_error) {
+        if (active) setFileError('Unable to load the paper file.');
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, [paperId]);
 
   const categoryNameById = useMemo(() => buildCategoryNameById(categories), [categories]);
@@ -120,35 +139,6 @@ export const ResearchDetailScreen = () => {
       setSaved((prev) => !prev);
     } finally {
       setSavePending(false);
-    }
-  };
-
-  const openFile = async () => {
-    if (!paper) return;
-    setOpeningFile(true);
-
-    try {
-      try {
-        await researchApi.trackView(paperId);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unable to track view.');
-      }
-
-      const resolved = await researchApi.getResearchFile(paperId);
-      const url = resolved.fileUrl || paper.file_url;
-
-      if (!url) {
-        setError('File URL is unavailable for this paper.');
-        return;
-      }
-
-      // NOTE: opens the signed URL in the system browser. Swapped to the shared in-app
-      // PdfViewer after the faculty-access mini-merge + dev-client rebuild.
-      await WebBrowser.openBrowserAsync(url);
-    } catch (_error) {
-      setError('Unable to open paper file.');
-    } finally {
-      setOpeningFile(false);
     }
   };
 
@@ -211,15 +201,6 @@ export const ResearchDetailScreen = () => {
 
         {/* Download is intentionally hidden pending backend allow_download support (Issue #8). */}
         <View style={styles.readRow}>
-          <View style={styles.readBtn}>
-            <Button
-              label="Read paper"
-              variant="primary"
-              onPress={openFile}
-              loading={openingFile}
-              disabled={openingFile}
-            />
-          </View>
           <Pressable
             style={({ pressed }) => [styles.bookmarkBtn, pressed && styles.bookmarkPressed]}
             onPress={handleToggleSave}
@@ -233,6 +214,22 @@ export const ResearchDetailScreen = () => {
               color={saved ? theme.colors.brand.accent : theme.colors.text.muted}
             />
           </Pressable>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Paper</Text>
+          {fileError ? (
+            <InlineNotice tone="danger" message={fileError} />
+          ) : fileUri ? (
+            <PdfViewer
+              uri={fileUri}
+              onFirstLoad={() => {
+                researchApi.trackView(paperId).catch(() => undefined);
+              }}
+            />
+          ) : (
+            <Skeleton height={460} radius="lg" />
+          )}
         </View>
 
         {error ? <InlineNotice tone="danger" message={error} /> : null}
@@ -401,11 +398,8 @@ const styles = StyleSheet.create({
   readRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    justifyContent: 'flex-end',
     marginTop: theme.spacing.lg,
-  },
-  readBtn: {
-    flex: 1,
   },
   bookmarkBtn: {
     width: 44,
