@@ -494,6 +494,7 @@ const styles = StyleSheet.create({
   content: {
     padding: theme.spacing.lg,
     gap: theme.spacing.md,
+    paddingBottom: theme.spacing['3xl'],
   },
   centered: {
     flex: 1,
@@ -505,7 +506,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   title: {
-    ...theme.typography.h1,
+    fontFamily: theme.fontFamilies.display.semibold,
+    fontSize: 26,
+    lineHeight: 32,
     color: theme.colors.text.primary,
   },
   meta: {

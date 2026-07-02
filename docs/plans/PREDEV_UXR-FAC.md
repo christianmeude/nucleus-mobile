@@ -148,8 +148,23 @@ re-skin adopts the same `fontFamilies.display` serif for in-body titles.
 **Exit criteria met:** Review is inset-correct with a serif title; tokenized; tsc green.
 
 ### Phase 5 — FacultyReviewDetail re-skin
-⏳ **NOT STARTED** — Largest screen (PdfViewer + annotations + decision panel);
-adopt the student ResearchDetail header pattern.
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- Adopted the student ResearchDetail header pattern: `FacultyReviewDetail` now uses
+  the shared `ResearchDetailHeader` custom header (`header: props =>
+  <ResearchDetailHeader {...props}/>` in `AppNavigator`) — themed back chevron,
+  safe-area inset, hairline border — replacing the default native header. The header
+  is generic (reads `options.title`), so "Paper Review" flows straight through.
+- Switched the screen title from `typography.h1` (sans) to the serif
+  `fontFamilies.display.semibold` 26/32 (matches the student ResearchDetail title).
+  Added `paddingBottom: 3xl` for home-indicator clearance.
+- The rest was already tokenized (PdfViewer + annotation overlays, `Card` timeline,
+  `BottomSheet` decision flows, `Chip` status). Approve = primary navy; no
+  decorative gold. `npx tsc --noEmit` **green**.
+
+**Exit criteria met:** ReviewDetail wears the student header pattern + serif title;
+tsc green.
 
 ### Phase 6 — FacultyRepository re-skin
 ⏳ **NOT STARTED** — Adopt `src/utils/category.ts` (§10 shared-utils) + tile/card patterns.
