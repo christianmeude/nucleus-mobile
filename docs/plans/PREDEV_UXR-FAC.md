@@ -226,24 +226,40 @@ already uses the inline viewer; tsc green.
 the whole faculty surface; tsc green.
 
 ### Phase 9 — Queued revisions pass
-⏳ **NOT STARTED** — Christian's held UX-R revision list + faculty QA findings.
-Split 9a/9b if long.
+🔴 **BLOCKED** — awaiting inputs. This phase applies Christian's held UX-R revision
+list + faculty QA findings. Per `HANDOFF_UX-R_PHASE-12.md`, those tweaks were
+"queued by Christian" and collected verbally — **not documented in-repo**, so there
+are no actionable items for an autonomous session to apply. Unblocks when Christian
+provides the revision list and/or completes the Phase-11 both-role QA (findings feed
+here). Do not fabricate revisions.
 
 ### Phase 10 — Docs sync + guardrail re-freeze
-⏳ **NOT STARTED** — CLAUDE.md Key Files additions (PdfViewer, `src/api/faculty.ts`,
-FacultyTabs); close #12; **re-freeze** nav + SubmitResearch via
-`git checkout dev -- .claude/settings.json` + commit (git-level write, flagged;
-must come after all nav-editing phases).
+⏳ **NOT STARTED** (closeout) — CLAUDE.md Key Files additions (PdfViewer,
+`src/api/faculty.ts`, FacultyTabs); close #12; **re-freeze** nav + SubmitResearch via
+`git checkout dev -- .claude/settings.json` + commit (git-level write, flagged).
+**Deliberately deferred** until after Phase 9 — the re-freeze "must come after all
+nav-editing phases," and Phase 9 revisions may still touch nav. Running it now would
+risk a re-unfreeze/rework cycle.
 
 ### Phase 11 — Exit QA + fresh EAS dev-client
-⏳ **NOT STARTED** — Full both-role regression on the existing APK; tsc; then
-`eas build -p android --profile development`; re-run both roles + both PDF flows
-on the fresh client. Exit gate = §4.
+⏳ **NOT STARTED** (Christian's testing) — Full both-role regression on the existing
+APK; tsc; then `eas build -p android --profile development`; re-run both roles + both
+PDF flows on the fresh client. Exit gate = §4. Requires a cloud build + a device —
+Christian-driven; an autonomous session cannot run it.
 
 ### Phase 12 — Final merge + retirement
-⏳ **NOT STARTED** — `predev/uxr-fac → dev` (two-undertaking merge body); tag +
-delete both feature branches + worktrees; registry flips to `complete`; instance
-record `docs/predev/PREDEV_UXR-FAC_<date>.md` on dev; hybrid-search syncs `dev`.
+⏳ **NOT STARTED** (gated on §4 + explicit go) — `predev/uxr-fac → dev`
+(two-undertaking merge body); tag + delete both feature branches + worktrees;
+registry flips to `complete`; instance record `docs/predev/PREDEV_UXR-FAC_<date>.md`
+on dev; hybrid-search syncs `dev`. Irreversible steps — held until Christian's QA
+passes and he gives the go.
+
+---
+
+> **Autonomous-run checkpoint (2026-07-02):** Phases 0–8 complete + committed
+> (`aa13b33` → `f8d7527`); tsc green throughout. Phases 9–12 are the interactive
+> closeout — 9 needs Christian's revision list, 11 is his on-device QA, 12 is his
+> go. See `HANDOFF_P-D_PHASE-8.md`.
 
 ## 4. Exit gate ("clear for dev")
 
