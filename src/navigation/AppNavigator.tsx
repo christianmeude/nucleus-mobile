@@ -14,6 +14,7 @@ import { NotificationsScreen } from '../screens/main/NotificationsScreen';
 import { InvitationsScreen } from '../screens/main/InvitationsScreen';
 import { ResearchDetailScreen } from '../screens/main/ResearchDetailScreen';
 import { SubmitResearchScreen } from '../screens/main/SubmitResearchScreen';
+import { ProfileScreen } from '../screens/main/ProfileScreen';
 import { theme } from '../theme';
 import { Logo } from '../components/ui';
 import { ResearchDetailHeader } from './ResearchDetailHeader';
@@ -71,23 +72,27 @@ const StudentTabs = () => {
       <Tabs.Screen
         name="Dashboard"
         component={DashboardScreen}
-        options={{ title: 'Dashboard' }}
+        options={{ title: 'Dashboard', headerShown: false }}
       />
       <Tabs.Screen
         name="MyPapers"
         component={MyPapersScreen}
-        options={{ title: 'My Papers' }}
+        options={{ title: 'My Papers', headerShown: false }}
       />
-      <Tabs.Screen name="Browse" component={BrowseScreen} options={{ title: 'Browse' }} />
+      <Tabs.Screen
+        name="Browse"
+        component={BrowseScreen}
+        options={{ title: 'Browse', headerShown: false }}
+      />
       <Tabs.Screen
         name="Notifications"
         component={NotificationsScreen}
-        options={{ title: 'Notifications' }}
+        options={{ title: 'Notifications', headerShown: false }}
       />
       <Tabs.Screen
         name="Invitations"
         component={InvitationsScreen}
-        options={{ title: 'Invites' }}
+        options={{ title: 'Invites', headerShown: false }}
       />
     </Tabs.Navigator>
   );
@@ -153,6 +158,11 @@ export const AppNavigator = () => {
               name="SubmitResearch"
               component={SubmitResearchScreen}
               options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="Profile"
+              component={ProfileScreen}
+              options={{ title: 'Profile' }}
             />
           </>
         )}

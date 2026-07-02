@@ -1,0 +1,334 @@
+<!-- @dsCard group="Browse Directions" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Direction C — The Index</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #D4CCB8;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 16px 48px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.label {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #6B6254;
+  margin-bottom: 16px;
+}
+
+/* ── Phone canvas ── */
+.phone {
+  width: 375px;
+  background: #F7F3EA;
+  border-radius: 40px;
+  overflow: hidden;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.06);
+}
+
+.status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0F172A;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 24px 16px;
+}
+
+.nav-title {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 26px;
+  font-weight: 600;
+  color: #0F172A;
+  letter-spacing: -0.3px;
+}
+
+/* Search — minimal, sandwiched by rules */
+.search-section {
+  border-top: 1px solid #E9E2D3;
+  border-bottom: 1px solid #E9E2D3;
+  padding: 12px 24px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search-placeholder {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  color: #94A3B8;
+}
+
+/* Category filter — text-only slash navigation */
+.filter {
+  padding: 0 24px 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  align-items: center;
+}
+
+.filter-item {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: #94A3B8;
+}
+
+.filter-item.active {
+  font-weight: 600;
+  color: #1B3A8C;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.filter-sep {
+  font-size: 13px;
+  color: #CBD5E1;
+  margin: 0 8px;
+}
+
+/* Result count */
+.result-count {
+  padding: 12px 24px 0;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: #94A3B8;
+  letter-spacing: 0.1px;
+}
+
+/* Paper list — pure typographic rows, no card chrome */
+.papers { padding: 0 24px; }
+
+.paper {
+  display: flex;
+  gap: 0;
+  padding: 18px 0;
+  border-bottom: 1px solid #E9E2D3;
+  position: relative;
+}
+.paper:last-child { border-bottom: none; }
+
+/* Gold left accent bar — new/featured papers only */
+.paper.new {
+  padding-left: 12px;
+}
+
+.paper.new::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 18px;
+  bottom: 18px;
+  width: 3px;
+  background: #F5A623;
+  border-radius: 9999px;
+}
+
+.paper-body { flex: 1; }
+
+.paper-tag {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #1B3A8C;
+  margin-bottom: 5px;
+}
+
+.paper-title {
+  font-family: 'Source Serif 4', serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #0F172A;
+  margin-bottom: 6px;
+}
+
+.paper-authors {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #64748B;
+  margin-bottom: 5px;
+  line-height: 1.5;
+}
+
+.paper-meta {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 11px;
+  color: #94A3B8;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.sep { color: #CBD5E1; }
+
+/* Bottom tab bar */
+.tab-bar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 12px 0 28px;
+  border-top: 1px solid #E9E2D3;
+  background: #FFFDF8;
+}
+
+.tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #94A3B8;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+.tab-item.active { color: #1B3A8C; }
+</style>
+</head>
+<body>
+
+<p class="label">Direction C — The Index</p>
+
+<div class="phone">
+
+  <div class="status">
+    <span>9:41</span>
+    <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+      <rect x="0" y="4" width="3" height="8" rx="0.5" fill="#0F172A"/>
+      <rect x="4.5" y="2.5" width="3" height="9.5" rx="0.5" fill="#0F172A"/>
+      <rect x="9" y="0" width="3" height="12" rx="0.5" fill="#0F172A"/>
+    </svg>
+  </div>
+
+  <div class="nav">
+    <div class="nav-title">Browse</div>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F172A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      <circle cx="18" cy="5" r="3.5" fill="#F5A623" stroke="none"/>
+    </svg>
+  </div>
+
+  <!-- Search — minimal, between rules -->
+  <div class="search-section">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <span class="search-placeholder">Search papers, authors, keywords…</span>
+  </div>
+
+  <!-- Text-style filter -->
+  <div class="filter">
+    <span class="filter-item active">All</span>
+    <span class="filter-sep">/</span>
+    <span class="filter-item">Comp. Sci.</span>
+    <span class="filter-sep">/</span>
+    <span class="filter-item">Education</span>
+    <span class="filter-sep">/</span>
+    <span class="filter-item">Psychology</span>
+    <span class="filter-sep">/</span>
+    <span class="filter-item">Engineering</span>
+  </div>
+
+  <div class="result-count">128 papers</div>
+
+  <!-- Paper list -->
+  <div class="papers">
+
+    <!-- Gold bar = newest paper -->
+    <div class="paper new">
+      <div class="paper-body">
+        <div class="paper-tag">Computer Science</div>
+        <div class="paper-title">Impact of Social Media on Academic Performance Among Gen Z Students in Metro Manila</div>
+        <div class="paper-authors">Dela Cruz, M. · Santos, R. · Reyes, J.</div>
+        <div class="paper-meta">
+          <span>Jan 2026</span><span class="sep">·</span>
+          <span>142 views</span><span class="sep">·</span>
+          <span>12 downloads</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Standard paper — no bar -->
+    <div class="paper">
+      <div class="paper-body">
+        <div class="paper-tag">Engineering</div>
+        <div class="paper-title">Adaptive Learning Systems in Philippine Higher Education: An Engineering Approach</div>
+        <div class="paper-authors">Garcia, A. · Villanueva, K.</div>
+        <div class="paper-meta">
+          <span>Mar 2026</span><span class="sep">·</span>
+          <span>89 views</span><span class="sep">·</span>
+          <span>7 downloads</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Standard paper — no bar -->
+    <div class="paper">
+      <div class="paper-body">
+        <div class="paper-tag">Psychology</div>
+        <div class="paper-title">Filipino Youth Perceptions of Climate Change: Agency, Fatalism, and Collective Action</div>
+        <div class="paper-authors">Mendoza, C. · Bautista, L.</div>
+        <div class="paper-meta">
+          <span>Feb 2026</span><span class="sep">·</span>
+          <span>201 views</span><span class="sep">·</span>
+          <span>34 downloads</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-item">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </div>
+    <div class="tab-item">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      My Papers
+    </div>
+    <div class="tab-item active">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B3A8C" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Browse
+    </div>
+    <div class="tab-item">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      Alerts
+    </div>
+    <div class="tab-item">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Invites
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
