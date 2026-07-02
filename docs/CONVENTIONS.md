@@ -11,14 +11,16 @@ main
  └── dev
       └── feat/[undertaking]
       └── chore/[topic]
+      └── predev/[shorts]   (only when fusing undertakings — see docs/predev/)
 ```
 
 - **`main`** — Stable. Merged from `dev` only when an undertaking is complete and verified.
 - **`dev`** — Integration branch. Feature branches merge here when individually stable.
 - **`feat/[undertaking]`** — One per major undertaking, kebab-case. Examples: `feat/submit-research`, `feat/ui-overhaul`.
 - **`chore/[topic]`** — Cross-cutting maintenance (workflow, config, docs-only changes). Cut from `dev` or current working branch.
+- **`predev/[shorts]`** — A pre-dev integration branch that fuses two or more mature undertakings into one uniform tree before `dev`. Persistent; hosts reconciliation phases; participant `feat/*` branches merge into it and are retired when it clears to `dev`. Full workflow in `docs/predev/README.md`.
 
-Merge direction: `feat/* → dev → main`. Never skip levels. Use `git merge --no-ff` to preserve branch history.
+Merge direction: `feat/* → dev → main`. Never skip levels. When a pre-dev integration is active it becomes `feat/* → predev/* → dev → main`. Use `git merge --no-ff` to preserve branch history.
 
 ### Where conventions and docs live
 
