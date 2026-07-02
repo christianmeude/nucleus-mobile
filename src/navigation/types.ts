@@ -5,6 +5,9 @@ export type RootStackParamList = {
   ResearchDetail: { paperId: string };
   SubmitResearch: { resubmitPaperId?: string } | undefined;
   Profile: undefined;
+  FacultyTabs: undefined;
+  FacultyReviewDetail: { paperId: string };
+  FacultyPaperDetail: { paperId: string };
 };
 
 export type StudentTabsParamList = {
@@ -13,4 +16,12 @@ export type StudentTabsParamList = {
   Browse: undefined;
   Notifications: undefined;
   Invitations: undefined;
+};
+
+export type FacultyTabsParamList = {
+  FacultyDashboard: undefined;
+  FacultyReview: undefined;
+  FacultyRepository: undefined;
+  FacultyNotifications: undefined;
+  FacultyProfile: undefined;
 };
