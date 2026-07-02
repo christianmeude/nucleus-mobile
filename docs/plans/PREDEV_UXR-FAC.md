@@ -39,7 +39,30 @@ Each phase is one session turn (house Phase Protocol: investigate → report →
 → implement → tsc → update markers → stage → present → stop).
 
 ### Phase 0 — Base merges
-⏳ **IN PROGRESS** — UX-R merged (`9471502`); FAC merge is Session B's first action.
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- Both base merges landed: UX-R (`9471502`) + FAC (`aa13b33`, 6 conflicts resolved
+  per plan/kickoff: settings/ResearchDetail/lock `--ours`; package.json + nav files
+  unioned; lora/outfit dropped). `npm install` + `npx tsc --noEmit` **green**.
+- Boot smoke-QA on the existing dev-client passed: **both roles reachable in one
+  build**, fonts load, no crash from the removed Lora/Outfit (token-flow proof).
+
+**Smoke-QA observations (both expected — logged, not blockers):**
+- *Faculty screens look un-remodeled.* Not a font bug: every faculty surface already
+  consumes the same IBM Plex Sans `theme.typography.*` tokens as the student side
+  (screens, tab labels, native header titles). The gap is the remodel **layout
+  language** — faculty still uses **native headers** (kept verbatim by the merge) and
+  lacks the headerless in-body-title / card / safe-area patterns. This is precisely
+  the **Phase 3–8** re-skin scope. (Note: the Source Serif 4 `display` token is wired
+  into *zero* screens today, student included — no screen shows serif yet.)
+- *"Mock papers" in student Browse.* Not code: `getPublishedPapers()` reads
+  `research_papers` from Supabase; there is no mock/seed data in the codebase. These
+  are pre-existing test rows in the **shared** DB (shared with web), untouched by the
+  integration. Optional later Supabase data cleanup, not an integration task.
+
+**Exit criteria met:** both feature branches fused; tsc green; both roles boot in one
+build with the new UI font loaded.
 
 ### Phase 1 — Student "Read paper" → in-app PdfViewer
 ⏳ **NOT STARTED** — Port FAC's pattern into UX-R's rebuilt ResearchDetail: resolve
