@@ -44,13 +44,22 @@ latest handoff is discovered by recency on the branch, not tracked here.
 | Undertaking | Short | Branch | Plan | Status |
 |---|---|---|---|---|
 | Submit Research | `S-R` | merged → `main` | `docs/plans/SUBMIT_RESEARCH.md` | complete |
-| UX Remodel | `UX-R` | `feat/ux-remodel` | `docs/plans/UX_REMODEL.md` | active |
-| Faculty Access | `FAC` | `feat/faculty-access` | `docs/plans/FACULTY_ACCESS.md` | active |
+| Pre-Dev Integration | `P-D` | `predev/uxr-fac` | `docs/plans/PREDEV_UXR-FAC.md` | active |
+| UX Remodel | `UX-R` | `feat/ux-remodel` | `docs/plans/UX_REMODEL.md` | integrating |
+| Faculty Access | `FAC` | `feat/faculty-access` | `docs/plans/FACULTY_ACCESS.md` | integrating |
 | Hybrid Search | `H-S` | `feat/hybrid-search` | `docs/plans/HYBRID_SEARCH.md` | active |
 
 > A plan/handoff path resolves once you are on that undertaking's branch (each
 > lives on its own branch). Add a new undertaking = add a row + a plan doc; it
 > becomes resumable automatically.
+
+> **Status vocabulary:** `active` · `parked` · `integrating` · `complete`.
+> **`integrating`** means the undertaking's feature work is frozen and its branch
+> is being fused on a `predev/*` branch (see `docs/predev/`). A resume request for
+> an `integrating` undertaking (e.g. "resume faculty access") routes to the
+> **pre-dev integration** undertaking and its worktree — that is where its work
+> now lives — not to the retired-in-place feature branch. `integrating` rows flip
+> to `complete` when the pre-dev branch clears to `dev`.
 
 ### Worktrees (optional, for simultaneous work)
 
