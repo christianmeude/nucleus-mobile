@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
@@ -72,6 +73,7 @@ const DashboardSkeleton = () => (
 
 export const FacultyDashboardScreen = () => {
   const navigation = useNavigation<FacultyNavigation>();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const firstName = user?.fullName?.trim().split(/\s+/)[0] ?? '';
   const [papers, setPapers] = useState<FacultyAssignedPaper[] | null>(null);
@@ -106,7 +108,7 @@ export const FacultyDashboardScreen = () => {
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + theme.spacing.md }]}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -176,6 +178,7 @@ const styles = StyleSheet.create({
   content: {
     padding: theme.spacing.lg,
     gap: theme.spacing.lg,
+    paddingBottom: theme.spacing['3xl'],
   },
   headerRow: {
     flexDirection: 'row',

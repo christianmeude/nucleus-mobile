@@ -23,15 +23,7 @@ export const FacultyTabs = () => {
   return (
     <Tabs.Navigator
       screenOptions={({ route }) => ({
-        headerTitleAlign: 'left',
-        headerStyle: {
-          backgroundColor: theme.colors.surface.base,
-        },
-        headerShadowVisible: false,
-        headerTitleStyle: {
-          ...theme.typography.h3,
-          color: theme.colors.text.primary,
-        },
+        headerShown: false,
         tabBarStyle: {
           backgroundColor: theme.colors.surface.raised,
           borderTopColor: theme.colors.border.subtle,

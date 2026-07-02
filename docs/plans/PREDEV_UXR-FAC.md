@@ -105,8 +105,26 @@ superset for QA; the dead-dep removal only materializes in Phase 11's fresh buil
 tsc green; lockfile consistent.
 
 ### Phase 3 — Faculty shell + Dashboard re-skin
-⏳ **NOT STARTED** — `FacultyTabs.tsx` → `headerShown: false` ×5; FacultyDashboard
-gains in-body serif title + safe-area insets + UX card patterns + gold-once audit.
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- `FacultyTabs.tsx`: `headerShown: false` on all 5 tabs (dropped the now-dead
+  native-header styling). Faculty now matches the student headerless-tabs shell.
+- `FacultyDashboardScreen`: added `useSafeAreaInsets` → `paddingTop: insets.top +
+  spacing.md` on the scroll content (replacing the removed native header's top
+  spacing), plus `paddingBottom: 3xl` so cards clear the tab bar. In-body h1
+  greeting kept (mirrors the student Dashboard's in-body title). Card patterns
+  already tokenized (`PressableCard`/`Stat`/`Skeleton`) — no change needed.
+- Gold-once audit: single conditional `Stat` "warning" tone on pending-review; no
+  other accent. `npx tsc --noEmit` **green**.
+
+**Note (transient):** flipping `headerShown: false` ×5 also removed native headers
+from Review/Repository/Notifications/Profile, which don't yet carry safe-area
+insets — **Phases 4, 6, 8 add `useSafeAreaInsets` to each as they re-skin.** No
+intermediate QA happens before then (Christian tests post-Phase-11).
+
+**Exit criteria met:** faculty shell is headerless; Dashboard is inset-correct and
+tokenized; tsc green.
 
 ### Phase 4 — Faculty Review queue re-skin
 ⏳ **NOT STARTED**
