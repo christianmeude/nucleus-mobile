@@ -167,7 +167,25 @@ re-skin adopts the same `fontFamilies.display` serif for in-body titles.
 tsc green.
 
 ### Phase 6 — FacultyRepository re-skin
-⏳ **NOT STARTED** — Adopt `src/utils/category.ts` (§10 shared-utils) + tile/card patterns.
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- Adopted `src/utils/category.ts` (§10): replaced the screen-local
+  `new Map(categories…)` + `.has/.get` with `buildCategoryNameById` +
+  `resolveCategoryName` — the UUID-guarded, single-source category resolver. This
+  also brings the Issue-#5 UUID-leak guard to Repository for free.
+- Added the tab-screen safe-area inset (`paddingTop: insets.top + spacing.md` on the
+  sticky header) + serif "Repository" title, matching Review. Added
+  `paddingBottom: 3xl`. Cards already use the shared `PressableCard` pattern.
+- `npx tsc --noEmit` **green**.
+
+**Scope note:** kept `PressableCard` rather than adopting the student `ResearchTile`
+— `getPublishedPapers` returns `FacultyAssignedPaper`, not the `ResearchPaper` shape
+`ResearchTile`/`ResearchCard` consume; a full tile adoption needs a shape adapter
+(candidate for a follow-up, not this integration).
+
+**Exit criteria met:** Repository uses the shared category util + design-system card
+pattern; inset-correct with a serif title; tsc green.
 
 ### Phase 7 — FacultyPaperDetail re-skin
 ⏳ **NOT STARTED** — Align with student ResearchDetail incl. the Phase-1 PDF pattern.
