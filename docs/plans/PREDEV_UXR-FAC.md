@@ -188,7 +188,21 @@ tsc green.
 pattern; inset-correct with a serif title; tsc green.
 
 ### Phase 7 — FacultyPaperDetail re-skin
-⏳ **NOT STARTED** — Align with student ResearchDetail incl. the Phase-1 PDF pattern.
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- Gave `FacultyPaperDetail` the shared `ResearchDetailHeader` custom header in
+  `AppNavigator` (matches Phase 5 / student ResearchDetail).
+- Switched the title to the serif `fontFamilies.display.semibold` 26/32; added
+  `paddingBottom: 3xl`.
+- The Phase-1 inline-PDF pattern was already present here (`<PdfViewer uri={fileUri}/>`
+  inline with `Skeleton`/`InlineNotice` fallbacks) — no change needed.
+- Kept the screen intentionally lean (title, meta, PDF, abstract, keywords — no
+  review chrome), consistent with its read-only Repository-detail role. `npx tsc
+  --noEmit` **green**.
+
+**Exit criteria met:** PaperDetail wears the student header pattern + serif title and
+already uses the inline viewer; tsc green.
 
 ### Phase 8 — FacultyNotifications + FacultyProfile re-skin
 ⏳ **NOT STARTED** — Both small; NotificationCard already shared; Profile mirrors

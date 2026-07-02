@@ -180,7 +180,10 @@ export const AppNavigator = () => {
             <Stack.Screen
               name="FacultyPaperDetail"
               component={FacultyPaperDetailScreen}
-              options={{ title: 'Research Detail' }}
+              options={{
+                title: 'Research Detail',
+                header: (props) => <ResearchDetailHeader {...props} />,
+              }}
             />
           </>
         ) : (
