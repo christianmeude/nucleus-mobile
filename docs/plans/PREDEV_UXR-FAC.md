@@ -205,8 +205,25 @@ pattern; inset-correct with a serif title; tsc green.
 already uses the inline viewer; tsc green.
 
 ### Phase 8 — FacultyNotifications + FacultyProfile re-skin
-⏳ **NOT STARTED** — Both small; NotificationCard already shared; Profile mirrors
-UX-R's ProfileScreen. Closes the gold-once sweep.
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- `FacultyNotificationsScreen`: added the tab-screen safe-area inset (`paddingTop:
+  insets.top + spacing.md`) + `paddingBottom: 3xl`; switched the title to the serif
+  `fontFamilies.display.semibold` 26/32 (matches student Notifications). Already used
+  the shared `NotificationCard` + `ListEntranceItem` + mark-all logic — untouched.
+- `FacultyProfileScreen`: rebuilt to mirror the student ProfileScreen visual
+  language — `brand.primarySurface` band with avatar, serif name, role pill; a
+  sectioned Account card (Email/Department/Program/Member-since) with the single
+  gold "Member since" dot; styled sign-out. Safe-area inset via the band's
+  `paddingTop`. Adapted to faculty data — omits the student-only Papers/Saved stats
+  and the non-functional App-preferences placeholder rows.
+- **Gold-once sweep (faculty-wide) closed:** every faculty screen now uses ≤1 gold
+  accent (only Profile's dot); Dashboard/Review/ReviewDetail/Repository/PaperDetail/
+  Notifications use zero. `npx tsc --noEmit` **green**.
+
+**Exit criteria met:** both screens inset-correct + on-brand; gold-once holds across
+the whole faculty surface; tsc green.
 
 ### Phase 9 — Queued revisions pass
 ⏳ **NOT STARTED** — Christian's held UX-R revision list + faculty QA findings.
