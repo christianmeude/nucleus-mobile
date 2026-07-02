@@ -127,7 +127,25 @@ intermediate QA happens before then (Christian tests post-Phase-11).
 tokenized; tsc green.
 
 ### Phase 4 — Faculty Review queue re-skin
-⏳ **NOT STARTED**
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- `FacultyReviewScreen`: added `useSafeAreaInsets` → the sticky search/filter header
+  now insets under the status bar (`paddingTop: insets.top + spacing.md`), fixing
+  the Phase-3 header-removal. Added a serif in-body title ("Review",
+  `fontFamilies.display.semibold` 26/32 — matching the student Browse title). Added
+  `paddingBottom: 3xl` so the list clears the tab bar.
+- Kept the sticky search + count-badged filter chips (deliberate: persistent
+  filtering is core to a review queue). Cards already tokenized
+  (`PressableCard`/`Chip`/`Skeleton`). No decorative gold. `npx tsc --noEmit`
+  **green**.
+
+**Correction to the Phase-0 note:** serif *is* used on student screens — via
+`theme.fontFamilies.display.*` directly (Browse/ResearchDetail titles, abstract),
+not the `typography.display` token (which is what that grep checked). The faculty
+re-skin adopts the same `fontFamilies.display` serif for in-body titles.
+
+**Exit criteria met:** Review is inset-correct with a serif title; tokenized; tsc green.
 
 ### Phase 5 — FacultyReviewDetail re-skin
 ⏳ **NOT STARTED** — Largest screen (PdfViewer + annotations + decision panel);

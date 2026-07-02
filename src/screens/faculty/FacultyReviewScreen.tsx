@@ -7,6 +7,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
@@ -38,6 +39,7 @@ function formatDate(value?: string | null): string {
 
 export const FacultyReviewScreen = () => {
   const navigation = useNavigation<FacultyNavigation>();
+  const insets = useSafeAreaInsets();
   const [papers, setPapers] = useState<FacultyAssignedPaper[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -89,7 +91,8 @@ export const FacultyReviewScreen = () => {
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + theme.spacing.md }]}>
+        <Text style={styles.title}>Review</Text>
         <TextInput
           value={search}
           onChangeText={setSearch}
@@ -207,7 +210,15 @@ const styles = StyleSheet.create({
   content: {
     padding: theme.spacing.lg,
     gap: theme.spacing.md,
+    paddingBottom: theme.spacing['3xl'],
     flexGrow: 1,
+  },
+  title: {
+    fontFamily: theme.fontFamilies.display.semibold,
+    fontSize: 26,
+    lineHeight: 32,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
   },
   list: {
     gap: theme.spacing.md,
