@@ -83,10 +83,26 @@ build with the new UI font loaded.
 viewer as faculty; no external-browser handoff in the happy path.
 
 ### Phase 2 — Dead-dependency cleanup
-⏳ **NOT STARTED** — Remove `react-native-pdf`, `react-native-blob-util`, both
-`@config-plugins/*` (package.json + app.json atomically) and legacy
-`@expo-google-fonts/lora` / `outfit`. Decide `expo-web-browser` removal (now
-import-free). Removal-only native delta → existing APK stays a valid superset.
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- Removed `react-native-pdf`, `react-native-blob-util`, and both `@config-plugins/*`
+  from `package.json`; removed the two `@config-plugins/*` entries from `app.json`
+  `plugins` (atomic manifest+config edit). `npm install` regenerated the lockfile
+  (−101 lines). `npx tsc --noEmit` **green**.
+- `lora` / `outfit` needed no action — already dropped in the Phase 0 merge; no
+  residual references anywhere.
+- **`expo-web-browser` retained** (plan's "now import-free" assumption was wrong):
+  `PdfViewer.tsx` still imports it for its "Open in browser" error fallback, and it
+  stays in `app.json` plugins.
+- The `react-native-pdf`/`blob-util` mention left in `PdfViewer.tsx` is a *comment*
+  documenting why the viewer uses WebView + pdf.js instead — kept as rationale.
+
+**Native delta:** removal-only. The existing 2026-06-28 dev-client remains a valid
+superset for QA; the dead-dep removal only materializes in Phase 11's fresh build.
+
+**Exit criteria met:** no dead PDF/blob native deps or config-plugins in the tree;
+tsc green; lockfile consistent.
 
 ### Phase 3 — Faculty shell + Dashboard re-skin
 ⏳ **NOT STARTED** — `FacultyTabs.tsx` → `headerShown: false` ×5; FacultyDashboard

@@ -9,8 +9,6 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "@config-plugins/react-native-blob-util": "^14.0.1",
-    "@config-plugins/react-native-pdf": "^14.0.1",
     "@expo-google-fonts/ibm-plex-sans": "^0.4.1",
     "@expo-google-fonts/source-serif-4": "^0.4.1",
     "@expo/vector-icons": "^15.1.1",
@@ -31,9 +29,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.85.3",
-    "react-native-blob-util": "^0.24.10",
     "react-native-gesture-handler": "~2.31.1",
-    "react-native-pdf": "^7.0.4",
     "react-native-reanimated": "4.3.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "4.25.2",

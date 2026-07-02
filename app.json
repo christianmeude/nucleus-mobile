@@ -31,9 +31,7 @@
       "expo-dev-client",
       "expo-web-browser",
       "expo-font",
-      "expo-status-bar",
-      "@config-plugins/react-native-pdf",
-      "@config-plugins/react-native-blob-util"
+      "expo-status-bar"
     ],
     "extra": {
       "eas": {
