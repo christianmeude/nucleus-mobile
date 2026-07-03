@@ -2,6 +2,10 @@
 
 Canonical reference for all process conventions. Every commit, phase, issue, SQL change, and handoff must follow these formats without exception.
 
+> **Feeling lost? Start with `docs/HOW_WE_WORK.md`** — the entire workflow in
+> plain language. This document is the detailed reference behind that summary;
+> you don't need to hold all of it in your head to work.
+
 ---
 
 ## 1. Branch Workflow
@@ -18,7 +22,7 @@ main
 - **`feat/[undertaking]`** — one per undertaking or task, kebab-case. Cut from `main`, merged back to `main` as soon as it's individually stable. Incomplete or risky work ships behind a **feature flag** (below) rather than staying unmerged for weeks.
 - **`chore/[topic]`** — cross-cutting maintenance (workflow, config, docs-only changes). Same short-lived lifecycle, cut from `main`.
 
-Parallel undertakings run as parallel short-lived branches, each in its own worktree (`CLAUDE.md`), each executing the autonomous plan → execute → test → review → iterate loop (§3) independently. Frequent, small merges to `main` surface conflicts early and often instead of letting them accumulate for weeks — this is what replaces the old pre-dev integration / confluence fusion step for undertakings started from here forward (see "Legacy" below).
+Parallel undertakings run as parallel short-lived branches, each in its own worktree (`CLAUDE.md`), each executing the autonomous plan → execute → test → review → iterate loop (§3) independently. Frequent, small merges to `main` surface conflicts early and often instead of letting them accumulate for weeks.
 
 ### Feature flags — how incomplete work stays on trunk
 
@@ -54,12 +58,6 @@ Merge branch 'feat/[undertaking]' into main
 - Subject line is the standard git merge subject — do not alter it
 - Outcome statement: past-tense summary of what the undertaking delivered
 - Phase list: one line per phase, matching the labels in the plan doc
-
-### Legacy: `dev` / pre-dev integration / confluence — retired for new work
-
-The project previously ran an intermediate `dev` integration branch, with long-lived `feat/*` undertaking branches (often weeks) fused via a manual "pre-dev integration" or "confluence" step before reaching `dev` → `main` (`docs/predev/README.md`, `docs/confluences/README.md` — the latter already archived). **This model is retired for any undertaking started from here forward.** CI-gated PRs straight to `main`, short branch lifetimes, and feature flags now do the job those mechanisms existed for.
-
-`predev/uxr-fac` is grandfathered — mid-flight, it finishes via its already-documented path (`predev/uxr-fac → dev → main`). Once it clears and `dev` is merged into `main`, `dev` retires with it: no new `predev/*` or `confluence/*` branch should be started, and any other branch still targeting `dev` (e.g. `feat/hybrid-search`, if still active at that point) retargets to `main` directly.
 
 ---
 
@@ -422,7 +420,7 @@ Stable invariants (UUID mismatch, email-based RLS, SECURITY DEFINER pattern) liv
 
 ## 10. Project-Wide Standards
 
-Some changes establish a standard the **entire app** must follow — not just the branch that introduced them. These belong in canonical docs (this file / `CLAUDE.md`, canonical on `dev`) so they propagate to every feature branch on `git merge dev`, **including `feat/faculty-access`**. When you introduce or change such a standard, document it here in the same change — a standard that lives only in a feature branch's plan or code will drift and the rest of the app won't follow it.
+Some changes establish a standard the **entire app** must follow — not just the branch that introduced them. These belong in canonical docs (this file / `CLAUDE.md`, canonical on `main`) so they propagate to every feature branch on `git merge main`. When you introduce or change such a standard, document it here in the same change — a standard that lives only in a feature branch's plan or code will drift and the rest of the app won't follow it.
 
 ### Shared utilities (reuse over duplication)
 
@@ -435,6 +433,6 @@ Cross-cutting helpers live in `src/utils/` and are the single source of truth �
 
 The cool-slate + navy/gold system with Source Serif 4 (display) + IBM Plex Sans (UI), realized in `src/theme/`, is the canonical visual standard for the whole app. Always consume theme tokens from `src/theme` — never hardcode colors, fonts, spacing, or radii. New screens and features on **any** branch (student or faculty) must adopt it. It is governed by the mobile skill stack documented in the active undertaking's design-foundation section.
 
-### Applicability to faculty
+### Applies to every surface
 
-`feat/faculty-access` inherits these standards when it merges `dev`. The faculty workflow — its screens, cards, and utilities — follows the same shared utilities and design system; it does not get a parallel set of conventions.
+Every branch inherits these standards when it merges `main` — student and faculty alike. The faculty workflow — its screens, cards, and utilities — follows the same shared utilities and design system; no surface gets a parallel set of conventions.
