@@ -1,0 +1,302 @@
+# NUcleus Mobile — Implementation Plan: Pre-Dev Integration (UXR × FAC)
+
+> **STATUS: COMPLETE** — Merged to `dev` (2026-07-03); `predev/uxr-fac` +
+> `feat/ux-remodel` + `feat/faculty-access` branches and worktrees retired.
+> Fused **UX Remodel** (`feat/ux-remodel`) and **Faculty Access**
+> (`feat/faculty-access`) into one uniform tree, reconciled them into a single
+> visual + feature standard, then merged to `dev` and retired both feature
+> branches. Phase 9 (queued revisions) and Phase 11 (device QA) waived by
+> Christian to finish the merge and retire the legacy pre-dev workflow.
+> Workflow: [`docs/predev/README.md`](../predev/README.md).
+
+**Canonical product context:** [PROJECT_CONTEXT.md](../PROJECT_CONTEXT.md)
+**Process conventions:** [CONVENTIONS.md](../CONVENTIONS.md)
+**Participant plans:** [UX_REMODEL.md](./UX_REMODEL.md) · [FACULTY_ACCESS.md](./FACULTY_ACCESS.md)
+
+---
+
+## 1. Goal
+
+Produce a **UNIFORM PRODUCT**: the faculty side adopts UX Remodel's full layout
+language (headerless tabs with in-body serif titles + safe-area insets, the
+cool-slate / Source Serif 4 + IBM Plex Sans design system, the new card patterns,
+gold-once-per-screen), and the student side gains faculty's in-app `PdfViewer`
+("Read paper" wiring). All docs sync. The branch clears to `dev` only through the
+full exit gate (§4). Both feature branches are retired at the final merge;
+remaining faculty scope (#14 annotation write, #15 overlay verify) becomes a
+fresh undertaking cut from the new `dev`.
+
+## 2. Merge base (Phase 0)
+
+- Base cut from `dev @ 24b733d` (carries the pre-dev workflow docs + registry).
+- `feat/ux-remodel` merged first (`9471502`, conflict-free) — design source of truth.
+- `feat/faculty-access` merge pending (Session B) — resolves the 6-file conflict
+  surface: `.claude/settings.json`, `package.json`, `package-lock.json`,
+  `AppNavigator.tsx`, `navigation/types.ts`, `ResearchDetailScreen.tsx`.
+  Resolution policy per [`docs/predev/README.md`](../predev/README.md) §Procedure
+  and the approved plan.
+
+## 3. Phased plan
+
+Each phase is one session turn (house Phase Protocol: investigate → report → wait
+→ implement → tsc → update markers → stage → present → stop).
+
+### Phase 0 — Base merges
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- Both base merges landed: UX-R (`9471502`) + FAC (`aa13b33`, 6 conflicts resolved
+  per plan/kickoff: settings/ResearchDetail/lock `--ours`; package.json + nav files
+  unioned; lora/outfit dropped). `npm install` + `npx tsc --noEmit` **green**.
+- Boot smoke-QA on the existing dev-client passed: **both roles reachable in one
+  build**, fonts load, no crash from the removed Lora/Outfit (token-flow proof).
+
+**Smoke-QA observations (both expected — logged, not blockers):**
+- *Faculty screens look un-remodeled.* Not a font bug: every faculty surface already
+  consumes the same IBM Plex Sans `theme.typography.*` tokens as the student side
+  (screens, tab labels, native header titles). The gap is the remodel **layout
+  language** — faculty still uses **native headers** (kept verbatim by the merge) and
+  lacks the headerless in-body-title / card / safe-area patterns. This is precisely
+  the **Phase 3–8** re-skin scope. (Note: the Source Serif 4 `display` token is wired
+  into *zero* screens today, student included — no screen shows serif yet.)
+- *"Mock papers" in student Browse.* Not code: `getPublishedPapers()` reads
+  `research_papers` from Supabase; there is no mock/seed data in the codebase. These
+  are pre-existing test rows in the **shared** DB (shared with web), untouched by the
+  integration. Optional later Supabase data cleanup, not an integration task.
+
+**Exit criteria met:** both feature branches fused; tsc green; both roles boot in one
+build with the new UI font loaded.
+
+### Phase 1 — Student "Read paper" → in-app PdfViewer
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- Ported FAC's pattern into UX-R's `ResearchDetailScreen`: a mount effect resolves
+  the (signed) file URL via `getResearchFile` into `fileUri`/`fileError`; a new
+  "Paper" section renders the shared `<PdfViewer>` inline (loading→`Skeleton`,
+  failure→`InlineNotice`). `trackView` moved from button-tap to the viewer's
+  `onFirstLoad` (fires once on first render).
+- Dropped the `WebBrowser.openBrowserAsync` path, the "Read paper" `Button`, and
+  the `openFile`/`openingFile` machinery. Bookmark control kept, right-aligned in
+  its own row (option A). `expo-web-browser` stays — `PdfViewer` still uses it for
+  its error fallback (Phase 2 removal decision unaffected).
+- `npx tsc --noEmit` **green**; no orphaned references.
+
+**Exit criteria met:** student ResearchDetail reads PDFs in-app via the same shared
+viewer as faculty; no external-browser handoff in the happy path.
+
+### Phase 2 — Dead-dependency cleanup
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- Removed `react-native-pdf`, `react-native-blob-util`, and both `@config-plugins/*`
+  from `package.json`; removed the two `@config-plugins/*` entries from `app.json`
+  `plugins` (atomic manifest+config edit). `npm install` regenerated the lockfile
+  (−101 lines). `npx tsc --noEmit` **green**.
+- `lora` / `outfit` needed no action — already dropped in the Phase 0 merge; no
+  residual references anywhere.
+- **`expo-web-browser` retained** (plan's "now import-free" assumption was wrong):
+  `PdfViewer.tsx` still imports it for its "Open in browser" error fallback, and it
+  stays in `app.json` plugins.
+- The `react-native-pdf`/`blob-util` mention left in `PdfViewer.tsx` is a *comment*
+  documenting why the viewer uses WebView + pdf.js instead — kept as rationale.
+
+**Native delta:** removal-only. The existing 2026-06-28 dev-client remains a valid
+superset for QA; the dead-dep removal only materializes in Phase 11's fresh build.
+
+**Exit criteria met:** no dead PDF/blob native deps or config-plugins in the tree;
+tsc green; lockfile consistent.
+
+### Phase 3 — Faculty shell + Dashboard re-skin
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- `FacultyTabs.tsx`: `headerShown: false` on all 5 tabs (dropped the now-dead
+  native-header styling). Faculty now matches the student headerless-tabs shell.
+- `FacultyDashboardScreen`: added `useSafeAreaInsets` → `paddingTop: insets.top +
+  spacing.md` on the scroll content (replacing the removed native header's top
+  spacing), plus `paddingBottom: 3xl` so cards clear the tab bar. In-body h1
+  greeting kept (mirrors the student Dashboard's in-body title). Card patterns
+  already tokenized (`PressableCard`/`Stat`/`Skeleton`) — no change needed.
+- Gold-once audit: single conditional `Stat` "warning" tone on pending-review; no
+  other accent. `npx tsc --noEmit` **green**.
+
+**Note (transient):** flipping `headerShown: false` ×5 also removed native headers
+from Review/Repository/Notifications/Profile, which don't yet carry safe-area
+insets — **Phases 4, 6, 8 add `useSafeAreaInsets` to each as they re-skin.** No
+intermediate QA happens before then (Christian tests post-Phase-11).
+
+**Exit criteria met:** faculty shell is headerless; Dashboard is inset-correct and
+tokenized; tsc green.
+
+### Phase 4 — Faculty Review queue re-skin
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- `FacultyReviewScreen`: added `useSafeAreaInsets` → the sticky search/filter header
+  now insets under the status bar (`paddingTop: insets.top + spacing.md`), fixing
+  the Phase-3 header-removal. Added a serif in-body title ("Review",
+  `fontFamilies.display.semibold` 26/32 — matching the student Browse title). Added
+  `paddingBottom: 3xl` so the list clears the tab bar.
+- Kept the sticky search + count-badged filter chips (deliberate: persistent
+  filtering is core to a review queue). Cards already tokenized
+  (`PressableCard`/`Chip`/`Skeleton`). No decorative gold. `npx tsc --noEmit`
+  **green**.
+
+**Correction to the Phase-0 note:** serif *is* used on student screens — via
+`theme.fontFamilies.display.*` directly (Browse/ResearchDetail titles, abstract),
+not the `typography.display` token (which is what that grep checked). The faculty
+re-skin adopts the same `fontFamilies.display` serif for in-body titles.
+
+**Exit criteria met:** Review is inset-correct with a serif title; tokenized; tsc green.
+
+### Phase 5 — FacultyReviewDetail re-skin
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- Adopted the student ResearchDetail header pattern: `FacultyReviewDetail` now uses
+  the shared `ResearchDetailHeader` custom header (`header: props =>
+  <ResearchDetailHeader {...props}/>` in `AppNavigator`) — themed back chevron,
+  safe-area inset, hairline border — replacing the default native header. The header
+  is generic (reads `options.title`), so "Paper Review" flows straight through.
+- Switched the screen title from `typography.h1` (sans) to the serif
+  `fontFamilies.display.semibold` 26/32 (matches the student ResearchDetail title).
+  Added `paddingBottom: 3xl` for home-indicator clearance.
+- The rest was already tokenized (PdfViewer + annotation overlays, `Card` timeline,
+  `BottomSheet` decision flows, `Chip` status). Approve = primary navy; no
+  decorative gold. `npx tsc --noEmit` **green**.
+
+**Exit criteria met:** ReviewDetail wears the student header pattern + serif title;
+tsc green.
+
+### Phase 6 — FacultyRepository re-skin
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- Adopted `src/utils/category.ts` (§10): replaced the screen-local
+  `new Map(categories…)` + `.has/.get` with `buildCategoryNameById` +
+  `resolveCategoryName` — the UUID-guarded, single-source category resolver. This
+  also brings the Issue-#5 UUID-leak guard to Repository for free.
+- Added the tab-screen safe-area inset (`paddingTop: insets.top + spacing.md` on the
+  sticky header) + serif "Repository" title, matching Review. Added
+  `paddingBottom: 3xl`. Cards already use the shared `PressableCard` pattern.
+- `npx tsc --noEmit` **green**.
+
+**Scope note:** kept `PressableCard` rather than adopting the student `ResearchTile`
+— `getPublishedPapers` returns `FacultyAssignedPaper`, not the `ResearchPaper` shape
+`ResearchTile`/`ResearchCard` consume; a full tile adoption needs a shape adapter
+(candidate for a follow-up, not this integration).
+
+**Exit criteria met:** Repository uses the shared category util + design-system card
+pattern; inset-correct with a serif title; tsc green.
+
+### Phase 7 — FacultyPaperDetail re-skin
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- Gave `FacultyPaperDetail` the shared `ResearchDetailHeader` custom header in
+  `AppNavigator` (matches Phase 5 / student ResearchDetail).
+- Switched the title to the serif `fontFamilies.display.semibold` 26/32; added
+  `paddingBottom: 3xl`.
+- The Phase-1 inline-PDF pattern was already present here (`<PdfViewer uri={fileUri}/>`
+  inline with `Skeleton`/`InlineNotice` fallbacks) — no change needed.
+- Kept the screen intentionally lean (title, meta, PDF, abstract, keywords — no
+  review chrome), consistent with its read-only Repository-detail role. `npx tsc
+  --noEmit` **green**.
+
+**Exit criteria met:** PaperDetail wears the student header pattern + serif title and
+already uses the inline viewer; tsc green.
+
+### Phase 8 — FacultyNotifications + FacultyProfile re-skin
+✅ **COMPLETED (stable)**
+
+**Implementation summary**
+- `FacultyNotificationsScreen`: added the tab-screen safe-area inset (`paddingTop:
+  insets.top + spacing.md`) + `paddingBottom: 3xl`; switched the title to the serif
+  `fontFamilies.display.semibold` 26/32 (matches student Notifications). Already used
+  the shared `NotificationCard` + `ListEntranceItem` + mark-all logic — untouched.
+- `FacultyProfileScreen`: rebuilt to mirror the student ProfileScreen visual
+  language — `brand.primarySurface` band with avatar, serif name, role pill; a
+  sectioned Account card (Email/Department/Program/Member-since) with the single
+  gold "Member since" dot; styled sign-out. Safe-area inset via the band's
+  `paddingTop`. Adapted to faculty data — omits the student-only Papers/Saved stats
+  and the non-functional App-preferences placeholder rows.
+- **Gold-once sweep (faculty-wide) closed:** every faculty screen now uses ≤1 gold
+  accent (only Profile's dot); Dashboard/Review/ReviewDetail/Repository/PaperDetail/
+  Notifications use zero. `npx tsc --noEmit` **green**.
+
+**Exit criteria met:** both screens inset-correct + on-brand; gold-once holds across
+the whole faculty surface; tsc green.
+
+### Phase 9 — Queued revisions pass
+🔴 **BLOCKED** — awaiting inputs. This phase applies Christian's held UX-R revision
+list + faculty QA findings. Per `HANDOFF_UX-R_PHASE-12.md`, those tweaks were
+"queued by Christian" and collected verbally — **not documented in-repo**, so there
+are no actionable items for an autonomous session to apply. Unblocks when Christian
+provides the revision list and/or completes the Phase-11 both-role QA (findings feed
+here). Do not fabricate revisions.
+
+### Phase 10 — Docs sync + guardrail re-freeze
+✅ **COMPLETED (stable)** — Phase 9 skipped by Christian's decision (no documented
+revisions; goal is to finish the merge and retire the legacy workflow), so this ran
+next.
+
+**Implementation summary**
+- **Dev sync first (`ea0412b`).** Merged `dev @ a7c2dc1` into `predev/uxr-fac` — the
+  new trunk-based workflow docs (CLAUDE.md / CONVENTIONS §1-3/9), the CI `typecheck`
+  job (`.github/workflows/ci.yml`), and the `typecheck` npm script. Clean auto-merge
+  (package.json unioned: dev's `typecheck` script + predev's dep removals both
+  survive). Editing the *stale* predev CLAUDE.md before this would have self-inflicted
+  a merge conflict; syncing first makes the doc current and the eventual dev merge
+  conflict-free.
+- **CLAUDE.md Key Files additions:** `src/api/faculty.ts`, `src/components/PdfViewer.tsx`,
+  `src/navigation/FacultyTabs.tsx`.
+- **Re-freeze:** `git checkout dev -- .claude/settings.json` restored the nav +
+  `SubmitResearchScreen` deny entries dropped on this branch. Runs safely now that no
+  further nav-editing phase remains (9 skipped).
+- `npm install` clean (lockfile already consistent post-merge); `npx tsc --noEmit`
+  **green**.
+
+**Deferred to Phase 12:** closing **#12** — held until the merge actually lands (its
+delivery is only real once fused to `dev`).
+
+### Phase 11 — Exit QA + fresh EAS dev-client
+⏭️ **WAIVED** (Christian, 2026-07-03) — Device QA on a fresh EAS dev-client was
+waived to finish the merge and retire the legacy workflow. The existing dev-client
+remains a valid superset for behavior/layout; the dead-dep removals (Phase 2)
+materialize on the next dev-client build. Any regression is caught on `dev`, not
+before branch deletion.
+
+### Phase 12 — Final merge + retirement
+✅ **COMPLETED (2026-07-03)** — `predev/uxr-fac → dev` via `--no-ff` (two-undertaking
+merge body). Registry flipped: P-D / UX-R / FAC → `complete`. Participant tips tagged
+`retired/ux-remodel-2026-07-03` + `retired/faculty-access-2026-07-03` before delete
+(README §Retirement). Retired: branches + worktrees `predev/uxr-fac`,
+`feat/ux-remodel`, `feat/faculty-access` (`git branch -d`, merge-verified). Instance
+record `docs/predev/PREDEV_UXR-FAC_2026-07-03.md` authored on dev (carries the merge
+SHA). #12 closed. Hybrid-search synced `dev`.
+
+---
+
+> **Autonomous-run checkpoint (2026-07-02):** Phases 0–8 complete + committed
+> (`aa13b33` → `f8d7527`); tsc green throughout. Phases 9–12 are the interactive
+> closeout — 9 needs Christian's revision list, 11 is his on-device QA, 12 is his
+> go. See `HANDOFF_P-D_PHASE-8.md`.
+
+## 4. Exit gate ("clear for dev")
+
+All queued revisions applied · full both-role QA on the **fresh** dev-client ·
+`npx tsc --noEmit` green · docs synced (registry, statuses, handoffs, snapshots) ·
+Christian's explicit go.
+
+## 5. Constraints
+
+- `npx tsc --noEmit` green at every phase exit.
+- Palette discipline: navy + gold + slate; gold once per screen. Two typefaces
+  only (Source Serif 4 + IBM Plex Sans).
+- Session-critical core stays frozen (Auth/supabase/domain/auth/authStorage).
+  Nav files + SubmitResearchScreen are unfrozen on this branch (inherited from
+  the participant branches) until Phase 10 re-freezes them.
+- No SQL changes expected (both branches' SQL already deployed; snapshots union
+  cleanly).
+- Commits staged specifically, presented for review; no Co-Authored-By trailer.

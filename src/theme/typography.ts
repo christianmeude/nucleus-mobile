@@ -3,14 +3,16 @@ import { PixelRatio, type TextStyle } from 'react-native';
 /**
  * NUcleus typography tokens.
  *
- * Two families per docs/plans/UI_OVERHAUL.md §2.2:
- *   - `families.ui = Outfit`     — every UI surface (default).
- *   - `families.display = Lora`  — sparingly, for premium reading-view titles
- *                                  (e.g. ResearchDetail paper title). NEVER for UI chrome.
+ * Two families (UX remodel — cool/minimal direction):
+ *   - `families.ui = IBM Plex Sans`       — every UI surface (default).
+ *   - `families.display = Source Serif 4` — sparingly, for titles / reading-view
+ *                                  headings (e.g. ResearchDetail paper title, card
+ *                                  titles). NEVER for UI chrome like buttons/labels.
  *
  * React Native does not select a weight from a single family name + numeric weight;
  * each weight must reference its own registered font name. Both families ship via
- * `@expo-google-fonts/outfit` and `@expo-google-fonts/lora` and are loaded in App.tsx.
+ * `@expo-google-fonts/ibm-plex-sans` and `@expo-google-fonts/source-serif-4` and
+ * are loaded in App.tsx.
  */
 
 const MAX_FONT_SCALE = 1.3;
@@ -22,16 +24,16 @@ export const scaledFontSize = (size: number): number => {
 
 export const families = {
   ui: {
-    regular: 'Outfit_400Regular',
-    medium: 'Outfit_500Medium',
-    semibold: 'Outfit_600SemiBold',
-    bold: 'Outfit_700Bold',
+    regular: 'IBMPlexSans_400Regular',
+    medium: 'IBMPlexSans_500Medium',
+    semibold: 'IBMPlexSans_600SemiBold',
+    bold: 'IBMPlexSans_700Bold',
   },
   display: {
-    regular: 'Lora_400Regular',
-    medium: 'Lora_500Medium',
-    semibold: 'Lora_600SemiBold',
-    bold: 'Lora_700Bold',
+    regular: 'SourceSerif4_400Regular',
+    medium: 'SourceSerif4_500Medium',
+    semibold: 'SourceSerif4_600SemiBold',
+    bold: 'SourceSerif4_700Bold',
   },
 } as const;
 
@@ -72,7 +74,7 @@ const make = (
  * headings, subheads, body, and metadata; line lengths and sizes tuned for
  * mobile reading").
  *
- * `display` is the only style that uses the Lora serif by default.
+ * `display` is the only style that uses the Source Serif 4 serif by default.
  */
 export const typography = {
   display: make('display', 'semibold', 30, 38, 0.2),

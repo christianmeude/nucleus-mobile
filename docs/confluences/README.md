@@ -1,5 +1,14 @@
 # Confluence builds
 
+> **Archived 2026-07-02 — superseded by [`docs/predev/README.md`](../predev/README.md).**
+> Confluences were throwaway, QA-only fusions that were *never* merged to `dev`.
+> The **pre-dev integration** workflow is the evolved, persistent form: it fuses
+> mature undertakings, hosts the reconciliation work, and *is* the merge into
+> `dev`. Use a confluence only when nothing needs changing and you just want one
+> dev-client to test two branches at once. The workflow below and the records in
+> this directory remain valid history (the `confluence/uxr-fac-2026-06-28` tag
+> still points at them).
+
 A **confluence** is a throwaway branch that temporarily fuses two (or more) active
 undertakings into one buildable tree, solely to produce a single native dev-client and
 QA every undertaking against it at once. It is deleted afterward; each undertaking
