@@ -53,10 +53,12 @@ export const PressableCard = ({
 const styles = StyleSheet.create({
   card: {
     borderRadius: theme.radii.lg,
+    borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },
   pressable: {
     borderRadius: theme.radii.lg,
+    borderCurve: 'continuous',
   },
   pressed: {
     opacity: 0.96,

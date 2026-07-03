@@ -111,6 +111,7 @@ const styles = StyleSheet.create({
   readOnly: {
     backgroundColor: theme.colors.surface.raised,
     borderRadius: theme.radii.lg,
+    borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.border.subtle,
     padding: theme.spacing.lg,
@@ -177,7 +178,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   title: {
-    ...theme.typography.bodyStrong,
+    ...theme.typography.h3,
     color: theme.colors.text.primary,
   },
   meta: {

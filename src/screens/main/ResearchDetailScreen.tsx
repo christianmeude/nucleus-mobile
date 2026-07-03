@@ -359,9 +359,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   title: {
-    fontFamily: theme.fontFamilies.display.semibold,
-    fontSize: 26,
-    lineHeight: 32,
+    ...theme.typography.display,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.md,
   },

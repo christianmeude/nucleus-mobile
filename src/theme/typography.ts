@@ -3,16 +3,22 @@ import { PixelRatio, type TextStyle } from 'react-native';
 /**
  * NUcleus typography tokens.
  *
- * Two families (UX remodel — cool/minimal direction):
- *   - `families.ui = IBM Plex Sans`       — every UI surface (default).
- *   - `families.display = Source Serif 4` — sparingly, for titles / reading-view
- *                                  headings (e.g. ResearchDetail paper title, card
- *                                  titles). NEVER for UI chrome like buttons/labels.
+ * Two families ("Modern Clarity" pairing):
+ *   - `families.ui = Roboto`       — every UI surface (default): chrome, labels,
+ *                                  buttons, chips, metadata. Also Material 3's own
+ *                                  default typeface.
+ *   - `families.display = Montserrat` — heading roles only (display, h1-h3) and
+ *                                  reading-view titles (e.g. ResearchDetail paper
+ *                                  title, card titles). NEVER for UI chrome like
+ *                                  buttons/labels.
+ *
+ * Heading sizes are calibrated against the Material 3 type scale roles
+ * (Headline/Title), not sized up arbitrarily — see the `typography` scale below.
  *
  * React Native does not select a weight from a single family name + numeric weight;
  * each weight must reference its own registered font name. Both families ship via
- * `@expo-google-fonts/ibm-plex-sans` and `@expo-google-fonts/source-serif-4` and
- * are loaded in App.tsx.
+ * `@expo-google-fonts/roboto` and `@expo-google-fonts/montserrat` and are loaded
+ * in App.tsx.
  */
 
 const MAX_FONT_SCALE = 1.3;
@@ -24,16 +30,16 @@ export const scaledFontSize = (size: number): number => {
 
 export const families = {
   ui: {
-    regular: 'IBMPlexSans_400Regular',
-    medium: 'IBMPlexSans_500Medium',
-    semibold: 'IBMPlexSans_600SemiBold',
-    bold: 'IBMPlexSans_700Bold',
+    regular: 'Roboto_400Regular',
+    medium: 'Roboto_500Medium',
+    semibold: 'Roboto_600SemiBold',
+    bold: 'Roboto_700Bold',
   },
   display: {
-    regular: 'SourceSerif4_400Regular',
-    medium: 'SourceSerif4_500Medium',
-    semibold: 'SourceSerif4_600SemiBold',
-    bold: 'SourceSerif4_700Bold',
+    regular: 'Montserrat_400Regular',
+    medium: 'Montserrat_500Medium',
+    semibold: 'Montserrat_600SemiBold',
+    bold: 'Montserrat_700Bold',
   },
 } as const;
 
@@ -72,15 +78,20 @@ const make = (
 /**
  * Type scale tuned for mobile reading per roadmap §2 ("strong scale between
  * headings, subheads, body, and metadata; line lengths and sizes tuned for
- * mobile reading").
- *
- * `display` is the only style that uses the Source Serif 4 serif by default.
+ * mobile reading"), with heading sizes calibrated against the Material 3
+ * type scale roles rather than sized up arbitrarily:
+ *   - `display`  ≈ M3 Headline Medium (28)
+ *   - `h1`       ≈ M3 Headline Small (24)
+ *   - `h2`       ≈ M3 Title Large (20, unchanged)
+ *   - `h3`       ≈ M3 Title Medium (17, unchanged)
+ * `display` and `h1`-`h3` move to the Montserrat display family; body/UI
+ * sizes are unchanged.
  */
 export const typography = {
-  display: make('display', 'semibold', 30, 38, 0.2),
-  h1: make('ui', 'bold', 26, 34, 0),
-  h2: make('ui', 'bold', 20, 28, 0),
-  h3: make('ui', 'semibold', 17, 24, 0),
+  display: make('display', 'semibold', 28, 36, 0.15),
+  h1: make('display', 'bold', 24, 32, 0),
+  h2: make('display', 'bold', 20, 28, 0),
+  h3: make('display', 'semibold', 17, 24, 0),
   bodyStrong: make('ui', 'semibold', 15, 22, 0),
   body: make('ui', 'regular', 15, 22, 0),
   bodySmall: make('ui', 'regular', 13, 20, 0),
