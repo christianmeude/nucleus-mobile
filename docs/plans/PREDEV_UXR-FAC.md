@@ -234,12 +234,28 @@ provides the revision list and/or completes the Phase-11 both-role QA (findings 
 here). Do not fabricate revisions.
 
 ### Phase 10 — Docs sync + guardrail re-freeze
-⏳ **NOT STARTED** (closeout) — CLAUDE.md Key Files additions (PdfViewer,
-`src/api/faculty.ts`, FacultyTabs); close #12; **re-freeze** nav + SubmitResearch via
-`git checkout dev -- .claude/settings.json` + commit (git-level write, flagged).
-**Deliberately deferred** until after Phase 9 — the re-freeze "must come after all
-nav-editing phases," and Phase 9 revisions may still touch nav. Running it now would
-risk a re-unfreeze/rework cycle.
+✅ **COMPLETED (stable)** — Phase 9 skipped by Christian's decision (no documented
+revisions; goal is to finish the merge and retire the legacy workflow), so this ran
+next.
+
+**Implementation summary**
+- **Dev sync first (`ea0412b`).** Merged `dev @ a7c2dc1` into `predev/uxr-fac` — the
+  new trunk-based workflow docs (CLAUDE.md / CONVENTIONS §1-3/9), the CI `typecheck`
+  job (`.github/workflows/ci.yml`), and the `typecheck` npm script. Clean auto-merge
+  (package.json unioned: dev's `typecheck` script + predev's dep removals both
+  survive). Editing the *stale* predev CLAUDE.md before this would have self-inflicted
+  a merge conflict; syncing first makes the doc current and the eventual dev merge
+  conflict-free.
+- **CLAUDE.md Key Files additions:** `src/api/faculty.ts`, `src/components/PdfViewer.tsx`,
+  `src/navigation/FacultyTabs.tsx`.
+- **Re-freeze:** `git checkout dev -- .claude/settings.json` restored the nav +
+  `SubmitResearchScreen` deny entries dropped on this branch. Runs safely now that no
+  further nav-editing phase remains (9 skipped).
+- `npm install` clean (lockfile already consistent post-merge); `npx tsc --noEmit`
+  **green**.
+
+**Deferred to Phase 12:** closing **#12** — held until the merge actually lands (its
+delivery is only real once fused to `dev`).
 
 ### Phase 11 — Exit QA + fresh EAS dev-client
 ⏳ **NOT STARTED** (Christian's testing) — Full both-role regression on the existing
