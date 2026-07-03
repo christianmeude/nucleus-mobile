@@ -129,9 +129,10 @@ Break the SQL down in plain, simple language (what it does, what it touches, whe
 ### After implementing (per phase, no pause)
 
 1. Run `npx tsc --noEmit` — a red `tsc` is a blocker (see Escalation), not something to smooth over
-2. Update the active plan doc (phase status markers below)
-3. Stage specific files, draft the commit message (§2), and commit
-4. Continue directly to the next phase — no stop-and-wait
+2. Run `npm test` — Jest is wired via CI (`.github/workflows/ci.yml`); a red test run is a blocker, same as `tsc`
+3. Update the active plan doc (phase status markers below)
+4. Stage specific files, draft the commit message (§2), and commit
+5. Continue directly to the next phase — no stop-and-wait
 
 ### Escalation — when a phase gets stuck
 
@@ -151,7 +152,7 @@ At the undertaking's merge boundary (§1), Claude Code opens a PR instead of mer
 
 1. Open the PR with a structured description (the merge-commit format, §1).
 2. Run a review pass against the diff — plan conformance, frozen files untouched, `tsc` green.
-3. Christian runs manual device/emulator QA and gives the go-ahead. This is the only test stage beyond `tsc` — there is no automated test suite today.
+3. Christian runs manual device/emulator QA and gives the go-ahead. This runs alongside the automated `tsc` + `npm test` gates (Jest, wired via CI) — there is no additional automated stage beyond these.
 4. Claude Code merges the PR (`gh pr merge`).
 
 ### Plan doc phase status markers
