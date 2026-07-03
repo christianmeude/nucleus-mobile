@@ -42,20 +42,19 @@ steps in order; do not act until all are done.
 
 ### Undertaking Registry
 
-Routing table for resume. The name→short→branch→plan mapping is stable; the only
-recurring upkeep is `Status` (updated at session close, CONVENTIONS §9). The
-latest handoff is discovered by recency on the branch, not tracked here.
+Routing table for resume. Only non-`complete` undertakings get a row — once an
+undertaking merges to `main`, its plan and handoffs are removed (git/PR history
+is the permanent record; nothing is left to resume). The latest handoff is
+discovered by recency on the branch, not tracked here.
 
 | Undertaking | Short | Branch | Plan | Status |
 |---|---|---|---|---|
-| Submit Research | `S-R` | merged → `main` | `docs/plans/SUBMIT_RESEARCH.md` | complete |
-| UX Remodel | `UX-R` | merged → `main` | `docs/plans/UX_REMODEL.md` | complete |
-| Faculty Access | `FAC` | merged → `main` | `docs/plans/FACULTY_ACCESS.md` | complete |
 | Hybrid Search | `H-S` | `feat/hybrid-search` | `docs/plans/HYBRID_SEARCH.md` | active |
 
 > A plan/handoff path resolves once you are on that undertaking's branch (each
 > lives on its own branch). Add a new undertaking = add a row + a plan doc; it
-> becomes resumable automatically.
+> becomes resumable automatically. When an undertaking merges to `main`, drop
+> its row, delete its plan doc and handoffs (CONVENTIONS §9).
 
 > **Status vocabulary:** `active` · `parked` · `complete`.
 
