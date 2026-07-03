@@ -389,13 +389,13 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface.base,
   },
   content: {
-    padding: theme.spacing.lg,
-    gap: theme.spacing.md,
+    padding: theme.spacing.xl,
+    gap: theme.spacing.lg,
   },
   title: {
-    fontFamily: theme.fontFamilies.display.semibold,
-    fontSize: 26,
-    lineHeight: 32,
+    fontFamily: theme.fontFamilies.display.bold,
+    fontSize: 28,
+    lineHeight: 36,
     color: theme.colors.text.primary,
   },
   searchWrap: {
@@ -518,8 +518,8 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     fontFamily: theme.fontFamilies.display.semibold,
-    fontSize: 20,
-    lineHeight: 26,
+    fontSize: 22,
+    lineHeight: 28,
     color: theme.colors.text.onBrand,
     marginBottom: theme.spacing.md,
   },
@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    rowGap: theme.spacing.md,
+    rowGap: theme.spacing.lg,
   },
   gridCell: {
     width: '48%',
@@ -644,16 +644,16 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface.raised,
   },
   list: {
-    gap: theme.spacing.sm,
+    gap: theme.spacing.md,
   },
   card: {
     backgroundColor: theme.colors.surface.raised,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.border.subtle,
-    borderRadius: theme.radii.lg,
+    borderRadius: theme.radii.xl,
     borderCurve: 'continuous',
-    padding: theme.spacing.lg,
-    gap: 6,
+    padding: theme.spacing.xl,
+    gap: 8,
   },
   cardPressed: {
     opacity: 0.7,
@@ -677,8 +677,8 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontFamily: theme.fontFamilies.display.semibold,
-    fontSize: 16,
-    lineHeight: 21,
+    fontSize: 18,
+    lineHeight: 24,
     color: theme.colors.text.primary,
   },
   cardMeta: {
