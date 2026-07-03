@@ -168,7 +168,7 @@ const COLUMN_WIDTH = 46;
 const styles = StyleSheet.create({
   wrap: {
     gap: 4,
-    marginTop: 2,
+    marginTop: theme.spacing.md,
   },
   track: {
     flexDirection: 'row',
