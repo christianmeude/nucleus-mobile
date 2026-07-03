@@ -95,10 +95,10 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: theme.spacing.lg,
-    paddingVertical: 16,
-    paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.radii.xl,
+    gap: theme.spacing.md,
+    paddingVertical: 13,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.radii.lg,
     borderCurve: 'continuous',
   },
   rowUnread: {

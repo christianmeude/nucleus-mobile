@@ -110,13 +110,13 @@ export const ResearchCard = ({
 const styles = StyleSheet.create({
   readOnly: {
     backgroundColor: theme.colors.surface.raised,
-    borderRadius: theme.radii.xl,
+    borderRadius: theme.radii.lg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.border.subtle,
-    padding: theme.spacing.xl,
+    padding: theme.spacing.lg,
   },
   content: {
-    gap: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
   categoryLine: {
     ...theme.typography.caption,
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   title: {
-    ...theme.typography.h3,
+    ...theme.typography.bodyStrong,
     color: theme.colors.text.primary,
   },
   meta: {

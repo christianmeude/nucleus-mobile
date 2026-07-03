@@ -191,9 +191,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   skeletonList: {
-    gap: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
   list: {
-    gap: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
 });

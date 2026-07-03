@@ -271,10 +271,10 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   skeletonList: {
-    gap: theme.spacing.lg,
+    gap: theme.spacing.md,
   },
   list: {
-    gap: theme.spacing.lg,
+    gap: theme.spacing.md,
   },
   fab: {
     position: 'absolute',

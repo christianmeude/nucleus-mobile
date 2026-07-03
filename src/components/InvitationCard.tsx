@@ -162,9 +162,9 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface.raised,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.border.subtle,
-    borderRadius: theme.radii.xl,
+    borderRadius: theme.radii.lg,
     borderCurve: 'continuous',
-    padding: theme.spacing.xl,
+    padding: theme.spacing.lg,
   },
   cardMuted: {
     backgroundColor: theme.colors.surface.base,
@@ -229,8 +229,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: theme.fontFamilies.display.semibold,
-    fontSize: 19,
-    lineHeight: 25,
+    fontSize: 17,
+    lineHeight: 22,
     color: theme.colors.text.primary,
     marginTop: theme.spacing.md,
   },

@@ -58,13 +58,13 @@ export const ResearchTile = ({
 const styles = StyleSheet.create({
   tile: {
     flex: 1,
-    minHeight: 144,
+    minHeight: 132,
     backgroundColor: theme.colors.surface.raised,
-    borderRadius: theme.radii.xl,
+    borderRadius: theme.radii.lg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.border.subtle,
-    padding: theme.spacing.lg,
-    gap: theme.spacing.sm,
+    padding: theme.spacing.md,
+    gap: theme.spacing.xs,
     ...theme.shadows.level1,
   },
   pressed: {
@@ -89,8 +89,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: theme.fontFamilies.display.semibold,
-    fontSize: 16,
-    lineHeight: 21,
+    fontSize: 14,
+    lineHeight: 19,
     color: theme.colors.text.primary,
   },
   author: {

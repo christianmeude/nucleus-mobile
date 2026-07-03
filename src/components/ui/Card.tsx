@@ -15,7 +15,7 @@ type PressableCardProps = CardProps & {
   accessibilityLabel?: string;
 };
 
-export const Card = ({ children, style, padding = 'xl' }: CardProps) => {
+export const Card = ({ children, style, padding = 'lg' }: CardProps) => {
   return (
     <Surface style={[styles.card, { padding: theme.spacing[padding] }, style]}>
       {children}
@@ -26,7 +26,7 @@ export const Card = ({ children, style, padding = 'xl' }: CardProps) => {
 export const PressableCard = ({
   children,
   style,
-  padding = 'xl',
+  padding = 'lg',
   onPress,
   disabled,
   accessibilityLabel,
@@ -52,11 +52,11 @@ export const PressableCard = ({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: theme.radii.xl,
+    borderRadius: theme.radii.lg,
     borderWidth: StyleSheet.hairlineWidth,
   },
   pressable: {
-    borderRadius: theme.radii.xl,
+    borderRadius: theme.radii.lg,
   },
   pressed: {
     opacity: 0.96,
