@@ -2,19 +2,19 @@ import { ActivityIndicator, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
-  useFonts as useOutfit,
-  Outfit_400Regular,
-  Outfit_500Medium,
-  Outfit_600SemiBold,
-  Outfit_700Bold,
-} from '@expo-google-fonts/outfit';
+  useFonts as useIBMPlexSans,
+  IBMPlexSans_400Regular,
+  IBMPlexSans_500Medium,
+  IBMPlexSans_600SemiBold,
+  IBMPlexSans_700Bold,
+} from '@expo-google-fonts/ibm-plex-sans';
 import {
-  useFonts as useLora,
-  Lora_400Regular,
-  Lora_500Medium,
-  Lora_600SemiBold,
-  Lora_700Bold,
-} from '@expo-google-fonts/lora';
+  useFonts as useSourceSerif4,
+  SourceSerif4_400Regular,
+  SourceSerif4_500Medium,
+  SourceSerif4_600SemiBold,
+  SourceSerif4_700Bold,
+} from '@expo-google-fonts/source-serif-4';
 import { AuthProvider } from './src/context/AuthContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { theme } from './src/theme';
@@ -33,21 +33,21 @@ const FontLoader = () => (
 );
 
 export default function App() {
-  const [outfitLoaded] = useOutfit({
-    Outfit_400Regular,
-    Outfit_500Medium,
-    Outfit_600SemiBold,
-    Outfit_700Bold,
+  const [uiLoaded] = useIBMPlexSans({
+    IBMPlexSans_400Regular,
+    IBMPlexSans_500Medium,
+    IBMPlexSans_600SemiBold,
+    IBMPlexSans_700Bold,
   });
 
-  const [loraLoaded] = useLora({
-    Lora_400Regular,
-    Lora_500Medium,
-    Lora_600SemiBold,
-    Lora_700Bold,
+  const [displayLoaded] = useSourceSerif4({
+    SourceSerif4_400Regular,
+    SourceSerif4_500Medium,
+    SourceSerif4_600SemiBold,
+    SourceSerif4_700Bold,
   });
 
-  const fontsReady = outfitLoaded && loraLoaded;
+  const fontsReady = uiLoaded && displayLoaded;
 
   return (
     <SafeAreaProvider>

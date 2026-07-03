@@ -188,5 +188,8 @@ The `public.users` SELECT policy cannot reference itself — triggers `42P17`. C
 | `src/api/research.ts` | Research and submission API facade |
 | `src/api/invitations.ts` | Invitations API facade |
 | `src/api/notifications.ts` | Notifications API facade |
+| `src/api/faculty.ts` | Faculty read paths + review write RPCs |
 | `src/theme/` | Design tokens — always use, never hardcode values |
 | `src/components/ui/` | Shared UI primitives |
+| `src/components/PdfViewer.tsx` | Shared in-app PDF reader (WebView + pdf.js); used by both roles |
+| `src/navigation/FacultyTabs.tsx` | Faculty tab navigator (headerless; per-screen safe-area insets) |

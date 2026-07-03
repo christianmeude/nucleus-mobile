@@ -32,6 +32,13 @@ export const formatDate = (value?: string | null) => {
   });
 };
 
+export const formatMonthYear = (value?: string | null) => {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+};
+
 export const formatRelativeTime = (value?: string | null) => {
   if (!value) return 'just now';
   const target = new Date(value).getTime();
