@@ -53,6 +53,7 @@ latest handoff is discovered by recency on the branch, not tracked here.
 | UX Remodel | `UX-R` | `feat/ux-remodel` | `docs/plans/UX_REMODEL.md` | integrating |
 | Faculty Access | `FAC` | `feat/faculty-access` | `docs/plans/FACULTY_ACCESS.md` | integrating |
 | Hybrid Search | `H-S` | `feat/hybrid-search` | `docs/plans/HYBRID_SEARCH.md` | active |
+| Workflow Retirement | `W-R` | `chore/workflow-retirement` | `docs/plans/WORKFLOW_RETIREMENT.md` | active |
 
 > A plan/handoff path resolves once you are on that undertaking's branch (each
 > lives on its own branch). Add a new undertaking = add a row + a plan doc; it
