@@ -94,6 +94,8 @@ Consult routing and gating in `src/navigation/AppNavigator.tsx` and `src/navigat
 
 Design guidance: map backend rows to these shapes without renaming fields unnecessarily.
 
+**Known data/storage gap (2026-07-04):** 26 mock/smoke `research_papers` rows (8 seeded by `smoke.student@nucleus.local` + 18 junk-titled QA scratch rows) were hard-deleted from `public.research_papers` (cascaded to child tables). Their PDF files were **not** removed from the `research-papers` storage bucket — direct SQL against `storage.objects` is blocked by a protect-delete trigger, and cleanup requires the Storage API with the service-role key, which mobile-scoped tooling does not hold. These files are orphaned (unreferenced by any DB row) but still occupy the bucket under folders `7a857672-628a-4889-be7b-61ffba420056/`, `0e0955f8-2d55-419a-a2e2-c834dfb535e1/`, `0eb203d0-fb60-4c38-9f0a-e60383dc7267/`, and `a8f223c6-7afd-4fa1-a0a9-aa4f168edc00/`. Delete manually via Supabase Studio → Storage → `research-papers` when convenient.
+
 ## Access control & role model
 
 - Authoritative user profile: the application relies on a canonical user profile record as the authoritative user identity (for example, the `public.users` profile used by backend services). A valid, complete application profile is REQUIRED for an authenticated mobile session; users without a complete profile are not considered provisioned for the student product.
