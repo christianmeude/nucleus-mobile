@@ -49,28 +49,15 @@ latest handoff is discovered by recency on the branch, not tracked here.
 | Undertaking | Short | Branch | Plan | Status |
 |---|---|---|---|---|
 | Submit Research | `S-R` | merged → `main` | `docs/plans/SUBMIT_RESEARCH.md` | complete |
-| Pre-Dev Integration | `P-D` | `predev/uxr-fac` | `docs/plans/PREDEV_UXR-FAC.md` | active |
-| UX Remodel | `UX-R` | `feat/ux-remodel` | `docs/plans/UX_REMODEL.md` | integrating |
-| Faculty Access | `FAC` | `feat/faculty-access` | `docs/plans/FACULTY_ACCESS.md` | integrating |
+| UX Remodel | `UX-R` | merged → `main` | `docs/plans/UX_REMODEL.md` | complete |
+| Faculty Access | `FAC` | merged → `main` | `docs/plans/FACULTY_ACCESS.md` | complete |
 | Hybrid Search | `H-S` | `feat/hybrid-search` | `docs/plans/HYBRID_SEARCH.md` | active |
-| Workflow Retirement | `W-R` | `chore/workflow-retirement` | `docs/plans/WORKFLOW_RETIREMENT.md` | active |
 
 > A plan/handoff path resolves once you are on that undertaking's branch (each
 > lives on its own branch). Add a new undertaking = add a row + a plan doc; it
 > becomes resumable automatically.
 
-> **Status vocabulary:** `active` · `parked` · `integrating` · `complete`.
-> **`integrating`** means the undertaking's feature work is frozen and its branch
-> is being fused on a `predev/*` branch (see `docs/predev/`). A resume request for
-> an `integrating` undertaking (e.g. "resume faculty access") routes to the
-> **pre-dev integration** undertaking and its worktree — that is where its work
-> now lives — not to the retired-in-place feature branch. `integrating` rows flip
-> to `complete` when the pre-dev branch clears to `dev`.
->
-> **`integrating` is legacy** — it only exists for `predev/uxr-fac`, which is
-> grandfathered through its already-documented path. No undertaking started from
-> here forward goes through a `predev/*` or `confluence/*` step; it runs on a
-> short-lived `feat/*` branch straight to `main` (CONVENTIONS §1 "Legacy").
+> **Status vocabulary:** `active` · `parked` · `complete`.
 
 ### Worktrees (expected once a plan runs autonomously)
 
@@ -137,7 +124,7 @@ Once Christian approves a plan, execution runs unattended through to a pull requ
 2. **Execute.** Every phase runs end to end — investigate, implement, `tsc`, plan-doc marker update, commit (Rule 6) — with no stop between phases. Independent, disjoint-file phases may run as parallel sub-agents instead of serially.
    - Hard stops mid-run: a SQL/schema change (Rule 3) or a frozen-file conflict (Frozen Files, above). Both pause for Christian, same as always.
 3. **Test.** `npx tsc --noEmit` gates every phase (Rule 5) — a red `tsc` is a blocker, not something to smooth over. There is no automated test suite beyond this; manual QA stays Christian's and happens at the review gate below, not as a separate autonomous stage.
-4. **Review & merge (exit gate).** At the undertaking's merge boundary — `feat/* → main` (CONVENTIONS §1) — Claude Code opens a GitHub PR with a structured description instead of merging locally. CI runs automatically. A review pass checks the diff against the plan. Christian runs his own manual QA and gives the go-ahead; Claude Code then merges via `gh pr merge`. (`predev/uxr-fac` is grandfathered on its already-documented `predev/uxr-fac → dev → main` path — CONVENTIONS §1 "Legacy".)
+4. **Review & merge (exit gate).** At the undertaking's merge boundary — `feat/* → main` (CONVENTIONS §1) — Claude Code opens a GitHub PR with a structured description instead of merging locally. CI runs automatically. A review pass checks the diff against the plan. Christian runs his own manual QA and gives the go-ahead; Claude Code then merges via `gh pr merge`.
 5. **Escalation.** A blocker (ambiguous requirement, red `tsc`, a frozen-file hit, an unexpected merge conflict) marks that phase — and anything depending on it — 🔴 **BLOCKED** in the plan doc. Independent phases keep running. Claude Code reports once, consolidated, when nothing independent remains: blockers first, completed work after.
 
 ---

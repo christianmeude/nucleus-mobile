@@ -70,6 +70,7 @@ Everything else runs start to finish without pausing you.
 
 ## Words you can ignore
 
-You'll see `dev`, `predev`, `confluence`, and `integrating` in the older docs.
-They're leftovers from a heavier process we're retiring. You can ignore them —
-they're being deleted.
+If you come across `dev`, `predev`, `confluence`, or `integrating` in old
+handoffs or plan docs, they're leftovers from a heavier process we've since
+retired. They no longer mean anything in how we work today — one trunk (`main`),
+short branches, PRs. Ignore them.

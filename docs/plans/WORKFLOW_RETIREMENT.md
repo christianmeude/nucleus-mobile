@@ -1,15 +1,22 @@
-# Plan — Workflow Retirement (kill the ghosts)
+# Workflow Retirement — checklist (kill the ghosts)
 
-**Undertaking:** Workflow Retirement · **Short:** `W-R` · **Branch:** `chore/workflow-retirement`
-
-Retire the old heavy workflow so the project runs on **one** path: short-lived
-`feat/*` / `chore/*` branches → PR → `main`. Removes the vocabulary that makes the
-process feel "all over the place" — `dev`, `predev`, `confluence`, `integrating`.
+A one-time cleanup, **not** a registered undertaking with its own ceremony —
+that would just add more of the process we're removing. Retire the old heavy
+workflow so the project runs on **one** path: short-lived `feat/*` / `chore/*`
+branches → PR → `main`. Removes the vocabulary that makes the process feel "all
+over the place" — `dev`, `predev`, `confluence`, `integrating`.
 
 > **Rule:** delete the *things* before the *words*. The legacy sections in
 > `CONVENTIONS.md` / `CLAUDE.md` stay until the branches they describe are actually
 > gone, so the docs never describe a state that isn't real. Doc deletion is the
 > **last** phase, not the first.
+
+> **STATUS — 2026-07-03:** Phase 1 (uxr-fac integration) landed on `dev` in a
+> parallel session (250bec6). This session: merged `dev` → `main` locally (tree
+> identical to `dev`, `tsc` green — commit `2d7a19b`) and cut the legacy vocab
+> from `CLAUDE.md` / `CONVENTIONS.md` / `HOW_WE_WORK.md`. **Remaining:** push
+> `main` to origin, land tooling PR #16, delete `dev` + stale legacy remotes, then
+> merge this doc-cleanup PR (#17) last.
 
 ---
 
@@ -80,9 +87,8 @@ Only after Phases 4–5. Now the docs can describe the real (single-path) world.
 
 ---
 
-## Resumption
-`chore/workflow-retirement` branch + this plan doc. Say *"resume workflow
-retirement."* Each session closes with a handoff (`HANDOFF_W-R_*`) so a cold
-session continues from the last completed phase. Phase 1 delegates to the
-separate pre-dev integration undertaking — that state is on `predev/uxr-fac`,
-independently resumable.
+## If it spans sittings
+Best done in one or two sittings — it's a cleanup, not ongoing work. If paused,
+the phase markers above show where it stopped; point Claude at this file to pick
+back up. Phase 1's actual work (the UX Remodel + Faculty Access merge) lives on
+`predev/uxr-fac` and stays resumable on its own.
