@@ -1,33 +1,30 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { PaperStatus } from '../types/domain';
 import { statusToLabel } from '../utils/format';
 import { theme } from '../theme';
 
-type StepState = 'done' | 'current' | 'upcoming' | 'warning' | 'danger';
+type NodeState = 'done' | 'pending' | 'upcoming' | 'warning' | 'danger' | 'complete';
 
-const STAGES = [
-  { key: 'submitted', label: 'Submitted' },
-  { key: 'adviser', label: 'Adviser' },
-  { key: 'review', label: 'Review' },
-  { key: 'approved', label: 'Approved' },
-  { key: 'published', label: 'Published' },
-] as const;
+/** Reviewer hierarchy, in order. Not every paper touches every level (e.g. an
+ * editor-routed paper skips Adviser/Chair) — the map still renders all 5 so the
+ * student always sees the full ladder and where they currently sit on it. */
+const STAGES = ['Adviser', 'Chair', 'Editor', 'Admin', 'Approved'] as const;
 
-/** pending_dean/program_chair/editor/admin all collapse into one "Review" step. */
 const stageIndexForStatus = (status: PaperStatus): number => {
   switch (status) {
     case 'pending':
-      return 0;
     case 'pending_faculty':
-      return 1;
+      return 0;
     case 'pending_dean':
     case 'pending_program_chair':
+      return 1;
     case 'pending_editor':
-    case 'pending_admin':
       return 2;
-    case 'approved':
+    case 'pending_admin':
       return 3;
+    case 'approved':
     case 'published':
       return 4;
     default:
@@ -35,12 +32,35 @@ const stageIndexForStatus = (status: PaperStatus): number => {
   }
 };
 
-const MARKER_COLOR: Record<StepState, string> = {
-  done: theme.colors.brand.primary,
-  current: theme.colors.brand.primary,
-  upcoming: theme.colors.surface.raised,
-  warning: theme.colors.state.warning,
-  danger: theme.colors.state.danger,
+const PulseRing = ({ color }: { color: string }) => {
+  const progress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(progress, {
+        toValue: 1,
+        duration: 1200,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      })
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [progress]);
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.pulseRing,
+        {
+          borderColor: color,
+          opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0.6, 0] }),
+          transform: [{ scale: progress.interpolate({ inputRange: [0, 1], outputRange: [1, 2.4] }) }],
+        },
+      ]}
+    />
+  );
 };
 
 interface PaperProgressMapProps {
@@ -48,65 +68,87 @@ interface PaperProgressMapProps {
 }
 
 export const PaperProgressMap = ({ status }: PaperProgressMapProps) => {
-  const isRevision = status === 'revision_required';
   const isRejected = status === 'rejected';
-  /** Revision/reject only ever branch off pending_faculty (faculty-access §4). */
-  const blockedIndex = isRevision || isRejected ? 1 : -1;
-  const currentIndex = blockedIndex >= 0 ? blockedIndex : stageIndexForStatus(status);
+  const isRevision = status === 'revision_required';
+  const isComplete = status === 'approved' || status === 'published';
+
+  /** Revision/reject only ever branch off pending_faculty today (faculty-access §4) — the
+   * level that "initiated" the revision is always Adviser. */
+  const blockedIndex = isRejected || isRevision ? 0 : -1;
+  const currentIndex = stageIndexForStatus(status);
+  const filledThrough = isComplete ? 4 : blockedIndex >= 0 ? blockedIndex : currentIndex;
+  const barColor = isComplete ? theme.colors.state.success : theme.colors.brand.primary;
   const blockedColor = isRejected ? theme.colors.state.danger : theme.colors.state.warning;
 
   return (
     <View style={styles.wrap}>
       <View style={styles.track}>
-        {STAGES.map((stage, index) => {
-          const state: StepState =
-            index === blockedIndex
+        {STAGES.map((label, index) => {
+          const state: NodeState = isComplete
+            ? 'complete'
+            : index === blockedIndex
               ? isRejected
                 ? 'danger'
                 : 'warning'
               : index < currentIndex
                 ? 'done'
                 : index === currentIndex
-                  ? 'current'
+                  ? 'pending'
                   : 'upcoming';
 
           return (
-            <View key={stage.key} style={styles.stepWrap}>
+            <View key={label} style={styles.stepWrap}>
               {index > 0 ? (
                 <View
-                  style={[styles.connector, index <= currentIndex && styles.connectorFilled]}
+                  style={[
+                    styles.connector,
+                    index <= filledThrough && { backgroundColor: barColor },
+                  ]}
                 />
               ) : null}
-              <View style={[styles.marker, { backgroundColor: MARKER_COLOR[state] }, state === 'upcoming' && styles.markerUpcoming]}>
-                {state === 'done' ? (
-                  <Ionicons name="checkmark" size={10} color={theme.colors.text.onBrand} />
-                ) : null}
-                {state === 'warning' ? (
-                  <Ionicons name="alert" size={9} color={theme.colors.text.onBrand} />
-                ) : null}
-                {state === 'danger' ? (
-                  <Ionicons name="close" size={9} color={theme.colors.text.onBrand} />
-                ) : null}
+              <View style={styles.markerHost}>
+                {state === 'pending' ? <PulseRing color={theme.colors.brand.primary} /> : null}
+                <View
+                  style={[
+                    styles.marker,
+                    state === 'done' && { backgroundColor: theme.colors.brand.primary },
+                    state === 'complete' && { backgroundColor: theme.colors.state.success },
+                    state === 'warning' && { backgroundColor: theme.colors.state.warning },
+                    state === 'danger' && { backgroundColor: theme.colors.state.danger },
+                    (state === 'pending' || state === 'upcoming') && styles.markerHollow,
+                    state === 'pending' && { borderColor: theme.colors.brand.primary },
+                  ]}
+                >
+                  {state === 'done' || state === 'complete' ? (
+                    <Ionicons name="checkmark" size={10} color={theme.colors.text.onBrand} />
+                  ) : null}
+                  {state === 'warning' ? (
+                    <Ionicons name="alert" size={9} color={theme.colors.text.onBrand} />
+                  ) : null}
+                  {state === 'danger' ? (
+                    <Ionicons name="close" size={9} color={theme.colors.text.onBrand} />
+                  ) : null}
+                </View>
               </View>
             </View>
           );
         })}
       </View>
       <View style={styles.labels}>
-        {STAGES.map((stage, index) => {
+        {STAGES.map((label, index) => {
           const isBlocked = index === blockedIndex;
-          const isCurrent = index === currentIndex && !isBlocked;
+          const isActive = isBlocked || (!isComplete && index === currentIndex) || (isComplete && index === 4);
           return (
             <Text
-              key={stage.key}
+              key={label}
               numberOfLines={1}
               style={[
                 styles.label,
-                (isCurrent || isBlocked) && styles.labelActive,
+                isActive && styles.labelActive,
                 isBlocked && { color: blockedColor },
               ]}
             >
-              {stage.label}
+              {label}
             </Text>
           );
         })}
@@ -117,6 +159,8 @@ export const PaperProgressMap = ({ status }: PaperProgressMapProps) => {
     </View>
   );
 };
+
+const MARKER_SIZE = 16;
 
 const styles = StyleSheet.create({
   wrap: {
@@ -137,17 +181,28 @@ const styles = StyleSheet.create({
     height: 2,
     backgroundColor: theme.colors.border.subtle,
   },
-  connectorFilled: {
-    backgroundColor: theme.colors.brand.primary,
+  markerHost: {
+    width: MARKER_SIZE,
+    height: MARKER_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pulseRing: {
+    position: 'absolute',
+    width: MARKER_SIZE,
+    height: MARKER_SIZE,
+    borderRadius: theme.radii.pill,
+    borderWidth: 2,
   },
   marker: {
-    width: 16,
-    height: 16,
+    width: MARKER_SIZE,
+    height: MARKER_SIZE,
     borderRadius: theme.radii.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  markerUpcoming: {
+  markerHollow: {
+    backgroundColor: theme.colors.surface.raised,
     borderWidth: 1.5,
     borderColor: theme.colors.border.strong,
   },
