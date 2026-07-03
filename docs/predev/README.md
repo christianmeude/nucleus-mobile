@@ -1,5 +1,13 @@
 # Pre-dev integration
 
+> **Retired for new work 2026-07-03 — superseded by trunk-based development**
+> ([`docs/CONVENTIONS.md`](../CONVENTIONS.md) §1 "Legacy"). `predev/uxr-fac` is
+> grandfathered through the workflow below since it was already mid-flight; no
+> new `predev/*` branch should be started. CI-gated PRs straight to `main`,
+> short-lived `feat/*` branches, and feature flags now do the job this workflow
+> existed for. The procedure below remains valid history for `predev/uxr-fac`
+> until it clears to `dev` → `main`.
+
 A **pre-dev integration** is a persistent branch that fuses two (or more) mature
 undertakings into one tree, hosts the revision and uniformity work the union
 demands, and finally **merges into `dev`**. Unlike a confluence (its throwaway

@@ -15,10 +15,11 @@ GitHub repo: `christianmeude/capstone-nucleus-rn`
 
 ## Session Opening Protocol
 
-Work runs as parallel **undertakings**, each with its own branch, plan, handoff
-lineage, and (optionally) a git worktree. Resume is routed by undertaking — say
-"resume faculty access" or "resume ux remodel" and this protocol loads that
-undertaking's state. Run these steps in order; do not act until all are done.
+Work runs as parallel **undertakings**, each on its own short-lived branch cut
+from `main` (trunk-based — CONVENTIONS §1), with its own plan, handoff lineage,
+and worktree. Resume is routed by undertaking — say "resume faculty access" or
+"resume ux remodel" and this protocol loads that undertaking's state. Run these
+steps in order; do not act until all are done.
 
 1. Read `docs/PROJECT_CONTEXT.md`
 2. Read `docs/CONVENTIONS.md`
@@ -60,14 +61,27 @@ latest handoff is discovered by recency on the branch, not tracked here.
 > **pre-dev integration** undertaking and its worktree — that is where its work
 > now lives — not to the retired-in-place feature branch. `integrating` rows flip
 > to `complete` when the pre-dev branch clears to `dev`.
+>
+> **`integrating` is legacy** — it only exists for `predev/uxr-fac`, which is
+> grandfathered through its already-documented path. No undertaking started from
+> here forward goes through a `predev/*` or `confluence/*` step; it runs on a
+> short-lived `feat/*` branch straight to `main` (CONVENTIONS §1 "Legacy").
 
-### Worktrees (optional, for simultaneous work)
+### Worktrees (expected once a plan runs autonomously)
 
-Active/parked undertakings may each have a git worktree pinned to their branch,
-so two undertakings run at once without checkout churn. "Resume <undertaking>" =
-open its worktree, or check out its branch in the main dir. Run
-`git worktree list` for the current map; the main repo dir tracks whichever
-undertaking is currently active.
+Every active undertaking gets a git worktree pinned to its branch — not just to
+run two undertakings at once, but because an approved plan now executes
+unattended (see **Autonomous Execution & Review Gate** below): isolation is
+what lets other work continue while it runs. "Resume <undertaking>" = open its
+worktree, or check out its branch in the main dir. Run `git worktree list` for
+the current map; the main repo dir tracks whichever undertaking is currently
+active.
+
+Two worktree lifecycles exist and shouldn't blur: the **persistent, named**
+worktree per registered undertaking (this section — lives for the life of the
+undertaking) versus any **ephemeral** worktree a tool creates for a throwaway,
+unregistered one-off. Dispatch a registered undertaking's work at its own named
+worktree, not into a throwaway one.
 
 ---
 
@@ -83,8 +97,9 @@ undertaking is currently active.
    - **Mobile never uses the service role key** (anon + RLS only — see rule 4). Note the **MCP connection itself is privileged**: it can run DDL and is **not** limited by RLS (confirmed 2026-06-25 — it returns non-public rows). That is exactly why every change goes through the explain-and-approve gate, and why any new object must enforce its own RLS + least-privilege grants.
 4. **Never use the service role key on mobile.** Anon key + RLS only.
 5. **tsc gate is non-negotiable.** Run `npx tsc --noEmit` after every code change. Green typecheck is required before reporting done.
-6. **Commits.** Stage specific files (never `git add .`), draft a message following `docs/CONVENTIONS.md` §2, and present for review. Do not commit without explicit user confirmation.
+6. **Commits.** Stage specific files (never `git add .`), draft a message following `docs/CONVENTIONS.md` §2, and present for review. Once Christian approves the message, Claude Code executes the commit itself — Christian no longer runs `git commit` by hand.
 7. **Handoffs.** At the end of a session or when context grows long, draft a handoff using `docs/handoffs/HANDOFF_TEMPLATE.md`, present for review, then commit once approved.
+8. **Once a plan is approved, execution is autonomous — not phase-by-phase.** Plan approval is the only entry gate; hard stops after that are only a SQL/schema change (Rule 3) or a frozen-file conflict (Rule 2). See **Autonomous Execution & Review Gate** below.
 
 ---
 
@@ -106,6 +121,19 @@ Never edit or create files at these paths. Also enforced in `.claude/settings.js
 | `docs/sql/submit_research_rls_policies.sql` | Deployed SQL snapshot |
 
 **Frozen is the project-wide default, enforced per branch.** An undertaking whose scope genuinely requires a listed file may unfreeze that one entry **in its own branch's `.claude/settings.json`** — a deliberate, scoped exception for that work, not a project-wide unfreeze (e.g. an undertaking that owns navigation changes unfreezes the navigation files on its branch). The session-critical core — `AuthContext.tsx`, `supabase.ts`, `src/auth/`, `authStorage.ts`, `domain.ts` — stays frozen on every branch, no exceptions.
+
+---
+
+## Autonomous Execution & Review Gate
+
+Once Christian approves a plan, execution runs unattended through to a pull request — not phase-by-phase. Two human gates bracket it; everything between them is autonomous. Full mechanics: `docs/CONVENTIONS.md` §3.
+
+1. **Plan approval (entry gate).** Christian approves the plan doc. Everything after this runs without per-phase pauses.
+2. **Execute.** Every phase runs end to end — investigate, implement, `tsc`, plan-doc marker update, commit (Rule 6) — with no stop between phases. Independent, disjoint-file phases may run as parallel sub-agents instead of serially.
+   - Hard stops mid-run: a SQL/schema change (Rule 3) or a frozen-file conflict (Frozen Files, above). Both pause for Christian, same as always.
+3. **Test.** `npx tsc --noEmit` gates every phase (Rule 5) — a red `tsc` is a blocker, not something to smooth over. There is no automated test suite beyond this; manual QA stays Christian's and happens at the review gate below, not as a separate autonomous stage.
+4. **Review & merge (exit gate).** At the undertaking's merge boundary — `feat/* → main` (CONVENTIONS §1) — Claude Code opens a GitHub PR with a structured description instead of merging locally. CI runs automatically. A review pass checks the diff against the plan. Christian runs his own manual QA and gives the go-ahead; Claude Code then merges via `gh pr merge`. (`predev/uxr-fac` is grandfathered on its already-documented `predev/uxr-fac → dev → main` path — CONVENTIONS §1 "Legacy".)
+5. **Escalation.** A blocker (ambiguous requirement, red `tsc`, a frozen-file hit, an unexpected merge conflict) marks that phase — and anything depending on it — 🔴 **BLOCKED** in the plan doc. Independent phases keep running. Claude Code reports once, consolidated, when nothing independent remains: blockers first, completed work after.
 
 ---
 
