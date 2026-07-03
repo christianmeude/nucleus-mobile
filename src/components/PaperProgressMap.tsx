@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { Fragment, useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { PaperStatus } from '../types/domain';
@@ -32,15 +32,17 @@ const stageIndexForStatus = (status: PaperStatus): number => {
   }
 };
 
-const PulseRing = ({ color }: { color: string }) => {
+/** Awaiting-review node: hollow ring that breathes + a fading ping, so the
+ * "live" step reads as active without a static/flat chip. */
+const PendingMarker = () => {
   const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const loop = Animated.loop(
       Animated.timing(progress, {
         toValue: 1,
-        duration: 1200,
-        easing: Easing.out(Easing.ease),
+        duration: 1500,
+        easing: Easing.out(Easing.quad),
         useNativeDriver: true,
       })
     );
@@ -48,18 +50,27 @@ const PulseRing = ({ color }: { color: string }) => {
     return () => loop.stop();
   }, [progress]);
 
+  const ringScale = progress.interpolate({ inputRange: [0, 1], outputRange: [1, 2.3] });
+  const ringOpacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0.55, 0] });
+  const breatheScale = progress.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.14, 1] });
+
   return (
-    <Animated.View
-      pointerEvents="none"
-      style={[
-        styles.pulseRing,
-        {
-          borderColor: color,
-          opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0.6, 0] }),
-          transform: [{ scale: progress.interpolate({ inputRange: [0, 1], outputRange: [1, 2.4] }) }],
-        },
-      ]}
-    />
+    <View style={styles.markerHost}>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.pulseRing,
+          { opacity: ringOpacity, transform: [{ scale: ringScale }] },
+        ]}
+      />
+      <Animated.View
+        style={[
+          styles.marker,
+          styles.markerHollow,
+          { borderColor: theme.colors.brand.primary, transform: [{ scale: breatheScale }] },
+        ]}
+      />
+    </View>
   );
 };
 
@@ -95,61 +106,52 @@ export const PaperProgressMap = ({ status }: PaperProgressMapProps) => {
                 : index === currentIndex
                   ? 'pending'
                   : 'upcoming';
+          const isActive = state !== 'upcoming' && state !== 'done';
+          const labelColor =
+            state === 'warning' || state === 'danger' ? blockedColor : undefined;
 
           return (
-            <View key={label} style={styles.stepWrap}>
+            <Fragment key={label}>
               {index > 0 ? (
                 <View
-                  style={[
-                    styles.connector,
-                    index <= filledThrough && { backgroundColor: barColor },
-                  ]}
+                  style={[styles.connector, index <= filledThrough && { backgroundColor: barColor }]}
                 />
               ) : null}
-              <View style={styles.markerHost}>
-                {state === 'pending' ? <PulseRing color={theme.colors.brand.primary} /> : null}
-                <View
-                  style={[
-                    styles.marker,
-                    state === 'done' && { backgroundColor: theme.colors.brand.primary },
-                    state === 'complete' && { backgroundColor: theme.colors.state.success },
-                    state === 'warning' && { backgroundColor: theme.colors.state.warning },
-                    state === 'danger' && { backgroundColor: theme.colors.state.danger },
-                    (state === 'pending' || state === 'upcoming') && styles.markerHollow,
-                    state === 'pending' && { borderColor: theme.colors.brand.primary },
-                  ]}
+              <View style={styles.column}>
+                {state === 'pending' ? (
+                  <PendingMarker />
+                ) : (
+                  <View style={styles.markerHost}>
+                    <View
+                      style={[
+                        styles.marker,
+                        state === 'done' && { backgroundColor: theme.colors.brand.primary },
+                        state === 'complete' && { backgroundColor: theme.colors.state.success },
+                        state === 'warning' && { backgroundColor: theme.colors.state.warning },
+                        state === 'danger' && { backgroundColor: theme.colors.state.danger },
+                        state === 'upcoming' && styles.markerHollow,
+                      ]}
+                    >
+                      {state === 'done' || state === 'complete' ? (
+                        <Ionicons name="checkmark" size={10} color={theme.colors.text.onBrand} />
+                      ) : null}
+                      {state === 'warning' ? (
+                        <Ionicons name="alert" size={9} color={theme.colors.text.onBrand} />
+                      ) : null}
+                      {state === 'danger' ? (
+                        <Ionicons name="close" size={9} color={theme.colors.text.onBrand} />
+                      ) : null}
+                    </View>
+                  </View>
+                )}
+                <Text
+                  numberOfLines={1}
+                  style={[styles.label, isActive && styles.labelActive, labelColor && { color: labelColor }]}
                 >
-                  {state === 'done' || state === 'complete' ? (
-                    <Ionicons name="checkmark" size={10} color={theme.colors.text.onBrand} />
-                  ) : null}
-                  {state === 'warning' ? (
-                    <Ionicons name="alert" size={9} color={theme.colors.text.onBrand} />
-                  ) : null}
-                  {state === 'danger' ? (
-                    <Ionicons name="close" size={9} color={theme.colors.text.onBrand} />
-                  ) : null}
-                </View>
+                  {label}
+                </Text>
               </View>
-            </View>
-          );
-        })}
-      </View>
-      <View style={styles.labels}>
-        {STAGES.map((label, index) => {
-          const isBlocked = index === blockedIndex;
-          const isActive = isBlocked || (!isComplete && index === currentIndex) || (isComplete && index === 4);
-          return (
-            <Text
-              key={label}
-              numberOfLines={1}
-              style={[
-                styles.label,
-                isActive && styles.labelActive,
-                isBlocked && { color: blockedColor },
-              ]}
-            >
-              {label}
-            </Text>
+            </Fragment>
           );
         })}
       </View>
@@ -160,7 +162,8 @@ export const PaperProgressMap = ({ status }: PaperProgressMapProps) => {
   );
 };
 
-const MARKER_SIZE = 16;
+const MARKER_SIZE = 18;
+const COLUMN_WIDTH = 46;
 
 const styles = StyleSheet.create({
   wrap: {
@@ -169,17 +172,19 @@ const styles = StyleSheet.create({
   },
   track: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
-  stepWrap: {
-    flex: 1,
-    flexDirection: 'row',
+  column: {
+    width: COLUMN_WIDTH,
     alignItems: 'center',
+    gap: 4,
   },
   connector: {
     flex: 1,
-    height: 2,
+    height: 3,
+    borderRadius: 1.5,
     backgroundColor: theme.colors.border.subtle,
+    marginTop: MARKER_SIZE / 2 - 1.5,
   },
   markerHost: {
     width: MARKER_SIZE,
@@ -193,6 +198,7 @@ const styles = StyleSheet.create({
     height: MARKER_SIZE,
     borderRadius: theme.radii.pill,
     borderWidth: 2,
+    borderColor: theme.colors.brand.primary,
   },
   marker: {
     width: MARKER_SIZE,
@@ -206,11 +212,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: theme.colors.border.strong,
   },
-  labels: {
-    flexDirection: 'row',
-  },
   label: {
-    flex: 1,
     textAlign: 'center',
     fontFamily: theme.fontFamilies.ui.medium,
     fontSize: 9,
