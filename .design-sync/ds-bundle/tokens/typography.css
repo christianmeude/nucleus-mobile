@@ -1,0 +1,124 @@
+/* ============================================================
+   NUcleus Mobile — Typography Tokens
+   Two faces only: Outfit (UI) · Lora (display/titles)
+   ============================================================ */
+
+:root {
+  /* --- Font families --- */
+  --font-ui:      'Outfit', sans-serif;
+  --font-display: 'Lora', serif;
+
+  /* --- Type scale: font sizes (px) --- */
+  --text-size-display:    30px;
+  --text-size-h1:         26px;
+  --text-size-h2:         20px;
+  --text-size-h3:         17px;
+  --text-size-body-strong: 15px;
+  --text-size-body:        15px;
+  --text-size-body-small:  13px;
+  --text-size-label:       13px;
+  --text-size-metadata:    12px;
+  --text-size-caption:     11px;
+  --text-size-button:      15px;
+
+  /* --- Type scale: line heights (px) --- */
+  --text-lh-display:    38px;
+  --text-lh-h1:         34px;
+  --text-lh-h2:         28px;
+  --text-lh-h3:         24px;
+  --text-lh-body:       22px;
+  --text-lh-body-small: 20px;
+  --text-lh-label:      18px;
+  --text-lh-metadata:   18px;
+  --text-lh-caption:    16px;
+  --text-lh-button:     20px;
+
+  /* --- Type scale: font weights --- */
+  --text-weight-regular:  400;
+  --text-weight-medium:   500;
+  --text-weight-semibold: 600;
+  --text-weight-bold:     700;
+
+  /* --- Type scale: letter spacing --- */
+  --text-ls-display:  0.2px;
+  --text-ls-label:    0.1px;
+  --text-ls-metadata: 0.1px;
+  --text-ls-caption:  0.2px;
+  --text-ls-button:   0.2px;
+  --text-ls-none:     0px;
+}
+
+/* --- Semantic role shorthands --- */
+/* Usage: apply these classes to elements for on-brand typography */
+
+.text-display {
+  font-family: var(--font-display);
+  font-size: var(--text-size-display);
+  line-height: var(--text-lh-display);
+  font-weight: var(--text-weight-semibold);
+  letter-spacing: var(--text-ls-display);
+}
+.text-h1 {
+  font-family: var(--font-ui);
+  font-size: var(--text-size-h1);
+  line-height: var(--text-lh-h1);
+  font-weight: var(--text-weight-bold);
+}
+.text-h2 {
+  font-family: var(--font-ui);
+  font-size: var(--text-size-h2);
+  line-height: var(--text-lh-h2);
+  font-weight: var(--text-weight-bold);
+}
+.text-h3 {
+  font-family: var(--font-ui);
+  font-size: var(--text-size-h3);
+  line-height: var(--text-lh-h3);
+  font-weight: var(--text-weight-semibold);
+}
+.text-body-strong {
+  font-family: var(--font-ui);
+  font-size: var(--text-size-body-strong);
+  line-height: var(--text-lh-body);
+  font-weight: var(--text-weight-semibold);
+}
+.text-body {
+  font-family: var(--font-ui);
+  font-size: var(--text-size-body);
+  line-height: var(--text-lh-body);
+  font-weight: var(--text-weight-regular);
+}
+.text-body-small {
+  font-family: var(--font-ui);
+  font-size: var(--text-size-body-small);
+  line-height: var(--text-lh-body-small);
+  font-weight: var(--text-weight-regular);
+}
+.text-label {
+  font-family: var(--font-ui);
+  font-size: var(--text-size-label);
+  line-height: var(--text-lh-label);
+  font-weight: var(--text-weight-semibold);
+  letter-spacing: var(--text-ls-label);
+}
+.text-metadata {
+  font-family: var(--font-ui);
+  font-size: var(--text-size-metadata);
+  line-height: var(--text-lh-metadata);
+  font-weight: var(--text-weight-medium);
+  letter-spacing: var(--text-ls-metadata);
+}
+.text-caption {
+  font-family: var(--font-ui);
+  font-size: var(--text-size-caption);
+  line-height: var(--text-lh-caption);
+  font-weight: var(--text-weight-regular);
+  letter-spacing: var(--text-ls-caption);
+}
+.text-button {
+  font-family: var(--font-ui);
+  font-size: var(--text-size-button);
+  line-height: var(--text-lh-button);
+  font-weight: var(--text-weight-semibold);
+  letter-spacing: var(--text-ls-button);
+}

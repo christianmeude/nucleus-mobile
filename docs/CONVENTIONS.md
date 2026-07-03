@@ -1,0 +1,440 @@
+# NUcleus Mobile — Project Conventions
+
+Canonical reference for all process conventions. Every commit, phase, issue, SQL change, and handoff must follow these formats without exception.
+
+---
+
+## 1. Branch Workflow
+
+**Trunk-based.** `main` is the trunk and is always releasable. Work lands via short-lived branches merged directly to `main` through a CI-gated PR — target days, not weeks, per branch.
+
+```
+main
+ └── feat/[undertaking]   (short-lived, one per undertaking/task)
+ └── chore/[topic]         (cross-cutting maintenance, same lifecycle)
+```
+
+- **`main`** — trunk. Every merge is CI-gated (`.github/workflows/ci.yml` — typecheck today, more checks as they're added) and reviewed via PR before it lands.
+- **`feat/[undertaking]`** — one per undertaking or task, kebab-case. Cut from `main`, merged back to `main` as soon as it's individually stable. Incomplete or risky work ships behind a **feature flag** (below) rather than staying unmerged for weeks.
+- **`chore/[topic]`** — cross-cutting maintenance (workflow, config, docs-only changes). Same short-lived lifecycle, cut from `main`.
+
+Parallel undertakings run as parallel short-lived branches, each in its own worktree (`CLAUDE.md`), each executing the autonomous plan → execute → test → review → iterate loop (§3) independently. Frequent, small merges to `main` surface conflicts early and often instead of letting them accumulate for weeks — this is what replaces the old pre-dev integration / confluence fusion step for undertakings started from here forward (see "Legacy" below).
+
+### Feature flags — how incomplete work stays on trunk
+
+When a branch's work isn't fully done but shouldn't block merging to `main`, gate it behind a feature flag instead of holding the branch open:
+
+- A flag is a named boolean, checked at the point the feature would render or execute — default **off** until Christian flips it on.
+- Land the flagged-off code on `main` as soon as it typechecks and doesn't regress anything else; this is what lets the branch stay short-lived even if the feature itself isn't done.
+- Remove the flag once the feature is fully live everywhere it should be — a flag that outlives its rollout is tech debt, not a permanent branching primitive.
+
+### Merge mechanics (every merge to `main`)
+
+Every merge to `main` happens via a **GitHub PR**, not a direct local `git merge`: Claude Code opens the PR with a structured description (format below), CI runs automatically, a review pass checks the diff against the plan, Christian runs manual QA and gives the go-ahead, then Claude Code merges the PR itself (`gh pr merge`) — preserving the same merge-commit history a local `--no-ff` would. Phase-level commits within an undertaking are not PR'd; only the merge to `main` is (§3).
+
+### Where conventions and docs live
+
+Project-wide rules and docs (`CONVENTIONS.md`, `CLAUDE.md`, `PROJECT_CONTEXT.md`, the handoff template) are **canonical on `main`** and propagate to feature branches via `git merge main` — pull them in at session/phase start. Author project-wide changes on `main` (or a `chore/*` branch → `main`), never only on a feature branch, or they drift apart. **Branch-scoped** files are *not* synced and stay on their branch: each undertaking's plan and handoffs, its SQL snapshots, and `.claude/settings.json` (its frozen-file guardrails reflect what *that* undertaking may touch).
+
+### Merge commit format (undertaking-level PRs)
+
+Use a structured body for every `feat/* → main` PR merge. Chore and hotfix merges do not require a body.
+
+```
+Merge branch 'feat/[undertaking]' into main
+
+[Undertaking name] — [one-line outcome statement]
+
+- Phase 1: label
+- Phase 2: label
+- Phase N: label
+```
+
+**Rules:**
+- Subject line is the standard git merge subject — do not alter it
+- Outcome statement: past-tense summary of what the undertaking delivered
+- Phase list: one line per phase, matching the labels in the plan doc
+
+### Legacy: `dev` / pre-dev integration / confluence — retired for new work
+
+The project previously ran an intermediate `dev` integration branch, with long-lived `feat/*` undertaking branches (often weeks) fused via a manual "pre-dev integration" or "confluence" step before reaching `dev` → `main` (`docs/predev/README.md`, `docs/confluences/README.md` — the latter already archived). **This model is retired for any undertaking started from here forward.** CI-gated PRs straight to `main`, short branch lifetimes, and feature flags now do the job those mechanisms existed for.
+
+`predev/uxr-fac` is grandfathered — mid-flight, it finishes via its already-documented path (`predev/uxr-fac → dev → main`). Once it clears and `dev` is merged into `main`, `dev` retires with it: no new `predev/*` or `confluence/*` branch should be started, and any other branch still targeting `dev` (e.g. `feat/hybrid-search`, if still active at that point) retargets to `main` directly.
+
+---
+
+## 2. Commit Format
+
+Subject line:
+```
+type(scope): short description
+```
+
+Body:
+```
+Phase N: Label
+
+- Bullet one
+- Bullet two
+
+Refs #issue-number
+```
+
+**Allowed types:**
+
+| Type | When |
+|---|---|
+| `feat` | New feature or phase implementation |
+| `fix` | Bug fix or corrective change |
+| `docs` | Documentation-only changes |
+| `chore` | Maintenance, dependency, or config changes |
+| `refactor` | Code restructure with no behavior change |
+
+**Rules:**
+- Subject line: max 72 characters, imperative mood ("add", "fix", "update"), no trailing period
+- Body required when a commit spans multiple files or logical areas
+- `Refs #N` when the commit relates to a known GitHub issue
+- Claude Code stages specific files (never `git add .`) and drafts the message. Christian approves the message; Claude Code then executes the commit itself.
+
+**Example:**
+```
+feat(notifications): overhaul Notifications screen to design system
+
+Phase 6: Notifications Overhaul
+
+- Replaced bare loading state with Skeleton rows
+- Replaced bare error text with InlineNotice
+- Themed RefreshControl and removed all hex literals
+- Preserved loadData, markRead, markAllRead logic exactly
+
+Refs #6
+```
+
+---
+
+## 3. Phase Protocol
+
+Once Christian approves a plan, phases run **autonomously end to end** — not one phase per session turn waiting on confirmation each time. Two points gate on Christian: the plan approval itself, and the PR review/merge gate at the end. Claude Code follows this sequence for every phase in between, continuing directly from one phase to the next.
+
+### Before implementing (per phase, no pause)
+
+1. Read the source files relevant to the phase (components, API facades, types, frozen file list)
+2. Record findings in the plan doc / commit — current screen/component structure, data flow, prop interfaces
+3. Proceed directly to implementation — no per-phase wait
+
+Do not use client-side workarounds to simulate server-side behavior. If a change requires a frozen file, stop that phase and mark it 🔴 **BLOCKED** (see Escalation below) — do not attempt the change.
+
+### When SQL is needed (hard stop)
+
+Break the SQL down in plain, simple language (what it does, what it touches, whether it is destructive/reversible, and the data-security impact) and wait for Christian's explicit per-change approval. **Once approved, Claude deploys it via the Supabase MCP** (`apply_migration` for DDL, `execute_sql` for data/reads), then writes/updates the snapshot (§7). Read-only checks (SELECT/EXPLAIN) may be run freely but shown first. This is one of the two hard stops during an otherwise-unattended run.
+
+### After implementing (per phase, no pause)
+
+1. Run `npx tsc --noEmit` — a red `tsc` is a blocker (see Escalation), not something to smooth over
+2. Update the active plan doc (phase status markers below)
+3. Stage specific files, draft the commit message (§2), and commit
+4. Continue directly to the next phase — no stop-and-wait
+
+### Escalation — when a phase gets stuck
+
+A blocker (ambiguous requirement, red `tsc`, a frozen-file conflict, an unexpected merge conflict) does not halt the run:
+
+1. Mark the blocked phase — and anything depending on it — 🔴 **BLOCKED** in the plan doc, noting what's needed to clear it.
+2. Continue any independent phase that doesn't depend on the blocked one.
+3. When nothing independent remains, report once: blockers first (with what's needed), completed phases after.
+
+### Parallelizing independent phases
+
+When a plan's phases touch non-overlapping files with no shared dependency, run them as parallel sub-agents instead of serially — each proposes its diff, applied and committed in plan order so history stays linear. Phases with a real dependency chain stay serial.
+
+### Review & merge (PR gate)
+
+At the undertaking's merge boundary (§1), Claude Code opens a PR instead of merging locally:
+
+1. Open the PR with a structured description (the merge-commit format, §1).
+2. Run a review pass against the diff — plan conformance, frozen files untouched, `tsc` green.
+3. Christian runs manual device/emulator QA and gives the go-ahead. This is the only test stage beyond `tsc` — there is no automated test suite today.
+4. Claude Code merges the PR (`gh pr merge`).
+
+### Plan doc phase status markers
+
+Use these markers exactly when updating plan docs:
+
+| Marker | Usage |
+|---|---|
+| `✅ **COMPLETED (stable)**` | Phase header when complete |
+| `⏳ **NOT STARTED**` | Phase header when not yet begun |
+| `🔴 **BLOCKED**` | Phase header when blocked |
+| `- ✅` | Completed task bullet |
+| `- ⏳` | Pending task bullet |
+| `**Implementation summary**` | Section under a completed phase header |
+| `**Exit criteria met:**` | Final line of a completed phase block |
+
+---
+
+## 4. GitHub Issues
+
+### Issue number discipline
+
+Issue numbers are canonical and fixed. **Claude Code is authorized to create and update issues directly** (since 2026-06-24), as long as they follow the formats in this section; it may open issues beyond the current cap. **Whenever a feature is deferred, file an issue for it.** Keep the table below and the cap line in sync whenever an issue is opened or its status changes.
+
+### Canonical issues (latest first)
+
+| # | Title | Status |
+|---|---|---|
+| 15 | `faculty: verify annotation overlays on papers returned from dean or program chair` | 🔴 Open |
+| 14 | `faculty: annotation creation — write path for review comments` | 🔴 Open |
+| 13 | `research detail: related papers via semantic search (replace client-side heuristic)` | 🔴 Open |
+| 12 | `faculty: additional tabs (Notifications, Repository, Profile)` | 🔴 Open |
+| 11 | `faculty review: annotation threads on papers` | 🔴 Open |
+| 10 | `research detail: in-app embedded PDF viewer (student + faculty)` | ✅ Closed |
+| 9 | `faculty review actions: email and push notifications not sent on mobile` | 🔴 Open |
+| 8 | `ResearchDetail: Download button always visible — no allow_download column` | 🔴 Open |
+| 7 | `ResearchDetail / Browse: author name shows "Unknown" for non-uploaders` | ✅ Closed |
+| 6 | `Browse: add toggleable list and tile view` | 🔴 Open |
+| 5 | `Browse: category filter shows unresolved UUIDs — categories not loading` | 🔴 Open |
+| 4 | `ResearchCard: published papers do not show view and download counts` | ✅ Closed |
+| 3 | `co_author_invitations: PostgREST joins fail silently for research title and inviter name` | ✅ Closed |
+| 2 | `Mobile auth: UUID mismatch between auth.users and public.users breaks RLS` | ✅ Closed |
+| 1 | `ResearchDetail: view and download counts not persisting after navigation` | ✅ Closed |
+
+**Current cap: #15.**
+
+### Issue title format
+
+`<scope>: <problem or capability statement>`
+
+- Present tense, no trailing period
+- At most one em-dash for a clarifying tail on bugs
+- Use `/` when two scopes apply equally
+- No redundant `Screen` suffixes (`ResearchDetail`, not `ResearchDetailScreen`)
+
+### Bug issue body
+
+```markdown
+## Summary
+<Short problem statement and impact.>
+
+## What's working
+<What still behaves correctly.>
+
+## What's not working
+<Exact broken behavior and where it appears.>
+
+## Suspected cause
+<Likely technical cause or hypothesis.>
+
+## Workaround
+<Temporary workaround, or "None known".>
+
+## Acceptance criteria
+- [ ] Criterion 1
+- [ ] Criterion 2
+
+## Status / Resolution
+<Open / in progress / fixed details.>
+
+## References
+<Related PRs, commits, screenshots, logs, docs.>
+```
+
+### Enhancement issue body
+
+```markdown
+## Summary
+<Capability request and user value.>
+
+## Proposed behavior
+<What should happen after implementation.>
+
+## Current state
+<How it works today and constraints.>
+
+## Acceptance criteria
+- [ ] Criterion 1
+- [ ] Criterion 2
+
+## Status / Resolution
+<Open / in progress / delivered details.>
+
+## References
+<Related issues, docs, mockups, links.>
+```
+
+### Labels
+
+- `bug` — incorrect behavior, regressions, broken outcomes
+- `enhancement` — new capability or meaningful improvement
+- `mobile` — React Native / client runtime scope
+- `backend` — API, schema, RPC, policy, or server-side dependencies
+- Additional labels only when they improve triage clarity (e.g., `auth`, `ui`, `docs`)
+
+---
+
+## 5. GitHub Milestones
+
+### Description format
+
+One paragraph: scope summary in one sentence, total phase count, which issues were resolved or mitigated, notable technical outcomes (architecture decisions, validation results, preserved constraints).
+
+**Example:**
+> 10-phase UI overhaul completed across design tokens, shared components, main screens, accessibility polish, and validation; Issue #4 was resolved and Issue #8 was mitigated in UI pending backend `allow_download` support. Notable outcomes include a frozen-layer clean diff against `origin/dev`, Android-safe `ResearchDetail` header handling under edge-to-edge, and a fully passing smoke-test checklist before merge.
+
+### Milestone policy
+
+Milestones are for grouped, closed delivery work. Deferred or open items remain un-milestoned until active execution starts, or are assigned to a clearly scoped future milestone.
+
+---
+
+## 6. Git Tags
+
+Tags are named pointers to commits on `main`. They are not the same as GitHub milestones: milestones group issues; tags freeze a point in repository history.
+
+**When to tag:** Optional but recommended for major integration points merged to `main` (e.g., undertaking complete). Skip for routine feature commits.
+
+**Naming:** Semantic prefix pattern — `v1.0-ui-overhaul`, `v0.9-submit-research`. Pick one scheme and stay consistent.
+
+**Workflow:**
+```
+git checkout main
+git pull
+git tag -a <tag-name> -m "<short description>"
+git push origin <tag-name>
+```
+
+Tags must be created and pushed explicitly — GitHub merges do not create them automatically.
+
+**Relationship to milestones:** Close a GitHub milestone when issues are done. Create a git tag when you want a reproducible snapshot at a shipped milestone on `main`. You may do both, one, or neither.
+
+---
+
+## 7. SQL Snapshot Format
+
+SQL snapshots in `docs/sql/` record deployed Supabase definitions exactly as they exist in the live database. They are **not migration scripts** — they are snapshots of what is currently deployed.
+
+### File naming
+
+`docs/sql/[table-or-feature]_[type].sql`
+
+Examples:
+- `docs/sql/submit_research_rls_policies.sql`
+- `docs/sql/submit_research_rpcs.sql`
+- `docs/sql/research_authors_rls_policies.sql`
+- `docs/sql/co_author_invitations_rls_policies.sql`
+
+### File header format
+
+Every snapshot file opens with this exact block comment structure:
+
+```sql
+-- ============================================================
+-- RECORD: [brief description of what's in this file]
+-- [Deployment context — which feature/phase introduced this]
+-- [Identity resolution note if applicable, e.g. "Email-resolved user_id matches public.users to auth.email() (project convention)"]
+-- This file is a snapshot of deployed definitions, not a migration script.
+-- ============================================================
+```
+
+Sections within the file are separated by:
+
+```sql
+-- ----------------------------------------------------------------
+-- [table or function name] — [description]
+-- ----------------------------------------------------------------
+```
+
+### SQL ownership
+
+Claude Code has Supabase MCP access and **deploys SQL itself after approval** — but must first **break every change down in plain, simple language** (what it does, what it touches, whether it is destructive and reversible, and the data-security impact) and wait for Christian's explicit per-change approval (2026-06-25). The MCP connection is privileged (runs DDL; not constrained by RLS) and the DB is shared with web, so changes must be additive-only where possible, with RLS + least-privilege on anything new. Read-only queries (SELECT, EXPLAIN) may be run freely but shown first. Destructive operations (DROP, DELETE, ALTER, policy drops) require extra explanation of consequences. Deploy DDL via `apply_migration`, data/reads via `execute_sql`. After any deployed change, Claude Code writes or updates the snapshot file in `docs/sql/` — the canonical record of what is live.
+
+---
+
+## 8. Handoff Format
+
+Handoffs are the canonical session-state artifact — the single source of truth for "what's true right now." They live in `docs/handoffs/` and follow the template in `docs/handoffs/HANDOFF_TEMPLATE.md`.
+
+### Naming convention
+
+`HANDOFF_[UNDERTAKING-SHORT]_[PHASE-LABEL].md`
+
+Examples:
+- `HANDOFF_S-R_PHASE-3.md` (Submit Research, Phase 3)
+- `HANDOFF_U-O_PHASE-10.md` (UI Overhaul, Phase 10)
+- `HANDOFF_S-R_KICKOFF.md` (Submit Research, Kickoff)
+
+### Frontmatter
+
+Every handoff opens with YAML frontmatter:
+
+```yaml
+---
+undertaking: "[name, e.g. Submit Research]"
+phase: "[N or label, e.g. 3 or kickoff]"
+date: YYYY-MM-DD
+branch: "[current branch]"
+last_commit: "[type(scope): description]"
+status: in-progress | blocked | complete
+---
+```
+
+### Required sections (in order)
+
+1. **Project Overview** — one-sentence architecture state, current undertaking, branch
+2. **What Changed Since Last Handoff** — every delta since the previous handoff, including Supabase changes made outside the codebase
+3. **Critical Architectural Context** — session-specific updates to stable patterns only; stable invariants live in `CLAUDE.md`
+4. **Open Issues** — current open issues with status and owner
+5. **Current RLS Policy State (Supabase)** — per-table policy summary
+6. **Supabase RPCs** — all SECURITY DEFINER RPCs with purpose
+7. **Current State of the Codebase** — design system, component system, API facades, frozen files, gotchas
+8. **Current Git State** — branch, uncommitted changes, untracked files
+9. **Commit History** — most recent first
+10. **Immediate Next Steps** — ordered action list for the next session
+
+See `docs/handoffs/HANDOFF_TEMPLATE.md` for the full section template.
+
+---
+
+## 9. Session Closing
+
+### When to close
+
+- After a PR opens at the merge gate, or after it merges — phase-by-phase closes are no longer the default cadence now that an approved plan runs as one autonomous batch (§3)
+- After an escalation report, if Christian's input is needed before the run can continue
+- Before context grows too long to maintain quality
+- Before a significantly different area of work
+
+### Closing procedure
+
+1. Confirm with Christian that a close point has been reached
+2. Draft the handoff using `docs/handoffs/HANDOFF_TEMPLATE.md` — name it `HANDOFF_<SHORT>_<PHASE>.md` using the undertaking's registry short code, so resume can discover it
+3. Present the draft for review — do not commit before approval
+4. Once approved: **bundle the handoff into the session's final commit** (the phase-close or last logical commit) — present that commit for confirmation. Make a standalone `docs(handoff): add HANDOFF_[NAME]` commit **only** when the session ends with no other commit to attach it to.
+5. After commit: confirm the next session opening state matches the handoff's "Immediate Next Steps"
+6. Update the undertaking's `Status` in the CLAUDE.md Undertaking Registry (active / parked / complete) if it changed this session
+
+### What makes a good handoff
+
+A handoff is the **delta** since the last handoff plus the **current-state snapshot**. A future session reading only CLAUDE.md and the latest handoff should be able to fully resume work without needing any other context from this conversation.
+
+Stable invariants (UUID mismatch, email-based RLS, SECURITY DEFINER pattern) live in `CLAUDE.md`. Include in the handoff only if there are session-specific updates or corrections to those patterns — do not copy them verbatim every time.
+
+---
+
+## 10. Project-Wide Standards
+
+Some changes establish a standard the **entire app** must follow — not just the branch that introduced them. These belong in canonical docs (this file / `CLAUDE.md`, canonical on `dev`) so they propagate to every feature branch on `git merge dev`, **including `feat/faculty-access`**. When you introduce or change such a standard, document it here in the same change — a standard that lives only in a feature branch's plan or code will drift and the rest of the app won't follow it.
+
+### Shared utilities (reuse over duplication)
+
+Cross-cutting helpers live in `src/utils/` and are the single source of truth — never re-implement them per screen. When a helper is copied a second time, extract it. Canonical examples:
+
+- `src/utils/category.ts` — `resolveCategoryName` / `buildCategoryNameById` / `UUID_PATTERN`: the only sanctioned way to turn a paper's `category` into a display name (UUID-guarded, Issue #5). Every papers-facing surface (Browse, ResearchDetail, My Papers, and any faculty equivalent) must use it.
+- `src/utils/format.ts` — dates, relative time, status labels, author-name resolution.
+
+### Design system (single visual standard)
+
+The cool-slate + navy/gold system with Source Serif 4 (display) + IBM Plex Sans (UI), realized in `src/theme/`, is the canonical visual standard for the whole app. Always consume theme tokens from `src/theme` — never hardcode colors, fonts, spacing, or radii. New screens and features on **any** branch (student or faculty) must adopt it. It is governed by the mobile skill stack documented in the active undertaking's design-foundation section.
+
+### Applicability to faculty
+
+`feat/faculty-access` inherits these standards when it merges `dev`. The faculty workflow — its screens, cards, and utilities — follows the same shared utilities and design system; it does not get a parallel set of conventions.

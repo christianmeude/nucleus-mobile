@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "NUcleus Student Mobile",
+    "name": "NUcleus Mobile",
     "slug": "nucleus-student-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -20,6 +20,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "package": "com.christianmeude.nucleus",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
@@ -27,7 +28,16 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-web-browser"
-    ]
+      "expo-dev-client",
+      "expo-web-browser",
+      "expo-font",
+      "expo-status-bar"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "cfc58fb4-9bdc-4fd8-91ed-44a201032d8d"
+      }
+    },
+    "owner": "christianmeude"
   }
 }

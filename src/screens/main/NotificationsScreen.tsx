@@ -7,13 +7,21 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { notificationsApi } from '../../api/notifications';
 import { NotificationItem } from '../../types/domain';
-import { formatRelativeTime } from '../../utils/format';
+import { NotificationCard } from '../../components/NotificationCard';
+import { ListEntranceItem } from '../../components/ListEntranceItem';
+import { theme } from '../../theme';
+import { EmptyState, InlineNotice, Skeleton } from '../../components/ui';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const NotificationsScreen = () => {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -49,6 +57,28 @@ export const NotificationsScreen = () => {
     [notifications]
   );
 
+  const groups = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const weekStart = todayStart - 6 * DAY_MS;
+    const today: NotificationItem[] = [];
+    const week: NotificationItem[] = [];
+    const earlier: NotificationItem[] = [];
+
+    notifications.forEach((item) => {
+      const time = new Date(item.created_at).getTime();
+      if (Number.isNaN(time) || time < weekStart) earlier.push(item);
+      else if (time >= todayStart) today.push(item);
+      else week.push(item);
+    });
+
+    return [
+      { key: 'today', title: 'Today', items: today },
+      { key: 'week', title: 'This week', items: week },
+      { key: 'earlier', title: 'Earlier', items: earlier },
+    ].filter((group) => group.items.length > 0);
+  }, [notifications]);
+
   const openNotification = async (item: NotificationItem) => {
     if (!item.is_read) {
       try {
@@ -58,14 +88,7 @@ export const NotificationsScreen = () => {
       }
 
       setNotifications((prev) =>
-        prev.map((entry) =>
-          entry.id === item.id
-            ? {
-                ...entry,
-                is_read: true,
-              }
-            : entry
-        )
+        prev.map((entry) => (entry.id === item.id ? { ...entry, is_read: true } : entry))
       );
     }
 
@@ -86,48 +109,62 @@ export const NotificationsScreen = () => {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => loadData(true)} />}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + theme.spacing.md }]}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => loadData(true)}
+          tintColor={theme.colors.brand.primary}
+          colors={[theme.colors.brand.primary]}
+        />
+      }
     >
-      <View style={styles.headerRow}>
-        <View>
+      <View style={styles.header}>
+        <View style={styles.titleRow}>
           <Text style={styles.title}>Notifications</Text>
-          <Text style={styles.subtitle}>{unreadCount} unread</Text>
-        </View>
-
-        <Pressable
-          style={[styles.actionButton, unreadCount === 0 ? styles.actionButtonDisabled : null]}
-          disabled={unreadCount === 0}
-          onPress={markAllAsRead}
-        >
-          <Text
-            style={[
-              styles.actionButtonLabel,
-              unreadCount === 0 ? styles.actionButtonLabelDisabled : null,
-            ]}
+          <Pressable
+            onPress={markAllAsRead}
+            disabled={unreadCount === 0}
+            accessibilityRole="button"
+            accessibilityLabel="Mark all notifications as read"
+            hitSlop={8}
           >
-            Mark all read
-          </Text>
-        </Pressable>
+            <Text style={[styles.markAll, unreadCount === 0 && styles.markAllDisabled]}>
+              Mark all read
+            </Text>
+          </Pressable>
+        </View>
+        <Text style={styles.subtitle}>
+          {unreadCount > 0 ? `${unreadCount} unread` : 'You’re all caught up'}
+        </Text>
       </View>
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <InlineNotice tone="danger" message={error} /> : null}
 
       {loading ? (
-        <Text style={styles.loadingText}>Loading notifications...</Text>
+        <View style={styles.skeletonList}>
+          <Skeleton height={72} />
+          <Skeleton height={72} />
+          <Skeleton height={72} />
+        </View>
       ) : notifications.length === 0 ? (
-        <Text style={styles.emptyText}>No notifications yet.</Text>
+        <EmptyState
+          icon={
+            <Ionicons name="notifications-outline" size={24} color={theme.colors.text.muted} />
+          }
+          title="No notifications yet"
+          message="Updates on your papers and activity will appear here."
+        />
       ) : (
-        notifications.map((item) => (
-          <Pressable
-            key={item.id}
-            style={[styles.card, !item.is_read ? styles.unreadCard : null]}
-            onPress={() => openNotification(item)}
-          >
-            <Text style={styles.cardTitle}>{item.title || 'Notification'}</Text>
-            <Text style={styles.cardBody}>{item.message || 'No additional details.'}</Text>
-            <Text style={styles.cardMeta}>{formatRelativeTime(item.created_at)}</Text>
-          </Pressable>
+        groups.map((group) => (
+          <View key={group.key} style={styles.group}>
+            <Text style={styles.groupTitle}>{group.title}</Text>
+            {group.items.map((item, index) => (
+              <ListEntranceItem key={item.id} index={index}>
+                <NotificationCard notification={item} onPress={() => openNotification(item)} />
+              </ListEntranceItem>
+            ))}
+          </View>
         ))
       )}
     </ScrollView>
@@ -137,81 +174,55 @@ export const NotificationsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.colors.surface.base,
   },
   content: {
-    padding: 16,
-    gap: 12,
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing['3xl'],
+    gap: theme.spacing.md,
   },
-  headerRow: {
+  header: {
+    gap: 2,
+  },
+  titleRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing.sm,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#0f172a',
+    fontFamily: theme.fontFamilies.display.semibold,
+    fontSize: 26,
+    lineHeight: 32,
+    color: theme.colors.text.primary,
+  },
+  markAll: {
+    fontFamily: theme.fontFamilies.ui.medium,
+    fontSize: 13,
+    color: theme.colors.brand.primary,
+  },
+  markAllDisabled: {
+    color: theme.colors.text.disabled,
   },
   subtitle: {
-    marginTop: 2,
-    color: '#475569',
+    fontFamily: theme.fontFamilies.ui.regular,
     fontSize: 13,
+    color: theme.colors.text.muted,
   },
-  actionButton: {
-    borderWidth: 1,
-    borderColor: '#1c4d8d',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    backgroundColor: '#ffffff',
+  skeletonList: {
+    gap: theme.spacing.sm,
   },
-  actionButtonDisabled: {
-    borderColor: '#cbd5e1',
+  group: {
+    gap: theme.spacing.xs,
   },
-  actionButtonLabel: {
-    color: '#1c4d8d',
+  groupTitle: {
+    fontFamily: theme.fontFamilies.ui.semibold,
     fontSize: 12,
-    fontWeight: '700',
-  },
-  actionButtonLabelDisabled: {
-    color: '#94a3b8',
-  },
-  error: {
-    color: '#dc2626',
-    fontSize: 13,
-  },
-  loadingText: {
-    color: '#475569',
-    fontSize: 14,
-  },
-  emptyText: {
-    color: '#64748b',
-    fontSize: 14,
-  },
-  card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 12,
-    gap: 6,
-  },
-  unreadCard: {
-    borderColor: '#1c4d8d',
-  },
-  cardTitle: {
-    color: '#0f172a',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  cardBody: {
-    color: '#334155',
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  cardMeta: {
-    color: '#64748b',
-    fontSize: 11,
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+    color: theme.colors.text.disabled,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.sm,
   },
 });

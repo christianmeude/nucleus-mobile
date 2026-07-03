@@ -1,53 +1,58 @@
-# NUcleus React Native (Student)
+# NUcleus Mobile
 
-React Native/Expo mobile app for student workflows in NUcleus, integrated with the existing Express backend.
+NUcleus Mobile is a React Native (Expo) app for enrolled students at National University — Dasmariñas. It provides a mobile interface for browsing research, submitting papers, reading paper details, and managing student notifications and invitations.
 
-## Implemented (Initial)
-- Student login (token + refresh session handling)
-- Student-only route guard (non-student accounts blocked)
-- Dashboard (status summaries + recent papers)
-- My Papers (filters + search)
-- Repository browse (published papers + category filter)
-- Research Detail (workflow timeline + PDF open)
-- Notifications (unread tracking, mark read, mark all read)
-- Co-author Invitations (list, accept, decline)
+## Features
 
-## Explicitly Excluded
-- Submit research flow
-- Draft saving/updating/deleting
-- Faculty/Dean/Program Chair/Staff/Admin features
+- Student authentication and session persistence
+- Browse published research with search and category filters
+- View research details and PDF links
+- Submit and resubmit research papers with draft autosave
+- Access My Papers and dashboard summaries
+- Manage notifications and co-author invitations
 
 ## Tech Stack
-- Expo + React Native + TypeScript
-- React Navigation (stack + bottom tabs)
-- Axios + AsyncStorage token persistence
+
+- React Native (Expo)
+- TypeScript
+- Supabase (Auth, Database, Storage)
+- React Navigation
+- AsyncStorage
 
 ## Setup
+
 1. Install dependencies
+
 ```bash
 npm install
 ```
 
-2. Configure environment
-- Copy `.env.example` to `.env`
-- Set `EXPO_PUBLIC_API_URL`
+2. Configure environment variables
 
-3. Run app
+Create a `.env` file from `.env.example` and set:
+
 ```bash
-npm run start
+EXPO_PUBLIC_SUPABASE_URL=your-supabase-url
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
-## Backend Compatibility
-Expected backend base URL shape:
-- `http://<host>:5000/api`
+3. Start the development server
 
-Used endpoint groups:
-- `/auth/login`, `/auth/refresh`, `/auth/me`
-- `/research/my/papers`, `/research/published`, `/research/categories`
-- `/research/:id`, `/research/:id/file`, `/research/:id/view`, `/research/:id/download`
-- `/auth/notifications`, `/auth/notifications/unread-count`, `/auth/notifications/:id/read`, `/auth/notifications/read-all`
-- `/auth/co-author-invitations`, `/auth/co-author-invitations/:token/accept`, `/auth/co-author-invitations/:token/decline`
+```bash
+npx expo start
+```
 
-## Notes
-- This app is intentionally scoped to student workflows and read-first behavior.
-- Data parity is maintained by consuming the same Express API used by the web app.
+Scan the QR code with Expo Go (Android) or the Camera app (iOS) to run the app on your device. If you're on a network with connectivity issues, use tunnel mode:
+
+```bash
+npx expo start --tunnel
+```
+
+## Documentation
+
+- [PROJECT_CONTEXT.md](./docs/PROJECT_CONTEXT.md)
+- [PRODUCT_ROADMAP.md](./docs/PRODUCT_ROADMAP.md)
+- [SUPABASE_MIGRATION.md](./docs/plans/SUPABASE_MIGRATION.md)
+- [UI_OVERHAUL.md](./docs/plans/UI_OVERHAUL.md)
+- [SUBMIT_RESEARCH.md](./docs/plans/SUBMIT_RESEARCH.md)
+- [Conventions](./docs/CONVENTIONS.md)

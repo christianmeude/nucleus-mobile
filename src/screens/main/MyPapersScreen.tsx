@@ -8,24 +8,23 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
-import { PaperStatus, ResearchPaper } from '../../types/domain';
-import { formatDate, paperDate, statusToLabel } from '../../utils/format';
+import { Category, PaperStatus, ResearchPaper } from '../../types/domain';
+import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
+import { theme } from '../../theme';
+import { MyPaperCard } from '../../components/MyPaperCard';
+import { ListEntranceItem } from '../../components/ListEntranceItem';
+import {
+  ACTION_STATUSES,
+  ACTIVE_STATUSES,
+  PUBLISHED_STATUSES,
+} from '../../components/PaperStatusChip';
+import { Chip, EmptyState, InlineNotice, Skeleton } from '../../components/ui';
 
 type FilterKey = 'all' | 'active' | 'published' | 'action';
-
-const ACTIVE_STATUSES = new Set([
-  'pending',
-  'pending_faculty',
-  'pending_dean',
-  'pending_program_chair',
-  'pending_editor',
-  'pending_admin',
-]);
-
-const ACTION_STATUSES = new Set(['revision_required', 'rejected']);
-const PUBLISHED_STATUSES = new Set(['approved', 'published']);
 
 const isFilterMatch = (status: PaperStatus, filter: FilterKey) => {
   if (filter === 'all') return true;
@@ -36,7 +35,9 @@ const isFilterMatch = (status: PaperStatus, filter: FilterKey) => {
 
 export const MyPapersScreen = () => {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   const [loading, setLoading] = useState(true);
@@ -50,16 +51,23 @@ export const MyPapersScreen = () => {
       setRefreshing(true);
     }
 
-    try {
-      const rows = await researchApi.getMyPapers();
-      setPapers(rows);
+    const [papersResult, categoriesResult] = await Promise.allSettled([
+      researchApi.getMyPapers(),
+      researchApi.getCategories(),
+    ]);
+
+    if (papersResult.status === 'fulfilled') {
+      setPapers(papersResult.value);
       setError('');
-    } catch (_error) {
+    } else {
       setError('Unable to load your papers.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
     }
+    if (categoriesResult.status === 'fulfilled') {
+      setCategories(categoriesResult.value);
+    }
+
+    setLoading(false);
+    setRefreshing(false);
   }, []);
 
   useFocusEffect(
@@ -68,6 +76,8 @@ export const MyPapersScreen = () => {
     }, [loadData])
   );
 
+  const categoryNameById = useMemo(() => buildCategoryNameById(categories), [categories]);
+
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
 
@@ -75,165 +85,221 @@ export const MyPapersScreen = () => {
       .filter((paper) => isFilterMatch(paper.status, activeFilter))
       .filter((paper) => {
         if (!normalized) return true;
-
         const keywords = Array.isArray(paper.keywords) ? paper.keywords.join(' ') : '';
         const target = `${paper.title} ${paper.abstract} ${keywords}`.toLowerCase();
         return target.includes(normalized);
       })
       .sort((left, right) => {
-        const leftDate = new Date(paperDate(left) || 0).getTime();
-        const rightDate = new Date(paperDate(right) || 0).getTime();
+        const leftDate = new Date(paperDateValue(left)).getTime();
+        const rightDate = new Date(paperDateValue(right)).getTime();
         return rightDate - leftDate;
       });
   }, [activeFilter, papers, query]);
 
+  const subtitle = useMemo(() => {
+    const total = papers.length;
+    if (total === 0) return 'No submissions yet';
+    const needsAttention = papers.filter((p) => ACTION_STATUSES.has(p.status)).length;
+    const base = `${total} submission${total === 1 ? '' : 's'}`;
+    if (needsAttention === 0) return base;
+    return `${base} · ${needsAttention} need${needsAttention === 1 ? 's' : ''} your attention`;
+  }, [papers]);
+
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => loadData(true)} />}
-    >
-      <Text style={styles.title}>My Papers</Text>
+    <View style={styles.container}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + theme.spacing.md }]}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => loadData(true)}
+            tintColor={theme.colors.brand.primary}
+            colors={[theme.colors.brand.primary]}
+          />
+        }
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>My Papers</Text>
+          <Text style={styles.subtitle}>{subtitle}</Text>
+        </View>
 
-      <TextInput
-        value={query}
-        onChangeText={setQuery}
-        placeholder="Search title, abstract, or keywords"
-        placeholderTextColor="#94a3b8"
-        style={styles.search}
-      />
+        <View style={styles.searchWrap}>
+          <Ionicons name="search-outline" size={18} color={theme.colors.text.muted} />
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search your papers"
+            placeholderTextColor={theme.colors.text.disabled}
+            style={styles.searchInput}
+            accessibilityLabel="Search papers"
+            accessibilityHint="Filters your papers by title, abstract, or keywords"
+          />
+          {query ? (
+            <Chip label="Clear" active={false} onPress={() => setQuery('')} variant="filter" />
+          ) : null}
+        </View>
 
-      <View style={styles.filters}>
-        <FilterChip label="All" active={activeFilter === 'all'} onPress={() => setActiveFilter('all')} />
-        <FilterChip
-          label="In Review"
-          active={activeFilter === 'active'}
-          onPress={() => setActiveFilter('active')}
-        />
-        <FilterChip
-          label="Published"
-          active={activeFilter === 'published'}
-          onPress={() => setActiveFilter('published')}
-        />
-        <FilterChip
-          label="Needs Action"
-          active={activeFilter === 'action'}
-          onPress={() => setActiveFilter('action')}
-        />
-      </View>
+        <View style={styles.filters}>
+          <Chip
+            label="All"
+            variant="filter"
+            active={activeFilter === 'all'}
+            onPress={() => setActiveFilter('all')}
+          />
+          <Chip
+            label="In review"
+            variant="filter"
+            active={activeFilter === 'active'}
+            onPress={() => setActiveFilter('active')}
+            tone="info"
+          />
+          <Chip
+            label="Needs revision"
+            variant="filter"
+            active={activeFilter === 'action'}
+            onPress={() => setActiveFilter('action')}
+            tone="warning"
+          />
+          <Chip
+            label="Published"
+            variant="filter"
+            active={activeFilter === 'published'}
+            onPress={() => setActiveFilter('published')}
+            tone="success"
+          />
+        </View>
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? <InlineNotice tone="danger" message={error} /> : null}
 
-      {loading ? (
-        <Text style={styles.loadingText}>Loading papers...</Text>
-      ) : filtered.length === 0 ? (
-        <Text style={styles.emptyText}>No papers match your current filter.</Text>
-      ) : (
-        filtered.map((paper) => (
-          <Pressable
-            key={paper.id}
-            style={styles.paperCard}
-            onPress={() => navigation.navigate('ResearchDetail', { paperId: paper.id })}
-          >
-            <Text style={styles.paperTitle}>{paper.title}</Text>
-            <Text style={styles.paperMeta}>{statusToLabel(paper.status)}</Text>
-            <Text style={styles.paperMeta}>{formatDate(paperDate(paper))}</Text>
-          </Pressable>
-        ))
-      )}
-    </ScrollView>
+        {loading ? (
+          <View style={styles.skeletonList}>
+            <Skeleton height={104} />
+            <Skeleton height={104} />
+            <Skeleton height={104} />
+          </View>
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            icon={<Ionicons name="folder-open-outline" size={24} color={theme.colors.text.muted} />}
+            title="No papers found"
+            message={
+              papers.length === 0
+                ? 'Submit your first research paper to see it here.'
+                : 'No papers match your current filter.'
+            }
+          />
+        ) : (
+          <View style={styles.list}>
+            {filtered.map((paper, index) => (
+              <ListEntranceItem key={paper.id} index={index}>
+                <MyPaperCard
+                  paper={paper}
+                  category={resolveCategoryName(paper.category, categoryNameById)}
+                  onPress={() => navigation.navigate('ResearchDetail', { paperId: paper.id })}
+                />
+              </ListEntranceItem>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+
+      <Pressable
+        style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
+        onPress={() => navigation.navigate('SubmitResearch')}
+        accessibilityRole="button"
+        accessibilityLabel="Submit new research"
+      >
+        <Ionicons name="add" size={20} color={theme.colors.text.onBrand} />
+        <Text style={styles.fabText}>Submit</Text>
+      </Pressable>
+    </View>
   );
 };
 
-const FilterChip = ({
-  label,
-  active,
-  onPress,
-}: {
-  label: string;
-  active: boolean;
-  onPress: () => void;
-}) => (
-  <Pressable onPress={onPress} style={[styles.filterChip, active ? styles.filterChipActive : null]}>
-    <Text style={[styles.filterLabel, active ? styles.filterLabelActive : null]}>{label}</Text>
-  </Pressable>
-);
+/** Newest-first sort key: published, then submission, then created. */
+const paperDateValue = (paper: ResearchPaper) =>
+  paper.published_date || paper.submission_date || paper.created_at || 0;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.colors.surface.base,
+  },
+  scroll: {
+    flex: 1,
   },
   content: {
-    padding: 16,
-    gap: 12,
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing['3xl'] + 56,
+    gap: theme.spacing.md,
+  },
+  header: {
+    gap: 2,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#0f172a',
+    fontFamily: theme.fontFamilies.display.semibold,
+    fontSize: 26,
+    lineHeight: 32,
+    color: theme.colors.text.primary,
   },
-  search: {
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: '#0f172a',
-    backgroundColor: '#ffffff',
+  subtitle: {
+    fontFamily: theme.fontFamilies.ui.regular,
+    fontSize: 13,
+    color: theme.colors.text.muted,
+  },
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border.subtle,
+    borderRadius: theme.radii.md,
+    borderCurve: 'continuous',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    backgroundColor: theme.colors.surface.sunken,
+  },
+  searchInput: {
+    flex: 1,
+    ...theme.typography.body,
+    color: theme.colors.text.primary,
+    paddingVertical: 0,
   },
   filters: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: theme.spacing.sm,
   },
-  filterChip: {
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#ffffff',
+  skeletonList: {
+    gap: theme.spacing.md,
   },
-  filterChipActive: {
-    backgroundColor: '#1c4d8d',
-    borderColor: '#1c4d8d',
+  list: {
+    gap: theme.spacing.md,
   },
-  filterLabel: {
-    color: '#334155',
-    fontWeight: '600',
-    fontSize: 12,
+  fab: {
+    position: 'absolute',
+    right: theme.spacing.lg,
+    bottom: theme.spacing.xl,
+    height: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.xl,
+    borderRadius: theme.radii.pill,
+    borderCurve: 'continuous',
+    backgroundColor: theme.colors.brand.accent,
+    shadowColor: theme.colors.brand.accent,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  filterLabelActive: {
-    color: '#ffffff',
+  fabPressed: {
+    opacity: 0.85,
   },
-  error: {
-    color: '#dc2626',
-    fontSize: 13,
-  },
-  loadingText: {
-    color: '#475569',
-    fontSize: 14,
-  },
-  emptyText: {
-    color: '#64748b',
-    fontSize: 14,
-  },
-  paperCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 12,
-    gap: 4,
-  },
-  paperTitle: {
+  fabText: {
+    fontFamily: theme.fontFamilies.ui.semibold,
     fontSize: 15,
-    fontWeight: '600',
-    color: '#0f172a',
-  },
-  paperMeta: {
-    fontSize: 12,
-    color: '#64748b',
+    color: theme.colors.text.onBrand,
   },
 });

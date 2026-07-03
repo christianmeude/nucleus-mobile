@@ -1,4 +1,4 @@
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -13,6 +13,14 @@ import { BrowseScreen } from '../screens/main/BrowseScreen';
 import { NotificationsScreen } from '../screens/main/NotificationsScreen';
 import { InvitationsScreen } from '../screens/main/InvitationsScreen';
 import { ResearchDetailScreen } from '../screens/main/ResearchDetailScreen';
+import { SubmitResearchScreen } from '../screens/main/SubmitResearchScreen';
+import { ProfileScreen } from '../screens/main/ProfileScreen';
+import { FacultyTabs } from './FacultyTabs';
+import { FacultyReviewDetailScreen } from '../screens/faculty/FacultyReviewDetailScreen';
+import { FacultyPaperDetailScreen } from '../screens/faculty/FacultyPaperDetailScreen';
+import { theme } from '../theme';
+import { Logo } from '../components/ui';
+import { ResearchDetailHeader } from './ResearchDetailHeader';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<StudentTabsParamList>();
@@ -30,52 +38,74 @@ const StudentTabs = () => {
     <Tabs.Navigator
       screenOptions={({ route }) => ({
         headerTitleAlign: 'left',
-        tabBarIcon: ({ color, size }) => (
-          <Ionicons
-            name={tabIcons[route.name as keyof StudentTabsParamList]}
-            color={color}
-            size={size}
-          />
+        headerStyle: {
+          backgroundColor: theme.colors.surface.base,
+        },
+        headerShadowVisible: false,
+        headerTitleStyle: {
+          ...theme.typography.h3,
+          color: theme.colors.text.primary,
+        },
+        tabBarStyle: {
+          backgroundColor: theme.colors.surface.raised,
+          borderTopColor: theme.colors.border.subtle,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          paddingTop: theme.spacing.xs,
+          paddingBottom: theme.spacing.sm,
+          height: 66,
+        },
+        tabBarLabelStyle: {
+          ...theme.typography.caption,
+          marginTop: 2,
+        },
+        tabBarActiveTintColor: theme.colors.brand.primary,
+        tabBarInactiveTintColor: theme.colors.text.muted,
+        tabBarIcon: ({ color, size, focused }) => (
+          <View style={styles.tabIconWrap}>
+            <Ionicons
+              name={tabIcons[route.name as keyof StudentTabsParamList]}
+              color={color}
+              size={size}
+            />
+            {focused ? <View style={styles.activeDot} /> : null}
+          </View>
         ),
       })}
     >
       <Tabs.Screen
         name="Dashboard"
         component={DashboardScreen}
-        options={{ title: 'Dashboard' }}
+        options={{ title: 'Dashboard', headerShown: false }}
       />
       <Tabs.Screen
         name="MyPapers"
         component={MyPapersScreen}
-        options={{ title: 'My Papers' }}
+        options={{ title: 'My Papers', headerShown: false }}
       />
-      <Tabs.Screen name="Browse" component={BrowseScreen} options={{ title: 'Browse' }} />
+      <Tabs.Screen
+        name="Browse"
+        component={BrowseScreen}
+        options={{ title: 'Browse', headerShown: false }}
+      />
       <Tabs.Screen
         name="Notifications"
         component={NotificationsScreen}
-        options={{ title: 'Notifications' }}
+        options={{ title: 'Notifications', headerShown: false }}
       />
       <Tabs.Screen
         name="Invitations"
         component={InvitationsScreen}
-        options={{ title: 'Invites' }}
+        options={{ title: 'Invites', headerShown: false }}
       />
     </Tabs.Navigator>
   );
 };
 
 const FullScreenLoader = () => (
-  <View
-    style={{
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 12,
-      backgroundColor: '#f8fafc',
-    }}
-  >
-    <ActivityIndicator size="large" color="#1c4d8d" />
-    <Text style={{ color: '#334155', fontSize: 15 }}>Restoring session...</Text>
+  <View style={styles.loaderContainer}>
+    <Logo size="sm" showWordmark={false} />
+    <ActivityIndicator size="large" color={theme.colors.brand.primary} />
+    <Text style={styles.loaderText}>Restoring session...</Text>
   </View>
 );
 
@@ -88,20 +118,25 @@ export const AppNavigator = () => {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator>
+      <Stack.Navigator
+        screenOptions={{
+          headerStyle: { backgroundColor: theme.colors.surface.base },
+          headerShadowVisible: false,
+          headerTintColor: theme.colors.brand.primary,
+          headerTitleStyle: {
+            ...theme.typography.h3,
+            color: theme.colors.text.primary,
+          },
+          headerTitleAlign: 'left',
+        }}
+      >
         {!user ? (
           <Stack.Screen
             name="Login"
             component={LoginScreen}
             options={{ headerShown: false }}
           />
-        ) : user.role !== 'student' ? (
-          <Stack.Screen
-            name="UnsupportedRole"
-            component={UnsupportedRoleScreen}
-            options={{ headerShown: false }}
-          />
-        ) : (
+        ) : user.role === 'student' ? (
           <>
             <Stack.Screen
               name="StudentTabs"
@@ -111,11 +146,79 @@ export const AppNavigator = () => {
             <Stack.Screen
               name="ResearchDetail"
               component={ResearchDetailScreen}
-              options={{ title: 'Research Detail' }}
+              options={{
+                title: 'Research Detail',
+                header: (props) => <ResearchDetailHeader {...props} />,
+              }}
+            />
+            <Stack.Screen
+              name="SubmitResearch"
+              component={SubmitResearchScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="Profile"
+              component={ProfileScreen}
+              options={{ title: 'Profile' }}
             />
           </>
+        ) : user.role === 'faculty' ? (
+          <>
+            <Stack.Screen
+              name="FacultyTabs"
+              component={FacultyTabs}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="FacultyReviewDetail"
+              component={FacultyReviewDetailScreen}
+              options={{
+                title: 'Paper Review',
+                header: (props) => <ResearchDetailHeader {...props} />,
+              }}
+            />
+            <Stack.Screen
+              name="FacultyPaperDetail"
+              component={FacultyPaperDetailScreen}
+              options={{
+                title: 'Research Detail',
+                header: (props) => <ResearchDetailHeader {...props} />,
+              }}
+            />
+          </>
+        ) : (
+          <Stack.Screen
+            name="UnsupportedRole"
+            component={UnsupportedRoleScreen}
+            options={{ headerShown: false }}
+          />
         )}
       </Stack.Navigator>
     </NavigationContainer>
   );
 };
+
+const styles = StyleSheet.create({
+  tabIconWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  activeDot: {
+    width: 5,
+    height: 5,
+    borderRadius: theme.radii.pill,
+    backgroundColor: theme.colors.brand.accent,
+  },
+  loaderContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    backgroundColor: theme.colors.surface.base,
+  },
+  loaderText: {
+    ...theme.typography.body,
+    color: theme.colors.text.secondary,
+  },
+});
