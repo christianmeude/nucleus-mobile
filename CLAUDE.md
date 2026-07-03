@@ -2,6 +2,10 @@
 
 Read this file in full before doing anything. Then follow the Session Opening Protocol below.
 
+> **Human-facing summary:** `docs/HOW_WE_WORK.md` explains the whole workflow in
+> plain language — what Christian does, what Claude handles, when Claude pauses.
+> This brief is the detailed operating reference behind it.
+
 ---
 
 ## What This Project Is

@@ -2,6 +2,10 @@
 
 Canonical reference for all process conventions. Every commit, phase, issue, SQL change, and handoff must follow these formats without exception.
 
+> **Feeling lost? Start with `docs/HOW_WE_WORK.md`** — the entire workflow in
+> plain language. This document is the detailed reference behind that summary;
+> you don't need to hold all of it in your head to work.
+
 ---
 
 ## 1. Branch Workflow
