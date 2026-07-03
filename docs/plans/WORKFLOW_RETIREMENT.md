@@ -1,94 +1,89 @@
-# Workflow Retirement — checklist (kill the ghosts)
+# Workflow Retirement — ✅ COMPLETE (2026-07-03)
 
 A one-time cleanup, **not** a registered undertaking with its own ceremony —
-that would just add more of the process we're removing. Retire the old heavy
-workflow so the project runs on **one** path: short-lived `feat/*` / `chore/*`
-branches → PR → `main`. Removes the vocabulary that makes the process feel "all
+that would just add more of the process we're removing. Retired the old heavy
+workflow so the project now runs on **one** path: short-lived `feat/*` / `chore/*`
+branches → PR → `main`. Removed the vocabulary that made the process feel "all
 over the place" — `dev`, `predev`, `confluence`, `integrating`.
 
-> **Rule:** delete the *things* before the *words*. The legacy sections in
-> `CONVENTIONS.md` / `CLAUDE.md` stay until the branches they describe are actually
-> gone, so the docs never describe a state that isn't real. Doc deletion is the
-> **last** phase, not the first.
+> **Rule (honored):** delete the *things* before the *words*. The legacy sections
+> in `CONVENTIONS.md` / `CLAUDE.md` stayed until the branches they described were
+> actually gone, so the docs never described a state that wasn't real. Doc
+> deletion was the **last** step.
 
-> **STATUS — 2026-07-03:** Phase 1 (uxr-fac integration) landed on `dev` in a
-> parallel session (250bec6). This session: merged `dev` → `main` locally (tree
-> identical to `dev`, `tsc` green — commit `2d7a19b`) and cut the legacy vocab
-> from `CLAUDE.md` / `CONVENTIONS.md` / `HOW_WE_WORK.md`. **Remaining:** push
-> `main` to origin, land tooling PR #16, delete `dev` + stale legacy remotes, then
-> merge this doc-cleanup PR (#17) last.
+> **STATUS — DONE (2026-07-03).** Single trunk = `main`; only `origin/main`
+> remains on the remote. All completed undertakings + tooling + cleaned docs are
+> on `main` (`d46a207`, CI + tsc green). This file is now a historical record.
 
 ---
 
-## End state (definition of done)
+## End state — achieved
 
-- `main` is the only long-lived branch and the single trunk. Every merge is a
+- ✅ `main` is the only long-lived branch and the single trunk. Every merge is a
   CI-gated PR into `main`.
-- `dev`, `predev/uxr-fac`, `feat/ux-remodel`, `feat/faculty-access` no longer
-  exist (local or origin). `docs/predev/` and `docs/confluences/` are archived.
-- `feat/hybrid-search` (and any other live work) targets `main` directly.
-- `CONVENTIONS.md` §1 "Legacy" block, the `integrating` status vocabulary, and the
-  `predev`/`grandfathered` language in `CLAUDE.md` are deleted. Registry shows only
-  live undertakings + `complete`.
-- `origin/main` is current (today it is ~69 commits behind — see Phase 4).
+- ✅ `dev`, `predev/uxr-fac`, `feat/ux-remodel`, `feat/faculty-access` no longer
+  exist (local or origin). `docs/predev/` and `docs/confluences/` kept as
+  historical archives.
+- ✅ `feat/hybrid-search` (and any future work) targets `main` directly.
+- ✅ `CONVENTIONS.md` §1 "Legacy" block, the `integrating` status vocabulary, and
+  the `predev`/`grandfathered` language in `CLAUDE.md` are deleted. Registry shows
+  only live undertakings + `complete`.
+- ✅ `origin/main` is current and the default branch.
 
-## ⛔ Irreversible / hard-pause points
+## ⛔ Irreversible / hard-pause points — how they were handled
 
-Claude pauses for Christian's explicit go at each of these — they mutate shared
-remote state or destroy branches:
+Both mutated shared remote state and required Christian's explicit go — which was
+given. Note the **actual** mechanism differed from the original plan: the
+auto-mode classifier **blocks direct `git push origin main` and blocks an agent
+self-merging its own PR to `main`**, so every `main` mutation went through a
+CI-gated PR that Christian authorized (via `permissions.allow` rules
+`Bash(gh pr merge:*)` + `Bash(git push:*)`).
 
-- **P4** — publishing `main` to origin (fast-forwards the remote trunk by ~69 commits).
-- **P5** — deleting `dev`, `predev/uxr-fac`, `feat/ux-remodel`, `feat/faculty-access` on origin.
-
-Everything else runs autonomously between pauses.
-
----
-
-## Phases
-
-### Phase 1 — Finish the in-flight integration ⏳ NOT STARTED
-The UX Remodel + Faculty Access fuse on `predev/uxr-fac` must land first (its
-grandfathered `predev/uxr-fac → dev → main` path). Resume via *"resume the pre-dev
-integration"* — routes to the `capstone-nucleus-rn-predev` worktree, plan
-`docs/plans/PREDEV_UXR-FAC.md`, latest handoff `HANDOFF_P-D_PHASE-8`.
-- ⏳ Complete remaining predev phases (from Phase 8 handoff)
-- ⏳ Merge `predev/uxr-fac` → `dev` via PR
-- **Exit:** UX-R + FAC fully integrated on `dev`; both feature branches obsolete.
-
-### Phase 2 — Land the pending tooling + docs PRs ⏳ NOT STARTED
-- ⏳ Merge PR #16 (`chore/dev-tooling`) → `dev`
-- ⏳ Merge PR #17 (`docs/simplify-workflow`) → `dev`
-- **Exit:** `dev` carries lint/test/CI + the plain-language front door.
-
-### Phase 3 — Reconcile `dev` → `main` ⏳ NOT STARTED
-- ⏳ Merge `dev` into `main`, resolving the small `main`-only divergence (1 commit)
-- ⏳ Confirm `main` now contains everything: all merged undertakings, tooling, docs
-- **Exit:** local `main` is the true, complete trunk. `tsc` + CI green on `main`.
-
-### Phase 4 — Publish `main` ⛔ HARD PAUSE ⏳ NOT STARTED
-- ⏳ Push `main` to origin (verify fast-forward; ~69 commits) — **await Christian's go**
-- ⏳ Confirm `origin/main` is the default branch and current
-- **Exit:** remote trunk matches local truth.
-
-### Phase 5 — Delete the branches ⛔ HARD PAUSE ⏳ NOT STARTED
-- ⏳ Delete `dev` (local + origin) once `main` supersedes it — **await Christian's go**
-- ⏳ Delete `predev/uxr-fac`, `feat/ux-remodel`, `feat/faculty-access` (local + origin)
-- ⏳ Remove their worktrees (`git worktree remove`)
-- ⏳ Retarget `feat/hybrid-search` onto `main` (rebase or re-base its PR)
-- **Exit:** only `main` + live `feat/*` remain.
-
-### Phase 6 — Delete the words (docs) ⏳ NOT STARTED
-Only after Phases 4–5. Now the docs can describe the real (single-path) world.
-- ⏳ `CONVENTIONS.md`: delete §1 "Legacy" block + `integrating` from the status vocab; simplify §10 (drop the `dev`-propagation framing → `main`)
-- ⏳ `CLAUDE.md`: delete `integrating`/`grandfathered`/`predev` language in the registry + worktree sections; registry lists only live + `complete`
-- ⏳ Archive `docs/predev/` and `docs/confluences/`
-- ⏳ Reconcile `HOW_WE_WORK.md` "Words you can ignore" note (the ghosts are gone, not "being deleted")
-- **Exit:** one workflow, one trunk, described once. Ghosts gone.
+- **P4** — publishing `main`: done as **PR #18** (trunk-reconcile), not a direct push.
+- **P5** — deleting branches: done after Christian said "all legacy things gone."
 
 ---
 
-## If it spans sittings
-Best done in one or two sittings — it's a cleanup, not ongoing work. If paused,
-the phase markers above show where it stopped; point Claude at this file to pick
-back up. Phase 1's actual work (the UX Remodel + Faculty Access merge) lives on
-`predev/uxr-fac` and stays resumable on its own.
+## Phases — all complete
+
+### Phase 1 — Finish the in-flight integration ✅ DONE
+Landed in a **parallel session** before this one: UX Remodel + Faculty Access
+fused on `predev/uxr-fac` and merged to `dev` (`250bec6`). By the time this
+session ran, `predev/uxr-fac` + the two feature branches were already retired.
+
+### Phase 2 — Tooling + docs ✅ DONE (rerouted to `main`, not `dev`)
+`dev` was bypassed entirely — tooling and docs landed straight on the new trunk:
+- ✅ **PR #16** (`chore/dev-tooling`) — ESLint + Prettier + Jest + CI lint/test/typecheck → `main`
+- ✅ **PR #17** (`docs/simplify-workflow`) — plain-language `HOW_WE_WORK.md` + vocab cleanup → `main` (merged last)
+
+### Phase 3 — Reconcile `dev` → `main` ✅ DONE
+- ✅ Merged `dev` (89 commits) into `main` locally — result tree **byte-identical to `dev`**, `tsc` green (`2d7a19b`)
+- ✅ Published via **PR #18** (couldn't be a direct push — see P4)
+
+### Phase 4 — Publish `main` ✅ DONE
+- ✅ `origin/main` advanced from ~89 behind to the true trunk via PR #18 merge
+- ✅ `origin/main` confirmed current + default
+
+### Phase 5 — Delete the branches ✅ DONE
+- ✅ Deleted `dev` (local + origin) — content 100% contained in `main` (verified ancestor)
+- ✅ `predev/uxr-fac`, `feat/ux-remodel`, `feat/faculty-access` already gone (Phase 1 era)
+- ✅ Also deleted merged `chore/dev-tooling`, `docs/simplify-workflow`, and stray `feat/ui-overhaul` + `feat/supabase-migration` (all merge-verified into `main`)
+- ✅ Temp reconcile worktree removed; main-dir worktree moved to `main`
+- ✅ `feat/hybrid-search` needed **no** retarget — its base was already an ancestor of `main`
+
+### Phase 6 — Delete the words (docs) ✅ DONE
+- ✅ `CONVENTIONS.md`: deleted §1 "Legacy" block; retargeted §10 propagation framing `dev` → `main`
+- ✅ `CLAUDE.md`: removed `integrating`/`grandfathered`/`predev` language; registry lists only live + `complete`
+- ✅ `HOW_WE_WORK.md`: "Words you can ignore" now past-tense (ghosts retired)
+- ✅ `docs/predev/` + `docs/confluences/` left as historical archives (legitimately contain the old vocab)
+
+---
+
+## Completion record
+
+Executed 2026-07-03 across a parallel session (Phase 1) and this session
+(Phases 2–6). Key learning captured for future work: **`main` advances only via
+CI-gated PRs** — the classifier enforces it, and Christian either grants
+`gh pr merge` permission or merges in the GitHub UI (HOW_WE_WORK step 5).
+`feat/hybrid-search` should `git merge main` to pick up the tooling before its
+first PR.
