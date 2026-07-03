@@ -1,0 +1,106 @@
+/* ============================================================
+   NUcleus Mobile — Color Tokens
+   Brand: navy #1B3A8C (primary) · gold #F5A623 (single accent)
+   Warm paper surfaces: page #F7F3EA · card #FFFDF8 · sunken #FCFAF4
+   ============================================================ */
+
+:root {
+  /* --- Palette: Navy --- */
+  --nucleus-navy-50:  #EAF0FB;
+  --nucleus-navy-100: #D2DEF5;
+  --nucleus-navy-200: #A3BBE9;
+  --nucleus-navy-300: #5F7EC9;
+  --nucleus-navy-400: #2E5BC9;
+  --nucleus-navy-500: #1B3A8C;
+  --nucleus-navy-600: #16307A;
+  --nucleus-navy-700: #102560;
+  --nucleus-navy-800: #0B1B47;
+  --nucleus-navy-900: #06112E;
+
+  /* --- Palette: Gold --- */
+  --nucleus-gold-50:  #FEF6E7;
+  --nucleus-gold-100: #FCE7BD;
+  --nucleus-gold-200: #FAD588;
+  --nucleus-gold-300: #F8C156;
+  --nucleus-gold-400: #F7B33B;
+  --nucleus-gold-500: #F5A623;
+  --nucleus-gold-600: #D9921F;
+  --nucleus-gold-700: #A86F17;
+  --nucleus-gold-800: #774E10;
+  --nucleus-gold-900: #473008;
+
+  /* --- Palette: Slate (cool neutral) --- */
+  --nucleus-slate-0:   #FFFFFF;
+  --nucleus-slate-50:  #F8FAFC;
+  --nucleus-slate-100: #F1F5F9;
+  --nucleus-slate-200: #E2E8F0;
+  --nucleus-slate-300: #CBD5E1;
+  --nucleus-slate-400: #94A3B8;
+  --nucleus-slate-500: #64748B;
+  --nucleus-slate-600: #475569;
+  --nucleus-slate-700: #334155;
+  --nucleus-slate-800: #1E293B;
+  --nucleus-slate-900: #0F172A;
+
+  /* --- Palette: Warm (paper surfaces) --- */
+  --nucleus-warm-page:          #F7F3EA;
+  --nucleus-warm-card:          #FFFDF8;
+  --nucleus-warm-sunken:        #FCFAF4;
+  --nucleus-warm-border:        #E9E2D3;
+  --nucleus-warm-border-subtle: #EFE9DC;
+
+  /* --- Palette: State --- */
+  --nucleus-success-100: #D1FAE5;
+  --nucleus-success-500: #059669;
+  --nucleus-success-600: #047857;
+  --nucleus-warning-100: #FEF3C7;
+  --nucleus-warning-500: #D97706;
+  --nucleus-warning-600: #B45309;
+  --nucleus-danger-100:  #FEE2E2;
+  --nucleus-danger-500:  #DC2626;
+  --nucleus-danger-600:  #B91C1C;
+
+  /* --- Semantic: Brand --- */
+  --color-brand-primary:         var(--nucleus-navy-500);
+  --color-brand-primary-hover:   var(--nucleus-navy-600);
+  --color-brand-primary-pressed: var(--nucleus-navy-700);
+  --color-brand-primary-soft:    var(--nucleus-navy-100);
+  --color-brand-primary-surface: var(--nucleus-navy-50);
+  --color-brand-accent:          var(--nucleus-gold-500);
+  --color-brand-accent-hover:    var(--nucleus-gold-600);
+  --color-brand-accent-soft:     var(--nucleus-gold-100);
+  --color-brand-accent-surface:  var(--nucleus-gold-50);
+
+  /* --- Semantic: Text --- */
+  --color-text-primary:   var(--nucleus-slate-900);
+  --color-text-secondary: var(--nucleus-slate-600);
+  --color-text-muted:     var(--nucleus-slate-500);
+  --color-text-disabled:  var(--nucleus-slate-400);
+  --color-text-on-brand:  #FFFFFF;
+  --color-text-on-accent: var(--nucleus-slate-900);
+  --color-text-link:      var(--nucleus-navy-500);
+
+  /* --- Semantic: Surfaces --- */
+  --color-surface-base:         var(--nucleus-slate-50);
+  --color-surface-raised:       #FFFFFF;
+  --color-surface-sunken:       var(--nucleus-slate-100);
+  --color-surface-paper:        var(--nucleus-warm-page);
+  --color-surface-paper-raised: var(--nucleus-warm-card);
+  --color-surface-paper-sunken: var(--nucleus-warm-sunken);
+  --color-surface-overlay:      rgba(15, 23, 42, 0.45);
+
+  /* --- Semantic: Borders --- */
+  --color-border-subtle:       var(--nucleus-slate-200);
+  --color-border-strong:       var(--nucleus-slate-300);
+  --color-border-focus:        var(--nucleus-navy-400);
+  --color-border-warm:         var(--nucleus-warm-border);
+  --color-border-warm-subtle:  var(--nucleus-warm-border-subtle);
+
+  /* --- Semantic: State --- */
+  --color-state-success:          var(--nucleus-success-600);
+  --color-state-success-surface:  var(--nucleus-success-100);
+  --color-state-warning:          var(--nucleus-warning-500);
+  --color-state-warning-surface:  var(--nucleus-warning-100);
+  --color-state-danger:           var(--nucleus-danger-600);
+  --color-state-danger-surface:   var(--nucleus-danger-100);
+}
