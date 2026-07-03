@@ -1,10 +1,13 @@
 # NUcleus Mobile — Implementation Plan: Pre-Dev Integration (UXR × FAC)
 
-> **STATUS: IN PROGRESS** — Branch `predev/uxr-fac`, cut from `dev`.
-> Fuses **UX Remodel** (`feat/ux-remodel`) and **Faculty Access**
-> (`feat/faculty-access`) into one uniform tree, reconciles them into a single
-> visual + feature standard, then merges to `dev` and retires both feature
-> branches. Workflow: [`docs/predev/README.md`](../predev/README.md).
+> **STATUS: COMPLETE** — Merged to `dev` (2026-07-03); `predev/uxr-fac` +
+> `feat/ux-remodel` + `feat/faculty-access` branches and worktrees retired.
+> Fused **UX Remodel** (`feat/ux-remodel`) and **Faculty Access**
+> (`feat/faculty-access`) into one uniform tree, reconciled them into a single
+> visual + feature standard, then merged to `dev` and retired both feature
+> branches. Phase 9 (queued revisions) and Phase 11 (device QA) waived by
+> Christian to finish the merge and retire the legacy pre-dev workflow.
+> Workflow: [`docs/predev/README.md`](../predev/README.md).
 
 **Canonical product context:** [PROJECT_CONTEXT.md](../PROJECT_CONTEXT.md)
 **Process conventions:** [CONVENTIONS.md](../CONVENTIONS.md)
@@ -258,17 +261,20 @@ next.
 delivery is only real once fused to `dev`).
 
 ### Phase 11 — Exit QA + fresh EAS dev-client
-⏳ **NOT STARTED** (Christian's testing) — Full both-role regression on the existing
-APK; tsc; then `eas build -p android --profile development`; re-run both roles + both
-PDF flows on the fresh client. Exit gate = §4. Requires a cloud build + a device —
-Christian-driven; an autonomous session cannot run it.
+⏭️ **WAIVED** (Christian, 2026-07-03) — Device QA on a fresh EAS dev-client was
+waived to finish the merge and retire the legacy workflow. The existing dev-client
+remains a valid superset for behavior/layout; the dead-dep removals (Phase 2)
+materialize on the next dev-client build. Any regression is caught on `dev`, not
+before branch deletion.
 
 ### Phase 12 — Final merge + retirement
-⏳ **NOT STARTED** (gated on §4 + explicit go) — `predev/uxr-fac → dev`
-(two-undertaking merge body); tag + delete both feature branches + worktrees;
-registry flips to `complete`; instance record `docs/predev/PREDEV_UXR-FAC_<date>.md`
-on dev; hybrid-search syncs `dev`. Irreversible steps — held until Christian's QA
-passes and he gives the go.
+✅ **COMPLETED (2026-07-03)** — `predev/uxr-fac → dev` via `--no-ff` (two-undertaking
+merge body). Registry flipped: P-D / UX-R / FAC → `complete`. Participant tips tagged
+`retired/ux-remodel-2026-07-03` + `retired/faculty-access-2026-07-03` before delete
+(README §Retirement). Retired: branches + worktrees `predev/uxr-fac`,
+`feat/ux-remodel`, `feat/faculty-access` (`git branch -d`, merge-verified). Instance
+record `docs/predev/PREDEV_UXR-FAC_2026-07-03.md` authored on dev (carries the merge
+SHA). #12 closed. Hybrid-search synced `dev`.
 
 ---
 
