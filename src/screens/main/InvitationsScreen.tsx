@@ -6,6 +6,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { invitationsApi } from '../../api/invitations';
@@ -16,6 +17,7 @@ import { theme } from '../../theme';
 import { EmptyState, InlineNotice, Skeleton } from '../../components/ui';
 
 export const InvitationsScreen = () => {
+  const insets = useSafeAreaInsets();
   const [invitations, setInvitations] = useState<CoAuthorInvitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -96,7 +98,7 @@ export const InvitationsScreen = () => {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + theme.spacing.md }]}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -107,7 +109,7 @@ export const InvitationsScreen = () => {
       }
     >
       <View style={styles.headerBlock}>
-        <Text style={styles.title}>Co-author Invites</Text>
+        <Text style={styles.title}>Invitations</Text>
         <Text style={styles.subtitle}>{pendingSubtitle}</Text>
       </View>
 
@@ -169,20 +171,24 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface.base,
   },
   content: {
-    padding: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing['3xl'],
     gap: theme.spacing.lg,
   },
   headerBlock: {
     gap: 0,
   },
   title: {
-    ...theme.typography.h1,
+    fontFamily: theme.fontFamilies.display.semibold,
+    fontSize: 26,
+    lineHeight: 32,
     color: theme.colors.text.primary,
   },
   subtitle: {
-    ...theme.typography.bodySmall,
-    color: theme.colors.text.secondary,
-    marginTop: theme.spacing.xs,
+    fontFamily: theme.fontFamilies.ui.regular,
+    fontSize: 13,
+    color: theme.colors.text.muted,
+    marginTop: 2,
   },
   skeletonList: {
     gap: theme.spacing.sm,

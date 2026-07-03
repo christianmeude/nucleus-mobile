@@ -45,9 +45,9 @@ latest handoff is discovered by recency on the branch, not tracked here.
 | Undertaking | Short | Branch | Plan | Status |
 |---|---|---|---|---|
 | Submit Research | `S-R` | merged → `main` | `docs/plans/SUBMIT_RESEARCH.md` | complete |
-| Pre-Dev Integration | `P-D` | `predev/uxr-fac` | `docs/plans/PREDEV_UXR-FAC.md` | active |
-| UX Remodel | `UX-R` | `feat/ux-remodel` | `docs/plans/UX_REMODEL.md` | integrating |
-| Faculty Access | `FAC` | `feat/faculty-access` | `docs/plans/FACULTY_ACCESS.md` | integrating |
+| Pre-Dev Integration | `P-D` | merged → `dev` | `docs/plans/PREDEV_UXR-FAC.md` | complete |
+| UX Remodel | `UX-R` | merged → `dev` (via P-D) | `docs/plans/UX_REMODEL.md` | complete |
+| Faculty Access | `FAC` | merged → `dev` (via P-D) | `docs/plans/FACULTY_ACCESS.md` | complete |
 | Hybrid Search | `H-S` | `feat/hybrid-search` | `docs/plans/HYBRID_SEARCH.md` | active |
 
 > A plan/handoff path resolves once you are on that undertaking's branch (each
@@ -196,5 +196,8 @@ The `public.users` SELECT policy cannot reference itself — triggers `42P17`. C
 | `src/api/research.ts` | Research and submission API facade |
 | `src/api/invitations.ts` | Invitations API facade |
 | `src/api/notifications.ts` | Notifications API facade |
+| `src/api/faculty.ts` | Faculty read paths + review write RPCs |
 | `src/theme/` | Design tokens — always use, never hardcode values |
 | `src/components/ui/` | Shared UI primitives |
+| `src/components/PdfViewer.tsx` | Shared in-app PDF reader (WebView + pdf.js); used by both roles |
+| `src/navigation/FacultyTabs.tsx` | Faculty tab navigator (headerless; per-screen safe-area insets) |
