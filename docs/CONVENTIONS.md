@@ -409,6 +409,7 @@ See `docs/handoffs/HANDOFF_TEMPLATE.md` for the full section template.
 4. Once approved: **bundle the handoff into the session's final commit** (the phase-close or last logical commit) — present that commit for confirmation. Make a standalone `docs(handoff): add HANDOFF_[NAME]` commit **only** when the session ends with no other commit to attach it to.
 5. After commit: confirm the next session opening state matches the handoff's "Immediate Next Steps"
 6. Update the undertaking's `Status` in the CLAUDE.md Undertaking Registry (active / parked / complete) if it changed this session
+7. **When an undertaking merges to `main` (status → `complete`):** delete its plan doc and every handoff for its short code, then drop its Registry row entirely. The merge commit and PR description are the permanent record — a completed undertaking's plan/handoffs have no forward value and just accumulate as dead weight. Keep only `HANDOFF_TEMPLATE.md`.
 
 ### What makes a good handoff
 
