@@ -30,5 +30,18 @@
       "Edit(docs/sql/submit_research_rls_policies.sql)",
       "Write(docs/sql/submit_research_rls_policies.sql)"
     ]
+  },
+  "hooks": {
+    "WorktreeCreate": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ROOT=\"$(git worktree list --porcelain | awk '/^worktree /{print $2; exit}')\"; for d in \"$ROOT\"/.claude/worktrees/*/; do [ -d \"$d\" ] && [ -f \"$ROOT/.env\" ] && [ ! -f \"${d}.env\" ] && cp \"$ROOT/.env\" \"${d}.env\"; done 2>/dev/null; true",
+            "statusMessage": "Copying .env into new worktree"
+          }
+        ]
+      }
+    ]
   }
 }
