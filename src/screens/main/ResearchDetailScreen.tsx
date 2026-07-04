@@ -27,6 +27,7 @@ import {
   statusToLabel,
 } from '../../utils/format';
 import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
+import { PUBLISHED_STATUSES } from '../../components/PaperStatusChip';
 
 type DetailRouteProp = RouteProp<RootStackParamList, 'ResearchDetail'>;
 
@@ -170,6 +171,10 @@ export const ResearchDetailScreen = () => {
   // only status Browse surfaces), so the workflow stays hidden for everyone.
   const showWorkflow =
     isOwner && paper.status !== 'approved' && paper.status !== 'published';
+  // Related papers only make sense once a paper is a public repository entry — for a
+  // paper still in review (only reachable from Dashboard/My Papers), there's nothing
+  // published yet to meaningfully relate it to.
+  const isRepositoryPaper = PUBLISHED_STATUSES.has(paper.status);
   const keywords = Array.isArray(paper.keywords) ? paper.keywords.filter(Boolean) : [];
   const categoryName = resolveCategoryName(paper.category, categoryNameById);
   const authorName = getPrimaryAuthorName(paper);
@@ -252,7 +257,7 @@ export const ResearchDetailScreen = () => {
           <Text style={styles.abstract}>{paper.abstract || 'No abstract available.'}</Text>
         </View>
 
-        {related.length > 0 ? (
+        {isRepositoryPaper && related.length > 0 ? (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Related papers</Text>
             <View style={styles.relatedList}>
