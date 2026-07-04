@@ -17,6 +17,7 @@ import {
 } from '@expo-google-fonts/source-serif-4';
 import { AuthProvider } from './src/context/AuthContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
+import { RoleGuard } from './src/navigation/RoleGuard';
 import { theme } from './src/theme';
 
 const FontLoader = () => (
@@ -54,7 +55,9 @@ export default function App() {
       <StatusBar style="dark" />
       {fontsReady ? (
         <AuthProvider>
-          <AppNavigator />
+          <RoleGuard>
+            <AppNavigator />
+          </RoleGuard>
         </AuthProvider>
       ) : (
         <FontLoader />

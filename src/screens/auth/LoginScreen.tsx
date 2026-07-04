@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -13,31 +13,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { theme } from '../../theme';
 import { Button, Logo } from '../../components/ui';
-
-type LoginIntent = 'student' | 'faculty';
+import { consumeLoginRejection, LoginIntent, setLoginIntent } from '../../state/loginIntent';
 
 export const LoginScreen = () => {
-  const { signIn, signOut, user } = useAuth();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submittingIntent, setSubmittingIntent] = useState<LoginIntent | null>(null);
-  const [error, setError] = useState('');
-  const pendingIntent = useRef<LoginIntent | null>(null);
-
-  useEffect(() => {
-    const intent = pendingIntent.current;
-    if (!intent || !user) {
-      return;
-    }
-    pendingIntent.current = null;
-
-    if (user.role !== intent) {
-      setError(
-        `That account isn't registered as ${intent}. Use the correct sign-in option below.`
-      );
-      void signOut();
-    }
-  }, [user, signOut]);
+  const [error, setError] = useState(() => consumeLoginRejection() || '');
 
   const onSubmit = async (intent: LoginIntent) => {
     if (!email.trim() || !password.trim()) {
@@ -47,13 +30,13 @@ export const LoginScreen = () => {
 
     setSubmittingIntent(intent);
     setError('');
-    pendingIntent.current = intent;
+    setLoginIntent(intent);
 
     const result = await signIn(email.trim(), password);
     setSubmittingIntent(null);
 
     if (!result.success) {
-      pendingIntent.current = null;
+      setLoginIntent(null);
       setError(result.error || 'Unable to sign in.');
     }
   };
