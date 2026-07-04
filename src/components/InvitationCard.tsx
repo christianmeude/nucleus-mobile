@@ -1,7 +1,8 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { CoAuthorInvitation } from '../types/domain';
 import { formatDate, statusToLabel } from '../utils/format';
-import { theme } from '../theme';
+import { useTheme, useThemedStyles } from '../context/ThemeContext';
+import { type Theme } from '../theme';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -28,16 +29,19 @@ const statusLabelForStatus = (status: string) => {
   }
 };
 
-const pillToneForStatus = (status: string): { bg: string; color: string } => {
+const pillToneForStatus = (
+  status: string,
+  c: Theme['colors'],
+): { bg: string; color: string } => {
   switch (status) {
     case 'pending':
-      return { bg: theme.colors.state.warningSurface, color: theme.colors.state.warning };
+      return { bg: c.state.warningSurface, color: c.state.warning };
     case 'accepted':
-      return { bg: theme.colors.state.successSurface, color: theme.colors.state.success };
+      return { bg: c.state.successSurface, color: c.state.success };
     case 'declined':
-      return { bg: theme.colors.state.dangerSurface, color: theme.colors.state.danger };
+      return { bg: c.state.dangerSurface, color: c.state.danger };
     default:
-      return { bg: theme.colors.surface.sunken, color: theme.colors.text.muted };
+      return { bg: c.surface.sunken, color: c.text.muted };
   }
 };
 
@@ -54,6 +58,8 @@ export const InvitationCard = ({
   onAccept,
   onDecline,
 }: InvitationCardProps) => {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const status = String(invitation.status);
   const isPending = status === 'pending';
   const isExpired = status === 'expired';
@@ -67,7 +73,7 @@ export const InvitationCard = ({
     invitation.inviter?.email ||
     'Unknown';
   const researchTitle = invitation.research?.title || 'Untitled Research';
-  const pill = pillToneForStatus(status);
+  const pill = pillToneForStatus(status, theme.colors);
 
   const subline = isExpired
     ? `Expired ${formatDate(invitation.expires_at)}`
@@ -157,129 +163,130 @@ export const InvitationCard = ({
   );
 };
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: theme.colors.surface.raised,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.border.subtle,
-    borderRadius: theme.radii.lg,
-    borderCurve: 'continuous',
-    padding: theme.spacing.lg,
-  },
-  cardMuted: {
-    backgroundColor: theme.colors.surface.base,
-  },
-  head: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: theme.spacing.sm,
-  },
-  inviterRow: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  avatar: {
-    width: 34,
-    height: 34,
-    borderRadius: theme.radii.pill,
-    borderCurve: 'continuous',
-    backgroundColor: theme.colors.brand.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarMuted: {
-    backgroundColor: theme.colors.border.strong,
-  },
-  avatarText: {
-    fontFamily: theme.fontFamilies.ui.semibold,
-    fontSize: 13,
-    color: theme.colors.text.onBrand,
-  },
-  avatarTextMuted: {
-    color: theme.colors.text.muted,
-  },
-  inviterText: {
-    flex: 1,
-  },
-  inviterName: {
-    fontFamily: theme.fontFamilies.ui.semibold,
-    fontSize: 14,
-    color: theme.colors.text.primary,
-  },
-  subline: {
-    fontFamily: theme.fontFamilies.ui.regular,
-    fontSize: 12,
-    color: theme.colors.text.disabled,
-    marginTop: 1,
-  },
-  textMuted: {
-    color: theme.colors.text.muted,
-  },
-  pill: {
-    borderRadius: theme.radii.pill,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 3,
-  },
-  pillText: {
-    fontFamily: theme.fontFamilies.ui.semibold,
-    fontSize: 11,
-  },
-  title: {
-    fontFamily: theme.fontFamilies.display.semibold,
-    fontSize: 17,
-    lineHeight: 22,
-    color: theme.colors.text.primary,
-    marginTop: theme.spacing.md,
-  },
-  expiry: {
-    fontFamily: theme.fontFamilies.ui.medium,
-    fontSize: 12,
-    color: theme.colors.text.disabled,
-    marginTop: theme.spacing.sm,
-  },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: theme.spacing.lg,
-    marginTop: theme.spacing.lg,
-  },
-  decline: {
-    fontFamily: theme.fontFamilies.ui.medium,
-    fontSize: 14,
-    color: theme.colors.text.secondary,
-  },
-  declineDisabled: {
-    color: theme.colors.text.disabled,
-  },
-  accept: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    backgroundColor: theme.colors.brand.primary,
-    borderRadius: theme.radii.pill,
-    borderCurve: 'continuous',
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: 9,
-  },
-  acceptLoading: {
-    backgroundColor: theme.colors.brand.primaryHover,
-  },
-  acceptDisabled: {
-    backgroundColor: theme.colors.border.subtle,
-  },
-  acceptPressed: {
-    opacity: 0.85,
-  },
-  acceptText: {
-    fontFamily: theme.fontFamilies.ui.semibold,
-    fontSize: 14,
-    color: theme.colors.text.onBrand,
-  },
-  acceptTextDisabled: {
-    color: theme.colors.text.disabled,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: t.colors.surface.raised,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: t.colors.border.subtle,
+      borderRadius: t.radii.lg,
+      borderCurve: 'continuous',
+      padding: t.spacing.lg,
+    },
+    cardMuted: {
+      backgroundColor: t.colors.surface.base,
+    },
+    head: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: t.spacing.sm,
+    },
+    inviterRow: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: t.spacing.sm,
+    },
+    avatar: {
+      width: 34,
+      height: 34,
+      borderRadius: t.radii.pill,
+      borderCurve: 'continuous',
+      backgroundColor: t.colors.brand.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    avatarMuted: {
+      backgroundColor: t.colors.border.strong,
+    },
+    avatarText: {
+      fontFamily: t.fontFamilies.ui.semibold,
+      fontSize: 13,
+      color: t.colors.text.onBrand,
+    },
+    avatarTextMuted: {
+      color: t.colors.text.muted,
+    },
+    inviterText: {
+      flex: 1,
+    },
+    inviterName: {
+      fontFamily: t.fontFamilies.ui.semibold,
+      fontSize: 14,
+      color: t.colors.text.primary,
+    },
+    subline: {
+      fontFamily: t.fontFamilies.ui.regular,
+      fontSize: 12,
+      color: t.colors.text.disabled,
+      marginTop: 1,
+    },
+    textMuted: {
+      color: t.colors.text.muted,
+    },
+    pill: {
+      borderRadius: t.radii.pill,
+      paddingHorizontal: t.spacing.sm,
+      paddingVertical: 3,
+    },
+    pillText: {
+      fontFamily: t.fontFamilies.ui.semibold,
+      fontSize: 11,
+    },
+    title: {
+      fontFamily: t.fontFamilies.display.semibold,
+      fontSize: 17,
+      lineHeight: 22,
+      color: t.colors.text.primary,
+      marginTop: t.spacing.md,
+    },
+    expiry: {
+      fontFamily: t.fontFamilies.ui.medium,
+      fontSize: 12,
+      color: t.colors.text.disabled,
+      marginTop: t.spacing.sm,
+    },
+    actions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      gap: t.spacing.lg,
+      marginTop: t.spacing.lg,
+    },
+    decline: {
+      fontFamily: t.fontFamilies.ui.medium,
+      fontSize: 14,
+      color: t.colors.text.secondary,
+    },
+    declineDisabled: {
+      color: t.colors.text.disabled,
+    },
+    accept: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: t.spacing.sm,
+      backgroundColor: t.colors.brand.primary,
+      borderRadius: t.radii.pill,
+      borderCurve: 'continuous',
+      paddingHorizontal: t.spacing.xl,
+      paddingVertical: 9,
+    },
+    acceptLoading: {
+      backgroundColor: t.colors.brand.primaryHover,
+    },
+    acceptDisabled: {
+      backgroundColor: t.colors.border.subtle,
+    },
+    acceptPressed: {
+      opacity: 0.85,
+    },
+    acceptText: {
+      fontFamily: t.fontFamilies.ui.semibold,
+      fontSize: 14,
+      color: t.colors.text.onBrand,
+    },
+    acceptTextDisabled: {
+      color: t.colors.text.disabled,
+    },
+  });

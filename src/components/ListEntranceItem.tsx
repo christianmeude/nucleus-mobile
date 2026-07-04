@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet } from 'react-native';
-import { theme } from '../theme';
+import { motion } from '../theme';
 import { useReduceMotion } from '../hooks/useReduceMotion';
 
 interface ListEntranceItemProps {
@@ -36,17 +36,17 @@ export const ListEntranceItem = ({ index, children }: ListEntranceItemProps) => 
     setEntering(true);
 
     const animation = Animated.sequence([
-      Animated.delay(index * theme.motion.listStaggerDelay),
+      Animated.delay(index * motion.listStaggerDelay),
       Animated.parallel([
         Animated.timing(opacity, {
           toValue: 1,
-          duration: theme.motion.listItemDuration,
+          duration: motion.listItemDuration,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(translateY, {
           toValue: 0,
-          duration: theme.motion.listItemDuration,
+          duration: motion.listItemDuration,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
