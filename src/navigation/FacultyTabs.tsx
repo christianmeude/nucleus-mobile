@@ -7,7 +7,8 @@ import { FacultyReviewScreen } from '../screens/faculty/FacultyReviewScreen';
 import { FacultyRepositoryScreen } from '../screens/faculty/FacultyRepositoryScreen';
 import { FacultyNotificationsScreen } from '../screens/faculty/FacultyNotificationsScreen';
 import { FacultyProfileScreen } from '../screens/faculty/FacultyProfileScreen';
-import { theme } from '../theme';
+import { useTheme, useThemedStyles } from '../context/ThemeContext';
+import { type Theme } from '../theme';
 
 const Tabs = createBottomTabNavigator<FacultyTabsParamList>();
 
@@ -20,6 +21,8 @@ const tabIcons: Record<keyof FacultyTabsParamList, keyof typeof Ionicons.glyphMa
 };
 
 export const FacultyTabs = () => {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <Tabs.Navigator
       screenOptions={({ route }) => ({
@@ -79,7 +82,8 @@ export const FacultyTabs = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
   tabIconWrap: {
     alignItems: 'center',
     justifyContent: 'center',
