@@ -1,28 +1,24 @@
 /**
  * NUcleus theme — single source of truth for design tokens.
  *
- * Phase 1 deliverable per docs/plans/UI_OVERHAUL.md §5. Consumers import
- * `theme` directly:
+ * A0 adds runtime theming: the `schemes` (light/dark) from colors.ts are
+ * composed with the theme-invariant tokens (spacing / radii / typography /
+ * shadows / motion) into a full `themes` map. `ThemeProvider` selects the
+ * active one and `useThemedStyles` rebuilds StyleSheets when it changes.
  *
- *   import { theme } from '../theme';
- *   const styles = StyleSheet.create({
- *     card: { backgroundColor: theme.colors.surface.raised, padding: theme.spacing.lg },
- *   });
- *
- * A React context provider and `useTheme()` hook are intentionally NOT
- * shipped in Phase 1; they are deferred until they are actually needed
- * (e.g. for runtime theme switching such as dark mode).
+ * Backward-compat: `export const theme` remains the LIGHT theme, so every
+ * consumer still doing `import { theme } from '../theme'` keeps compiling and
+ * renders light until it migrates to `useTheme()` / `useThemedStyles()`.
  */
-
-import { colors, palette } from './colors';
+import { palette, schemes, type SchemeName } from './colors';
 import { families, fontWeightToKey, typography } from './typography';
 import { spacing } from './spacing';
 import { shadows } from './shadows';
 import { radii } from './radii';
 import { motion } from './motion';
 
-export const theme = {
-  colors,
+const buildTheme = (scheme: SchemeName) => ({
+  colors: schemes[scheme],
   palette,
   typography,
   fontFamilies: families,
@@ -31,12 +27,21 @@ export const theme = {
   radii,
   shadows,
   motion,
-} as const;
+});
 
-export type Theme = typeof theme;
+/** Full theme objects per scheme — consumed by `ThemeProvider`. */
+export const themes = {
+  light: buildTheme('light'),
+  dark: buildTheme('dark'),
+};
 
-export { colors, palette } from './colors';
-export type { Colors, Palette } from './colors';
+/** Backward-compat: the light theme, for unmigrated `import { theme }` uses. */
+export const theme = themes.light;
+
+export type Theme = typeof themes.light;
+
+export { colors, palette, schemes } from './colors';
+export type { Colors, Palette, SchemeName } from './colors';
 export {
   families as fontFamilies,
   fontWeightToKey as fontWeights,

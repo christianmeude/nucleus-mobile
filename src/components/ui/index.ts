@@ -13,3 +13,6 @@ export { BottomSheet } from './BottomSheet';
 export { Divider } from './Divider';
 export { Logo } from './Logo';
 export { OrbitalAccent } from './OrbitalAccent';
+export { Screen } from './Screen';
+export { PressableScale } from './motion/PressableScale';
+export { FadeInView } from './motion/FadeInView';
