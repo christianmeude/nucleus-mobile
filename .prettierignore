@@ -1,0 +1,18 @@
+# Dependencies & build output
+node_modules/
+.expo/
+dist/
+coverage/
+package-lock.json
+
+# Frozen files — never reformat (see CLAUDE.md "Frozen Files")
+src/context/AuthContext.tsx
+src/lib/supabase.ts
+src/auth/
+src/storage/authStorage.ts
+src/types/domain.ts
+src/navigation/types.ts
+src/navigation/AppNavigator.tsx
+src/screens/main/SubmitResearchScreen.tsx
+docs/sql/submit_research_rpcs.sql
+docs/sql/submit_research_rls_policies.sql

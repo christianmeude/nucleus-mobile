@@ -2,6 +2,10 @@
 
 Canonical reference for all process conventions. Every commit, phase, issue, SQL change, and handoff must follow these formats without exception.
 
+> **Feeling lost? Start with `docs/HOW_WE_WORK.md`** — the entire workflow in
+> plain language. This document is the detailed reference behind that summary;
+> you don't need to hold all of it in your head to work.
+
 ---
 
 ## 1. Branch Workflow
@@ -18,7 +22,7 @@ main
 - **`feat/[undertaking]`** — one per undertaking or task, kebab-case. Cut from `main`, merged back to `main` as soon as it's individually stable. Incomplete or risky work ships behind a **feature flag** (below) rather than staying unmerged for weeks.
 - **`chore/[topic]`** — cross-cutting maintenance (workflow, config, docs-only changes). Same short-lived lifecycle, cut from `main`.
 
-Parallel undertakings run as parallel short-lived branches, each in its own worktree (`CLAUDE.md`), each executing the autonomous plan → execute → test → review → iterate loop (§3) independently. Frequent, small merges to `main` surface conflicts early and often instead of letting them accumulate for weeks — this is what replaces the old pre-dev integration / confluence fusion step for undertakings started from here forward (see "Legacy" below).
+Parallel undertakings run as parallel short-lived branches, each in its own worktree (`CLAUDE.md`), each executing the autonomous plan → execute → test → review → iterate loop (§3) independently. Frequent, small merges to `main` surface conflicts early and often instead of letting them accumulate for weeks.
 
 ### Feature flags — how incomplete work stays on trunk
 
@@ -54,12 +58,6 @@ Merge branch 'feat/[undertaking]' into main
 - Subject line is the standard git merge subject — do not alter it
 - Outcome statement: past-tense summary of what the undertaking delivered
 - Phase list: one line per phase, matching the labels in the plan doc
-
-### Legacy: `dev` / pre-dev integration / confluence — retired for new work
-
-The project previously ran an intermediate `dev` integration branch, with long-lived `feat/*` undertaking branches (often weeks) fused via a manual "pre-dev integration" or "confluence" step before reaching `dev` → `main` (`docs/predev/README.md`, `docs/confluences/README.md` — the latter already archived). **This model is retired for any undertaking started from here forward.** CI-gated PRs straight to `main`, short branch lifetimes, and feature flags now do the job those mechanisms existed for.
-
-`predev/uxr-fac` is grandfathered — mid-flight, it finishes via its already-documented path (`predev/uxr-fac → dev → main`). Once it clears and `dev` is merged into `main`, `dev` retires with it: no new `predev/*` or `confluence/*` branch should be started, and any other branch still targeting `dev` (e.g. `feat/hybrid-search`, if still active at that point) retargets to `main` directly.
 
 ---
 
@@ -131,9 +129,10 @@ Break the SQL down in plain, simple language (what it does, what it touches, whe
 ### After implementing (per phase, no pause)
 
 1. Run `npx tsc --noEmit` — a red `tsc` is a blocker (see Escalation), not something to smooth over
-2. Update the active plan doc (phase status markers below)
-3. Stage specific files, draft the commit message (§2), and commit
-4. Continue directly to the next phase — no stop-and-wait
+2. Run `npm test` — Jest is wired via CI (`.github/workflows/ci.yml`); a red test run is a blocker, same as `tsc`
+3. Update the active plan doc (phase status markers below)
+4. Stage specific files, draft the commit message (§2), and commit
+5. Continue directly to the next phase — no stop-and-wait
 
 ### Escalation — when a phase gets stuck
 
@@ -153,7 +152,7 @@ At the undertaking's merge boundary (§1), Claude Code opens a PR instead of mer
 
 1. Open the PR with a structured description (the merge-commit format, §1).
 2. Run a review pass against the diff — plan conformance, frozen files untouched, `tsc` green.
-3. Christian runs manual device/emulator QA and gives the go-ahead. This is the only test stage beyond `tsc` — there is no automated test suite today.
+3. Christian runs manual device/emulator QA and gives the go-ahead. This runs alongside the automated `tsc` + `npm test` gates (Jest, wired via CI) — there is no additional automated stage beyond these.
 4. Claude Code merges the PR (`gh pr merge`).
 
 ### Plan doc phase status markers
@@ -182,6 +181,7 @@ Issue numbers are canonical and fixed. **Claude Code is authorized to create and
 
 | # | Title | Status |
 |---|---|---|
+| 21 | `test: unit coverage for API facades (research, invitations, notifications, faculty, collections)` | 🔴 Open |
 | 15 | `faculty: verify annotation overlays on papers returned from dean or program chair` | 🔴 Open |
 | 14 | `faculty: annotation creation — write path for review comments` | 🔴 Open |
 | 13 | `research detail: related papers via semantic search (replace client-side heuristic)` | 🔴 Open |
@@ -198,7 +198,7 @@ Issue numbers are canonical and fixed. **Claude Code is authorized to create and
 | 2 | `Mobile auth: UUID mismatch between auth.users and public.users breaks RLS` | ✅ Closed |
 | 1 | `ResearchDetail: view and download counts not persisting after navigation` | ✅ Closed |
 
-**Current cap: #15.**
+**Current cap: #21.**
 
 ### Issue title format
 
@@ -411,6 +411,7 @@ See `docs/handoffs/HANDOFF_TEMPLATE.md` for the full section template.
 4. Once approved: **bundle the handoff into the session's final commit** (the phase-close or last logical commit) — present that commit for confirmation. Make a standalone `docs(handoff): add HANDOFF_[NAME]` commit **only** when the session ends with no other commit to attach it to.
 5. After commit: confirm the next session opening state matches the handoff's "Immediate Next Steps"
 6. Update the undertaking's `Status` in the CLAUDE.md Undertaking Registry (active / parked / complete) if it changed this session
+7. **When an undertaking merges to `main` (status → `complete`):** delete its plan doc and every handoff for its short code, then drop its Registry row entirely. The merge commit and PR description are the permanent record — a completed undertaking's plan/handoffs have no forward value and just accumulate as dead weight. Keep only `HANDOFF_TEMPLATE.md`.
 
 ### What makes a good handoff
 
@@ -422,7 +423,7 @@ Stable invariants (UUID mismatch, email-based RLS, SECURITY DEFINER pattern) liv
 
 ## 10. Project-Wide Standards
 
-Some changes establish a standard the **entire app** must follow — not just the branch that introduced them. These belong in canonical docs (this file / `CLAUDE.md`, canonical on `dev`) so they propagate to every feature branch on `git merge dev`, **including `feat/faculty-access`**. When you introduce or change such a standard, document it here in the same change — a standard that lives only in a feature branch's plan or code will drift and the rest of the app won't follow it.
+Some changes establish a standard the **entire app** must follow — not just the branch that introduced them. These belong in canonical docs (this file / `CLAUDE.md`, canonical on `main`) so they propagate to every feature branch on `git merge main`. When you introduce or change such a standard, document it here in the same change — a standard that lives only in a feature branch's plan or code will drift and the rest of the app won't follow it.
 
 ### Shared utilities (reuse over duplication)
 
@@ -435,6 +436,6 @@ Cross-cutting helpers live in `src/utils/` and are the single source of truth �
 
 The cool-slate + navy/gold system with Source Serif 4 (display) + IBM Plex Sans (UI), realized in `src/theme/`, is the canonical visual standard for the whole app. Always consume theme tokens from `src/theme` — never hardcode colors, fonts, spacing, or radii. New screens and features on **any** branch (student or faculty) must adopt it. It is governed by the mobile skill stack documented in the active undertaking's design-foundation section.
 
-### Applicability to faculty
+### Applies to every surface
 
-`feat/faculty-access` inherits these standards when it merges `dev`. The faculty workflow — its screens, cards, and utilities — follows the same shared utilities and design system; it does not get a parallel set of conventions.
+Every branch inherits these standards when it merges `main` — student and faculty alike. The faculty workflow — its screens, cards, and utilities — follows the same shared utilities and design system; no surface gets a parallel set of conventions.

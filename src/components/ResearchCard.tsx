@@ -4,7 +4,7 @@ import { PressableCard } from './ui/Card';
 import { ResearchPaper } from '../types/domain';
 import { formatDate, getPrimaryAuthorName, paperDate, statusToLabel } from '../utils/format';
 import { theme } from '../theme';
-import { PaperStatusChip } from './PaperStatusChip';
+import { PaperProgressMap } from './PaperProgressMap';
 import { useListEntranceActive } from './ListEntranceItem';
 
 interface ResearchCardProps {
@@ -46,13 +46,10 @@ export const ResearchCard = ({
           <Text style={styles.authorAvatarText}>{authorInitial}</Text>
         </View>
         <Text style={styles.meta} numberOfLines={1}>
-          {authorName}
+          {authorName} · {formatDate(paperDate(paper))}
         </Text>
       </View>
-      <View style={[styles.row, showStatusChip ? styles.rowWithChip : styles.rowWithoutChip]}>
-        {showStatusChip ? <PaperStatusChip status={paper.status} /> : null}
-        <Text style={styles.meta}>{formatDate(paperDate(paper))}</Text>
-      </View>
+      {showStatusChip ? <PaperProgressMap status={paper.status} /> : null}
       {displayKeywords.length > 0 ? (
         <ScrollView
           horizontal
@@ -138,17 +135,6 @@ const styles = StyleSheet.create({
   authorAvatarText: {
     ...theme.typography.caption,
     color: theme.colors.text.onBrand,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  rowWithChip: {
-    justifyContent: 'space-between',
-  },
-  rowWithoutChip: {
-    justifyContent: 'flex-start',
   },
   keywordRow: {
     gap: theme.spacing.xs,
