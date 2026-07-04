@@ -9,7 +9,8 @@ import { facultyApi, type FacultyAssignedPaper } from '../../api/faculty';
 import { researchApi } from '../../api/research';
 import { Category } from '../../types/domain';
 import { RootStackParamList } from '../../navigation/types';
-import { theme } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
 
 type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
@@ -24,6 +25,8 @@ function formatDate(value?: string | null): string {
 export const FacultyRepositoryScreen = () => {
   const navigation = useNavigation<FacultyNavigation>();
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [papers, setPapers] = useState<FacultyAssignedPaper[] | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -175,7 +178,8 @@ export const FacultyRepositoryScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: theme.colors.surface.base,

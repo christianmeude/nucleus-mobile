@@ -9,7 +9,8 @@ import { NotificationItem } from '../../types/domain';
 import { NotificationCard } from '../../components/NotificationCard';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
 import { RootStackParamList } from '../../navigation/types';
-import { theme } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 import { Button, EmptyState, InlineNotice, Skeleton } from '../../components/ui';
 
 type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
@@ -17,6 +18,8 @@ type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
 export const FacultyNotificationsScreen = () => {
   const navigation = useNavigation<FacultyNavigation>();
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -145,7 +148,8 @@ export const FacultyNotificationsScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.surface.base,
