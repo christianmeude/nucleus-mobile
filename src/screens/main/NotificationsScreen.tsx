@@ -14,7 +14,8 @@ import { notificationsApi } from '../../api/notifications';
 import { NotificationItem } from '../../types/domain';
 import { NotificationCard } from '../../components/NotificationCard';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
-import { theme } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 import { EmptyState, InlineNotice, Skeleton } from '../../components/ui';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -22,6 +23,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export const NotificationsScreen = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -171,58 +174,59 @@ export const NotificationsScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.surface.base,
-  },
-  content: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing['3xl'],
-    gap: theme.spacing.md,
-  },
-  header: {
-    gap: 2,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: theme.spacing.sm,
-  },
-  title: {
-    fontFamily: theme.fontFamilies.display.semibold,
-    fontSize: 26,
-    lineHeight: 32,
-    color: theme.colors.text.primary,
-  },
-  markAll: {
-    fontFamily: theme.fontFamilies.ui.medium,
-    fontSize: 13,
-    color: theme.colors.brand.primary,
-  },
-  markAllDisabled: {
-    color: theme.colors.text.disabled,
-  },
-  subtitle: {
-    fontFamily: theme.fontFamilies.ui.regular,
-    fontSize: 13,
-    color: theme.colors.text.muted,
-  },
-  skeletonList: {
-    gap: theme.spacing.sm,
-  },
-  group: {
-    gap: theme.spacing.xs,
-  },
-  groupTitle: {
-    fontFamily: theme.fontFamilies.ui.semibold,
-    fontSize: 12,
-    letterSpacing: 0.9,
-    textTransform: 'uppercase',
-    color: theme.colors.text.disabled,
-    marginTop: theme.spacing.sm,
-    marginBottom: theme.spacing.xs,
-    paddingHorizontal: theme.spacing.sm,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: t.colors.surface.base,
+    },
+    content: {
+      paddingHorizontal: t.spacing.lg,
+      paddingBottom: t.spacing['3xl'],
+      gap: t.spacing.md,
+    },
+    header: {
+      gap: 2,
+    },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: t.spacing.sm,
+    },
+    title: {
+      fontFamily: t.fontFamilies.display.semibold,
+      fontSize: 26,
+      lineHeight: 32,
+      color: t.colors.text.primary,
+    },
+    markAll: {
+      fontFamily: t.fontFamilies.ui.medium,
+      fontSize: 13,
+      color: t.colors.brand.primary,
+    },
+    markAllDisabled: {
+      color: t.colors.text.disabled,
+    },
+    subtitle: {
+      fontFamily: t.fontFamilies.ui.regular,
+      fontSize: 13,
+      color: t.colors.text.muted,
+    },
+    skeletonList: {
+      gap: t.spacing.sm,
+    },
+    group: {
+      gap: t.spacing.xs,
+    },
+    groupTitle: {
+      fontFamily: t.fontFamilies.ui.semibold,
+      fontSize: 12,
+      letterSpacing: 0.9,
+      textTransform: 'uppercase',
+      color: t.colors.text.disabled,
+      marginTop: t.spacing.sm,
+      marginBottom: t.spacing.xs,
+      paddingHorizontal: t.spacing.sm,
+    },
+  });

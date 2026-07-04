@@ -2,10 +2,13 @@ import { NativeStackHeaderProps } from '@react-navigation/native-stack';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { theme } from '../theme';
+import { useTheme, useThemedStyles } from '../context/ThemeContext';
+import { type Theme } from '../theme';
 
 export const ResearchDetailHeader = ({ navigation, options }: NativeStackHeaderProps) => {
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const title =
     typeof options.title === 'string' && options.title.length > 0
       ? options.title
@@ -40,7 +43,8 @@ export const ResearchDetailHeader = ({ navigation, options }: NativeStackHeaderP
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
   wrap: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.border.subtle,

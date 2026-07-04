@@ -18,7 +18,8 @@ import {
 } from '../../api/faculty';
 import { facultyStatusLabel } from './facultyStatus';
 import { RootStackParamList } from '../../navigation/types';
-import { theme } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 
 const RECENT_LIMIT = 5;
@@ -32,7 +33,9 @@ function formatDate(value?: string | null): string {
 
 type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
 
-const WorkloadGrid = ({ summary }: { summary: FacultyWorkloadSummary }) => (
+const WorkloadGrid = ({ summary }: { summary: FacultyWorkloadSummary }) => {
+  const styles = useThemedStyles(makeStyles);
+  return (
   <View style={styles.grid}>
     <View style={styles.gridItem}>
       <Stat
@@ -51,9 +54,12 @@ const WorkloadGrid = ({ summary }: { summary: FacultyWorkloadSummary }) => (
       <Stat label="Total assigned" value={summary.totalAssigned} />
     </View>
   </View>
-);
+  );
+};
 
-const DashboardSkeleton = () => (
+const DashboardSkeleton = () => {
+  const styles = useThemedStyles(makeStyles);
+  return (
   <>
     <View style={styles.grid}>
       {[0, 1, 2, 3].map((key) => (
@@ -69,11 +75,14 @@ const DashboardSkeleton = () => (
       ))}
     </View>
   </>
-);
+  );
+};
 
 export const FacultyDashboardScreen = () => {
   const navigation = useNavigation<FacultyNavigation>();
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
   const firstName = user?.fullName?.trim().split(/\s+/)[0] ?? '';
   const [papers, setPapers] = useState<FacultyAssignedPaper[] | null>(null);
@@ -170,7 +179,8 @@ export const FacultyDashboardScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: theme.colors.surface.base,

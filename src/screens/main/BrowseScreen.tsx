@@ -21,7 +21,8 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
 import { Category, ResearchPaper } from '../../types/domain';
 import { formatDate, getPrimaryAuthorName, paperDate } from '../../utils/format';
-import { theme } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 import { ResearchTile } from '../../components/ResearchTile';
 import { BottomSheet, Chip, EmptyState, InlineNotice, Skeleton } from '../../components/ui';
 import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
@@ -46,20 +47,14 @@ const GREETINGS = [
 
 const pickGreeting = () => GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
 
-/** Navy/blue shades for category dots — gold stays reserved for the featured hero. */
-const CATEGORY_COLORS = [
-  theme.colors.brand.primary,
-  theme.palette.navy[300],
-  theme.palette.navy[400],
-  theme.palette.navy[600],
-];
-
 const viewsOf = (paper: ResearchPaper) => paper.view_count || 0;
 const timeOf = (paper: ResearchPaper) => new Date(paperDate(paper) || 0).getTime();
 
 export const BrowseScreen = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [query, setQuery] = useState('');
@@ -143,13 +138,24 @@ export const BrowseScreen = () => {
 
   const categoryNameById = useMemo(() => buildCategoryNameById(categories), [categories]);
 
+  // Navy/blue shades for category dots — gold stays reserved for the featured hero.
+  const categoryColors = useMemo(
+    () => [
+      theme.colors.brand.primary,
+      theme.palette.navy[300],
+      theme.palette.navy[400],
+      theme.palette.navy[600],
+    ],
+    [theme],
+  );
+
   const categoryColorById = useMemo(() => {
     const map = new Map<string, string>();
     categories.forEach((item, index) => {
-      map.set(item.id, CATEGORY_COLORS[index % CATEGORY_COLORS.length]);
+      map.set(item.id, categoryColors[index % categoryColors.length]);
     });
     return map;
-  }, [categories]);
+  }, [categories, categoryColors]);
 
   const colorForCategory = useCallback(
     (value?: string | null) => {
@@ -158,7 +164,7 @@ export const BrowseScreen = () => {
       }
       return theme.colors.brand.primary;
     },
-    [categoryColorById],
+    [categoryColorById, theme],
   );
 
   const isFiltering = Boolean(query.trim() || categoryFilter);
@@ -472,7 +478,8 @@ export const BrowseScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
   root: {
     flex: 1,
     paddingHorizontal: theme.spacing.lg,

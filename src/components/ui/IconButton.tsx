@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, ViewStyle } from 'react-native';
-import { theme } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 
 interface IconButtonProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -14,9 +15,12 @@ export const IconButton = ({
   icon,
   onPress,
   accessibilityLabel,
-  color = theme.colors.brand.primary,
+  color,
   style,
 }: IconButtonProps) => {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const iconColor = color ?? theme.colors.brand.primary;
   return (
     <Pressable
       accessibilityRole="button"
@@ -29,26 +33,27 @@ export const IconButton = ({
         pressed ? styles.pressedScale : null,
       ]}
     >
-      <Ionicons name={icon} size={20} color={color} />
+      <Ionicons name={icon} size={20} color={iconColor} />
     </Pressable>
   );
 };
 
-const styles = StyleSheet.create({
-  button: {
-    minHeight: 44,
-    minWidth: 44,
-    borderRadius: theme.radii.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.surface.raised,
-    borderWidth: 1,
-    borderColor: theme.colors.border.subtle,
-  },
-  pressed: {
-    backgroundColor: theme.colors.surface.sunken,
-  },
-  pressedScale: {
-    transform: [{ scale: 0.98 }],
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    button: {
+      minHeight: 44,
+      minWidth: 44,
+      borderRadius: t.radii.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: t.colors.surface.raised,
+      borderWidth: 1,
+      borderColor: t.colors.border.subtle,
+    },
+    pressed: {
+      backgroundColor: t.colors.surface.sunken,
+    },
+    pressedScale: {
+      transform: [{ scale: 0.98 }],
+    },
+  });

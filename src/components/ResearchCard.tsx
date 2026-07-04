@@ -3,7 +3,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { PressableCard } from './ui/Card';
 import { ResearchPaper } from '../types/domain';
 import { formatDate, getPrimaryAuthorName, paperDate, statusToLabel } from '../utils/format';
-import { theme } from '../theme';
+import { useTheme, useThemedStyles } from '../context/ThemeContext';
+import { type Theme } from '../theme';
 import { PaperProgressMap } from './PaperProgressMap';
 import { useListEntranceActive } from './ListEntranceItem';
 
@@ -24,6 +25,8 @@ export const ResearchCard = ({
   categoryLine,
   keywords,
 }: ResearchCardProps) => {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const isEntering = useListEntranceActive();
   const authorName = getPrimaryAuthorName(paper);
   const authorInitial = authorName.trim().charAt(0).toUpperCase() || '?';
@@ -104,71 +107,72 @@ export const ResearchCard = ({
   return <View style={[styles.readOnly, cardShadow]}>{body}</View>;
 };
 
-const styles = StyleSheet.create({
-  readOnly: {
-    backgroundColor: theme.colors.surface.raised,
-    borderRadius: theme.radii.lg,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.border.subtle,
-    padding: theme.spacing.lg,
-  },
-  content: {
-    gap: theme.spacing.sm,
-  },
-  categoryLine: {
-    ...theme.typography.caption,
-    color: theme.colors.text.muted,
-  },
-  authorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  authorAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: theme.radii.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.brand.primary,
-  },
-  authorAvatarText: {
-    ...theme.typography.caption,
-    color: theme.colors.text.onBrand,
-  },
-  keywordRow: {
-    gap: theme.spacing.xs,
-    paddingRight: theme.spacing.xs,
-  },
-  keywordChip: {
-    borderRadius: theme.radii.sm,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 2,
-  },
-  keywordText: {
-    ...theme.typography.caption,
-    color: theme.colors.text.primary,
-  },
-  engagementRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-  },
-  engagementAfterKeywords: {
-    marginTop: -theme.spacing.xs,
-  },
-  engagementItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  title: {
-    ...theme.typography.h3,
-    color: theme.colors.text.primary,
-  },
-  meta: {
-    ...theme.typography.metadata,
-    color: theme.colors.text.muted,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    readOnly: {
+      backgroundColor: t.colors.surface.raised,
+      borderRadius: t.radii.lg,
+      borderCurve: 'continuous',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: t.colors.border.subtle,
+      padding: t.spacing.lg,
+    },
+    content: {
+      gap: t.spacing.sm,
+    },
+    categoryLine: {
+      ...t.typography.caption,
+      color: t.colors.text.muted,
+    },
+    authorRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: t.spacing.sm,
+    },
+    authorAvatar: {
+      width: 32,
+      height: 32,
+      borderRadius: t.radii.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: t.colors.brand.primary,
+    },
+    authorAvatarText: {
+      ...t.typography.caption,
+      color: t.colors.text.onBrand,
+    },
+    keywordRow: {
+      gap: t.spacing.xs,
+      paddingRight: t.spacing.xs,
+    },
+    keywordChip: {
+      borderRadius: t.radii.sm,
+      paddingHorizontal: t.spacing.sm,
+      paddingVertical: 2,
+    },
+    keywordText: {
+      ...t.typography.caption,
+      color: t.colors.text.primary,
+    },
+    engagementRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: t.spacing.md,
+    },
+    engagementAfterKeywords: {
+      marginTop: -t.spacing.xs,
+    },
+    engagementItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    title: {
+      ...t.typography.h3,
+      color: t.colors.text.primary,
+    },
+    meta: {
+      ...t.typography.metadata,
+      color: t.colors.text.muted,
+    },
+  });

@@ -1,5 +1,6 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
-import { theme } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 
 type ButtonVariant = 'primary' | 'secondary' | 'subtle';
 type ButtonSize = 'md' | 'sm';
@@ -23,6 +24,8 @@ export const Button = ({
   size = 'md',
   accessibilityLabel,
 }: ButtonProps) => {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const isBlocked = disabled || loading;
 
   return (
@@ -52,60 +55,61 @@ export const Button = ({
   );
 };
 
-const styles = StyleSheet.create({
-  base: {
-    minHeight: 44,
-    borderRadius: theme.radii.md,
-    paddingHorizontal: theme.spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-  },
-  md: {
-    minHeight: 44,
-    paddingVertical: theme.spacing.sm,
-  },
-  sm: {
-    minHeight: 44,
-    paddingVertical: theme.spacing.xs,
-  },
-  primaryBase: {
-    backgroundColor: theme.colors.brand.primary,
-  },
-  primaryPressed: {
-    backgroundColor: theme.colors.brand.primaryPressed,
-  },
-  primaryLabel: {
-    color: theme.colors.text.onBrand,
-  },
-  secondaryBase: {
-    backgroundColor: theme.colors.surface.raised,
-    borderWidth: 1,
-    borderColor: theme.colors.brand.primary,
-  },
-  secondaryPressed: {
-    backgroundColor: theme.colors.brand.primarySoft,
-  },
-  secondaryLabel: {
-    color: theme.colors.brand.primary,
-  },
-  subtleBase: {
-    backgroundColor: 'transparent',
-  },
-  subtlePressed: {
-    backgroundColor: theme.colors.surface.sunken,
-  },
-  subtleLabel: {
-    color: theme.colors.brand.primary,
-  },
-  blocked: {
-    opacity: 0.6,
-  },
-  pressedScale: {
-    transform: [{ scale: 0.98 }],
-  },
-  label: {
-    ...theme.typography.button,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    base: {
+      minHeight: 44,
+      borderRadius: t.radii.md,
+      paddingHorizontal: t.spacing.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'row',
+      gap: t.spacing.sm,
+    },
+    md: {
+      minHeight: 44,
+      paddingVertical: t.spacing.sm,
+    },
+    sm: {
+      minHeight: 44,
+      paddingVertical: t.spacing.xs,
+    },
+    primaryBase: {
+      backgroundColor: t.colors.brand.primary,
+    },
+    primaryPressed: {
+      backgroundColor: t.colors.brand.primaryPressed,
+    },
+    primaryLabel: {
+      color: t.colors.text.onBrand,
+    },
+    secondaryBase: {
+      backgroundColor: t.colors.surface.raised,
+      borderWidth: 1,
+      borderColor: t.colors.brand.primary,
+    },
+    secondaryPressed: {
+      backgroundColor: t.colors.brand.primarySoft,
+    },
+    secondaryLabel: {
+      color: t.colors.brand.primary,
+    },
+    subtleBase: {
+      backgroundColor: 'transparent',
+    },
+    subtlePressed: {
+      backgroundColor: t.colors.surface.sunken,
+    },
+    subtleLabel: {
+      color: t.colors.brand.primary,
+    },
+    blocked: {
+      opacity: 0.6,
+    },
+    pressedScale: {
+      transform: [{ scale: 0.98 }],
+    },
+    label: {
+      ...t.typography.button,
+    },
+  });

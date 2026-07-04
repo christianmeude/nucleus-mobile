@@ -3,7 +3,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { formatMonthYear } from '../../utils/format';
-import { theme } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 
 const initialsFor = (fullName?: string | null) => {
   const name = fullName?.trim();
@@ -21,7 +22,9 @@ type InfoRowProps = {
   selectable?: boolean;
 };
 
-const InfoRow = ({ label, value, divided, gold, selectable }: InfoRowProps) => (
+const InfoRow = ({ label, value, divided, gold, selectable }: InfoRowProps) => {
+  const styles = useThemedStyles(makeStyles);
+  return (
   <View style={[styles.infoRow, divided && styles.rowDivided]}>
     <Text style={styles.infoKey}>{label}</Text>
     <View style={styles.infoValWrap}>
@@ -31,10 +34,13 @@ const InfoRow = ({ label, value, divided, gold, selectable }: InfoRowProps) => (
       </Text>
     </View>
   </View>
-);
+  );
+};
 
 export const FacultyProfileScreen = () => {
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { user, signOut } = useAuth();
 
   const initials = useMemo(() => initialsFor(user?.fullName), [user?.fullName]);
@@ -79,7 +85,8 @@ export const FacultyProfileScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.surface.base,

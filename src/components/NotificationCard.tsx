@@ -2,7 +2,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NotificationItem } from '../types/domain';
 import { formatRelativeTime } from '../utils/format';
-import { theme } from '../theme';
+import { useTheme, useThemedStyles } from '../context/ThemeContext';
+import { type Theme } from '../theme';
 
 type IconVisual = {
   name: keyof typeof Ionicons.glyphMap;
@@ -11,13 +12,13 @@ type IconVisual = {
 };
 
 /** Tinted type icon, keyed off the notification `type` string. */
-const visualForType = (type?: string): IconVisual => {
+const visualForType = (type: string | undefined, c: Theme['colors']): IconVisual => {
   const t = (type || '').toLowerCase();
   if (t.includes('invit') || t.includes('co_author') || t.includes('coauthor')) {
     return {
       name: 'person-add-outline',
-      color: theme.colors.brand.primary,
-      bg: theme.colors.brand.primarySurface,
+      color: c.brand.primary,
+      bg: c.brand.primarySurface,
     };
   }
   if (
@@ -29,8 +30,8 @@ const visualForType = (type?: string): IconVisual => {
   ) {
     return {
       name: 'chatbubble-ellipses-outline',
-      color: theme.colors.state.warning,
-      bg: theme.colors.state.warningSurface,
+      color: c.state.warning,
+      bg: c.state.warningSurface,
     };
   }
   if (
@@ -41,14 +42,14 @@ const visualForType = (type?: string): IconVisual => {
   ) {
     return {
       name: 'checkmark-circle-outline',
-      color: theme.colors.state.success,
-      bg: theme.colors.state.successSurface,
+      color: c.state.success,
+      bg: c.state.successSurface,
     };
   }
   return {
     name: 'notifications-outline',
-    color: theme.colors.text.muted,
-    bg: theme.colors.surface.sunken,
+    color: c.text.muted,
+    bg: c.surface.sunken,
   };
 };
 
@@ -58,8 +59,10 @@ interface NotificationCardProps {
 }
 
 export const NotificationCard = ({ notification, onPress }: NotificationCardProps) => {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const unread = !notification.is_read;
-  const visual = visualForType(notification.type);
+  const visual = visualForType(notification.type, theme.colors);
   const title = notification.title?.trim();
   const message = notification.message?.trim();
   const primaryText = title || message || 'Notification';
@@ -91,61 +94,62 @@ export const NotificationCard = ({ notification, onPress }: NotificationCardProp
   );
 };
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: theme.spacing.md,
-    paddingVertical: 13,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.radii.lg,
-    borderCurve: 'continuous',
-  },
-  rowUnread: {
-    backgroundColor: theme.colors.brand.primarySurface,
-  },
-  rowPressed: {
-    opacity: 0.7,
-  },
-  icon: {
-    width: 38,
-    height: 38,
-    borderRadius: theme.radii.md,
-    borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  body: {
-    flex: 1,
-  },
-  text: {
-    fontFamily: theme.fontFamilies.ui.regular,
-    fontSize: 14,
-    lineHeight: 20,
-    color: theme.colors.text.secondary,
-  },
-  textUnread: {
-    fontFamily: theme.fontFamilies.ui.medium,
-    color: theme.colors.text.primary,
-  },
-  secondary: {
-    fontFamily: theme.fontFamilies.ui.regular,
-    fontSize: 13,
-    lineHeight: 18,
-    color: theme.colors.text.muted,
-    marginTop: 2,
-  },
-  time: {
-    fontFamily: theme.fontFamilies.ui.medium,
-    fontSize: 12,
-    color: theme.colors.text.disabled,
-    marginTop: 4,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: theme.radii.pill,
-    backgroundColor: theme.colors.brand.primary,
-    marginTop: 6,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: t.spacing.md,
+      paddingVertical: 13,
+      paddingHorizontal: t.spacing.md,
+      borderRadius: t.radii.lg,
+      borderCurve: 'continuous',
+    },
+    rowUnread: {
+      backgroundColor: t.colors.brand.primarySurface,
+    },
+    rowPressed: {
+      opacity: 0.7,
+    },
+    icon: {
+      width: 38,
+      height: 38,
+      borderRadius: t.radii.md,
+      borderCurve: 'continuous',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    body: {
+      flex: 1,
+    },
+    text: {
+      fontFamily: t.fontFamilies.ui.regular,
+      fontSize: 14,
+      lineHeight: 20,
+      color: t.colors.text.secondary,
+    },
+    textUnread: {
+      fontFamily: t.fontFamilies.ui.medium,
+      color: t.colors.text.primary,
+    },
+    secondary: {
+      fontFamily: t.fontFamilies.ui.regular,
+      fontSize: 13,
+      lineHeight: 18,
+      color: t.colors.text.muted,
+      marginTop: 2,
+    },
+    time: {
+      fontFamily: t.fontFamilies.ui.medium,
+      fontSize: 12,
+      color: t.colors.text.disabled,
+      marginTop: 4,
+    },
+    dot: {
+      width: 8,
+      height: 8,
+      borderRadius: t.radii.pill,
+      backgroundColor: t.colors.brand.primary,
+      marginTop: 6,
+    },
+  });

@@ -3,7 +3,8 @@ import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { PaperStatus } from '../types/domain';
 import { statusToLabel } from '../utils/format';
-import { theme } from '../theme';
+import { useTheme, useThemedStyles } from '../context/ThemeContext';
+import { type Theme } from '../theme';
 
 type NodeState = 'done' | 'pending' | 'upcoming' | 'warning' | 'danger' | 'complete';
 
@@ -35,6 +36,8 @@ const stageIndexForStatus = (status: PaperStatus): number => {
 /** Awaiting-review node: hollow ring that breathes + a fading ping, so the
  * "live" step reads as active without a static/flat chip. */
 const PendingMarker = () => {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -79,6 +82,8 @@ interface PaperProgressMapProps {
 }
 
 export const PaperProgressMap = ({ status }: PaperProgressMapProps) => {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const isRejected = status === 'rejected';
   const isRevision = status === 'revision_required';
   const isComplete = status === 'approved' || status === 'published';
@@ -165,67 +170,68 @@ export const PaperProgressMap = ({ status }: PaperProgressMapProps) => {
 const MARKER_SIZE = 18;
 const COLUMN_WIDTH = 46;
 
-const styles = StyleSheet.create({
-  wrap: {
-    gap: 4,
-    marginTop: theme.spacing.md,
-  },
-  track: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  column: {
-    width: COLUMN_WIDTH,
-    alignItems: 'center',
-    gap: 4,
-  },
-  connector: {
-    flex: 1,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: theme.colors.border.subtle,
-    marginTop: MARKER_SIZE / 2 - 1.5,
-  },
-  markerHost: {
-    width: MARKER_SIZE,
-    height: MARKER_SIZE,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pulseRing: {
-    position: 'absolute',
-    width: MARKER_SIZE,
-    height: MARKER_SIZE,
-    borderRadius: theme.radii.pill,
-    borderWidth: 2,
-    borderColor: theme.colors.brand.primary,
-  },
-  marker: {
-    width: MARKER_SIZE,
-    height: MARKER_SIZE,
-    borderRadius: theme.radii.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  markerHollow: {
-    backgroundColor: theme.colors.surface.raised,
-    borderWidth: 1.5,
-    borderColor: theme.colors.border.strong,
-  },
-  label: {
-    textAlign: 'center',
-    fontFamily: theme.fontFamilies.ui.medium,
-    fontSize: 9,
-    color: theme.colors.text.disabled,
-  },
-  labelActive: {
-    fontFamily: theme.fontFamilies.ui.semibold,
-    color: theme.colors.text.primary,
-  },
-  caption: {
-    fontFamily: theme.fontFamilies.ui.semibold,
-    fontSize: 11,
-    textAlign: 'center',
-    marginTop: 2,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    wrap: {
+      gap: 4,
+      marginTop: t.spacing.md,
+    },
+    track: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+    },
+    column: {
+      width: COLUMN_WIDTH,
+      alignItems: 'center',
+      gap: 4,
+    },
+    connector: {
+      flex: 1,
+      height: 3,
+      borderRadius: 1.5,
+      backgroundColor: t.colors.border.subtle,
+      marginTop: MARKER_SIZE / 2 - 1.5,
+    },
+    markerHost: {
+      width: MARKER_SIZE,
+      height: MARKER_SIZE,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    pulseRing: {
+      position: 'absolute',
+      width: MARKER_SIZE,
+      height: MARKER_SIZE,
+      borderRadius: t.radii.pill,
+      borderWidth: 2,
+      borderColor: t.colors.brand.primary,
+    },
+    marker: {
+      width: MARKER_SIZE,
+      height: MARKER_SIZE,
+      borderRadius: t.radii.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    markerHollow: {
+      backgroundColor: t.colors.surface.raised,
+      borderWidth: 1.5,
+      borderColor: t.colors.border.strong,
+    },
+    label: {
+      textAlign: 'center',
+      fontFamily: t.fontFamilies.ui.medium,
+      fontSize: 9,
+      color: t.colors.text.disabled,
+    },
+    labelActive: {
+      fontFamily: t.fontFamilies.ui.semibold,
+      color: t.colors.text.primary,
+    },
+    caption: {
+      fontFamily: t.fontFamilies.ui.semibold,
+      fontSize: 11,
+      textAlign: 'center',
+      marginTop: 2,
+    },
+  });

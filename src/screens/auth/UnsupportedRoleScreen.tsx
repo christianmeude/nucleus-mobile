@@ -1,11 +1,13 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
-import { theme } from '../../theme';
+import { useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 import { Button } from '../../components/ui';
 
 export const UnsupportedRoleScreen = () => {
   const { user, signOut } = useAuth();
+  const styles = useThemedStyles(makeStyles);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -20,7 +22,8 @@ export const UnsupportedRoleScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: theme.colors.surface.base,

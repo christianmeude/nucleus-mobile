@@ -19,7 +19,8 @@ import {
 } from '../../api/faculty';
 import { facultyStatusLabel, facultyStatusTone } from './facultyStatus';
 import { RootStackParamList } from '../../navigation/types';
-import { theme } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 
 type FacultyDetailRoute = RouteProp<RootStackParamList, 'FacultyReviewDetail'>;
 type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
@@ -40,6 +41,8 @@ function titleCase(value?: string | null, fallback = ''): string {
 export const FacultyReviewDetailScreen = () => {
   const route = useRoute<FacultyDetailRoute>();
   const navigation = useNavigation<FacultyNavigation>();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { paperId } = route.params;
   const [detail, setDetail] = useState<FacultyReviewDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -486,7 +489,8 @@ export const FacultyReviewDetailScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: theme.colors.surface.base,

@@ -4,7 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
-import { theme } from '../theme';
+import { useTheme, useThemedStyles } from '../context/ThemeContext';
+import { type Theme } from '../theme';
 import { Button, InlineNotice } from './ui';
 
 // Shared, read-only PDF viewer used by both the student ResearchDetail and the faculty review
@@ -39,13 +40,13 @@ export interface PdfAnnotationOverlay {
 }
 
 /** Self-contained HTML that pulls pdf.js from a CDN and renders the signed URL to canvases. */
-const buildViewerHtml = (uri: string): string => `<!DOCTYPE html>
+const buildViewerHtml = (uri: string, backgroundColor: string): string => `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=4, user-scalable=yes" />
 <style>
-  html, body { margin: 0; padding: 0; background: ${theme.colors.surface.sunken}; }
+  html, body { margin: 0; padding: 0; background: ${backgroundColor}; }
   #container { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px; }
   .page-wrapper { position: relative; width: 100%; }
   canvas { width: 100%; height: auto; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.15); display: block; }
@@ -178,6 +179,8 @@ interface PdfSurfaceProps {
 
 /** Renders the PDF via a pdf.js-in-WebView surface with its own loading + error handling. */
 const PdfSurface = ({ uri, onLoaded, annotations, showAnnotations = false }: PdfSurfaceProps) => {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const webViewRef = useRef<WebView>(null);
   const [loaded, setLoaded] = useState(false);
   const [errored, setErrored] = useState(false);
@@ -247,7 +250,7 @@ const PdfSurface = ({ uri, onLoaded, annotations, showAnnotations = false }: Pdf
       <WebView
         ref={webViewRef}
         key={uri}
-        source={{ html: buildViewerHtml(uri), baseUrl: 'https://localhost/' }}
+        source={{ html: buildViewerHtml(uri, theme.colors.surface.sunken), baseUrl: 'https://localhost/' }}
         originWhitelist={['*']}
         javaScriptEnabled
         domStorageEnabled
@@ -285,6 +288,8 @@ interface PdfViewerProps {
 }
 
 export const PdfViewer = ({ uri, onFirstLoad, height = 460, annotations }: PdfViewerProps) => {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [fullscreen, setFullscreen] = useState(false);
   const [showAnnotations, setShowAnnotations] = useState(false);
 
@@ -352,70 +357,71 @@ export const PdfViewer = ({ uri, onFirstLoad, height = 460, annotations }: PdfVi
   );
 };
 
-const styles = StyleSheet.create({
-  panel: {
-    borderRadius: theme.radii.lg,
-    overflow: 'hidden',
-    backgroundColor: theme.colors.surface.sunken,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.border.subtle,
-  },
-  webview: {
-    flex: 1,
-    backgroundColor: theme.colors.surface.sunken,
-  },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.sm,
-    padding: theme.spacing.lg,
-    backgroundColor: theme.colors.surface.sunken,
-  },
-  errorDetail: {
-    ...theme.typography.caption,
-    color: theme.colors.text.muted,
-    textAlign: 'center',
-  },
-  controls: {
-    position: 'absolute',
-    top: theme.spacing.sm,
-    right: theme.spacing.sm,
-    flexDirection: 'row',
-    gap: theme.spacing.xs,
-  },
-  controlButton: {
-    width: 36,
-    height: 36,
-    borderRadius: theme.radii.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.brand.primary,
-    ...theme.shadows.level2,
-  },
-  modal: {
-    flex: 1,
-    backgroundColor: theme.colors.surface.base,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    padding: theme.spacing.sm,
-  },
-  closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: theme.radii.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.surface.raised,
-  },
-  modalBody: {
-    flex: 1,
-    backgroundColor: theme.colors.surface.sunken,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    panel: {
+      borderRadius: t.radii.lg,
+      overflow: 'hidden',
+      backgroundColor: t.colors.surface.sunken,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: t.colors.border.subtle,
+    },
+    webview: {
+      flex: 1,
+      backgroundColor: t.colors.surface.sunken,
+    },
+    overlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: t.spacing.sm,
+      padding: t.spacing.lg,
+      backgroundColor: t.colors.surface.sunken,
+    },
+    errorDetail: {
+      ...t.typography.caption,
+      color: t.colors.text.muted,
+      textAlign: 'center',
+    },
+    controls: {
+      position: 'absolute',
+      top: t.spacing.sm,
+      right: t.spacing.sm,
+      flexDirection: 'row',
+      gap: t.spacing.xs,
+    },
+    controlButton: {
+      width: 36,
+      height: 36,
+      borderRadius: t.radii.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: t.colors.brand.primary,
+      ...t.shadows.level2,
+    },
+    modal: {
+      flex: 1,
+      backgroundColor: t.colors.surface.base,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      padding: t.spacing.sm,
+    },
+    closeButton: {
+      width: 40,
+      height: 40,
+      borderRadius: t.radii.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: t.colors.surface.raised,
+    },
+    modalBody: {
+      flex: 1,
+      backgroundColor: t.colors.surface.sunken,
+    },
+  });

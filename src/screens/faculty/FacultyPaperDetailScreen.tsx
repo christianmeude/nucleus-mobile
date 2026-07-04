@@ -5,7 +5,8 @@ import { InlineNotice, Skeleton } from '../../components/ui';
 import { PdfViewer } from '../../components/PdfViewer';
 import { facultyApi, type FacultyReviewDetail } from '../../api/faculty';
 import { RootStackParamList } from '../../navigation/types';
-import { theme } from '../../theme';
+import { useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 
 type FacultyPaperDetailRoute = RouteProp<RootStackParamList, 'FacultyPaperDetail'>;
 
@@ -23,6 +24,7 @@ function formatDate(value?: string | null): string {
  */
 export const FacultyPaperDetailScreen = () => {
   const route = useRoute<FacultyPaperDetailRoute>();
+  const styles = useThemedStyles(makeStyles);
   const { paperId } = route.params;
   const [detail, setDetail] = useState<FacultyReviewDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -116,7 +118,8 @@ export const FacultyPaperDetailScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: theme.colors.surface.base,

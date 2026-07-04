@@ -26,7 +26,8 @@ import {
   type FacultyQueueFilter,
 } from './facultyStatus';
 import { RootStackParamList } from '../../navigation/types';
-import { theme } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 
 type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -40,6 +41,8 @@ function formatDate(value?: string | null): string {
 export const FacultyReviewScreen = () => {
   const navigation = useNavigation<FacultyNavigation>();
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [papers, setPapers] = useState<FacultyAssignedPaper[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -178,7 +181,8 @@ export const FacultyReviewScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: theme.colors.surface.base,

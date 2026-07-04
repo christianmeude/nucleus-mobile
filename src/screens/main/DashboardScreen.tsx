@@ -11,12 +11,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { researchApi } from '../../api/research';
 import { notificationsApi } from '../../api/notifications';
 import { getSavedPapers, SavedPaper } from '../../api/collections';
 import { ResearchPaper } from '../../types/domain';
 import { paperDate } from '../../utils/format';
-import { theme } from '../../theme';
+import { type Theme } from '../../theme';
 import { ResearchCard } from '../../components/ResearchCard';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
 import {
@@ -32,6 +33,8 @@ import {
 export const DashboardScreen = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -235,141 +238,142 @@ export const DashboardScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.surface.base,
-  },
-  content: {
-    padding: theme.spacing.lg,
-    gap: theme.spacing.lg,
-    paddingBottom: theme.spacing['3xl'],
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: theme.spacing.sm,
-  },
-  headerLeft: {
-    flex: 1,
-    gap: theme.spacing.xs,
-  },
-  avatarButton: {
-    width: 44,
-    height: 44,
-    borderRadius: theme.radii.pill,
-    borderCurve: 'continuous',
-    backgroundColor: theme.colors.brand.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarButtonPressed: {
-    opacity: 0.7,
-  },
-  avatarButtonText: {
-    fontFamily: theme.fontFamilies.ui.semibold,
-    fontSize: 14,
-    color: theme.colors.text.onBrand,
-  },
-  greeting: {
-    ...theme.typography.h1,
-    color: theme.colors.text.primary,
-  },
-  statusLine: {
-    fontFamily: theme.fontFamilies.ui.regular,
-    fontSize: 14,
-    color: theme.colors.text.secondary,
-  },
-  statusLineUrgent: {
-    fontFamily: theme.fontFamilies.ui.semibold,
-    color: theme.colors.text.primary,
-  },
-  quickActions: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-  },
-  quickAction: {
-    flex: 1,
-    alignItems: 'flex-start',
-    gap: theme.spacing.xs,
-    padding: theme.spacing.md,
-    borderRadius: theme.radii.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.border.subtle,
-    backgroundColor: theme.colors.surface.raised,
-  },
-  quickActionPressed: {
-    opacity: 0.7,
-  },
-  quickActionLabel: {
-    fontFamily: theme.fontFamilies.ui.semibold,
-    fontSize: 13,
-    color: theme.colors.text.primary,
-  },
-  activityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.radii.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.border.subtle,
-    backgroundColor: theme.colors.surface.raised,
-  },
-  activityRowPressed: {
-    opacity: 0.7,
-  },
-  activityLabel: {
-    flex: 1,
-    fontFamily: theme.fontFamilies.ui.regular,
-    fontSize: 14,
-    color: theme.colors.text.primary,
-  },
-  badge: {
-    backgroundColor: theme.colors.brand.primary,
-    borderRadius: theme.radii.pill,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    minWidth: 20,
-    alignItems: 'center',
-  },
-  badgeText: {
-    fontFamily: theme.fontFamilies.ui.semibold,
-    fontSize: 11,
-    color: '#FFFFFF',
-  },
-  section: {
-    gap: theme.spacing.sm,
-  },
-  sectionTitle: {
-    ...theme.typography.h3,
-    color: theme.colors.text.primary,
-  },
-  skeletonList: {
-    gap: theme.spacing.sm,
-  },
-  savedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    paddingVertical: theme.spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.border.subtle,
-  },
-  savedRowPressed: {
-    opacity: 0.6,
-  },
-  savedTitle: {
-    flex: 1,
-    fontFamily: theme.fontFamilies.display.regular,
-    fontSize: 14,
-    lineHeight: 20,
-    color: theme.colors.text.primary,
-  },
-  savedEmpty: {
-    fontFamily: theme.fontFamilies.ui.regular,
-    fontSize: 14,
-    color: theme.colors.text.muted,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: t.colors.surface.base,
+    },
+    content: {
+      padding: t.spacing.lg,
+      gap: t.spacing.lg,
+      paddingBottom: t.spacing['3xl'],
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: t.spacing.sm,
+    },
+    headerLeft: {
+      flex: 1,
+      gap: t.spacing.xs,
+    },
+    avatarButton: {
+      width: 44,
+      height: 44,
+      borderRadius: t.radii.pill,
+      borderCurve: 'continuous',
+      backgroundColor: t.colors.brand.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    avatarButtonPressed: {
+      opacity: 0.7,
+    },
+    avatarButtonText: {
+      fontFamily: t.fontFamilies.ui.semibold,
+      fontSize: 14,
+      color: t.colors.text.onBrand,
+    },
+    greeting: {
+      ...t.typography.h1,
+      color: t.colors.text.primary,
+    },
+    statusLine: {
+      fontFamily: t.fontFamilies.ui.regular,
+      fontSize: 14,
+      color: t.colors.text.secondary,
+    },
+    statusLineUrgent: {
+      fontFamily: t.fontFamilies.ui.semibold,
+      color: t.colors.text.primary,
+    },
+    quickActions: {
+      flexDirection: 'row',
+      gap: t.spacing.sm,
+    },
+    quickAction: {
+      flex: 1,
+      alignItems: 'flex-start',
+      gap: t.spacing.xs,
+      padding: t.spacing.md,
+      borderRadius: t.radii.md,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: t.colors.border.subtle,
+      backgroundColor: t.colors.surface.raised,
+    },
+    quickActionPressed: {
+      opacity: 0.7,
+    },
+    quickActionLabel: {
+      fontFamily: t.fontFamilies.ui.semibold,
+      fontSize: 13,
+      color: t.colors.text.primary,
+    },
+    activityRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: t.spacing.sm,
+      paddingVertical: t.spacing.md,
+      paddingHorizontal: t.spacing.md,
+      borderRadius: t.radii.md,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: t.colors.border.subtle,
+      backgroundColor: t.colors.surface.raised,
+    },
+    activityRowPressed: {
+      opacity: 0.7,
+    },
+    activityLabel: {
+      flex: 1,
+      fontFamily: t.fontFamilies.ui.regular,
+      fontSize: 14,
+      color: t.colors.text.primary,
+    },
+    badge: {
+      backgroundColor: t.colors.brand.primary,
+      borderRadius: t.radii.pill,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      minWidth: 20,
+      alignItems: 'center',
+    },
+    badgeText: {
+      fontFamily: t.fontFamilies.ui.semibold,
+      fontSize: 11,
+      color: t.colors.text.onBrand,
+    },
+    section: {
+      gap: t.spacing.sm,
+    },
+    sectionTitle: {
+      ...t.typography.h3,
+      color: t.colors.text.primary,
+    },
+    skeletonList: {
+      gap: t.spacing.sm,
+    },
+    savedRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: t.spacing.sm,
+      paddingVertical: t.spacing.sm,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: t.colors.border.subtle,
+    },
+    savedRowPressed: {
+      opacity: 0.6,
+    },
+    savedTitle: {
+      flex: 1,
+      fontFamily: t.fontFamilies.display.regular,
+      fontSize: 14,
+      lineHeight: 20,
+      color: t.colors.text.primary,
+    },
+    savedEmpty: {
+      fontFamily: t.fontFamilies.ui.regular,
+      fontSize: 14,
+      color: t.colors.text.muted,
+    },
+  });

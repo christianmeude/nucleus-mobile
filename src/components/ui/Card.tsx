@@ -1,12 +1,13 @@
 import { ReactNode } from 'react';
 import { Pressable, PressableProps, StyleProp, StyleSheet, ViewStyle } from 'react-native';
-import { theme } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 import { Surface } from './Surface';
 
 interface CardProps {
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
-  padding?: keyof typeof theme.spacing;
+  padding?: keyof Theme['spacing'];
 }
 
 type PressableCardProps = CardProps & {
@@ -16,6 +17,8 @@ type PressableCardProps = CardProps & {
 };
 
 export const Card = ({ children, style, padding = 'lg' }: CardProps) => {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <Surface style={[styles.card, { padding: theme.spacing[padding] }, style]}>
       {children}
@@ -31,6 +34,8 @@ export const PressableCard = ({
   disabled,
   accessibilityLabel,
 }: PressableCardProps) => {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable
       accessibilityRole="button"
@@ -50,21 +55,22 @@ export const PressableCard = ({
   );
 };
 
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: theme.radii.lg,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  pressable: {
-    borderRadius: theme.radii.lg,
-    borderCurve: 'continuous',
-  },
-  pressed: {
-    opacity: 0.96,
-    transform: [{ scale: 0.98 }],
-  },
-  disabled: {
-    opacity: 0.6,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    card: {
+      borderRadius: t.radii.lg,
+      borderCurve: 'continuous',
+      borderWidth: StyleSheet.hairlineWidth,
+    },
+    pressable: {
+      borderRadius: t.radii.lg,
+      borderCurve: 'continuous',
+    },
+    pressed: {
+      opacity: 0.96,
+      transform: [{ scale: 0.98 }],
+    },
+    disabled: {
+      opacity: 0.6,
+    },
+  });

@@ -11,12 +11,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
-import { theme } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 import { Button, Logo } from '../../components/ui';
 import { consumeLoginRejection, LoginIntent, setLoginIntent } from '../../state/loginIntent';
 
 export const LoginScreen = () => {
   const { signIn } = useAuth();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submittingIntent, setSubmittingIntent] = useState<LoginIntent | null>(null);
@@ -139,7 +142,8 @@ export const LoginScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: theme.colors.surface.base,
