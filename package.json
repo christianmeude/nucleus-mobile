@@ -16,8 +16,8 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@expo-google-fonts/ibm-plex-sans": "^0.4.1",
-    "@expo-google-fonts/source-serif-4": "^0.4.1",
+    "@expo-google-fonts/montserrat": "^0.4.2",
+    "@expo-google-fonts/roboto": "^0.4.3",
     "@expo/vector-icons": "^15.1.1",
     "@gorhom/bottom-sheet": "^5.2.14",
     "@react-native-async-storage/async-storage": "2.2.0",

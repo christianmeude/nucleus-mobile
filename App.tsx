@@ -2,19 +2,19 @@ import { ActivityIndicator, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
-  useFonts as useIBMPlexSans,
-  IBMPlexSans_400Regular,
-  IBMPlexSans_500Medium,
-  IBMPlexSans_600SemiBold,
-  IBMPlexSans_700Bold,
-} from '@expo-google-fonts/ibm-plex-sans';
+  useFonts as useRoboto,
+  Roboto_400Regular,
+  Roboto_500Medium,
+  Roboto_600SemiBold,
+  Roboto_700Bold,
+} from '@expo-google-fonts/roboto';
 import {
-  useFonts as useSourceSerif4,
-  SourceSerif4_400Regular,
-  SourceSerif4_500Medium,
-  SourceSerif4_600SemiBold,
-  SourceSerif4_700Bold,
-} from '@expo-google-fonts/source-serif-4';
+  useFonts as useMontserrat,
+  Montserrat_400Regular,
+  Montserrat_500Medium,
+  Montserrat_600SemiBold,
+  Montserrat_700Bold,
+} from '@expo-google-fonts/montserrat';
 import { AuthProvider } from './src/context/AuthContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { RoleGuard } from './src/navigation/RoleGuard';
@@ -34,18 +34,18 @@ const FontLoader = () => (
 );
 
 export default function App() {
-  const [uiLoaded] = useIBMPlexSans({
-    IBMPlexSans_400Regular,
-    IBMPlexSans_500Medium,
-    IBMPlexSans_600SemiBold,
-    IBMPlexSans_700Bold,
+  const [uiLoaded] = useRoboto({
+    Roboto_400Regular,
+    Roboto_500Medium,
+    Roboto_600SemiBold,
+    Roboto_700Bold,
   });
 
-  const [displayLoaded] = useSourceSerif4({
-    SourceSerif4_400Regular,
-    SourceSerif4_500Medium,
-    SourceSerif4_600SemiBold,
-    SourceSerif4_700Bold,
+  const [displayLoaded] = useMontserrat({
+    Montserrat_400Regular,
+    Montserrat_500Medium,
+    Montserrat_600SemiBold,
+    Montserrat_700Bold,
   });
 
   const fontsReady = uiLoaded && displayLoaded;

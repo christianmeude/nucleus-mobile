@@ -61,6 +61,7 @@ const styles = StyleSheet.create({
     minHeight: 132,
     backgroundColor: theme.colors.surface.raised,
     borderRadius: theme.radii.lg,
+    borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.border.subtle,
     padding: theme.spacing.md,
