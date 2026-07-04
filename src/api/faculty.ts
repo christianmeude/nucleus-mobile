@@ -1,4 +1,5 @@
 import { fetchAppUserProfile } from '../auth/fetchAppUserProfile';
+import { PUBLISHED_STATUSES } from './research';
 import { supabase } from '../lib/supabase';
 import { NotificationItem, PaperStatus } from '../types/domain';
 
@@ -775,7 +776,7 @@ export const facultyApi = {
     const { data, error } = await supabase
       .from('research_papers')
       .select(FACULTY_PAPER_SELECT)
-      .eq('status', 'published');
+      .in('status', Array.from(PUBLISHED_STATUSES));
 
     if (error) {
       throw new Error(error.message || 'Unable to load published papers.');

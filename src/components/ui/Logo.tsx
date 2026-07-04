@@ -1,6 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { theme } from '../../theme';
-import { OrbitalAccent } from './OrbitalAccent';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
@@ -8,9 +7,9 @@ interface LogoProps {
 }
 
 const sizeMap = {
-  sm: { mark: 44, n: 34, wordmark: 16, tracking: 3 },
-  md: { mark: 56, n: 42, wordmark: 20, tracking: 4 },
-  lg: { mark: 72, n: 54, wordmark: 24, tracking: 5 },
+  sm: { mark: 48, wordmark: 16, tracking: 3 },
+  md: { mark: 64, wordmark: 20, tracking: 4 },
+  lg: { mark: 96, wordmark: 24, tracking: 5 },
 } as const;
 
 export const Logo = ({ size = 'md', showWordmark = true }: LogoProps) => {
@@ -18,12 +17,12 @@ export const Logo = ({ size = 'md', showWordmark = true }: LogoProps) => {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.mark, { width: token.mark, height: token.mark }]}>
-        <Text style={[styles.nGlyph, { fontSize: token.n }]}>N</Text>
-        <View style={styles.orbit}>
-          <OrbitalAccent size={token.mark} />
-        </View>
-      </View>
+      <Image
+        source={require('../../../assets/images/nucleus-mark.png')}
+        style={{ width: token.mark, height: token.mark }}
+        resizeMode="contain"
+        accessibilityIgnoresInvertColors
+      />
       {showWordmark ? (
         <Text style={[styles.wordmark, { fontSize: token.wordmark, letterSpacing: token.tracking }]}>
           NUCLEUS
@@ -38,25 +37,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: theme.spacing.sm,
-  },
-  mark: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  nGlyph: {
-    ...theme.typography.h1,
-    color: theme.colors.brand.primary,
-    fontFamily: theme.fontFamilies.ui.bold,
-    includeFontPadding: false,
-  },
-  orbit: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   wordmark: {
     color: theme.colors.brand.primary,
