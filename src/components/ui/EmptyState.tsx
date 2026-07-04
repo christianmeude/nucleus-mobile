@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { theme } from '../../theme';
+import { useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 
 interface EmptyStateProps {
   title: string;
@@ -9,6 +10,7 @@ interface EmptyStateProps {
 }
 
 export const EmptyState = ({ title, message, icon }: EmptyStateProps) => {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.container}>
       {icon ? <View style={styles.icon}>{icon}</View> : null}
@@ -18,25 +20,26 @@ export const EmptyState = ({ title, message, icon }: EmptyStateProps) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: theme.spacing['2xl'],
-    paddingHorizontal: theme.spacing.lg,
-    gap: theme.spacing.sm,
-  },
-  icon: {
-    marginBottom: theme.spacing.xs,
-  },
-  title: {
-    ...theme.typography.h3,
-    color: theme.colors.text.primary,
-    textAlign: 'center',
-  },
-  message: {
-    ...theme.typography.bodySmall,
-    color: theme.colors.text.muted,
-    textAlign: 'center',
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: t.spacing['2xl'],
+      paddingHorizontal: t.spacing.lg,
+      gap: t.spacing.sm,
+    },
+    icon: {
+      marginBottom: t.spacing.xs,
+    },
+    title: {
+      ...t.typography.h3,
+      color: t.colors.text.primary,
+      textAlign: 'center',
+    },
+    message: {
+      ...t.typography.bodySmall,
+      color: t.colors.text.muted,
+      textAlign: 'center',
+    },
+  });

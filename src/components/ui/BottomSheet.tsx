@@ -1,6 +1,7 @@
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { ReactNode } from 'react';
-import { theme } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 
 interface BottomSheetProps {
   visible: boolean;
@@ -9,6 +10,8 @@ interface BottomSheetProps {
 }
 
 export const BottomSheet = ({ visible, onClose, children }: BottomSheetProps) => {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <Modal transparent visible={visible} animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
@@ -21,24 +24,25 @@ export const BottomSheet = ({ visible, onClose, children }: BottomSheetProps) =>
   );
 };
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: theme.colors.surface.overlay,
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: theme.colors.surface.raised,
-    borderTopLeftRadius: theme.radii.lg,
-    borderTopRightRadius: theme.radii.lg,
-    padding: theme.spacing.lg,
-    gap: theme.spacing.md,
-  },
-  handle: {
-    width: 42,
-    height: 4,
-    borderRadius: theme.radii.pill,
-    backgroundColor: theme.colors.border.strong,
-    alignSelf: 'center',
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: t.colors.surface.overlay,
+      justifyContent: 'flex-end',
+    },
+    sheet: {
+      backgroundColor: t.colors.surface.raised,
+      borderTopLeftRadius: t.radii.lg,
+      borderTopRightRadius: t.radii.lg,
+      padding: t.spacing.lg,
+      gap: t.spacing.md,
+    },
+    handle: {
+      width: 42,
+      height: 4,
+      borderRadius: t.radii.pill,
+      backgroundColor: t.colors.border.strong,
+      alignSelf: 'center',
+    },
+  });

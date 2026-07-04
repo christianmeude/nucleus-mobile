@@ -1,5 +1,6 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
-import { theme } from '../../theme';
+import { useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
@@ -13,6 +14,7 @@ const sizeMap = {
 } as const;
 
 export const Logo = ({ size = 'md', showWordmark = true }: LogoProps) => {
+  const styles = useThemedStyles(makeStyles);
   const token = sizeMap[size];
 
   return (
@@ -32,15 +34,16 @@ export const Logo = ({ size = 'md', showWordmark = true }: LogoProps) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.sm,
-  },
-  wordmark: {
-    color: theme.colors.brand.primary,
-    fontFamily: theme.fontFamilies.ui.bold,
-    includeFontPadding: false,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: t.spacing.sm,
+    },
+    wordmark: {
+      color: t.colors.brand.primary,
+      fontFamily: t.fontFamilies.ui.bold,
+      includeFontPadding: false,
+    },
+  });

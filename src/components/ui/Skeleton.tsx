@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { Animated, DimensionValue, StyleSheet, View } from 'react-native';
-import { theme } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 import { useReduceMotion } from '../../hooks/useReduceMotion';
 
 interface SkeletonProps {
   height?: number;
   width?: DimensionValue;
-  radius?: keyof typeof theme.radii;
+  radius?: keyof Theme['radii'];
 }
 
 export const Skeleton = ({
@@ -14,6 +15,8 @@ export const Skeleton = ({
   width = '100%',
   radius = 'sm',
 }: SkeletonProps) => {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const reduceMotion = useReduceMotion();
   const opacity = useRef(new Animated.Value(1)).current;
   const baseStyle = [styles.block, { height, width, borderRadius: theme.radii[radius] }];
@@ -40,7 +43,7 @@ export const Skeleton = ({
     );
     anim.start();
     return () => anim.stop();
-  }, [opacity, reduceMotion]);
+  }, [opacity, reduceMotion, theme.motion.skeletonCycleDuration]);
 
   if (reduceMotion) {
     return <View style={[...baseStyle, { opacity: 0.6 }]} />;
@@ -49,8 +52,9 @@ export const Skeleton = ({
   return <Animated.View style={[...baseStyle, { opacity }]} />;
 };
 
-const styles = StyleSheet.create({
-  block: {
-    backgroundColor: theme.colors.surface.sunken,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    block: {
+      backgroundColor: t.colors.surface.sunken,
+    },
+  });

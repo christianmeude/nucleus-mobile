@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { theme } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 
 interface StatProps {
   label: string;
@@ -8,6 +9,8 @@ interface StatProps {
 }
 
 export const Stat = ({ label, value, tone = 'default' }: StatProps) => {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View
       style={[
@@ -22,28 +25,29 @@ export const Stat = ({ label, value, tone = 'default' }: StatProps) => {
   );
 };
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: theme.colors.surface.raised,
-    borderRadius: theme.radii.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border.subtle,
-    padding: theme.spacing.md,
-    gap: theme.spacing.xs,
-  },
-  cardWarning: {
-    borderColor: theme.colors.state.warning,
-    backgroundColor: theme.colors.state.warningSurface,
-  },
-  value: {
-    ...theme.typography.h2,
-    color: theme.colors.text.primary,
-  },
-  valueWarning: {
-    color: theme.colors.state.warning,
-  },
-  label: {
-    ...theme.typography.metadata,
-    color: theme.colors.text.muted,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: t.colors.surface.raised,
+      borderRadius: t.radii.lg,
+      borderWidth: 1,
+      borderColor: t.colors.border.subtle,
+      padding: t.spacing.md,
+      gap: t.spacing.xs,
+    },
+    cardWarning: {
+      borderColor: t.colors.state.warning,
+      backgroundColor: t.colors.state.warningSurface,
+    },
+    value: {
+      ...t.typography.h2,
+      color: t.colors.text.primary,
+    },
+    valueWarning: {
+      color: t.colors.state.warning,
+    },
+    label: {
+      ...t.typography.metadata,
+      color: t.colors.text.muted,
+    },
+  });
