@@ -129,9 +129,10 @@ Break the SQL down in plain, simple language (what it does, what it touches, whe
 ### After implementing (per phase, no pause)
 
 1. Run `npx tsc --noEmit` — a red `tsc` is a blocker (see Escalation), not something to smooth over
-2. Update the active plan doc (phase status markers below)
-3. Stage specific files, draft the commit message (§2), and commit
-4. Continue directly to the next phase — no stop-and-wait
+2. Run `npm test` — Jest is wired via CI (`.github/workflows/ci.yml`); a red test run is a blocker, same as `tsc`
+3. Update the active plan doc (phase status markers below)
+4. Stage specific files, draft the commit message (§2), and commit
+5. Continue directly to the next phase — no stop-and-wait
 
 ### Escalation — when a phase gets stuck
 
@@ -151,7 +152,7 @@ At the undertaking's merge boundary (§1), Claude Code opens a PR instead of mer
 
 1. Open the PR with a structured description (the merge-commit format, §1).
 2. Run a review pass against the diff — plan conformance, frozen files untouched, `tsc` green.
-3. Christian runs manual device/emulator QA and gives the go-ahead. This is the only test stage beyond `tsc` — there is no automated test suite today.
+3. Christian runs manual device/emulator QA and gives the go-ahead. This runs alongside the automated `tsc` + `npm test` gates (Jest, wired via CI) — there is no additional automated stage beyond these.
 4. Claude Code merges the PR (`gh pr merge`).
 
 ### Plan doc phase status markers
@@ -180,6 +181,7 @@ Issue numbers are canonical and fixed. **Claude Code is authorized to create and
 
 | # | Title | Status |
 |---|---|---|
+| 21 | `test: unit coverage for API facades (research, invitations, notifications, faculty, collections)` | 🔴 Open |
 | 15 | `faculty: verify annotation overlays on papers returned from dean or program chair` | 🔴 Open |
 | 14 | `faculty: annotation creation — write path for review comments` | 🔴 Open |
 | 13 | `research detail: related papers via semantic search (replace client-side heuristic)` | 🔴 Open |
@@ -196,7 +198,7 @@ Issue numbers are canonical and fixed. **Claude Code is authorized to create and
 | 2 | `Mobile auth: UUID mismatch between auth.users and public.users breaks RLS` | ✅ Closed |
 | 1 | `ResearchDetail: view and download counts not persisting after navigation` | ✅ Closed |
 
-**Current cap: #15.**
+**Current cap: #21.**
 
 ### Issue title format
 
@@ -409,6 +411,7 @@ See `docs/handoffs/HANDOFF_TEMPLATE.md` for the full section template.
 4. Once approved: **bundle the handoff into the session's final commit** (the phase-close or last logical commit) — present that commit for confirmation. Make a standalone `docs(handoff): add HANDOFF_[NAME]` commit **only** when the session ends with no other commit to attach it to.
 5. After commit: confirm the next session opening state matches the handoff's "Immediate Next Steps"
 6. Update the undertaking's `Status` in the CLAUDE.md Undertaking Registry (active / parked / complete) if it changed this session
+7. **When an undertaking merges to `main` (status → `complete`):** delete its plan doc and every handoff for its short code, then drop its Registry row entirely. The merge commit and PR description are the permanent record — a completed undertaking's plan/handoffs have no forward value and just accumulate as dead weight. Keep only `HANDOFF_TEMPLATE.md`.
 
 ### What makes a good handoff
 
