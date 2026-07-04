@@ -31,14 +31,21 @@ steps in order; do not act until all are done.
    "resume faculty access") against the Undertaking Registry below. If the user
    named none, list the non-`complete` undertakings and ask which to resume —
    do not assume.
-4. **Load that undertaking's state.** Check out its branch (or open its
-   worktree), then read its Plan and its latest handoff — the most recent
-   `docs/handoffs/HANDOFF_<SHORT>_*.md` for that undertaking's short code.
-5. Report:
+4. **Check out the branch (or open its worktree), then sync canonical docs
+   before reading anything else on it:** `git merge origin/main`. `CLAUDE.md`,
+   `CONVENTIONS.md`, and `PROJECT_CONTEXT.md` are canonical on `main` and
+   propagate to branches only via this merge (CONVENTIONS §1) — a long-lived
+   undertaking branch silently reverts to whatever workflow was current when it
+   was cut if this step is skipped. Run it every resume, even if the branch
+   "looks fine."
+5. **Load that undertaking's state.** Read its Plan and its latest handoff —
+   the most recent `docs/handoffs/HANDOFF_<SHORT>_*.md` for that undertaking's
+   short code.
+6. Report:
    - Current project state (undertaking, branch, phase, open blockers)
    - Open decisions or unresolved items
    - Proposed first action
-6. Stop and wait for confirmation before doing anything
+7. Stop and wait for confirmation before doing anything
 
 ### Undertaking Registry
 
