@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  Keyboard,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -8,6 +9,12 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -25,6 +32,19 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'newest', label: 'Newest' },
   { value: 'most_viewed', label: 'Most viewed' },
 ];
+
+/** Rotating landing prompts, one chosen at random each time the empty state shows. */
+const GREETINGS = [
+  'What are you researching today?',
+  'What do you want to learn?',
+  'Find your next reference.',
+  'Search the repository.',
+  "What's on your mind?",
+  'Discover published research.',
+  'Look something up.',
+];
+
+const pickGreeting = () => GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
 
 /** Navy/blue shades for category dots — gold stays reserved for the featured hero. */
 const CATEGORY_COLORS = [
@@ -51,6 +71,12 @@ export const BrowseScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
+  // Search-first landing: `searched` gates the idle→results morph. It flips on
+  // submit (Google-style), not on every keystroke; the Clear control resets it.
+  const [searched, setSearched] = useState(false);
+  const [greeting, setGreeting] = useState(pickGreeting);
+  const progress = useSharedValue(0);
+
   const loadData = useCallback(async (silent = false) => {
     if (!silent) {
       setLoading(true);
@@ -75,11 +101,45 @@ export const BrowseScreen = () => {
     }
   }, []);
 
+  // Load in the background on focus so results are instant when the first search
+  // fires; only rendering is gated on `searched`, never fetching. A fresh
+  // greeting per focus gives the landing its varies-each-time feel.
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [loadData])
+      setGreeting(pickGreeting());
+    }, [loadData]),
   );
+
+  // Drive the whole transition off one shared value: 0 = idle, 1 = results.
+  useEffect(() => {
+    progress.value = withTiming(searched ? 1 : 0, {
+      duration: 420,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [searched, progress]);
+
+  const spacerStyle = useAnimatedStyle(() => ({ flexGrow: 1 - progress.value }));
+  const greetingStyle = useAnimatedStyle(() => ({ opacity: 1 - progress.value }));
+  const resultsStyle = useAnimatedStyle(() => ({
+    flexGrow: progress.value,
+    opacity: progress.value,
+    transform: [{ translateY: (1 - progress.value) * 24 }],
+  }));
+
+  const submitSearch = useCallback(() => {
+    if (query.trim()) {
+      setSearched(true);
+      Keyboard.dismiss();
+    }
+  }, [query]);
+
+  const resetToIdle = useCallback(() => {
+    setQuery('');
+    setSearched(false);
+    setGreeting(pickGreeting());
+    Keyboard.dismiss();
+  }, []);
 
   const categoryNameById = useMemo(() => buildCategoryNameById(categories), [categories]);
 
@@ -98,7 +158,7 @@ export const BrowseScreen = () => {
       }
       return theme.colors.brand.primary;
     },
-    [categoryColorById]
+    [categoryColorById],
   );
 
   const isFiltering = Boolean(query.trim() || categoryFilter);
@@ -144,217 +204,246 @@ export const BrowseScreen = () => {
 
   const openDetail = useCallback(
     (paperId: string) => navigation.navigate('ResearchDetail', { paperId }),
-    [navigation]
+    [navigation],
   );
 
   const sortLabel = SORT_OPTIONS.find((option) => option.value === sort)?.label ?? 'Newest';
+  const showClear = searched || Boolean(query.trim());
 
   return (
     <>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + theme.spacing.md }]}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => loadData(true)}
-            tintColor={theme.colors.brand.primary}
-            colors={[theme.colors.brand.primary]}
-          />
-        }
+      <View
+        style={[
+          styles.root,
+          { paddingTop: insets.top + theme.spacing.md, paddingBottom: insets.bottom },
+        ]}
       >
-        <Text style={styles.title}>Browse</Text>
+        <Animated.View style={[styles.spacer, spacerStyle]} pointerEvents="none" />
 
-        <View style={styles.searchWrap}>
-          <Ionicons
-            name="search-outline"
-            size={18}
-            color={theme.colors.text.muted}
-            style={styles.searchIcon}
-          />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search papers, authors, keywords"
-            placeholderTextColor={theme.colors.text.disabled}
-            style={styles.searchInput}
-            accessibilityLabel="Search papers"
-            accessibilityHint="Filters published papers by title, author, or keyword"
-          />
-          <View
-            pointerEvents={query.trim() ? 'auto' : 'none'}
-            style={query.trim() ? styles.clearVisible : styles.clearHidden}
-          >
-            <Chip label="Clear" active={false} onPress={() => setQuery('')} variant="filter" />
-          </View>
-        </View>
+        <View style={styles.headerBlock}>
+          <Animated.Text style={[styles.greeting, greetingStyle]} pointerEvents="none">
+            {greeting}
+          </Animated.Text>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipsRow}
-        >
-          <Pressable
-            style={[styles.topicChip, !categoryFilter && styles.topicChipActive]}
-            onPress={() => setCategoryFilter('')}
-            accessibilityRole="button"
-            accessibilityLabel="All categories"
-          >
-            <Text style={[styles.topicChipText, !categoryFilter && styles.topicChipTextActive]}>
-              All
-            </Text>
-          </Pressable>
-          {categories.map((category) => {
-            const active = categoryFilter === category.id;
-            return (
-              <Pressable
-                key={category.id}
-                style={[styles.topicChip, active && styles.topicChipActive]}
-                onPress={() => setCategoryFilter(active ? '' : category.id)}
-                accessibilityRole="button"
-                accessibilityLabel={category.name}
-              >
-                <Text style={[styles.topicChipText, active && styles.topicChipTextActive]}>
-                  {category.name}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-
-        <View style={styles.subbar}>
-          <Text style={styles.resultCount}>
-            {sorted.length} {sorted.length === 1 ? 'Paper' : 'Papers'}
-          </Text>
-          <View style={styles.subbarRight}>
-            <Pressable
-              style={styles.sortLink}
-              onPress={() => setSortSheetOpen(true)}
-              accessibilityRole="button"
-              accessibilityLabel={`Sort: ${sortLabel}`}
+          <View style={styles.searchWrap}>
+            <Ionicons
+              name="search-outline"
+              size={18}
+              color={theme.colors.text.muted}
+              style={styles.searchIcon}
+            />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              onSubmitEditing={submitSearch}
+              returnKeyType="search"
+              placeholder="Search papers, authors, keywords"
+              placeholderTextColor={theme.colors.text.disabled}
+              style={styles.searchInput}
+              accessibilityLabel="Search papers"
+              accessibilityHint="Filters published papers by title, author, or keyword"
+            />
+            <View
+              pointerEvents={showClear ? 'auto' : 'none'}
+              style={showClear ? styles.clearVisible : styles.clearHidden}
             >
-              <Text style={styles.sortLinkText}>{sortLabel}</Text>
-              <Ionicons name="chevron-down" size={13} color={theme.colors.brand.primary} />
-            </Pressable>
-            <View style={styles.viewToggle}>
-              <Pressable
-                style={[styles.vt, viewMode === 'list' && styles.vtActive]}
-                onPress={() => setViewMode('list')}
-                accessibilityRole="button"
-                accessibilityLabel="List view"
-              >
-                <Ionicons
-                  name="reorder-three-outline"
-                  size={17}
-                  color={viewMode === 'list' ? theme.colors.brand.primary : theme.colors.text.muted}
-                />
-              </Pressable>
-              <Pressable
-                style={[styles.vt, viewMode === 'grid' && styles.vtActive]}
-                onPress={() => setViewMode('grid')}
-                accessibilityRole="button"
-                accessibilityLabel="Grid view"
-              >
-                <Ionicons
-                  name="grid-outline"
-                  size={15}
-                  color={viewMode === 'grid' ? theme.colors.brand.primary : theme.colors.text.muted}
-                />
-              </Pressable>
+              <Chip label="Clear" active={false} onPress={resetToIdle} variant="filter" />
             </View>
           </View>
         </View>
 
-        {error ? <InlineNotice tone="danger" message={error} /> : null}
-
-        {loading ? (
-          <View style={styles.loadingWrap}>
-            <Skeleton height={140} />
-            <Skeleton height={84} />
-            <Skeleton height={84} />
-            <Skeleton height={84} />
-          </View>
-        ) : sorted.length === 0 ? (
-          <EmptyState
-            icon={<Ionicons name="library-outline" size={24} color={theme.colors.text.muted} />}
-            title="No papers found"
-            message={
-              query.trim()
-                ? `No results for "${query.trim()}"`
-                : 'No papers found in this category'
+        <Animated.View style={[styles.resultsWrap, resultsStyle]}>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.resultsContent}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => loadData(true)}
+                tintColor={theme.colors.brand.primary}
+                colors={[theme.colors.brand.primary]}
+              />
             }
-          />
-        ) : (
-          <>
-            {featured ? (
+          >
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.chipsRow}
+            >
               <Pressable
-                style={styles.hero}
-                onPress={() => openDetail(featured.id)}
+                style={[styles.topicChip, !categoryFilter && styles.topicChipActive]}
+                onPress={() => setCategoryFilter('')}
                 accessibilityRole="button"
-                accessibilityLabel={`Featured paper: ${featured.title || 'Untitled paper'}`}
+                accessibilityLabel="All categories"
               >
-                <View style={styles.heroRingLg} />
-                <View style={styles.heroRingSm} />
-                <Text style={styles.heroBadge}>Featured Paper</Text>
-                <Text style={styles.heroTitle} numberOfLines={3}>
-                  {featured.title}
+                <Text style={[styles.topicChipText, !categoryFilter && styles.topicChipTextActive]}>
+                  All
                 </Text>
-                <View style={styles.heroMeta}>
-                  <Text style={styles.heroMetaText} numberOfLines={1}>
-                    {getPrimaryAuthorName(featured)}
-                  </Text>
-                  <Text style={styles.heroMetaSep}>·</Text>
-                  <Text style={styles.heroMetaText}>{viewsOf(featured)} views</Text>
-                </View>
               </Pressable>
-            ) : null}
+              {categories.map((category) => {
+                const active = categoryFilter === category.id;
+                return (
+                  <Pressable
+                    key={category.id}
+                    style={[styles.topicChip, active && styles.topicChipActive]}
+                    onPress={() => setCategoryFilter(active ? '' : category.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={category.name}
+                  >
+                    <Text style={[styles.topicChipText, active && styles.topicChipTextActive]}>
+                      {category.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
 
-            {viewMode === 'grid' ? (
-              <View style={styles.grid}>
-                {gridItems.map((paper) => (
-                  <View key={paper.id} style={styles.gridCell}>
-                    <ResearchTile
-                      paper={paper}
-                      category={resolveCategoryName(paper.category, categoryNameById)}
-                      categoryColor={colorForCategory(paper.category)}
-                      onPress={() => openDetail(paper.id)}
+            <View style={styles.subbar}>
+              <Text style={styles.resultCount}>
+                {sorted.length} {sorted.length === 1 ? 'Paper' : 'Papers'}
+              </Text>
+              <View style={styles.subbarRight}>
+                <Pressable
+                  style={styles.sortLink}
+                  onPress={() => setSortSheetOpen(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Sort: ${sortLabel}`}
+                >
+                  <Text style={styles.sortLinkText}>{sortLabel}</Text>
+                  <Ionicons name="chevron-down" size={13} color={theme.colors.brand.primary} />
+                </Pressable>
+                <View style={styles.viewToggle}>
+                  <Pressable
+                    style={[styles.vt, viewMode === 'list' && styles.vtActive]}
+                    onPress={() => setViewMode('list')}
+                    accessibilityRole="button"
+                    accessibilityLabel="List view"
+                  >
+                    <Ionicons
+                      name="reorder-three-outline"
+                      size={17}
+                      color={
+                        viewMode === 'list' ? theme.colors.brand.primary : theme.colors.text.muted
+                      }
                     />
-                  </View>
-                ))}
+                  </Pressable>
+                  <Pressable
+                    style={[styles.vt, viewMode === 'grid' && styles.vtActive]}
+                    onPress={() => setViewMode('grid')}
+                    accessibilityRole="button"
+                    accessibilityLabel="Grid view"
+                  >
+                    <Ionicons
+                      name="grid-outline"
+                      size={15}
+                      color={
+                        viewMode === 'grid' ? theme.colors.brand.primary : theme.colors.text.muted
+                      }
+                    />
+                  </Pressable>
+                </View>
               </View>
+            </View>
+
+            {error ? <InlineNotice tone="danger" message={error} /> : null}
+
+            {loading ? (
+              <View style={styles.loadingWrap}>
+                <Skeleton height={140} />
+                <Skeleton height={84} />
+                <Skeleton height={84} />
+                <Skeleton height={84} />
+              </View>
+            ) : sorted.length === 0 ? (
+              <EmptyState
+                icon={<Ionicons name="library-outline" size={24} color={theme.colors.text.muted} />}
+                title="No papers found"
+                message={
+                  query.trim()
+                    ? `No results for "${query.trim()}"`
+                    : 'No papers found in this category'
+                }
+              />
             ) : (
-              <View style={styles.list}>
-                {gridItems.map((paper) => {
-                  const categoryColor = colorForCategory(paper.category);
-                  const categoryName = resolveCategoryName(paper.category, categoryNameById);
-                  return (
-                    <Pressable
-                      key={paper.id}
-                      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-                      onPress={() => openDetail(paper.id)}
-                      accessibilityRole="button"
-                      accessibilityLabel={paper.title || 'Untitled paper'}
-                    >
-                      <View style={styles.cardCatRow}>
-                        <View style={[styles.dot, { backgroundColor: categoryColor }]} />
-                        <Text style={[styles.cardCat, { color: categoryColor }]} numberOfLines={1}>
-                          {categoryName || 'Research'}
-                        </Text>
+              <>
+                {featured ? (
+                  <Pressable
+                    style={styles.hero}
+                    onPress={() => openDetail(featured.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Featured paper: ${featured.title || 'Untitled paper'}`}
+                  >
+                    <View style={styles.heroRingLg} />
+                    <View style={styles.heroRingSm} />
+                    <Text style={styles.heroBadge}>Featured Paper</Text>
+                    <Text style={styles.heroTitle} numberOfLines={3}>
+                      {featured.title}
+                    </Text>
+                    <View style={styles.heroMeta}>
+                      <Text style={styles.heroMetaText} numberOfLines={1}>
+                        {getPrimaryAuthorName(featured)}
+                      </Text>
+                      <Text style={styles.heroMetaSep}>·</Text>
+                      <Text style={styles.heroMetaText}>{viewsOf(featured)} views</Text>
+                    </View>
+                  </Pressable>
+                ) : null}
+
+                {viewMode === 'grid' ? (
+                  <View style={styles.grid}>
+                    {gridItems.map((paper) => (
+                      <View key={paper.id} style={styles.gridCell}>
+                        <ResearchTile
+                          paper={paper}
+                          category={resolveCategoryName(paper.category, categoryNameById)}
+                          categoryColor={colorForCategory(paper.category)}
+                          onPress={() => openDetail(paper.id)}
+                        />
                       </View>
-                      <Text style={styles.cardTitle} numberOfLines={2}>
-                        {paper.title}
-                      </Text>
-                      <Text style={styles.cardMeta} numberOfLines={1}>
-                        {getPrimaryAuthorName(paper)} · {formatDate(paperDate(paper))}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
+                    ))}
+                  </View>
+                ) : (
+                  <View style={styles.list}>
+                    {gridItems.map((paper) => {
+                      const categoryColor = colorForCategory(paper.category);
+                      const categoryName = resolveCategoryName(paper.category, categoryNameById);
+                      return (
+                        <Pressable
+                          key={paper.id}
+                          style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+                          onPress={() => openDetail(paper.id)}
+                          accessibilityRole="button"
+                          accessibilityLabel={paper.title || 'Untitled paper'}
+                        >
+                          <View style={styles.cardCatRow}>
+                            <View style={[styles.dot, { backgroundColor: categoryColor }]} />
+                            <Text
+                              style={[styles.cardCat, { color: categoryColor }]}
+                              numberOfLines={1}
+                            >
+                              {categoryName || 'Research'}
+                            </Text>
+                          </View>
+                          <Text style={styles.cardTitle} numberOfLines={2}>
+                            {paper.title}
+                          </Text>
+                          <Text style={styles.cardMeta} numberOfLines={1}>
+                            {getPrimaryAuthorName(paper)} · {formatDate(paperDate(paper))}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                )}
+              </>
             )}
-          </>
-        )}
-      </ScrollView>
+          </ScrollView>
+        </Animated.View>
+
+        <Animated.View style={[styles.spacer, spacerStyle]} pointerEvents="none" />
+      </View>
 
       <BottomSheet visible={sortSheetOpen} onClose={() => setSortSheetOpen(false)}>
         <Text style={styles.sheetTitle}>Sort by</Text>
@@ -384,19 +473,41 @@ export const BrowseScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
+    paddingHorizontal: theme.spacing.lg,
     backgroundColor: theme.colors.surface.base,
   },
-  content: {
-    padding: theme.spacing.lg,
-    gap: theme.spacing.md,
+  spacer: {
+    flexShrink: 1,
+    flexBasis: 0,
   },
-  title: {
+  headerBlock: {
+    position: 'relative',
+  },
+  greeting: {
+    position: 'absolute',
+    bottom: '100%',
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    paddingBottom: theme.spacing.lg,
     fontFamily: theme.fontFamilies.display.semibold,
-    fontSize: 26,
-    lineHeight: 32,
+    fontSize: 24,
+    lineHeight: 30,
     color: theme.colors.text.primary,
+  },
+  resultsWrap: {
+    flexBasis: 0,
+    overflow: 'hidden',
+  },
+  scroll: {
+    flex: 1,
+  },
+  resultsContent: {
+    gap: theme.spacing.md,
+    paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.xl,
   },
   searchWrap: {
     flexDirection: 'row',
@@ -430,54 +541,6 @@ const styles = StyleSheet.create({
   clearHidden: {
     width: 0,
     overflow: 'hidden',
-  },
-  filterBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  filterBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    height: 36,
-    paddingHorizontal: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border.subtle,
-    borderRadius: theme.radii.sm,
-    backgroundColor: theme.colors.surface.raised,
-  },
-  filterBtnText: {
-    ...theme.typography.label,
-    color: theme.colors.text.secondary,
-  },
-  countBadge: {
-    minWidth: 18,
-    height: 18,
-    paddingHorizontal: 5,
-    borderRadius: theme.radii.pill,
-    backgroundColor: theme.colors.brand.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  countBadgeText: {
-    ...theme.typography.caption,
-    color: theme.colors.text.onBrand,
-  },
-  sortBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 36,
-    paddingHorizontal: theme.spacing.sm,
-  },
-  sortLabel: {
-    ...theme.typography.metadata,
-    color: theme.colors.text.muted,
-  },
-  sortValue: {
-    ...theme.typography.metadata,
-    color: theme.colors.brand.primary,
-    marginRight: theme.spacing.xs,
   },
   loadingWrap: {
     gap: theme.spacing.md,
@@ -537,12 +600,6 @@ const styles = StyleSheet.create({
     ...theme.typography.caption,
     color: 'rgba(255, 255, 255, 0.3)',
   },
-  rowHead: {
-    ...theme.typography.metadata,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    color: theme.colors.text.muted,
-  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -555,9 +612,6 @@ const styles = StyleSheet.create({
   sheetTitle: {
     ...theme.typography.h3,
     color: theme.colors.text.primary,
-  },
-  sheetScroll: {
-    maxHeight: 320,
   },
   sheetRow: {
     flexDirection: 'row',
