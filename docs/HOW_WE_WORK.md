@@ -51,7 +51,7 @@ Claude sets up the branch, the plan, everything.
 
 > *"Resume the faculty work."*
 
-Claude reloads the state itself. You never track branches or sessions.
+Claude checks the open branch and PR itself. You never track branches or sessions.
 
 ---
 

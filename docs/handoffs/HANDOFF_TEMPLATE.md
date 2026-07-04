@@ -1,153 +1,41 @@
 ---
-undertaking: "[name, e.g. Submit Research]"
-phase: "[N or label, e.g. 3 or kickoff]"
 date: YYYY-MM-DD
 branch: "[current branch]"
 last_commit: "[type(scope): description]"
 status: in-progress | blocked | complete
 ---
 
-# NUcleus Mobile — Session Handoff Context ([Undertaking] [Phase/Label])
+# NUcleus Mobile — Session Handoff
 
-## Project Overview
+> Optional. Write one only to carry mid-task state across a context break
+> (CONVENTIONS §8). The open PR and GitHub issues are the durable record — keep
+> this to the delta plus a current-state snapshot, and drop any section that
+> doesn't apply.
 
-React Native Expo app (`capstone-nucleus-rn`) [current architecture state in one sentence]. [Current undertaking] is in progress on branch `[feature-branch]`, [completed phase range], [next phase state].
+## What changed this session
 
-**Canonical docs in the repo:**
-- `docs/PROJECT_CONTEXT.md` — product identity, audience, navigation, domain types, principles
-- `docs/CONVENTIONS.md` — all process conventions (commits, phase protocol, issues, SQL, handoffs)
-- `docs/sql/` — canonical deployed SQL/RLS snapshots
-- `[active plan path]` — [active undertaking] implementation plan
+> Every delta since the last note, including any Supabase changes made outside
+> the codebase — what was done, why, and whether it's committed.
 
-**GitHub repo:** `christianmeude/capstone-nucleus-rn`
+- [change] — [why; note if uncommitted]
 
----
+## Architectural context (session-specific only)
 
-## [Previous Undertaking] Status
+> Stable invariants (UUID mismatch, email-based RLS, SECURITY DEFINER pattern,
+> mobile auth model) live in `CLAUDE.md` — record here only a new nuance,
+> correction, or deployed SQL/RLS change discovered this session.
 
-✅ Complete and stable. See `[relevant-plan-doc]`.
+- [pattern or correction], or "None."
 
----
+## Current git state
 
-## [Active Undertaking] Status
+Branch: `[branch]` — working tree [clean / has uncommitted changes].
 
-Currently on branch `[feature-branch]`, branched off `[base-branch]`.
+- Modified: `[file]` — [note]
+- Untracked: `[file]` — [note]
 
-- ✅ Phase 1 — [Label]
-- ✅ Phase 2 — [Label]
-- 🔴 Phase 3 — [Label] ← blocked / in-progress
-- ⏳ Phase 4 — [Label]
-
----
-
-## What Changed Since [Previous Handoff Name]
-
-> Every delta since the last handoff, including Supabase changes made outside the codebase.
-
-### [Gap/Fix/Feature Title] ([status emoji + one word])
-
-**Root cause:** [what caused the issue or why the change was needed]
-
-**Fix applied:** [what was done; note if uncommitted]
-
-**Status:** [resolved / unresolved / partial; if unresolved, state the blocker]
-
----
-
-## Critical Architectural Context
-
-> This section is for **session-specific updates only**. Stable invariants (UUID mismatch, email-based RLS, SECURITY DEFINER pattern, mobile auth model) live in `CLAUDE.md` — do not duplicate them here unless there is an update, correction, or new nuance discovered this session.
-
-### [New pattern or correction discovered this session]
-
-[Details]
-
----
-
-## Resolved Issues
-
-- ✅ #[N] — [problem summary] — [resolution mechanism]
-
-## Open Issues
-
-- 🔴 #[N] — [description] — [owner / dependency / investigation note]
-
-**Current cap: #[N]. Do not invent issue numbers beyond #[N].**
-
----
-
-## Current RLS Policy State (Supabase)
-
-All policies use email-based resolution unless noted. See `docs/sql/` for deployed snapshots.
-
-**Tables with active policies:**
-
-- `[table]` — [policies: SELECT/INSERT/UPDATE/DELETE, scope notes]
-
----
-
-## Supabase RPCs
-
-All SECURITY DEFINER. All `SET search_path = public`. All `GRANT EXECUTE TO anon, authenticated`.
-
-- `[rpc_name(signature)]` — [purpose and language]
-
----
-
-## Current State of the Codebase
-
-> **Claude Code note:** Design system, component inventory, API facade method lists, and frozen file lists are all derivable by reading the codebase directly. Omit those sections unless there is a non-obvious gotcha that cannot be found by reading the code. Include only what a reader cannot derive on their own.
-
-### Field-level gotchas (include only if non-obvious)
-
-[Non-obvious field naming, type coercions, or data-shape surprises that would cost time to rediscover — skip this section if there are none]
-
----
-
-## Uncommitted Changes (if any)
-
-- `[file]` — [what changed and why; note if SQL snapshot or dependency]
-
----
-
-## Issues Opened / Closed Since [Previous Handoff Name]
-
-- [No new GitHub issues filed. / List new issues.]
-- [No issues closed. / List closed issues with resolution.]
-- **Current cap: #[N]. Do not invent issue numbers beyond #[N].**
-
----
-
-## Current Git State
-
-Branch: `[feature-branch]` — working tree [clean / has uncommitted changes].
-
-**Modified (uncommitted):**
-- `M [file]` — [note]
-
-**Untracked:**
-- `[file]` — [note]
-
-**Intended branch workflow:**
-```
-[feature-branch] → main
-```
-
----
-
-## Commit History (most recent first)
-
-```
-[sha] (HEAD -> [branch]) [message]
-[sha] [message]
-[sha] ([base-branch]) [message]
-```
-
----
-
-## Immediate Next Steps
+## Immediate next steps
 
 1. [First action — specific and actionable]
 2. [Second action]
-3. [Third action]
-4. [Any backend/SQL actions Christian owns]
+3. [Any backend/SQL actions Christian owns]
