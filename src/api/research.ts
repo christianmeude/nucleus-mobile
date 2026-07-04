@@ -82,7 +82,7 @@ interface ResearchListParams {
   author?: string;
 }
 
-const PUBLISHED_STATUSES = new Set(['approved', 'published']);
+export const PUBLISHED_STATUSES = new Set(['approved', 'published']);
 
 const PAPER_SELECT = `
   id,
