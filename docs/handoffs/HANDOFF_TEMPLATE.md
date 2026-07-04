@@ -15,9 +15,8 @@ React Native Expo app (`capstone-nucleus-rn`) [current architecture state in one
 
 **Canonical docs in the repo:**
 - `docs/PROJECT_CONTEXT.md` — product identity, audience, navigation, domain types, principles
-- `docs/PRODUCT_ROADMAP.md` — UX and design direction reference
 - `docs/CONVENTIONS.md` — all process conventions (commits, phase protocol, issues, SQL, handoffs)
-- `docs/plans/SUPABASE_MIGRATION.md` — migration history and SQL/RLS policy reference
+- `docs/sql/` — canonical deployed SQL/RLS snapshots
 - `[active plan path]` — [active undertaking] implementation plan
 
 **GitHub repo:** `christianmeude/capstone-nucleus-rn`
@@ -79,7 +78,7 @@ Currently on branch `[feature-branch]`, branched off `[base-branch]`.
 
 ## Current RLS Policy State (Supabase)
 
-All policies use email-based resolution unless noted. See `docs/plans/SUPABASE_MIGRATION.md` for migration-era SQL and `docs/sql/` for snapshots.
+All policies use email-based resolution unless noted. See `docs/sql/` for deployed snapshots.
 
 **Tables with active policies:**
 
@@ -131,7 +130,7 @@ Branch: `[feature-branch]` — working tree [clean / has uncommitted changes].
 
 **Intended branch workflow:**
 ```
-[feature-branch] → [integration-branch] → main
+[feature-branch] → main
 ```
 
 ---
