@@ -359,7 +359,7 @@ Cross-cutting helpers live in `src/utils/` and are the single source of truth �
 
 ### Design system (single visual standard)
 
-The cool-slate + navy/gold system with Source Serif 4 (display) + IBM Plex Sans (UI), realized in `src/theme/`, is the canonical visual standard for the whole app. Always consume theme tokens from `src/theme` — never hardcode colors, fonts, spacing, or radii. New screens and features on **any** branch (student or faculty) must adopt it, consuming the tokens in `src/theme/`.
+The cool-slate + navy/gold system with **Montserrat (display) + Roboto (UI)** — the MD3-calibrated "Modern Clarity" pass merged 2026-07-04 (#24) — realized in `src/theme/`, is the current visual standard for the whole app. **Typography is provisional pending the UI/UX redesign**, which will revisit it. Always consume theme tokens from `src/theme` — never hardcode colors, fonts, spacing, or radii. New screens and features on **any** branch (student or faculty) must adopt it.
 
 ### Applies to every surface
 
