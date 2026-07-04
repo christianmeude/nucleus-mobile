@@ -10,6 +10,12 @@
  * - Blue family for primary UI, navigation, and links.
  * - Gold for emphasis and important affordances only — never decoration.
  * - Neutrals for surfaces, dividers, and text.
+ *
+ * Runtime theming (A0): `palette` is the raw, theme-invariant hue set. The
+ * semantic layer ships as two schemes — `light` and `dark` — sharing the
+ * `ColorScheme` shape, swapped at runtime by `ThemeProvider` / `useThemedStyles`.
+ * `light` is the canonical map (also exported as `colors` for backward-compat,
+ * so every unmigrated consumer keeps compiling and rendering light).
  */
 
 export const palette = {
@@ -67,7 +73,55 @@ export const palette = {
   },
 } as const;
 
-export const colors = {
+/**
+ * Semantic color scheme shape. Both `light` and `dark` are annotated with it,
+ * which (a) widens values to `string` so the two schemes share one type, and
+ * (b) fails typecheck if either scheme is missing a key the other declares.
+ */
+export interface ColorScheme {
+  brand: {
+    primary: string;
+    primaryHover: string;
+    primaryPressed: string;
+    primarySoft: string;
+    primarySurface: string;
+    accent: string;
+    accentHover: string;
+    accentSoft: string;
+    accentSurface: string;
+  };
+  text: {
+    primary: string;
+    secondary: string;
+    muted: string;
+    disabled: string;
+    onBrand: string;
+    onAccent: string;
+    link: string;
+  };
+  surface: {
+    base: string;
+    raised: string;
+    sunken: string;
+    overlay: string;
+  };
+  border: {
+    subtle: string;
+    strong: string;
+    focus: string;
+  };
+  state: {
+    success: string;
+    successSurface: string;
+    warning: string;
+    warningSurface: string;
+    danger: string;
+    dangerSurface: string;
+  };
+}
+
+// — Light scheme (canonical; the merged #24 "Modern Clarity" calibration). —
+export const light: ColorScheme = {
   brand: {
     primary: palette.navy[500],
     primaryHover: palette.navy[600],
@@ -107,7 +161,58 @@ export const colors = {
     danger: palette.danger[600],
     dangerSurface: palette.danger[100],
   },
-} as const;
+};
+
+// — Dark scheme (A0): deep-navy surfaces, navy-tinted light text, navy/gold
+//   amplified for contrast on dark. Same keys as `light` (enforced by the type). —
+export const dark: ColorScheme = {
+  brand: {
+    primary: palette.navy[400],
+    primaryHover: palette.navy[300],
+    primaryPressed: palette.navy[500],
+    primarySoft: 'rgba(46, 91, 201, 0.20)',
+    primarySurface: palette.navy[900],
+    accent: palette.gold[400],
+    accentHover: palette.gold[300],
+    accentSoft: 'rgba(247, 179, 59, 0.18)',
+    accentSurface: 'rgba(247, 179, 59, 0.10)',
+  },
+  text: {
+    primary: palette.navy[50],
+    secondary: palette.navy[200],
+    muted: '#8394B4',
+    disabled: '#586688',
+    onBrand: palette.slate[0],
+    onAccent: palette.slate[900],
+    link: palette.navy[300],
+  },
+  surface: {
+    base: '#0A1226',
+    raised: '#111C38',
+    sunken: '#070E1F',
+    overlay: 'rgba(3, 8, 20, 0.60)',
+  },
+  border: {
+    subtle: 'rgba(163, 187, 233, 0.14)',
+    strong: 'rgba(163, 187, 233, 0.26)',
+    focus: palette.navy[300],
+  },
+  state: {
+    success: '#34D399',
+    successSurface: 'rgba(52, 211, 153, 0.16)',
+    warning: '#FBBF24',
+    warningSurface: 'rgba(251, 191, 36, 0.16)',
+    danger: '#F87171',
+    dangerSurface: 'rgba(248, 113, 113, 0.16)',
+  },
+};
+
+/** Backward-compat alias — `theme.colors` resolves to the light scheme. */
+export const colors = light;
+
+/** Runtime-swappable semantic schemes, keyed by name. */
+export const schemes = { light, dark };
 
 export type Palette = typeof palette;
-export type Colors = typeof colors;
+export type Colors = ColorScheme;
+export type SchemeName = keyof typeof schemes;

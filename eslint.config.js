@@ -28,12 +28,14 @@ module.exports = [
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
       ],
       // React Compiler-adjacent rules new in eslint-config-expo 57. They fire on
-      // idiomatic RN animation/ref patterns and on frozen files we cannot edit,
-      // so surface them as warnings for now rather than blocking every PR.
+      // idiomatic RN animation/ref patterns (incl. Reanimated shared-value
+      // `.value` mutation) and on frozen files we cannot edit, so surface them
+      // as warnings for now rather than blocking every PR.
       'react-hooks/refs': 'warn',
       'react-hooks/set-state-in-effect': 'warn',
       'react-hooks/purity': 'warn',
       'react-hooks/preserve-manual-memoization': 'warn',
+      'react-hooks/immutability': 'warn',
     },
   },
 ];
