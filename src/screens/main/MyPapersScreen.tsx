@@ -14,7 +14,8 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
 import { Category, PaperStatus, ResearchPaper } from '../../types/domain';
 import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
-import { theme } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 import { MyPaperCard } from '../../components/MyPaperCard';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
 import {
@@ -36,6 +37,8 @@ const isFilterMatch = (status: PaperStatus, filter: FilterKey) => {
 export const MyPapersScreen = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [query, setQuery] = useState('');
@@ -220,86 +223,87 @@ export const MyPapersScreen = () => {
 const paperDateValue = (paper: ResearchPaper) =>
   paper.published_date || paper.submission_date || paper.created_at || 0;
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.surface.base,
-  },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing['3xl'] + 56,
-    gap: theme.spacing.md,
-  },
-  header: {
-    gap: 2,
-  },
-  title: {
-    fontFamily: theme.fontFamilies.display.semibold,
-    fontSize: 26,
-    lineHeight: 32,
-    color: theme.colors.text.primary,
-  },
-  subtitle: {
-    fontFamily: theme.fontFamilies.ui.regular,
-    fontSize: 13,
-    color: theme.colors.text.muted,
-  },
-  searchWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.border.subtle,
-    borderRadius: theme.radii.md,
-    borderCurve: 'continuous',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    backgroundColor: theme.colors.surface.sunken,
-  },
-  searchInput: {
-    flex: 1,
-    ...theme.typography.body,
-    color: theme.colors.text.primary,
-    paddingVertical: 0,
-  },
-  filters: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.sm,
-  },
-  skeletonList: {
-    gap: theme.spacing.md,
-  },
-  list: {
-    gap: theme.spacing.md,
-  },
-  fab: {
-    position: 'absolute',
-    right: theme.spacing.lg,
-    bottom: theme.spacing.xl,
-    height: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.xl,
-    borderRadius: theme.radii.pill,
-    borderCurve: 'continuous',
-    backgroundColor: theme.colors.brand.accent,
-    shadowColor: theme.colors.brand.accent,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  fabPressed: {
-    opacity: 0.85,
-  },
-  fabText: {
-    fontFamily: theme.fontFamilies.ui.semibold,
-    fontSize: 15,
-    color: theme.colors.text.onBrand,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: t.colors.surface.base,
+    },
+    scroll: {
+      flex: 1,
+    },
+    content: {
+      paddingHorizontal: t.spacing.lg,
+      paddingBottom: t.spacing['3xl'] + 56,
+      gap: t.spacing.md,
+    },
+    header: {
+      gap: 2,
+    },
+    title: {
+      fontFamily: t.fontFamilies.display.semibold,
+      fontSize: 26,
+      lineHeight: 32,
+      color: t.colors.text.primary,
+    },
+    subtitle: {
+      fontFamily: t.fontFamilies.ui.regular,
+      fontSize: 13,
+      color: t.colors.text.muted,
+    },
+    searchWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: t.spacing.sm,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: t.colors.border.subtle,
+      borderRadius: t.radii.md,
+      borderCurve: 'continuous',
+      paddingHorizontal: t.spacing.md,
+      paddingVertical: t.spacing.sm,
+      backgroundColor: t.colors.surface.sunken,
+    },
+    searchInput: {
+      flex: 1,
+      ...t.typography.body,
+      color: t.colors.text.primary,
+      paddingVertical: 0,
+    },
+    filters: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: t.spacing.sm,
+    },
+    skeletonList: {
+      gap: t.spacing.md,
+    },
+    list: {
+      gap: t.spacing.md,
+    },
+    fab: {
+      position: 'absolute',
+      right: t.spacing.lg,
+      bottom: t.spacing.xl,
+      height: 52,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: t.spacing.sm,
+      paddingHorizontal: t.spacing.xl,
+      borderRadius: t.radii.pill,
+      borderCurve: 'continuous',
+      backgroundColor: t.colors.brand.accent,
+      shadowColor: t.colors.brand.accent,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.4,
+      shadowRadius: 12,
+      elevation: 6,
+    },
+    fabPressed: {
+      opacity: 0.85,
+    },
+    fabText: {
+      fontFamily: t.fontFamilies.ui.semibold,
+      fontSize: 15,
+      color: t.colors.text.onBrand,
+    },
+  });

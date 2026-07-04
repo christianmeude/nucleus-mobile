@@ -15,7 +15,8 @@ import { getSavedPaperIds, togglePaperSaved } from '../../api/collections';
 import { RootStackParamList } from '../../navigation/types';
 import { Category, ResearchPaper, WorkflowEntry } from '../../types/domain';
 import { useAuth } from '../../context/AuthContext';
-import { theme } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 import { EmptyState, InlineNotice, Skeleton } from '../../components/ui';
 import { PdfViewer } from '../../components/PdfViewer';
 import {
@@ -44,6 +45,8 @@ export const ResearchDetailScreen = () => {
   const route = useRoute<DetailRouteProp>();
   const navigation = useNavigation<any>();
   const { user } = useAuth();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { paperId } = route.params;
 
   const [paper, setPaper] = useState<ResearchPaper | null>(null);
@@ -330,7 +333,8 @@ export const ResearchDetailScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: theme.colors.surface.base,

@@ -13,11 +13,14 @@ import { invitationsApi } from '../../api/invitations';
 import { CoAuthorInvitation } from '../../types/domain';
 import { InvitationCard } from '../../components/InvitationCard';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
-import { theme } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 import { EmptyState, InlineNotice, Skeleton } from '../../components/ui';
 
 export const InvitationsScreen = () => {
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [invitations, setInvitations] = useState<CoAuthorInvitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -165,35 +168,36 @@ export const InvitationsScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.surface.base,
-  },
-  content: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing['3xl'],
-    gap: theme.spacing.lg,
-  },
-  headerBlock: {
-    gap: 0,
-  },
-  title: {
-    fontFamily: theme.fontFamilies.display.semibold,
-    fontSize: 26,
-    lineHeight: 32,
-    color: theme.colors.text.primary,
-  },
-  subtitle: {
-    fontFamily: theme.fontFamilies.ui.regular,
-    fontSize: 13,
-    color: theme.colors.text.muted,
-    marginTop: 2,
-  },
-  skeletonList: {
-    gap: theme.spacing.sm,
-  },
-  list: {
-    gap: theme.spacing.sm,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: t.colors.surface.base,
+    },
+    content: {
+      paddingHorizontal: t.spacing.lg,
+      paddingBottom: t.spacing['3xl'],
+      gap: t.spacing.lg,
+    },
+    headerBlock: {
+      gap: 0,
+    },
+    title: {
+      fontFamily: t.fontFamilies.display.semibold,
+      fontSize: 26,
+      lineHeight: 32,
+      color: t.colors.text.primary,
+    },
+    subtitle: {
+      fontFamily: t.fontFamilies.ui.regular,
+      fontSize: 13,
+      color: t.colors.text.muted,
+      marginTop: 2,
+    },
+    skeletonList: {
+      gap: t.spacing.sm,
+    },
+    list: {
+      gap: t.spacing.sm,
+    },
+  });
