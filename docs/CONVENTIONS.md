@@ -161,6 +161,7 @@ Issue numbers are canonical and fixed. **Claude Code is authorized to create and
 
 | # | Title | Status |
 |---|---|---|
+| 29 | `search: complete hybrid semantic search (Edge Functions, mobile facade, Browse wiring)` | 🔴 Open |
 | 21 | `test: unit coverage for API facades (research, invitations, notifications, faculty, collections)` | 🔴 Open |
 | 15 | `faculty: verify annotation overlays on papers returned from dean or program chair` | 🔴 Open |
 | 14 | `faculty: annotation creation — write path for review comments` | 🔴 Open |
@@ -178,7 +179,7 @@ Issue numbers are canonical and fixed. **Claude Code is authorized to create and
 | 2 | `Mobile auth: UUID mismatch between auth.users and public.users breaks RLS` | ✅ Closed |
 | 1 | `ResearchDetail: view and download counts not persisting after navigation` | ✅ Closed |
 
-**Current cap: #21.**
+**Current cap: #29.**
 
 ### Issue title format
 
