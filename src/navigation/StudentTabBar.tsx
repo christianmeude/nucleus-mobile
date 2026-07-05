@@ -32,6 +32,13 @@ const INDICATOR_TIMING = {
   easing: Easing.bezier(0.34, 1.3, 0.4, 1),
 };
 
+// Inset the sliding pill from each tab's edges so it doesn't sit flush to the
+// bar's inner wall (and leaves a gap between adjacent tabs).
+const PILL_INSET = 8;
+
+// Dark ink on the gold FAB (mockup ink-on-gold) — white read as poor contrast.
+const FAB_INK = '#3A2600';
+
 interface TabItemProps {
   routeName: keyof StudentTabsParamList;
   focused: boolean;
@@ -96,12 +103,14 @@ export const StudentTabBar = ({ state, navigation }: BottomTabBarProps) => {
     (index: number, animate: boolean) => {
       const layout = layouts.current[index];
       if (!layout) return;
+      const x = layout.x + PILL_INSET;
+      const width = layout.width - PILL_INSET * 2;
       if (animate) {
-        indX.value = withTiming(layout.x, INDICATOR_TIMING);
-        indW.value = withTiming(layout.width, INDICATOR_TIMING);
+        indX.value = withTiming(x, INDICATOR_TIMING);
+        indW.value = withTiming(width, INDICATOR_TIMING);
       } else {
-        indX.value = layout.x;
-        indW.value = layout.width;
+        indX.value = x;
+        indW.value = width;
       }
     },
     [indX, indW]
@@ -177,7 +186,8 @@ export const StudentTabBar = ({ state, navigation }: BottomTabBarProps) => {
             accessibilityRole="button"
             accessibilityLabel="Submit research"
           >
-            <Ionicons name="add" size={28} color={theme.colors.text.onBrand} />
+            <View style={styles.fabGloss} pointerEvents="none" />
+            <Ionicons name="create-outline" size={26} color={FAB_INK} />
           </PressableScale>
         </View>
       </View>
@@ -215,7 +225,7 @@ const makeStyles = (t: Theme) =>
       left: 0,
       top: 9,
       height: 48,
-      borderRadius: 16,
+      borderRadius: 20,
       borderCurve: 'continuous',
       backgroundColor: t.colors.brand.primarySoft,
       zIndex: 0,
@@ -245,15 +255,32 @@ const makeStyles = (t: Theme) =>
     fab: {
       width: 58,
       height: 58,
-      borderRadius: 20,
+      borderRadius: 24,
       borderCurve: 'continuous',
       backgroundColor: t.colors.brand.accent,
       alignItems: 'center',
       justifyContent: 'center',
+      // Faux-gradient depth until expo-linear-gradient lands (A3): a lighter
+      // top edge + saturated gold shadow read as a lit, textured squircle.
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: 'rgba(255,255,255,0.55)',
       shadowColor: t.colors.brand.accent,
       shadowOffset: { width: 0, height: 10 },
       shadowOpacity: 0.6,
       shadowRadius: 16,
       elevation: 10,
+    },
+    // Top-highlight sheen overlay — the light-catch that gives the flat gold
+    // fill its "moving-forward" dimensionality.
+    fabGloss: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: '55%',
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      borderCurve: 'continuous',
+      backgroundColor: 'rgba(255,255,255,0.28)',
     },
   });
