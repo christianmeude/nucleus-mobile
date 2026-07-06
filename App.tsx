@@ -1,6 +1,7 @@
 import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
+import { BlurTargetView } from 'expo-blur';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   useFonts as useRoboto,
@@ -20,6 +21,7 @@ import { AuthProvider } from './src/context/AuthContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { RoleGuard } from './src/navigation/RoleGuard';
+import { navBlurTargetRef } from './src/navigation/navBlurTarget';
 
 const FontLoader = () => {
   const { theme } = useTheme();
@@ -60,11 +62,16 @@ const AppShell = () => {
     <>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       {fontsReady ? (
-        <AuthProvider>
-          <RoleGuard>
-            <AppNavigator />
-          </RoleGuard>
-        </AuthProvider>
+        // Wraps the whole app so StudentTabBar's floating BlurView has a
+        // `blurTarget` to sample as its background on Android (see
+        // src/navigation/navBlurTarget.ts).
+        <BlurTargetView ref={navBlurTargetRef} style={{ flex: 1 }}>
+          <AuthProvider>
+            <RoleGuard>
+              <AppNavigator />
+            </RoleGuard>
+          </AuthProvider>
+        </BlurTargetView>
       ) : (
         <FontLoader />
       )}
