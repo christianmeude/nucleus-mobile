@@ -401,12 +401,15 @@ slides, one swipeable `FlatList` (`pagingEnabled`, horizontal), full-bleed
   across every department — search, filter, and read what NU is publishing."
 - **Slide 2 — Submit in Minutes.** Icon: `cloud-upload-outline`. "Upload your
   paper and send it straight into faculty review, right from your phone."
-- **Slide 3 — Follow Every Stage.** Illustration is literally the Dashboard's
-  own stage-progress motif (see **Dashboard (A3)** above) rendered mid-flow —
-  `Submitted → Faculty → Dean → Published` with the third dot in the `accent`
-  gold-ring current-stage treatment — reusing a component the student will
-  recognize on first login, not a generic icon. "Track your submission from
-  faculty review to publication, every step visible."
+- **Slide 3 — Follow Every Stage.** Illustration is a standalone stage-progress
+  strip — `Submitted → Faculty → Dean → Published` with the third dot in the
+  `accent` gold-ring current-stage treatment — not a generic icon. **Note:**
+  Dashboard's own stage-progress card (the component this slide originally
+  meant to reuse) was removed from `DashboardScreen.tsx` per issue #50 — this
+  motif no longer exists anywhere in the codebase and must be built fresh for
+  this slide (a small presentational component, not wired to any real
+  submission data). "Track your submission from faculty review to
+  publication, every step visible."
 - **Slide 4 — Stay in the Loop.** Icon: `notifications-outline` with a small
   `accent`-filled badge dot top-right of the tile (glyph itself in `accent`,
   the emphasis exception noted above). "Get notified the moment your status
