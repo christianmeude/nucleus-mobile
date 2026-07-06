@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
+import { useRecentSearches } from '../../hooks/useRecentSearches';
 import { Category, ResearchPaper } from '../../types/domain';
 import { formatDate, getPrimaryAuthorName, paperDate } from '../../utils/format';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
@@ -71,6 +72,7 @@ export const BrowseScreen = () => {
   const [searched, setSearched] = useState(false);
   const [greeting, setGreeting] = useState(pickGreeting);
   const progress = useSharedValue(0);
+  const { recent, addRecent } = useRecentSearches();
 
   const loadData = useCallback(async (silent = false) => {
     if (!silent) {
@@ -122,12 +124,19 @@ export const BrowseScreen = () => {
     transform: [{ translateY: (1 - progress.value) * 24 }],
   }));
 
-  const submitSearch = useCallback(() => {
-    if (query.trim()) {
+  const runSearch = useCallback(
+    (term: string) => {
+      const trimmed = term.trim();
+      if (!trimmed) return;
+      addRecent(trimmed);
+      setQuery(trimmed);
       setSearched(true);
       Keyboard.dismiss();
-    }
-  }, [query]);
+    },
+    [addRecent],
+  );
+
+  const submitSearch = useCallback(() => runSearch(query), [query, runSearch]);
 
   const resetToIdle = useCallback(() => {
     setQuery('');
@@ -258,6 +267,37 @@ export const BrowseScreen = () => {
               <Chip label="Clear" active={false} onPress={resetToIdle} variant="filter" />
             </View>
           </View>
+
+          {!searched && recent.length > 0 ? (
+            <Animated.View style={[styles.recentRow, greetingStyle]} pointerEvents="box-none">
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.recentRowContent}
+                keyboardShouldPersistTaps="handled"
+              >
+                {recent.map((term, index) => (
+                  <Pressable
+                    key={term}
+                    style={styles.recentChip}
+                    onPress={() => runSearch(term)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Search recent: ${term}`}
+                  >
+                    {index === 0 ? (
+                      <Ionicons
+                        name="time-outline"
+                        size={14}
+                        color={theme.colors.brand.primary}
+                        style={styles.recentChipIcon}
+                      />
+                    ) : null}
+                    <Text style={styles.recentChipText}>{term}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </Animated.View>
+          ) : null}
         </View>
 
         <Animated.View style={[styles.resultsWrap, resultsStyle]}>
@@ -550,6 +590,29 @@ const makeStyles = (theme: Theme) =>
   clearHidden: {
     width: 0,
     overflow: 'hidden',
+  },
+  recentRow: {
+    marginTop: theme.spacing.md,
+  },
+  recentRowContent: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    paddingRight: theme.spacing.lg,
+  },
+  recentChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 36,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.radii.pill,
+    backgroundColor: theme.colors.brand.primarySoft,
+  },
+  recentChipIcon: {
+    marginRight: 6,
+  },
+  recentChipText: {
+    ...theme.typography.label,
+    color: theme.colors.brand.primary,
   },
   loadingWrap: {
     gap: theme.spacing.md,
