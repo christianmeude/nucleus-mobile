@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  FlatList,
   Keyboard,
   Pressable,
   RefreshControl,
@@ -9,14 +10,16 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import type { ListRenderItem } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
   runOnJS,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
-  withRepeat,
   withSequence,
+  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -34,6 +37,7 @@ import { BottomSheet, Chip, EmptyState, InlineNotice, Skeleton, TopBar } from '.
 import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
 
 type SortKey = 'newest' | 'most_viewed';
+type ViewMode = 'list' | 'grid';
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'newest', label: 'Newest' },
@@ -51,27 +55,113 @@ const GREETINGS = [
   'Look something up.',
 ];
 
+/** Static suggested-search terms for the first-run idle landing (Issue #37) —
+ * populated regardless of personal history, distinct from the "Recent" row. */
+const SUGGESTED_SEARCHES = [
+  'Machine learning',
+  'Mental health',
+  'Climate change',
+  'Data privacy',
+  'Renewable energy',
+  'Online learning',
+];
+
 const pickGreeting = () => GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
 
-/** Swipe-up-and-hold on the explore hint: full travel to reveal results, and
- * the fraction of that travel a release must clear to commit vs. spring back. */
+/** Swipe-up-and-hold explore gesture: full travel to commit, and the fraction
+ * of that travel a release must clear to commit vs. spring back. */
 const EXPLORE_DRAG_DISTANCE = 110;
 const EXPLORE_COMMIT_THRESHOLD = 0.4;
+const EXPLORE_ARROW_SIZE = 34;
 
 const viewsOf = (paper: ResearchPaper) => paper.view_count || 0;
 const timeOf = (paper: ResearchPaper) => new Date(paperDate(paper) || 0).getTime();
+
+type BrowseStyles = ReturnType<typeof makeStyles>;
+
+interface BrowseListCardProps {
+  paper: ResearchPaper;
+  categoryColor: string;
+  categoryName: string | null;
+  onOpen: (paperId: string) => void;
+  styles: BrowseStyles;
+}
+
+/** Memoized list-mode row (Issue #38) — isolates re-renders from FlatList scroll churn. */
+const BrowseListCard = memo(function BrowseListCard({
+  paper,
+  categoryColor,
+  categoryName,
+  onOpen,
+  styles,
+}: BrowseListCardProps) {
+  const handlePress = useCallback(() => onOpen(paper.id), [onOpen, paper.id]);
+
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+      onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={paper.title || 'Untitled paper'}
+    >
+      <View style={styles.cardCatRow}>
+        <View style={[styles.dot, { backgroundColor: categoryColor }]} />
+        <Text style={[styles.cardCat, { color: categoryColor }]} numberOfLines={1}>
+          {categoryName || 'Research'}
+        </Text>
+      </View>
+      <Text style={styles.cardTitle} numberOfLines={2}>
+        {paper.title}
+      </Text>
+      <Text style={styles.cardMeta} numberOfLines={1}>
+        {getPrimaryAuthorName(paper)} · {formatDate(paperDate(paper))}
+      </Text>
+    </Pressable>
+  );
+});
+
+interface BrowseGridCellProps {
+  paper: ResearchPaper;
+  category: string | null;
+  categoryColor: string;
+  onOpen: (paperId: string) => void;
+  styles: BrowseStyles;
+}
+
+/** Memoized grid-mode cell (Issue #38), wrapping the shared `ResearchTile`. */
+const BrowseGridCell = memo(function BrowseGridCell({
+  paper,
+  category,
+  categoryColor,
+  onOpen,
+  styles,
+}: BrowseGridCellProps) {
+  const handlePress = useCallback(() => onOpen(paper.id), [onOpen, paper.id]);
+
+  return (
+    <View style={styles.gridCell}>
+      <ResearchTile
+        paper={paper}
+        category={category}
+        categoryColor={categoryColor}
+        onPress={handlePress}
+      />
+    </View>
+  );
+});
 
 export const BrowseScreen = () => {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const reducedMotion = useReducedMotion();
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [sort, setSort] = useState<SortKey>('newest');
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [sortSheetOpen, setSortSheetOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -82,9 +172,16 @@ export const BrowseScreen = () => {
   const [searched, setSearched] = useState(false);
   const [greeting, setGreeting] = useState(pickGreeting);
   const progress = useSharedValue(0);
-  const bob = useSharedValue(0);
-  // Set when a persisted flag (or the explore gesture) forces `searched` without
-  // a user-initiated submit, so the morph jumps instead of replaying the 420ms tween.
+  // Explore-gesture fill (0..1): drives the arrow's pull-to-refresh-style fill
+  // while held. Deliberately independent of `progress` — the hold only shows
+  // fill/arrow feedback, never scrubs the results reveal (Issue #36).
+  const exploreFill = useSharedValue(0);
+  const explorePop = useSharedValue(1);
+  // Set when a committed explore-gesture release should drive the results
+  // reveal with the fast-start/decelerate spring instead of the typed-search tween.
+  const exploreReveal = useRef(false);
+  // Set when a persisted flag forces `searched` without a user-initiated submit,
+  // so the morph jumps instead of replaying either reveal animation.
   const skipMorphAnim = useRef(false);
   const { recent, addRecent } = useRecentSearches();
   const { hasSearchedOnce, loaded: hasSearchedOnceLoaded, markSearchedOnce } = useHasSearchedOnce();
@@ -140,21 +237,20 @@ export const BrowseScreen = () => {
       skipMorphAnim.current = false;
       return;
     }
-    progress.value = withTiming(searched ? 1 : 0, {
-      duration: 420,
-      easing: Easing.out(Easing.cubic),
-    });
-  }, [searched, progress]);
-
-  useEffect(() => {
-    bob.value = withRepeat(
-      withSequence(
-        withTiming(-6, { duration: 900, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 900, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-    );
-  }, [bob]);
+    if (searched && exploreReveal.current) {
+      exploreReveal.current = false;
+      // Fast-start/ease-in-settle: high initial velocity, moderate damping —
+      // distinct from the typed-search reveal's constant 420ms cubic tween (Issue #36).
+      progress.value = reducedMotion ? 1 : withSpring(1, { damping: 16, stiffness: 190, velocity: 5 });
+      return;
+    }
+    exploreReveal.current = false;
+    progress.value = reducedMotion
+      ? searched
+        ? 1
+        : 0
+      : withTiming(searched ? 1 : 0, { duration: 420, easing: Easing.out(Easing.cubic) });
+  }, [searched, progress, reducedMotion]);
 
   const spacerStyle = useAnimatedStyle(() => ({ flexGrow: 1 - progress.value }));
   const greetingStyle = useAnimatedStyle(() => ({ opacity: 1 - progress.value }));
@@ -163,7 +259,12 @@ export const BrowseScreen = () => {
     opacity: progress.value,
     transform: [{ translateY: (1 - progress.value) * 24 }],
   }));
-  const bobStyle = useAnimatedStyle(() => ({ transform: [{ translateY: bob.value }] }));
+  const explorePopStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: explorePop.value }],
+  }));
+  const exploreFillStyle = useAnimatedStyle(() => ({
+    height: exploreFill.value * EXPLORE_ARROW_SIZE,
+  }));
 
   const runSearch = useCallback(
     (term: string) => {
@@ -182,7 +283,11 @@ export const BrowseScreen = () => {
 
   // Explore gesture commits into results mode with no query — browsing the
   // full unfiltered repository, same destination the hint card advertises.
+  // `exploreReveal` is only ever flagged true here, on the JS thread — the
+  // gesture's `.onEnd` worklet runs on the UI thread, where mutating a plain
+  // ref does not propagate back to the JS-thread ref this closure captures.
   const commitExplore = useCallback(() => {
+    exploreReveal.current = true;
     setSearched(true);
     markSearchedOnce();
   }, [markSearchedOnce]);
@@ -191,18 +296,31 @@ export const BrowseScreen = () => {
     () =>
       Gesture.Pan()
         .onUpdate((event) => {
+          // Hold/drag only drives the fill feedback — results stay hidden
+          // until a committed release (Issue #36).
           const travelled = Math.max(0, -event.translationY);
-          progress.value = Math.min(1, travelled / EXPLORE_DRAG_DISTANCE);
+          exploreFill.value = Math.min(1, travelled / EXPLORE_DRAG_DISTANCE);
         })
         .onEnd(() => {
-          if (progress.value >= EXPLORE_COMMIT_THRESHOLD) {
-            progress.value = withTiming(1, { duration: 260, easing: Easing.out(Easing.cubic) });
+          const committed = exploreFill.value >= EXPLORE_COMMIT_THRESHOLD;
+          if (committed) {
+            if (reducedMotion) {
+              exploreFill.value = 1;
+            } else {
+              exploreFill.value = withTiming(1, { duration: 140, easing: Easing.out(Easing.quad) });
+              explorePop.value = withSequence(
+                withTiming(1.3, { duration: 110, easing: Easing.out(Easing.quad) }),
+                withTiming(1, { duration: 160, easing: Easing.out(Easing.quad) }),
+              );
+            }
             runOnJS(commitExplore)();
+          } else if (reducedMotion) {
+            exploreFill.value = 0;
           } else {
-            progress.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.cubic) });
+            exploreFill.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.cubic) });
           }
         }),
-    [progress, commitExplore],
+    [exploreFill, explorePop, commitExplore, reducedMotion],
   );
 
   const clearSearch = useCallback(() => {
@@ -288,13 +406,166 @@ export const BrowseScreen = () => {
     return sorted.filter((paper) => paper.id !== featured.id);
   }, [featured, sorted]);
 
+  const listData = loading ? [] : gridItems;
+
   const openDetail = useCallback(
     (paperId: string) => navigation.navigate('ResearchDetail', { paperId }),
     [navigation],
   );
 
+  const keyExtractor = useCallback((item: ResearchPaper) => item.id, []);
+
+  const renderItem: ListRenderItem<ResearchPaper> = useCallback(
+    ({ item }) => {
+      const categoryColor = colorForCategory(item.category);
+      const categoryName = resolveCategoryName(item.category, categoryNameById);
+      return viewMode === 'grid' ? (
+        <BrowseGridCell
+          paper={item}
+          category={categoryName}
+          categoryColor={categoryColor}
+          onOpen={openDetail}
+          styles={styles}
+        />
+      ) : (
+        <BrowseListCard
+          paper={item}
+          categoryColor={categoryColor}
+          categoryName={categoryName}
+          onOpen={openDetail}
+          styles={styles}
+        />
+      );
+    },
+    [viewMode, colorForCategory, categoryNameById, openDetail, styles],
+  );
+
   const sortLabel = SORT_OPTIONS.find((option) => option.value === sort)?.label ?? 'Newest';
   const showClear = searched || Boolean(query.trim());
+
+  // Sort sheet trigger, category chips, and featured hero render as the
+  // FlatList's header, not separately-scrolled content above it (Issue #38).
+  const listHeaderElement = (
+    <>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chipsRow}
+      >
+        <Pressable
+          style={[styles.topicChip, !categoryFilter && styles.topicChipActive]}
+          onPress={() => setCategoryFilter('')}
+          accessibilityRole="button"
+          accessibilityLabel="All categories"
+        >
+          <Text style={[styles.topicChipText, !categoryFilter && styles.topicChipTextActive]}>
+            All
+          </Text>
+        </Pressable>
+        {categories.map((category) => {
+          const active = categoryFilter === category.id;
+          return (
+            <Pressable
+              key={category.id}
+              style={[styles.topicChip, active && styles.topicChipActive]}
+              onPress={() => setCategoryFilter(active ? '' : category.id)}
+              accessibilityRole="button"
+              accessibilityLabel={category.name}
+            >
+              <Text style={[styles.topicChipText, active && styles.topicChipTextActive]}>
+                {category.name}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      <View style={styles.subbar}>
+        <Text style={styles.resultCount}>
+          {sorted.length} {sorted.length === 1 ? 'Paper' : 'Papers'}
+        </Text>
+        <View style={styles.subbarRight}>
+          <Pressable
+            style={styles.sortLink}
+            onPress={() => setSortSheetOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel={`Sort: ${sortLabel}`}
+          >
+            <Text style={styles.sortLinkText}>{sortLabel}</Text>
+            <Ionicons name="chevron-down" size={13} color={theme.colors.brand.primary} />
+          </Pressable>
+          <View style={styles.viewToggle}>
+            <Pressable
+              style={[styles.vt, viewMode === 'list' && styles.vtActive]}
+              onPress={() => setViewMode('list')}
+              accessibilityRole="button"
+              accessibilityLabel="List view"
+            >
+              <Ionicons
+                name="reorder-three-outline"
+                size={17}
+                color={viewMode === 'list' ? theme.colors.brand.primary : theme.colors.text.muted}
+              />
+            </Pressable>
+            <Pressable
+              style={[styles.vt, viewMode === 'grid' && styles.vtActive]}
+              onPress={() => setViewMode('grid')}
+              accessibilityRole="button"
+              accessibilityLabel="Grid view"
+            >
+              <Ionicons
+                name="grid-outline"
+                size={15}
+                color={viewMode === 'grid' ? theme.colors.brand.primary : theme.colors.text.muted}
+              />
+            </Pressable>
+          </View>
+        </View>
+      </View>
+
+      {error ? <InlineNotice tone="danger" message={error} /> : null}
+
+      {!loading && featured ? (
+        <Pressable
+          style={styles.hero}
+          onPress={() => openDetail(featured.id)}
+          accessibilityRole="button"
+          accessibilityLabel={`Featured paper: ${featured.title || 'Untitled paper'}`}
+        >
+          <View style={styles.heroRingLg} />
+          <View style={styles.heroRingSm} />
+          <Text style={styles.heroBadge}>Featured Paper</Text>
+          <Text style={styles.heroTitle} numberOfLines={3}>
+            {featured.title}
+          </Text>
+          <View style={styles.heroMeta}>
+            <Text style={styles.heroMetaText} numberOfLines={1}>
+              {getPrimaryAuthorName(featured)}
+            </Text>
+            <Text style={styles.heroMetaSep}>·</Text>
+            <Text style={styles.heroMetaText}>{viewsOf(featured)} views</Text>
+          </View>
+        </Pressable>
+      ) : null}
+    </>
+  );
+
+  const listEmptyElement = loading ? (
+    <View style={styles.loadingWrap}>
+      <Skeleton height={140} />
+      <Skeleton height={84} />
+      <Skeleton height={84} />
+      <Skeleton height={84} />
+    </View>
+  ) : sorted.length === 0 ? (
+    <EmptyState
+      icon={<Ionicons name="library-outline" size={24} color={theme.colors.text.muted} />}
+      title="No papers found"
+      message={
+        query.trim() ? `No results for "${query.trim()}"` : 'No papers found in this category'
+      }
+    />
+  ) : null;
 
   return (
     <>
@@ -371,24 +642,67 @@ export const BrowseScreen = () => {
           ) : null}
 
           {!searched ? (
+            <Animated.View style={[styles.suggestedRow, greetingStyle]} pointerEvents="box-none">
+              <Text style={styles.suggestedLabel}>Popular searches</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.suggestedRowContent}
+                keyboardShouldPersistTaps="handled"
+              >
+                {SUGGESTED_SEARCHES.map((term) => (
+                  <Pressable
+                    key={term}
+                    style={styles.suggestedChip}
+                    onPress={() => runSearch(term)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Search suggested: ${term}`}
+                  >
+                    <Ionicons
+                      name="trending-up-outline"
+                      size={13}
+                      color={theme.colors.text.secondary}
+                      style={styles.suggestedChipIcon}
+                    />
+                    <Text style={styles.suggestedChipText}>{term}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </Animated.View>
+          ) : null}
+
+          {!searched ? (
             <GestureDetector gesture={exploreGesture}>
               <Animated.View style={[styles.exploreHint, greetingStyle]}>
-                <Animated.View style={[styles.exploreHintUp, bobStyle]}>
-                  <Ionicons name="chevron-up" size={18} color={theme.colors.brand.primary} />
+                <Animated.View style={[styles.exploreArrowTile, explorePopStyle]}>
+                  <Ionicons name="arrow-up" size={18} color={theme.colors.brand.primary} />
+                  <Animated.View
+                    style={[styles.exploreArrowFillMask, exploreFillStyle]}
+                    pointerEvents="none"
+                  >
+                    <View style={styles.exploreArrowFillInner}>
+                      <Ionicons name="arrow-up" size={18} color={theme.colors.text.onBrand} />
+                    </View>
+                  </Animated.View>
                 </Animated.View>
-                <Text style={styles.exploreHintText}>
-                  <Text style={styles.exploreHintBold}>Swipe up & hold</Text>
-                  {'\n'}Release to explore the full repository
-                </Text>
+                <Text style={styles.exploreLabel}>Swipe up to browse papers</Text>
               </Animated.View>
             </GestureDetector>
           ) : null}
         </View>
 
         <Animated.View style={[styles.resultsWrap, resultsStyle]}>
-          <ScrollView
+          <FlatList
+            key={viewMode}
             style={styles.scroll}
             contentContainerStyle={styles.resultsContent}
+            data={listData}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+            numColumns={viewMode === 'grid' ? 2 : 1}
+            columnWrapperStyle={viewMode === 'grid' ? styles.gridRow : undefined}
+            ListHeaderComponent={listHeaderElement}
+            ListEmptyComponent={listEmptyElement}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
             refreshControl={
@@ -399,180 +713,7 @@ export const BrowseScreen = () => {
                 colors={[theme.colors.brand.primary]}
               />
             }
-          >
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.chipsRow}
-            >
-              <Pressable
-                style={[styles.topicChip, !categoryFilter && styles.topicChipActive]}
-                onPress={() => setCategoryFilter('')}
-                accessibilityRole="button"
-                accessibilityLabel="All categories"
-              >
-                <Text style={[styles.topicChipText, !categoryFilter && styles.topicChipTextActive]}>
-                  All
-                </Text>
-              </Pressable>
-              {categories.map((category) => {
-                const active = categoryFilter === category.id;
-                return (
-                  <Pressable
-                    key={category.id}
-                    style={[styles.topicChip, active && styles.topicChipActive]}
-                    onPress={() => setCategoryFilter(active ? '' : category.id)}
-                    accessibilityRole="button"
-                    accessibilityLabel={category.name}
-                  >
-                    <Text style={[styles.topicChipText, active && styles.topicChipTextActive]}>
-                      {category.name}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-
-            <View style={styles.subbar}>
-              <Text style={styles.resultCount}>
-                {sorted.length} {sorted.length === 1 ? 'Paper' : 'Papers'}
-              </Text>
-              <View style={styles.subbarRight}>
-                <Pressable
-                  style={styles.sortLink}
-                  onPress={() => setSortSheetOpen(true)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Sort: ${sortLabel}`}
-                >
-                  <Text style={styles.sortLinkText}>{sortLabel}</Text>
-                  <Ionicons name="chevron-down" size={13} color={theme.colors.brand.primary} />
-                </Pressable>
-                <View style={styles.viewToggle}>
-                  <Pressable
-                    style={[styles.vt, viewMode === 'list' && styles.vtActive]}
-                    onPress={() => setViewMode('list')}
-                    accessibilityRole="button"
-                    accessibilityLabel="List view"
-                  >
-                    <Ionicons
-                      name="reorder-three-outline"
-                      size={17}
-                      color={
-                        viewMode === 'list' ? theme.colors.brand.primary : theme.colors.text.muted
-                      }
-                    />
-                  </Pressable>
-                  <Pressable
-                    style={[styles.vt, viewMode === 'grid' && styles.vtActive]}
-                    onPress={() => setViewMode('grid')}
-                    accessibilityRole="button"
-                    accessibilityLabel="Grid view"
-                  >
-                    <Ionicons
-                      name="grid-outline"
-                      size={15}
-                      color={
-                        viewMode === 'grid' ? theme.colors.brand.primary : theme.colors.text.muted
-                      }
-                    />
-                  </Pressable>
-                </View>
-              </View>
-            </View>
-
-            {error ? <InlineNotice tone="danger" message={error} /> : null}
-
-            {loading ? (
-              <View style={styles.loadingWrap}>
-                <Skeleton height={140} />
-                <Skeleton height={84} />
-                <Skeleton height={84} />
-                <Skeleton height={84} />
-              </View>
-            ) : sorted.length === 0 ? (
-              <EmptyState
-                icon={<Ionicons name="library-outline" size={24} color={theme.colors.text.muted} />}
-                title="No papers found"
-                message={
-                  query.trim()
-                    ? `No results for "${query.trim()}"`
-                    : 'No papers found in this category'
-                }
-              />
-            ) : (
-              <>
-                {featured ? (
-                  <Pressable
-                    style={styles.hero}
-                    onPress={() => openDetail(featured.id)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Featured paper: ${featured.title || 'Untitled paper'}`}
-                  >
-                    <View style={styles.heroRingLg} />
-                    <View style={styles.heroRingSm} />
-                    <Text style={styles.heroBadge}>Featured Paper</Text>
-                    <Text style={styles.heroTitle} numberOfLines={3}>
-                      {featured.title}
-                    </Text>
-                    <View style={styles.heroMeta}>
-                      <Text style={styles.heroMetaText} numberOfLines={1}>
-                        {getPrimaryAuthorName(featured)}
-                      </Text>
-                      <Text style={styles.heroMetaSep}>·</Text>
-                      <Text style={styles.heroMetaText}>{viewsOf(featured)} views</Text>
-                    </View>
-                  </Pressable>
-                ) : null}
-
-                {viewMode === 'grid' ? (
-                  <View style={styles.grid}>
-                    {gridItems.map((paper) => (
-                      <View key={paper.id} style={styles.gridCell}>
-                        <ResearchTile
-                          paper={paper}
-                          category={resolveCategoryName(paper.category, categoryNameById)}
-                          categoryColor={colorForCategory(paper.category)}
-                          onPress={() => openDetail(paper.id)}
-                        />
-                      </View>
-                    ))}
-                  </View>
-                ) : (
-                  <View style={styles.list}>
-                    {gridItems.map((paper) => {
-                      const categoryColor = colorForCategory(paper.category);
-                      const categoryName = resolveCategoryName(paper.category, categoryNameById);
-                      return (
-                        <Pressable
-                          key={paper.id}
-                          style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-                          onPress={() => openDetail(paper.id)}
-                          accessibilityRole="button"
-                          accessibilityLabel={paper.title || 'Untitled paper'}
-                        >
-                          <View style={styles.cardCatRow}>
-                            <View style={[styles.dot, { backgroundColor: categoryColor }]} />
-                            <Text
-                              style={[styles.cardCat, { color: categoryColor }]}
-                              numberOfLines={1}
-                            >
-                              {categoryName || 'Research'}
-                            </Text>
-                          </View>
-                          <Text style={styles.cardTitle} numberOfLines={2}>
-                            {paper.title}
-                          </Text>
-                          <Text style={styles.cardMeta} numberOfLines={1}>
-                            {getPrimaryAuthorName(paper)} · {formatDate(paperDate(paper))}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                )}
-              </>
-            )}
-          </ScrollView>
+          />
         </Animated.View>
 
         <Animated.View style={[styles.spacer, spacerStyle]} pointerEvents="none" />
@@ -699,34 +840,77 @@ const makeStyles = (theme: Theme) =>
     ...theme.typography.label,
     color: theme.colors.brand.primary,
   },
-  exploreHint: {
-    marginTop: theme.spacing.sm,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: theme.colors.border.subtle,
-    borderRadius: theme.radii.xl,
-    paddingVertical: 22,
-    paddingHorizontal: theme.spacing.lg,
+  suggestedRow: {
+    marginTop: theme.spacing.md,
   },
-  exploreHintUp: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
+  suggestedLabel: {
+    fontFamily: theme.fontFamilies.ui.semibold,
+    fontSize: 11,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: theme.colors.text.muted,
     marginBottom: theme.spacing.sm,
+  },
+  suggestedRowContent: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    paddingRight: theme.spacing.lg,
+  },
+  suggestedChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 36,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.radii.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border.subtle,
+    backgroundColor: theme.colors.surface.raised,
+  },
+  suggestedChipIcon: {
+    marginRight: 6,
+  },
+  suggestedChipText: {
+    ...theme.typography.label,
+    color: theme.colors.text.secondary,
+  },
+  exploreHint: {
+    marginTop: theme.spacing.md,
+    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
+  },
+  exploreArrowTile: {
+    width: EXPLORE_ARROW_SIZE,
+    height: EXPLORE_ARROW_SIZE,
+    borderRadius: 12,
+    marginBottom: theme.spacing.xs,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.brand.primarySoft,
+    overflow: 'hidden',
+    position: 'relative',
   },
-  exploreHintText: {
-    ...theme.typography.caption,
-    textAlign: 'center',
-    lineHeight: 18,
+  exploreArrowFillMask: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    overflow: 'hidden',
+    backgroundColor: theme.colors.brand.primary,
+  },
+  exploreArrowFillInner: {
+    width: EXPLORE_ARROW_SIZE,
+    height: EXPLORE_ARROW_SIZE,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  exploreLabel: {
+    fontFamily: theme.fontFamilies.ui.medium,
+    fontSize: 12,
     color: theme.colors.text.muted,
-  },
-  exploreHintBold: {
-    fontFamily: theme.fontFamilies.ui.semibold,
-    color: theme.colors.text.primary,
+    textAlign: 'center',
   },
   loadingWrap: {
     gap: theme.spacing.md,
@@ -786,11 +970,8 @@ const makeStyles = (theme: Theme) =>
     ...theme.typography.caption,
     color: 'rgba(255, 255, 255, 0.3)',
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  gridRow: {
     justifyContent: 'space-between',
-    rowGap: theme.spacing.md,
   },
   gridCell: {
     width: '48%',
@@ -882,9 +1063,6 @@ const makeStyles = (theme: Theme) =>
   },
   vtActive: {
     backgroundColor: theme.colors.surface.raised,
-  },
-  list: {
-    gap: theme.spacing.sm,
   },
   card: {
     backgroundColor: theme.colors.surface.raised,
