@@ -3,6 +3,8 @@ import { LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -10,7 +12,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
-import { type Theme } from '../theme';
+import { palette, type Theme } from '../theme';
 import { PressableScale } from '../components/ui';
 import { haptics } from '../lib/haptics';
 import { useReduceMotion } from '../hooks/useReduceMotion';
@@ -38,6 +40,25 @@ const PILL_INSET = 8;
 
 // Dark ink on the gold FAB (mockup ink-on-gold) — white read as poor contrast.
 const FAB_INK = '#3A2600';
+
+// Mockup's frosted bar: `background: var(--nav) /* ~93% opaque */;
+// backdrop-filter: blur(18px)`. expo-blur's `intensity` (1-100) isn't a literal
+// px radius, so this is a chosen approximation, not a measured conversion —
+// verify on-device against the mockup before treating it as final.
+const BAR_BLUR_INTENSITY = 50;
+// Android has no real blur without an explicit method (default renders a flat
+// semi-transparent view per expo-blur's own docs); this is the SDK31+ native
+// implementation with automatic fallback to 'none' on older devices.
+const BAR_BLUR_METHOD = 'dimezisBlurViewSdk31Plus' as const;
+// Near-opaque tint over the blur, matching the mockup's `--nav` alpha (~0.93)
+// so the bar reads as frosted-but-legible rather than a see-through pane.
+const BAR_TINT_OPACITY = 0.9;
+
+// Mockup FAB fill: `linear-gradient(145deg, #F8C156, #F5A623)` — mode-invariant
+// (the mockup hardcodes these hex stops regardless of light/dark). 145deg
+// converted to expo-linear-gradient's normalized start/end points.
+const FAB_GRADIENT_START = { x: 0.21, y: 0.09 };
+const FAB_GRADIENT_END = { x: 0.79, y: 0.91 };
 
 interface TabItemProps {
   routeName: keyof StudentTabsParamList;
@@ -87,7 +108,7 @@ const TabItem = ({
  */
 export const StudentTabBar = ({ state, navigation }: BottomTabBarProps) => {
   const insets = useSafeAreaInsets();
-  const { theme } = useTheme();
+  const { theme, scheme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const reduceMotion = useReduceMotion();
 
@@ -168,14 +189,23 @@ export const StudentTabBar = ({ state, navigation }: BottomTabBarProps) => {
 
   return (
     <View style={[styles.wrap, { paddingBottom: insets.bottom || theme.spacing.sm }]}>
-      <View style={styles.bar}>
-        <Animated.View style={[styles.indicator, indicatorStyle]} pointerEvents="none" />
+      <View style={styles.barShadow}>
+        <View style={styles.bar}>
+          <BlurView
+            intensity={BAR_BLUR_INTENSITY}
+            tint={scheme === 'dark' ? 'dark' : 'light'}
+            blurMethod={BAR_BLUR_METHOD}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.barTint} pointerEvents="none" />
+          <Animated.View style={[styles.indicator, indicatorStyle]} pointerEvents="none" />
 
-        {renderTab(0)}
-        {renderTab(1)}
-        <View style={styles.spacer} />
-        {renderTab(2)}
-        {renderTab(3)}
+          {renderTab(0)}
+          {renderTab(1)}
+          <View style={styles.spacer} />
+          {renderTab(2)}
+          {renderTab(3)}
+        </View>
 
         <View style={styles.fabSlot} pointerEvents="box-none">
           <PressableScale
@@ -186,7 +216,13 @@ export const StudentTabBar = ({ state, navigation }: BottomTabBarProps) => {
             accessibilityRole="button"
             accessibilityLabel="Submit research"
           >
-            <View style={styles.fabGloss} pointerEvents="none" />
+            <LinearGradient
+              colors={[palette.gold[300], palette.gold[500]]}
+              start={FAB_GRADIENT_START}
+              end={FAB_GRADIENT_END}
+              style={styles.fabGradient}
+              pointerEvents="none"
+            />
             <Ionicons name="create-outline" size={26} color={FAB_INK} />
           </PressableScale>
         </View>
@@ -202,23 +238,39 @@ const makeStyles = (t: Theme) =>
       paddingTop: t.spacing.sm,
       backgroundColor: 'transparent',
     },
-    bar: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-around',
+    // Outer shadow container: iOS shadow rendering gets clipped by
+    // `overflow: hidden`, so the shadow/elevation live here while the actual
+    // frosted-glass clipping lives on the inner `bar`. The FAB slot is a
+    // sibling of `bar` (not a child) so its `top: -20` overhang isn't clipped
+    // by the inner view's `overflow: hidden`.
+    barShadow: {
       height: 66,
-      // Mockup-exact radii/shadow — the floating detached bar.
       borderRadius: 26,
       borderCurve: 'continuous',
-      backgroundColor: t.colors.surface.raised,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: t.colors.border.subtle,
-      overflow: 'visible',
       shadowColor: '#0B1B47',
       shadowOffset: { width: 0, height: 14 },
       shadowOpacity: 0.28,
       shadowRadius: 24,
       elevation: 12,
+    },
+    bar: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-around',
+      // Mockup-exact radii — the floating detached bar.
+      borderRadius: 26,
+      borderCurve: 'continuous',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: t.colors.border.subtle,
+      overflow: 'hidden',
+    },
+    // Near-opaque tint layered over the BlurView so the frosted bar reads in
+    // the app's own surface color rather than the system default tint.
+    barTint: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: t.colors.surface.raised,
+      opacity: BAR_TINT_OPACITY,
     },
     indicator: {
       position: 'absolute',
@@ -257,30 +309,21 @@ const makeStyles = (t: Theme) =>
       height: 58,
       borderRadius: 24,
       borderCurve: 'continuous',
-      backgroundColor: t.colors.brand.accent,
       alignItems: 'center',
       justifyContent: 'center',
-      // Faux-gradient depth until expo-linear-gradient lands (A3): a lighter
-      // top edge + saturated gold shadow read as a lit, textured squircle.
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: 'rgba(255,255,255,0.55)',
+      // Shadow values are mockup-exact (DESIGN.md) — unchanged by the A3
+      // gradient-fill swap.
       shadowColor: t.colors.brand.accent,
       shadowOffset: { width: 0, height: 10 },
       shadowOpacity: 0.6,
       shadowRadius: 16,
       elevation: 10,
     },
-    // Top-highlight sheen overlay — the light-catch that gives the flat gold
-    // fill its "moving-forward" dimensionality.
-    fabGloss: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      height: '55%',
-      borderTopLeftRadius: 24,
-      borderTopRightRadius: 24,
+    // Real gold gradient fill (A3) — replaces the A1 solid-fill + sheen
+    // approximation now that expo-linear-gradient is available.
+    fabGradient: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: 24,
       borderCurve: 'continuous',
-      backgroundColor: 'rgba(255,255,255,0.28)',
     },
   });
