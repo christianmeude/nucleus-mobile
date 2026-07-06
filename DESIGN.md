@@ -364,13 +364,7 @@ FAB. Labels: **Home · Papers · Browse · Profile**, laid out
   sans-only chrome rule).
 - **Submit CTA card:** `primary-surface` icon tile + "Submit your research" +
   gold chevron.
-- **In-progress submission card — stage progress:** `Submitted → Faculty →
-  Dean → Published`. Done stages = `success` dot + `success` connector; the
-  **current stage = `accent` (gold) dot** with a `0 0 0 4px rgba(245,166,35,.25)`
-  ring; future stages = `border-subtle` line. *(Gold marks the current stage —
-  the one emphasis exception in an otherwise navy/ink screen.)*
-- **Explore:** horizontal category chips (active = `primary` fill) and a
-  "MOST READ" featured card (navy band + gold `label`-style tag).
+- **Recent papers** and **Saved** section lists.
 - Generous spacing — no cramped stat grid.
 
 ### Browse (A2)
