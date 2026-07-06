@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
@@ -8,6 +9,7 @@ import { researchApi } from '../../api/research';
 import { getSavedPaperIds } from '../../api/collections';
 import { formatMonthYear } from '../../utils/format';
 import { type Theme } from '../../theme';
+import { TopBar } from '../../components/ui';
 
 const initialsFor = (fullName?: string | null) => {
   const name = fullName?.trim();
@@ -53,6 +55,8 @@ const PrefRow = ({ label, divided }: { label: string; divided?: boolean }) => {
 
 export const ProfileScreen = () => {
   const { user, signOut } = useAuth();
+  const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
   const styles = useThemedStyles(makeStyles);
   const [paperCount, setPaperCount] = useState<number | null>(null);
   const [savedCount, setSavedCount] = useState<number | null>(null);
@@ -82,8 +86,11 @@ export const ProfileScreen = () => {
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
-      contentInsetAdjustmentBehavior="automatic"
     >
+      <View style={[styles.topBar, { paddingTop: insets.top + theme.spacing.sm }]}>
+        <TopBar title="Profile" />
+      </View>
+
       <View style={styles.band}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initials}</Text>
@@ -145,6 +152,10 @@ const makeStyles = (t: Theme) =>
     },
     content: {
       paddingBottom: t.spacing['3xl'],
+    },
+    topBar: {
+      paddingHorizontal: t.spacing.lg,
+      paddingBottom: t.spacing.md,
     },
     band: {
       backgroundColor: t.colors.brand.primarySurface,

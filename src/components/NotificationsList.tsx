@@ -1,28 +1,24 @@
 import { useCallback, useMemo, useState } from 'react';
-import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { notificationsApi } from '../../api/notifications';
-import { NotificationItem } from '../../types/domain';
-import { NotificationCard } from '../../components/NotificationCard';
-import { ListEntranceItem } from '../../components/ListEntranceItem';
-import { useTheme, useThemedStyles } from '../../context/ThemeContext';
-import { type Theme } from '../../theme';
-import { EmptyState, InlineNotice, Skeleton } from '../../components/ui';
+import { notificationsApi } from '../api/notifications';
+import { NotificationItem } from '../types/domain';
+import { NotificationCard } from './NotificationCard';
+import { ListEntranceItem } from './ListEntranceItem';
+import { useTheme, useThemedStyles } from '../context/ThemeContext';
+import { type Theme } from '../theme';
+import { EmptyState, InlineNotice, Skeleton } from './ui';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export const NotificationsScreen = () => {
+/**
+ * Notifications feed — the body extracted from the retired NotificationsScreen,
+ * now hosted inside the merged Activity screen's "Notifications" segment. Owns
+ * its own fetch, grouping, and read-state actions.
+ */
+export const NotificationsList = () => {
   const navigation = useNavigation<any>();
-  const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -112,7 +108,7 @@ export const NotificationsScreen = () => {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + theme.spacing.md }]}
+      contentContainerStyle={styles.content}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -122,24 +118,21 @@ export const NotificationsScreen = () => {
         />
       }
     >
-      <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Text style={styles.title}>Notifications</Text>
-          <Pressable
-            onPress={markAllAsRead}
-            disabled={unreadCount === 0}
-            accessibilityRole="button"
-            accessibilityLabel="Mark all notifications as read"
-            hitSlop={8}
-          >
-            <Text style={[styles.markAll, unreadCount === 0 && styles.markAllDisabled]}>
-              Mark all read
-            </Text>
-          </Pressable>
-        </View>
+      <View style={styles.subheader}>
         <Text style={styles.subtitle}>
           {unreadCount > 0 ? `${unreadCount} unread` : 'You’re all caught up'}
         </Text>
+        <Pressable
+          onPress={markAllAsRead}
+          disabled={unreadCount === 0}
+          accessibilityRole="button"
+          accessibilityLabel="Mark all notifications as read"
+          hitSlop={8}
+        >
+          <Text style={[styles.markAll, unreadCount === 0 && styles.markAllDisabled]}>
+            Mark all read
+          </Text>
+        </Pressable>
       </View>
 
       {error ? <InlineNotice tone="danger" message={error} /> : null}
@@ -152,9 +145,7 @@ export const NotificationsScreen = () => {
         </View>
       ) : notifications.length === 0 ? (
         <EmptyState
-          icon={
-            <Ionicons name="notifications-outline" size={24} color={theme.colors.text.muted} />
-          }
+          icon={<Ionicons name="notifications-outline" size={24} color={theme.colors.text.muted} />}
           title="No notifications yet"
           message="Updates on your papers and activity will appear here."
         />
@@ -178,27 +169,23 @@ const makeStyles = (t: Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: t.colors.surface.base,
     },
     content: {
       paddingHorizontal: t.spacing.lg,
+      paddingTop: t.spacing.md,
       paddingBottom: t.spacing['3xl'],
       gap: t.spacing.md,
     },
-    header: {
-      gap: 2,
-    },
-    titleRow: {
+    subheader: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: t.spacing.sm,
     },
-    title: {
-      fontFamily: t.fontFamilies.display.semibold,
-      fontSize: 26,
-      lineHeight: 32,
-      color: t.colors.text.primary,
+    subtitle: {
+      fontFamily: t.fontFamilies.ui.regular,
+      fontSize: 13,
+      color: t.colors.text.muted,
     },
     markAll: {
       fontFamily: t.fontFamilies.ui.medium,
@@ -207,11 +194,6 @@ const makeStyles = (t: Theme) =>
     },
     markAllDisabled: {
       color: t.colors.text.disabled,
-    },
-    subtitle: {
-      fontFamily: t.fontFamilies.ui.regular,
-      fontSize: 13,
-      color: t.colors.text.muted,
     },
     skeletonList: {
       gap: t.spacing.sm,

@@ -1,24 +1,26 @@
-import { useCallback, useMemo, useState } from 'react';
-import {
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCallback, useState } from 'react';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { invitationsApi } from '../../api/invitations';
-import { CoAuthorInvitation } from '../../types/domain';
-import { InvitationCard } from '../../components/InvitationCard';
-import { ListEntranceItem } from '../../components/ListEntranceItem';
-import { useTheme, useThemedStyles } from '../../context/ThemeContext';
-import { type Theme } from '../../theme';
-import { EmptyState, InlineNotice, Skeleton } from '../../components/ui';
+import { invitationsApi } from '../api/invitations';
+import { CoAuthorInvitation } from '../types/domain';
+import { InvitationCard } from './InvitationCard';
+import { ListEntranceItem } from './ListEntranceItem';
+import { useTheme, useThemedStyles } from '../context/ThemeContext';
+import { type Theme } from '../theme';
+import { EmptyState, InlineNotice, Skeleton } from './ui';
 
-export const InvitationsScreen = () => {
-  const insets = useSafeAreaInsets();
+const isExpired = (invitation: CoAuthorInvitation) => {
+  if (!invitation.expires_at) return false;
+  return new Date(invitation.expires_at).getTime() < Date.now();
+};
+
+/**
+ * Co-author invitations feed — the body extracted from the retired
+ * InvitationsScreen, now hosted inside the merged Activity screen's "Invites"
+ * segment. Owns its own fetch and accept/decline actions.
+ */
+export const InvitationsList = () => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [invitations, setInvitations] = useState<CoAuthorInvitation[]>([]);
@@ -52,33 +54,6 @@ export const InvitationsScreen = () => {
     }, [loadData])
   );
 
-  const counts = useMemo(() => {
-    return invitations.reduce(
-      (acc, invitation) => {
-        const status = invitation.status;
-        if (status === 'pending') acc.pending += 1;
-        if (status === 'accepted') acc.accepted += 1;
-        if (status === 'declined' || status === 'expired') acc.closed += 1;
-        return acc;
-      },
-      { pending: 0, accepted: 0, closed: 0 }
-    );
-  }, [invitations]);
-
-  const isExpired = (invitation: CoAuthorInvitation) => {
-    if (!invitation.expires_at) return false;
-    return new Date(invitation.expires_at).getTime() < Date.now();
-  };
-
-  const pendingSubtitle = useMemo(() => {
-    const n = invitations.filter(
-      (inv) => inv.status === 'pending' && !isExpired(inv)
-    ).length;
-    if (n === 1) return '1 pending invitation';
-    if (n > 1) return `${n} pending invitations`;
-    return 'No pending invitations';
-  }, [invitations]);
-
   const runAction = async (token: string, action: 'accept' | 'decline') => {
     setActingToken(token);
     setError('');
@@ -101,7 +76,7 @@ export const InvitationsScreen = () => {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + theme.spacing.md }]}
+      contentContainerStyle={styles.content}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -111,11 +86,6 @@ export const InvitationsScreen = () => {
         />
       }
     >
-      <View style={styles.headerBlock}>
-        <Text style={styles.title}>Invitations</Text>
-        <Text style={styles.subtitle}>{pendingSubtitle}</Text>
-      </View>
-
       {error ? <InlineNotice tone="danger" message={error} /> : null}
 
       {loading ? (
@@ -126,38 +96,26 @@ export const InvitationsScreen = () => {
         </View>
       ) : invitations.length === 0 ? (
         <EmptyState
-          icon={
-            <Ionicons
-              name="mail-open-outline"
-              size={24}
-              color={theme.colors.text.muted}
-            />
-          }
+          icon={<Ionicons name="mail-open-outline" size={24} color={theme.colors.text.muted} />}
           title="No invitations available"
           message="Co-author invitations you receive will appear here."
         />
       ) : (
         <View style={styles.list}>
           {invitations.map((invitation, index) => {
-            const calendarExpired =
-              invitation.status === 'pending' && isExpired(invitation);
+            const calendarExpired = invitation.status === 'pending' && isExpired(invitation);
             const cardInvitation: CoAuthorInvitation = calendarExpired
               ? { ...invitation, status: 'expired' }
               : invitation;
-            const canAct =
-              invitation.status === 'pending' && !calendarExpired;
+            const canAct = invitation.status === 'pending' && !calendarExpired;
 
             return (
               <ListEntranceItem key={invitation.id} index={index}>
                 <InvitationCard
                   invitation={cardInvitation}
                   acting={actingToken === invitation.token}
-                  onAccept={
-                    canAct ? () => runAction(invitation.token, 'accept') : undefined
-                  }
-                  onDecline={
-                    canAct ? () => runAction(invitation.token, 'decline') : undefined
-                  }
+                  onAccept={canAct ? () => runAction(invitation.token, 'accept') : undefined}
+                  onDecline={canAct ? () => runAction(invitation.token, 'decline') : undefined}
                 />
               </ListEntranceItem>
             );
@@ -172,27 +130,12 @@ const makeStyles = (t: Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: t.colors.surface.base,
     },
     content: {
       paddingHorizontal: t.spacing.lg,
+      paddingTop: t.spacing.md,
       paddingBottom: t.spacing['3xl'],
-      gap: t.spacing.lg,
-    },
-    headerBlock: {
-      gap: 0,
-    },
-    title: {
-      fontFamily: t.fontFamilies.display.semibold,
-      fontSize: 26,
-      lineHeight: 32,
-      color: t.colors.text.primary,
-    },
-    subtitle: {
-      fontFamily: t.fontFamilies.ui.regular,
-      fontSize: 13,
-      color: t.colors.text.muted,
-      marginTop: 2,
+      gap: t.spacing.sm,
     },
     skeletonList: {
       gap: t.spacing.sm,

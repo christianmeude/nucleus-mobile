@@ -14,5 +14,6 @@ export { Divider } from './Divider';
 export { Logo } from './Logo';
 export { OrbitalAccent } from './OrbitalAccent';
 export { Screen } from './Screen';
+export { TopBar } from './TopBar';
 export { PressableScale } from './motion/PressableScale';
 export { FadeInView } from './motion/FadeInView';

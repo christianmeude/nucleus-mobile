@@ -25,6 +25,7 @@ On opening a session, run these in order; do not act until all are done.
 
 1. Read `docs/PROJECT_CONTEXT.md`
 2. Read `docs/CONVENTIONS.md`
+   - If the task is A-pillar (redesign) UI work, also read `docs/design/VISUAL_DIRECTION.md` and open `docs/design/mockup.html` — build to those exact values, not to a plan's prose (Rule 9).
 3. **Establish where things stand.** `git status` + `git branch` + `gh pr list`
    — is this a fresh task off `main`, or continuing an open `feat/*` branch / PR?
    If continuing a branch, `git merge origin/main` first so the canonical docs
@@ -65,6 +66,7 @@ On opening a session, run these in order; do not act until all are done.
 6. **Commits.** Stage specific files (never `git add .`), draft a message following `docs/CONVENTIONS.md` §2, and present for review. Once Christian approves the message, Claude Code executes the commit itself — Christian no longer runs `git commit` by hand.
 7. **Session notes are optional.** The PR description and GitHub issues are the durable record. Write a handoff (`docs/handoffs/HANDOFF_TEMPLATE.md`) only to carry mid-task state across a context break — it is not a required per-session artifact.
 8. **Once a plan is approved, execution is autonomous — not step-by-step.** Plan approval is the only entry gate; hard stops after that are only a SQL/schema change (Rule 3) or a frozen-file conflict (Rule 2). See **Autonomous Execution & Review Gate** below.
+9. **Build redesign UI to the visual direction, not to prose.** For any A-pillar (redesign) UI work, `docs/design/VISUAL_DIRECTION.md` + `docs/design/mockup.html` are the **source of truth for both look and motion** — a plan's text is only a summary. Before writing redesign UI, read the spec and port the *exact* values (palette, easing curve + duration, radii, spacing). When motion is called out, treat the curve/timing as a spec, not a vibe. If a faithful port needs a new dep (e.g. `expo-blur`, `expo-linear-gradient`) or a dev-client rebuild, surface it as a decision — do not silently approximate. Verify against the mockup, not just "does it animate."
 
 ---
 
@@ -153,6 +155,8 @@ The `public.users` SELECT policy cannot reference itself — triggers `42P17`. C
 | File | Purpose |
 |---|---|
 | `docs/PROJECT_CONTEXT.md` | Product scope, navigation model, access control, principles |
+| `docs/design/VISUAL_DIRECTION.md` | Redesign source of truth — distilled spec (palette, motion, shapes) for A-pillar UI (Rule 9) |
+| `docs/design/mockup.html` | Literal in-repo copy of the visual-direction mockup — open in a browser as the visual reference |
 | `docs/CONVENTIONS.md` | All conventions: commits, execution protocol, issues, SQL, handoffs |
 | `docs/handoffs/HANDOFF_TEMPLATE.md` | Handoff structure template |
 | `docs/sql/` | Deployed SQL snapshots (RLS policies + RPC definitions) |
