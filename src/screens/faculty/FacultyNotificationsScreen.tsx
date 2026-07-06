@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -11,13 +10,12 @@ import { ListEntranceItem } from '../../components/ListEntranceItem';
 import { RootStackParamList } from '../../navigation/types';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
-import { Button, EmptyState, InlineNotice, Skeleton } from '../../components/ui';
+import { Button, EmptyState, InlineNotice, Screen, Skeleton } from '../../components/ui';
 
 type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
 
 export const FacultyNotificationsScreen = () => {
   const navigation = useNavigation<FacultyNavigation>();
-  const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -90,18 +88,19 @@ export const FacultyNotificationsScreen = () => {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + theme.spacing.md }]}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={() => loadData(true)}
-          tintColor={theme.colors.brand.primary}
-          colors={[theme.colors.brand.primary]}
-        />
-      }
-    >
+    <Screen edges={{ bottom: false }}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => loadData(true)}
+            tintColor={theme.colors.brand.primary}
+            colors={[theme.colors.brand.primary]}
+          />
+        }
+      >
       <View style={styles.headerRow}>
         <View style={styles.headerLeft}>
           <Text style={styles.title}>Notifications</Text>
@@ -144,7 +143,8 @@ export const FacultyNotificationsScreen = () => {
           ))}
         </View>
       )}
-    </ScrollView>
+      </ScrollView>
+    </Screen>
   );
 };
 
@@ -152,10 +152,9 @@ const makeStyles = (theme: Theme) =>
   StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.surface.base,
   },
   content: {
-    padding: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
     gap: theme.spacing.lg,
     paddingBottom: theme.spacing['3xl'],
   },

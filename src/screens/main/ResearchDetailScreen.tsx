@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
@@ -17,7 +15,7 @@ import { Category, ResearchPaper, WorkflowEntry } from '../../types/domain';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
-import { EmptyState, InlineNotice, Skeleton } from '../../components/ui';
+import { EmptyState, InlineNotice, PressableScale, Screen, Skeleton } from '../../components/ui';
 import { PdfViewer } from '../../components/PdfViewer';
 import {
   formatDate,
@@ -148,22 +146,22 @@ export const ResearchDetailScreen = () => {
 
   if (loading) {
     return (
-      <View style={styles.loaderContainer}>
+      <Screen edges={{ top: false }} style={styles.loaderContainer}>
         <ActivityIndicator size="large" color={theme.colors.brand.primary} />
         <Text style={styles.loaderText}>Loading paper...</Text>
-      </View>
+      </Screen>
     );
   }
 
   if (!paper) {
     return (
-      <View style={styles.loaderContainer}>
+      <Screen edges={{ top: false }} style={styles.loaderContainer}>
         <EmptyState
           icon={<Ionicons name="document-outline" size={24} color={theme.colors.text.muted} />}
           title="Paper not found"
           message={error || 'Unable to load paper details.'}
         />
-      </View>
+      </Screen>
     );
   }
 
@@ -190,7 +188,7 @@ export const ResearchDetailScreen = () => {
   const displayDate = paper.published_date || paper.created_at;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
+    <Screen edges={{ top: false }}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         {categoryName ? <Text style={styles.eyebrow}>{categoryName}</Text> : null}
 
@@ -209,8 +207,8 @@ export const ResearchDetailScreen = () => {
 
         {/* Download is intentionally hidden pending backend allow_download support (Issue #8). */}
         <View style={styles.readRow}>
-          <Pressable
-            style={({ pressed }) => [styles.bookmarkBtn, pressed && styles.bookmarkPressed]}
+          <PressableScale
+            style={styles.bookmarkBtn}
             onPress={handleToggleSave}
             disabled={savePending}
             accessibilityRole="button"
@@ -221,7 +219,7 @@ export const ResearchDetailScreen = () => {
               size={22}
               color={saved ? theme.colors.brand.accent : theme.colors.text.muted}
             />
-          </Pressable>
+          </PressableScale>
         </View>
 
         <View style={styles.section}>
@@ -268,9 +266,9 @@ export const ResearchDetailScreen = () => {
                 const relatedCategory = resolveCategoryName(item.category, categoryNameById);
                 const relatedYear = yearOf(item);
                 return (
-                  <Pressable
+                  <PressableScale
                     key={item.id}
-                    style={({ pressed }) => [styles.relatedRow, pressed ? styles.pressed : null]}
+                    style={styles.relatedRow}
                     onPress={() => navigation.push('ResearchDetail', { paperId: item.id })}
                     accessibilityRole="button"
                     accessibilityLabel={item.title || 'Untitled paper'}
@@ -288,7 +286,7 @@ export const ResearchDetailScreen = () => {
                         {relatedYear ? `  ·  ${relatedYear}` : ''}
                       </Text>
                     </View>
-                  </Pressable>
+                  </PressableScale>
                 );
               })}
             </View>
@@ -329,30 +327,23 @@ export const ResearchDetailScreen = () => {
           </View>
         ) : null}
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 };
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: theme.colors.surface.base,
-  },
   container: {
     flex: 1,
-    backgroundColor: theme.colors.surface.base,
   },
   content: {
-    padding: theme.spacing.xl,
+    paddingTop: theme.spacing.xl,
     paddingBottom: theme.spacing['3xl'],
   },
   loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: theme.spacing.lg,
-    backgroundColor: theme.colors.surface.base,
     gap: theme.spacing.sm,
   },
   loaderText: {
@@ -417,9 +408,6 @@ const makeStyles = (theme: Theme) =>
     borderColor: theme.colors.border.subtle,
     borderRadius: theme.radii.md,
   },
-  bookmarkPressed: {
-    opacity: 0.6,
-  },
   section: {
     marginTop: theme.spacing.xl,
     gap: theme.spacing.sm,
@@ -463,9 +451,6 @@ const makeStyles = (theme: Theme) =>
     paddingVertical: theme.spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.border.subtle,
-  },
-  pressed: {
-    opacity: 0.6,
   },
   relatedMark: {
     width: 4,

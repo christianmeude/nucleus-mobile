@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
-import { Chip } from '../../components/ui';
+import { Chip, PressableScale, Screen } from '../../components/ui';
 import { NotificationsList } from '../../components/NotificationsList';
 import { InvitationsList } from '../../components/InvitationsList';
 
@@ -18,24 +17,23 @@ type ActivityTab = 'notifications' | 'invites';
  */
 export const ActivityScreen = () => {
   const navigation = useNavigation<any>();
-  const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [tab, setTab] = useState<ActivityTab>('notifications');
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + theme.spacing.sm }]}>
+    <Screen gutter={0}>
+      <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Pressable
+          <PressableScale
             onPress={() => navigation.goBack()}
             accessibilityRole="button"
             accessibilityLabel="Go back"
             hitSlop={12}
-            style={({ pressed }) => [styles.back, pressed && styles.backPressed]}
+            style={styles.back}
           >
             <Ionicons name="chevron-back" size={24} color={theme.colors.brand.primary} />
-          </Pressable>
+          </PressableScale>
           <Text style={styles.title}>Activity</Text>
           <View style={styles.backSpacer} />
         </View>
@@ -57,18 +55,15 @@ export const ActivityScreen = () => {
       </View>
 
       {tab === 'notifications' ? <NotificationsList /> : <InvitationsList />}
-    </View>
+    </Screen>
   );
 };
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: t.colors.surface.base,
-    },
     header: {
       paddingHorizontal: t.spacing.lg,
+      paddingTop: t.spacing.sm,
       paddingBottom: t.spacing.sm,
       gap: t.spacing.md,
       borderBottomWidth: StyleSheet.hairlineWidth,
@@ -85,9 +80,6 @@ const makeStyles = (t: Theme) =>
       alignItems: 'center',
       justifyContent: 'center',
       marginLeft: -t.spacing.sm,
-    },
-    backPressed: {
-      opacity: 0.6,
     },
     backSpacer: {
       width: 44,
