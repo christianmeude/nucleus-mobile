@@ -2,7 +2,6 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   Keyboard,
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -33,7 +32,16 @@ import { formatDate, getPrimaryAuthorName, paperDate } from '../../utils/format'
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { ResearchTile } from '../../components/ResearchTile';
-import { BottomSheet, Chip, EmptyState, InlineNotice, Skeleton, TopBar } from '../../components/ui';
+import {
+  BottomSheet,
+  Chip,
+  EmptyState,
+  InlineNotice,
+  PressableScale,
+  Screen,
+  Skeleton,
+  TopBar,
+} from '../../components/ui';
 import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
 
 type SortKey = 'newest' | 'most_viewed';
@@ -98,8 +106,8 @@ const BrowseListCard = memo(function BrowseListCard({
   const handlePress = useCallback(() => onOpen(paper.id), [onOpen, paper.id]);
 
   return (
-    <Pressable
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+    <PressableScale
+      style={styles.card}
       onPress={handlePress}
       accessibilityRole="button"
       accessibilityLabel={paper.title || 'Untitled paper'}
@@ -116,7 +124,7 @@ const BrowseListCard = memo(function BrowseListCard({
       <Text style={styles.cardMeta} numberOfLines={1}>
         {getPrimaryAuthorName(paper)} · {formatDate(paperDate(paper))}
       </Text>
-    </Pressable>
+    </PressableScale>
   );
 });
 
@@ -452,7 +460,7 @@ export const BrowseScreen = () => {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.chipsRow}
       >
-        <Pressable
+        <PressableScale
           style={[styles.topicChip, !categoryFilter && styles.topicChipActive]}
           onPress={() => setCategoryFilter('')}
           accessibilityRole="button"
@@ -461,11 +469,11 @@ export const BrowseScreen = () => {
           <Text style={[styles.topicChipText, !categoryFilter && styles.topicChipTextActive]}>
             All
           </Text>
-        </Pressable>
+        </PressableScale>
         {categories.map((category) => {
           const active = categoryFilter === category.id;
           return (
-            <Pressable
+            <PressableScale
               key={category.id}
               style={[styles.topicChip, active && styles.topicChipActive]}
               onPress={() => setCategoryFilter(active ? '' : category.id)}
@@ -475,7 +483,7 @@ export const BrowseScreen = () => {
               <Text style={[styles.topicChipText, active && styles.topicChipTextActive]}>
                 {category.name}
               </Text>
-            </Pressable>
+            </PressableScale>
           );
         })}
       </ScrollView>
@@ -485,7 +493,7 @@ export const BrowseScreen = () => {
           {sorted.length} {sorted.length === 1 ? 'Paper' : 'Papers'}
         </Text>
         <View style={styles.subbarRight}>
-          <Pressable
+          <PressableScale
             style={styles.sortLink}
             onPress={() => setSortSheetOpen(true)}
             accessibilityRole="button"
@@ -493,9 +501,9 @@ export const BrowseScreen = () => {
           >
             <Text style={styles.sortLinkText}>{sortLabel}</Text>
             <Ionicons name="chevron-down" size={13} color={theme.colors.brand.primary} />
-          </Pressable>
+          </PressableScale>
           <View style={styles.viewToggle}>
-            <Pressable
+            <PressableScale
               style={[styles.vt, viewMode === 'list' && styles.vtActive]}
               onPress={() => setViewMode('list')}
               accessibilityRole="button"
@@ -506,8 +514,8 @@ export const BrowseScreen = () => {
                 size={17}
                 color={viewMode === 'list' ? theme.colors.brand.primary : theme.colors.text.muted}
               />
-            </Pressable>
-            <Pressable
+            </PressableScale>
+            <PressableScale
               style={[styles.vt, viewMode === 'grid' && styles.vtActive]}
               onPress={() => setViewMode('grid')}
               accessibilityRole="button"
@@ -518,7 +526,7 @@ export const BrowseScreen = () => {
                 size={15}
                 color={viewMode === 'grid' ? theme.colors.brand.primary : theme.colors.text.muted}
               />
-            </Pressable>
+            </PressableScale>
           </View>
         </View>
       </View>
@@ -526,7 +534,7 @@ export const BrowseScreen = () => {
       {error ? <InlineNotice tone="danger" message={error} /> : null}
 
       {!loading && featured ? (
-        <Pressable
+        <PressableScale
           style={styles.hero}
           onPress={() => openDetail(featured.id)}
           accessibilityRole="button"
@@ -545,7 +553,7 @@ export const BrowseScreen = () => {
             <Text style={styles.heroMetaSep}>·</Text>
             <Text style={styles.heroMetaText}>{viewsOf(featured)} views</Text>
           </View>
-        </Pressable>
+        </PressableScale>
       ) : null}
     </>
   );
@@ -569,6 +577,11 @@ export const BrowseScreen = () => {
 
   return (
     <>
+      {/* Both edges opted out of Screen's own inset padding: this screen computes
+          its own top offset (insets.top + an extra breathing-room margin above
+          TopBar) and its own bottom offset (plain insets.bottom, since the
+          floating tab bar — not Screen — owns bottom clearance elsewhere). */}
+      <Screen gutter={0} edges={{ top: false, bottom: false }}>
       <View
         style={[
           styles.root,
@@ -619,7 +632,7 @@ export const BrowseScreen = () => {
                 keyboardShouldPersistTaps="handled"
               >
                 {recent.map((term, index) => (
-                  <Pressable
+                  <PressableScale
                     key={term}
                     style={styles.recentChip}
                     onPress={() => runSearch(term)}
@@ -635,7 +648,7 @@ export const BrowseScreen = () => {
                       />
                     ) : null}
                     <Text style={styles.recentChipText}>{term}</Text>
-                  </Pressable>
+                  </PressableScale>
                 ))}
               </ScrollView>
             </Animated.View>
@@ -651,7 +664,7 @@ export const BrowseScreen = () => {
                 keyboardShouldPersistTaps="handled"
               >
                 {SUGGESTED_SEARCHES.map((term) => (
-                  <Pressable
+                  <PressableScale
                     key={term}
                     style={styles.suggestedChip}
                     onPress={() => runSearch(term)}
@@ -665,7 +678,7 @@ export const BrowseScreen = () => {
                       style={styles.suggestedChipIcon}
                     />
                     <Text style={styles.suggestedChipText}>{term}</Text>
-                  </Pressable>
+                  </PressableScale>
                 ))}
               </ScrollView>
             </Animated.View>
@@ -718,13 +731,14 @@ export const BrowseScreen = () => {
 
         <Animated.View style={[styles.spacer, spacerStyle]} pointerEvents="none" />
       </View>
+      </Screen>
 
       <BottomSheet visible={sortSheetOpen} onClose={() => setSortSheetOpen(false)}>
         <Text style={styles.sheetTitle}>Sort by</Text>
         {SORT_OPTIONS.map((option) => {
           const active = sort === option.value;
           return (
-            <Pressable
+            <PressableScale
               key={option.value}
               style={styles.sheetRow}
               onPress={() => {
@@ -738,7 +752,7 @@ export const BrowseScreen = () => {
               {active ? (
                 <Ionicons name="checkmark" size={18} color={theme.colors.brand.primary} />
               ) : null}
-            </Pressable>
+            </PressableScale>
           );
         })}
       </BottomSheet>
@@ -751,7 +765,6 @@ const makeStyles = (theme: Theme) =>
   root: {
     flex: 1,
     paddingHorizontal: theme.spacing.lg,
-    backgroundColor: theme.colors.surface.base,
   },
   spacer: {
     flexShrink: 1,
@@ -1072,9 +1085,6 @@ const makeStyles = (theme: Theme) =>
     borderCurve: 'continuous',
     padding: theme.spacing.lg,
     gap: 6,
-  },
-  cardPressed: {
-    opacity: 0.7,
   },
   cardCatRow: {
     flexDirection: 'row',
