@@ -7,7 +7,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
@@ -22,7 +21,7 @@ import {
   ACTIVE_STATUSES,
   PUBLISHED_STATUSES,
 } from '../../components/PaperStatusChip';
-import { Chip, EmptyState, InlineNotice, Skeleton, TopBar } from '../../components/ui';
+import { Chip, EmptyState, InlineNotice, Screen, Skeleton, TopBar } from '../../components/ui';
 
 type FilterKey = 'all' | 'active' | 'published' | 'action';
 
@@ -35,7 +34,6 @@ const isFilterMatch = (status: PaperStatus, filter: FilterKey) => {
 
 export const MyPapersScreen = () => {
   const navigation = useNavigation<any>();
-  const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
@@ -108,10 +106,10 @@ export const MyPapersScreen = () => {
   }, [papers]);
 
   return (
-    <View style={styles.container}>
+    <Screen edges={{ bottom: false }}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + theme.spacing.md }]}
+        contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -204,7 +202,7 @@ export const MyPapersScreen = () => {
           </View>
         )}
       </ScrollView>
-    </View>
+    </Screen>
   );
 };
 
@@ -214,15 +212,11 @@ const paperDateValue = (paper: ResearchPaper) =>
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: t.colors.surface.base,
-    },
     scroll: {
       flex: 1,
     },
     content: {
-      paddingHorizontal: t.spacing.lg,
+      paddingTop: t.spacing.md,
       paddingBottom: t.spacing['3xl'] + 56,
       gap: t.spacing.md,
     },

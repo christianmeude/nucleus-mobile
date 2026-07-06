@@ -1,4 +1,5 @@
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { FacultyTabsParamList } from './types';
@@ -23,6 +24,7 @@ const tabIcons: Record<keyof FacultyTabsParamList, keyof typeof Ionicons.glyphMa
 export const FacultyTabs = () => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const insets = useSafeAreaInsets();
   return (
     <Tabs.Navigator
       screenOptions={({ route }) => ({
@@ -32,8 +34,8 @@ export const FacultyTabs = () => {
           borderTopColor: theme.colors.border.subtle,
           borderTopWidth: StyleSheet.hairlineWidth,
           paddingTop: theme.spacing.xs,
-          paddingBottom: theme.spacing.sm,
-          height: 66,
+          paddingBottom: insets.bottom || theme.spacing.sm,
+          height: 66 + insets.bottom,
         },
         tabBarLabelStyle: {
           ...theme.typography.caption,

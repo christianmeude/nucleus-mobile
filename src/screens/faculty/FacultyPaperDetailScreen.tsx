@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRoute, type RouteProp } from '@react-navigation/native';
-import { InlineNotice, Skeleton } from '../../components/ui';
+import { InlineNotice, Screen, Skeleton } from '../../components/ui';
 import { PdfViewer } from '../../components/PdfViewer';
 import { facultyApi, type FacultyReviewDetail } from '../../api/faculty';
 import { RootStackParamList } from '../../navigation/types';
@@ -66,55 +66,64 @@ export const FacultyPaperDetailScreen = () => {
   }, [paperId]);
 
   if (error && !detail) {
+    // `centered` carries no padding keys, so it's safe to pass straight to
+    // Screen's own `style` prop without colliding with its inset padding.
     return (
-      <View style={styles.centered}>
+      <Screen edges={{ top: false }} style={styles.centered}>
         <InlineNotice tone="danger" message={error} />
-      </View>
+      </Screen>
     );
   }
 
   if (!detail) {
+    // `content` sets its own paddingBottom, so it goes on a plain inner View
+    // (not Screen's `style` prop) to avoid overriding Screen's own bottom
+    // inset padding — the two stack additively this way.
     return (
-      <View style={styles.content}>
-        <Skeleton height={28} width="80%" />
-        <Skeleton height={16} width="50%" />
-        <Skeleton height={460} radius="lg" />
-      </View>
+      <Screen edges={{ top: false }}>
+        <View style={styles.content}>
+          <Skeleton height={28} width="80%" />
+          <Skeleton height={16} width="50%" />
+          <Skeleton height={460} radius="lg" />
+        </View>
+      </Screen>
     );
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>{detail.title}</Text>
-      <Text style={styles.meta}>
-        {detail.authorName}
-        {detail.department ? ` · ${detail.department}` : ''} ·{' '}
-        {formatDate(detail.submissionDate || detail.createdAt)}
-      </Text>
+    <Screen edges={{ top: false }}>
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        <Text style={styles.title}>{detail.title}</Text>
+        <Text style={styles.meta}>
+          {detail.authorName}
+          {detail.department ? ` · ${detail.department}` : ''} ·{' '}
+          {formatDate(detail.submissionDate || detail.createdAt)}
+        </Text>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Paper</Text>
-        {fileError ? (
-          <InlineNotice tone="danger" message={fileError} />
-        ) : fileUri ? (
-          <PdfViewer uri={fileUri} />
-        ) : (
-          <Skeleton height={460} radius="lg" />
-        )}
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Abstract</Text>
-        <Text style={styles.body}>{detail.abstract || '—'}</Text>
-      </View>
-
-      {detail.keywords && detail.keywords.length > 0 ? (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Keywords</Text>
-          <Text style={styles.body}>{detail.keywords.join(', ')}</Text>
+          <Text style={styles.sectionTitle}>Paper</Text>
+          {fileError ? (
+            <InlineNotice tone="danger" message={fileError} />
+          ) : fileUri ? (
+            <PdfViewer uri={fileUri} />
+          ) : (
+            <Skeleton height={460} radius="lg" />
+          )}
         </View>
-      ) : null}
-    </ScrollView>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Abstract</Text>
+          <Text style={styles.body}>{detail.abstract || '—'}</Text>
+        </View>
+
+        {detail.keywords && detail.keywords.length > 0 ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Keywords</Text>
+            <Text style={styles.body}>{detail.keywords.join(', ')}</Text>
+          </View>
+        ) : null}
+      </ScrollView>
+    </Screen>
   );
 };
 
@@ -122,18 +131,15 @@ const makeStyles = (theme: Theme) =>
   StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: theme.colors.surface.base,
   },
   content: {
-    padding: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
     gap: theme.spacing.md,
     paddingBottom: theme.spacing['3xl'],
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
-    padding: theme.spacing.lg,
-    backgroundColor: theme.colors.surface.base,
   },
   title: {
     fontFamily: theme.fontFamilies.display.semibold,

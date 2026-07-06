@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { formatMonthYear } from '../../utils/format';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
+import { PressableScale, Screen } from '../../components/ui';
 
 const initialsFor = (fullName?: string | null) => {
   const name = fullName?.trim();
@@ -50,38 +51,44 @@ export const FacultyProfileScreen = () => {
   }, [user?.role]);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={[styles.band, { paddingTop: insets.top + theme.spacing.xl }]}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{initials}</Text>
-        </View>
-        <Text style={styles.name}>{user?.fullName || 'Faculty'}</Text>
-        {roleLabel ? (
-          <View style={styles.rolePill}>
-            <Text style={styles.rolePillText}>{roleLabel}</Text>
+    // Top edge intentionally opted out of Screen's own inset padding: the navy
+    // band below is meant to bleed under the status bar, so its safe-area
+    // clearance is applied to the band itself (not to Screen's outer box).
+    <Screen gutter={0} edges={{ top: false, bottom: false }}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <View style={[styles.band, { paddingTop: insets.top + theme.spacing.xl }]}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{initials}</Text>
           </View>
-        ) : null}
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Account</Text>
-        <View style={styles.card}>
-          <InfoRow label="Email" value={user?.email || '—'} selectable />
-          <InfoRow label="Department" value={user?.department || '—'} divided />
-          <InfoRow label="Program" value={user?.program || '—'} divided />
-          <InfoRow label="Member since" value={formatMonthYear(user?.createdAt)} divided gold />
+          <Text style={styles.name}>{user?.fullName || 'Faculty'}</Text>
+          {roleLabel ? (
+            <View style={styles.rolePill}>
+              <Text style={styles.rolePillText}>{roleLabel}</Text>
+            </View>
+          ) : null}
         </View>
-      </View>
 
-      <Pressable
-        style={({ pressed }) => [styles.signout, pressed && styles.signoutPressed]}
-        onPress={signOut}
-        accessibilityRole="button"
-        accessibilityLabel="Sign out"
-      >
-        <Text style={styles.signoutText}>Sign out</Text>
-      </Pressable>
-    </ScrollView>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account</Text>
+          <View style={styles.card}>
+            <InfoRow label="Email" value={user?.email || '—'} selectable />
+            <InfoRow label="Department" value={user?.department || '—'} divided />
+            <InfoRow label="Program" value={user?.program || '—'} divided />
+            <InfoRow label="Member since" value={formatMonthYear(user?.createdAt)} divided gold />
+          </View>
+        </View>
+
+        <PressableScale
+          style={styles.signout}
+          haptic="light"
+          onPress={signOut}
+          accessibilityRole="button"
+          accessibilityLabel="Sign out"
+        >
+          <Text style={styles.signoutText}>Sign out</Text>
+        </PressableScale>
+      </ScrollView>
+    </Screen>
   );
 };
 
@@ -89,7 +96,6 @@ const makeStyles = (theme: Theme) =>
   StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.surface.base,
   },
   content: {
     paddingBottom: theme.spacing['3xl'],
@@ -199,9 +205,6 @@ const makeStyles = (theme: Theme) =>
     alignItems: 'center',
     paddingVertical: theme.spacing.xl,
     marginTop: theme.spacing.sm,
-  },
-  signoutPressed: {
-    opacity: 0.6,
   },
   signoutText: {
     fontFamily: theme.fontFamilies.ui.medium,

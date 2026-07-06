@@ -1,12 +1,12 @@
 import { useCallback, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   EmptyState,
   InlineNotice,
   PressableCard,
+  Screen,
   Skeleton,
   Stat,
 } from '../../components/ui';
@@ -80,7 +80,6 @@ const DashboardSkeleton = () => {
 
 export const FacultyDashboardScreen = () => {
   const navigation = useNavigation<FacultyNavigation>();
-  const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
@@ -115,18 +114,19 @@ export const FacultyDashboardScreen = () => {
   const recent = papers ? papers.slice(0, RECENT_LIMIT) : [];
 
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + theme.spacing.md }]}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor={theme.colors.brand.primary}
-          colors={[theme.colors.brand.primary]}
-        />
-      }
-    >
+    <Screen edges={{ bottom: false }}>
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.colors.brand.primary}
+            colors={[theme.colors.brand.primary]}
+          />
+        }
+      >
       <View style={styles.headerRow}>
         <Text style={styles.headerTitle}>
           {firstName ? `Welcome, ${firstName}.` : 'Welcome.'}
@@ -175,7 +175,8 @@ export const FacultyDashboardScreen = () => {
           )}
         </>
       )}
-    </ScrollView>
+      </ScrollView>
+    </Screen>
   );
 };
 
@@ -183,10 +184,9 @@ const makeStyles = (theme: Theme) =>
   StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: theme.colors.surface.base,
   },
   content: {
-    padding: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
     gap: theme.spacing.lg,
     paddingBottom: theme.spacing['3xl'],
   },

@@ -7,7 +7,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
@@ -15,6 +14,7 @@ import {
   EmptyState,
   InlineNotice,
   PressableCard,
+  Screen,
   Skeleton,
 } from '../../components/ui';
 import { facultyApi, type FacultyAssignedPaper } from '../../api/faculty';
@@ -40,7 +40,6 @@ function formatDate(value?: string | null): string {
 
 export const FacultyReviewScreen = () => {
   const navigation = useNavigation<FacultyNavigation>();
-  const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [papers, setPapers] = useState<FacultyAssignedPaper[] | null>(null);
@@ -93,8 +92,8 @@ export const FacultyReviewScreen = () => {
   }, [papers, filter, search]);
 
   return (
-    <View style={styles.screen}>
-      <View style={[styles.header, { paddingTop: insets.top + theme.spacing.md }]}>
+    <Screen gutter={0} edges={{ bottom: false }}>
+      <View style={styles.header}>
         <Text style={styles.title}>Review</Text>
         <TextInput
           value={search}
@@ -177,22 +176,17 @@ export const FacultyReviewScreen = () => {
           </View>
         )}
       </ScrollView>
-    </View>
+    </Screen>
   );
 };
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: theme.colors.surface.base,
-  },
   header: {
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.md,
     paddingBottom: theme.spacing.sm,
     gap: theme.spacing.sm,
-    backgroundColor: theme.colors.surface.base,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.border.subtle,
   },
@@ -212,7 +206,8 @@ const makeStyles = (theme: Theme) =>
     paddingRight: theme.spacing.lg,
   },
   content: {
-    padding: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
     gap: theme.spacing.md,
     paddingBottom: theme.spacing['3xl'],
     flexGrow: 1,

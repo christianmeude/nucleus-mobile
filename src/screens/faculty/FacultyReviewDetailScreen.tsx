@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,7 +8,16 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { BottomSheet, Button, Card, Chip, InlineNotice, Skeleton } from '../../components/ui';
+import {
+  BottomSheet,
+  Button,
+  Card,
+  Chip,
+  InlineNotice,
+  PressableScale,
+  Screen,
+  Skeleton,
+} from '../../components/ui';
 import { PdfViewer, type PdfAnnotationOverlay } from '../../components/PdfViewer';
 import {
   facultyApi,
@@ -221,21 +229,28 @@ export const FacultyReviewDetailScreen = () => {
   }, [reason, paperId, navigation]);
 
   if (error && !detail) {
+    // `centered` carries no padding keys, so it's safe to pass straight to
+    // Screen's own `style` prop without colliding with its inset padding.
     return (
-      <View style={styles.centered}>
+      <Screen edges={{ top: false }} style={styles.centered}>
         <InlineNotice tone="danger" message={error} />
-      </View>
+      </Screen>
     );
   }
 
   if (!detail) {
+    // `content` sets its own paddingBottom, so it goes on a plain inner View
+    // (not Screen's `style` prop) to avoid overriding Screen's own bottom
+    // inset padding — the two stack additively this way.
     return (
-      <View style={styles.content}>
-        <Skeleton height={28} width="80%" />
-        <Skeleton height={16} width="50%" />
-        <Skeleton height={120} radius="lg" />
-        <Skeleton height={90} radius="lg" />
-      </View>
+      <Screen edges={{ top: false }}>
+        <View style={styles.content}>
+          <Skeleton height={28} width="80%" />
+          <Skeleton height={16} width="50%" />
+          <Skeleton height={120} radius="lg" />
+          <Skeleton height={90} radius="lg" />
+        </View>
+      </Screen>
     );
   }
 
@@ -243,6 +258,7 @@ export const FacultyReviewDetailScreen = () => {
 
   return (
     <>
+      <Screen edges={{ top: false }}>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
         <View style={styles.badgeRow}>
           <Chip
@@ -359,6 +375,7 @@ export const FacultyReviewDetailScreen = () => {
           </View>
         ) : null}
       </ScrollView>
+      </Screen>
 
       <BottomSheet visible={sheet !== null} onClose={closeSheet}>
         {sheet === 'approve' ? (
@@ -379,7 +396,7 @@ export const FacultyReviewDetailScreen = () => {
                 {(approvers ?? []).map((approver) => {
                   const selected = approver.id === selectedApproverId;
                   return (
-                    <Pressable
+                    <PressableScale
                       key={approver.id}
                       onPress={() => setSelectedApproverId(approver.id)}
                       disabled={acting}
@@ -392,7 +409,7 @@ export const FacultyReviewDetailScreen = () => {
                         {approver.role === 'dean' ? 'Dean' : 'Program Chair'}
                         {approver.department ? ` · ${approver.department}` : ''}
                       </Text>
-                    </Pressable>
+                    </PressableScale>
                   );
                 })}
               </View>
@@ -493,18 +510,15 @@ const makeStyles = (theme: Theme) =>
   StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: theme.colors.surface.base,
   },
   content: {
-    padding: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
     gap: theme.spacing.md,
     paddingBottom: theme.spacing['3xl'],
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
-    padding: theme.spacing.lg,
-    backgroundColor: theme.colors.surface.base,
   },
   badgeRow: {
     flexDirection: 'row',

@@ -1,10 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Chip, EmptyState, InlineNotice, PressableCard, Skeleton } from '../../components/ui';
+import { Chip, EmptyState, InlineNotice, PressableCard, Screen, Skeleton } from '../../components/ui';
 import { facultyApi, type FacultyAssignedPaper } from '../../api/faculty';
 import { researchApi } from '../../api/research';
 import { Category } from '../../types/domain';
@@ -24,7 +23,6 @@ function formatDate(value?: string | null): string {
 
 export const FacultyRepositoryScreen = () => {
   const navigation = useNavigation<FacultyNavigation>();
-  const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [papers, setPapers] = useState<FacultyAssignedPaper[] | null>(null);
@@ -80,8 +78,8 @@ export const FacultyRepositoryScreen = () => {
   }, [papers, categoryFilter, search]);
 
   return (
-    <View style={styles.screen}>
-      <View style={[styles.header, { paddingTop: insets.top + theme.spacing.md }]}>
+    <Screen gutter={0} edges={{ bottom: false }}>
+      <View style={styles.header}>
         <Text style={styles.title}>Repository</Text>
         <TextInput
           value={search}
@@ -174,22 +172,17 @@ export const FacultyRepositoryScreen = () => {
           </View>
         )}
       </ScrollView>
-    </View>
+    </Screen>
   );
 };
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: theme.colors.surface.base,
-  },
   header: {
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.md,
     paddingBottom: theme.spacing.sm,
     gap: theme.spacing.sm,
-    backgroundColor: theme.colors.surface.base,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.border.subtle,
   },
@@ -209,7 +202,8 @@ const makeStyles = (theme: Theme) =>
     paddingRight: theme.spacing.lg,
   },
   content: {
-    padding: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
     gap: theme.spacing.md,
     paddingBottom: theme.spacing['3xl'],
     flexGrow: 1,
