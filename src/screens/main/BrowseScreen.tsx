@@ -24,7 +24,7 @@ import { formatDate, getPrimaryAuthorName, paperDate } from '../../utils/format'
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { ResearchTile } from '../../components/ResearchTile';
-import { BottomSheet, Chip, EmptyState, InlineNotice, Skeleton } from '../../components/ui';
+import { BottomSheet, Chip, EmptyState, InlineNotice, Skeleton, TopBar } from '../../components/ui';
 import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
 
 type SortKey = 'newest' | 'most_viewed';
@@ -224,6 +224,8 @@ export const BrowseScreen = () => {
           { paddingTop: insets.top + theme.spacing.md, paddingBottom: insets.bottom },
         ]}
       >
+        <TopBar />
+
         <Animated.View style={[styles.spacer, spacerStyle]} pointerEvents="none" />
 
         <View style={styles.headerBlock}>

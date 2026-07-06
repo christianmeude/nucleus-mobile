@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
 import {
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -23,7 +22,7 @@ import {
   ACTIVE_STATUSES,
   PUBLISHED_STATUSES,
 } from '../../components/PaperStatusChip';
-import { Chip, EmptyState, InlineNotice, Skeleton } from '../../components/ui';
+import { Chip, EmptyState, InlineNotice, Skeleton, TopBar } from '../../components/ui';
 
 type FilterKey = 'all' | 'active' | 'published' | 'action';
 
@@ -122,10 +121,10 @@ export const MyPapersScreen = () => {
           />
         }
       >
-        <View style={styles.header}>
+        <TopBar>
           <Text style={styles.title}>My Papers</Text>
           <Text style={styles.subtitle}>{subtitle}</Text>
-        </View>
+        </TopBar>
 
         <View style={styles.searchWrap}>
           <Ionicons name="search-outline" size={18} color={theme.colors.text.muted} />
@@ -205,16 +204,6 @@ export const MyPapersScreen = () => {
           </View>
         )}
       </ScrollView>
-
-      <Pressable
-        style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
-        onPress={() => navigation.navigate('SubmitResearch')}
-        accessibilityRole="button"
-        accessibilityLabel="Submit new research"
-      >
-        <Ionicons name="add" size={20} color={theme.colors.text.onBrand} />
-        <Text style={styles.fabText}>Submit</Text>
-      </Pressable>
     </View>
   );
 };
@@ -236,9 +225,6 @@ const makeStyles = (t: Theme) =>
       paddingHorizontal: t.spacing.lg,
       paddingBottom: t.spacing['3xl'] + 56,
       gap: t.spacing.md,
-    },
-    header: {
-      gap: 2,
     },
     title: {
       fontFamily: t.fontFamilies.display.semibold,
@@ -279,31 +265,5 @@ const makeStyles = (t: Theme) =>
     },
     list: {
       gap: t.spacing.md,
-    },
-    fab: {
-      position: 'absolute',
-      right: t.spacing.lg,
-      bottom: t.spacing.xl,
-      height: 52,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: t.spacing.sm,
-      paddingHorizontal: t.spacing.xl,
-      borderRadius: t.radii.pill,
-      borderCurve: 'continuous',
-      backgroundColor: t.colors.brand.accent,
-      shadowColor: t.colors.brand.accent,
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.4,
-      shadowRadius: 12,
-      elevation: 6,
-    },
-    fabPressed: {
-      opacity: 0.85,
-    },
-    fabText: {
-      fontFamily: t.fontFamilies.ui.semibold,
-      fontSize: 15,
-      color: t.colors.text.onBrand,
     },
   });

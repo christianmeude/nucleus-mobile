@@ -25,6 +25,7 @@ On opening a session, run these in order; do not act until all are done.
 
 1. Read `docs/PROJECT_CONTEXT.md`
 2. Read `docs/CONVENTIONS.md`
+   - If the task is A-pillar (redesign) UI work, also read `DESIGN.md` (the single design source of truth) and open `docs/design/mockup.html` — build to those exact values, not to a plan's prose (Rule 9).
 3. **Establish where things stand.** `git status` + `git branch` + `gh pr list`
    — is this a fresh task off `main`, or continuing an open `feat/*` branch / PR?
    If continuing a branch, `git merge origin/main` first so the canonical docs
@@ -65,7 +66,7 @@ On opening a session, run these in order; do not act until all are done.
 6. **Commits.** Stage specific files (never `git add .`), draft a message following `docs/CONVENTIONS.md` §2, and present for review. Once Christian approves the message, Claude Code executes the commit itself — Christian no longer runs `git commit` by hand.
 7. **Session notes are optional.** The PR description and GitHub issues are the durable record. Write a handoff (`docs/handoffs/HANDOFF_TEMPLATE.md`) only to carry mid-task state across a context break — it is not a required per-session artifact.
 8. **Once a plan is approved, execution is autonomous — not step-by-step.** Plan approval is the only entry gate; hard stops after that are only a SQL/schema change (Rule 3) or a frozen-file conflict (Rule 2). See **Autonomous Execution & Review Gate** below.
-9. **Redesign (A-pillar) UI builds to `DESIGN.md`.** `DESIGN.md` (repo root) is the **single design source of truth** — tokens, **Motion**, and **Screens**, matched to `src/theme/`. Build redesign UI to its exact values (palette tokens, easing curve + duration, radii, spacing), not to a plan's prose summary; `docs/design/mockup.html` is the literal visual reference to eyeball against. Before opening a UI PR, run the **`ui-ux-pro-max`** skill's React Native rule set as an audit — `.claude/skills/ui-ux-pro-max/data/stacks/react-native.csv` (the `search.py --stack react-native` CLI needs Python installed). Treat it as a linter for touch targets, list virtualization, a11y, and animation-thread correctness — **not** a second source of truth; `DESIGN.md` wins.
+9. **Redesign (A-pillar) UI builds to `DESIGN.md`.** `DESIGN.md` (repo root) is the **single design source of truth** — tokens, **Motion**, and **Screens**, matched to `src/theme/`. Build redesign UI to its exact values (palette tokens, easing curve + duration, radii, spacing), not to a plan's prose summary; `docs/design/mockup.html` is the literal visual reference to eyeball against. When motion is called out, treat the curve/timing as a spec, not a vibe. If a faithful port needs a new dep (e.g. `expo-blur`, `expo-linear-gradient`) or a dev-client rebuild, surface it as a decision — do not silently approximate. Before opening a UI PR, run the **`ui-ux-pro-max`** skill's React Native rule set as an audit — `.claude/skills/ui-ux-pro-max/data/stacks/react-native.csv` (the `search.py --stack react-native` CLI needs Python installed). Treat it as a linter for touch targets, list virtualization, a11y, and animation-thread correctness — **not** a second source of truth; `DESIGN.md` wins.
 
 ---
 

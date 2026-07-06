@@ -2,115 +2,58 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { useTheme, useThemedStyles } from '../context/ThemeContext';
+import { type Theme } from '../theme';
 import { RootStackParamList, StudentTabsParamList } from './types';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { UnsupportedRoleScreen } from '../screens/auth/UnsupportedRoleScreen';
 import { DashboardScreen } from '../screens/main/DashboardScreen';
 import { MyPapersScreen } from '../screens/main/MyPapersScreen';
 import { BrowseScreen } from '../screens/main/BrowseScreen';
-import { NotificationsScreen } from '../screens/main/NotificationsScreen';
-import { InvitationsScreen } from '../screens/main/InvitationsScreen';
+import { ProfileScreen } from '../screens/main/ProfileScreen';
+import { ActivityScreen } from '../screens/main/ActivityScreen';
 import { ResearchDetailScreen } from '../screens/main/ResearchDetailScreen';
 import { SubmitResearchScreen } from '../screens/main/SubmitResearchScreen';
-import { ProfileScreen } from '../screens/main/ProfileScreen';
+import { StudentTabBar } from './StudentTabBar';
 import { FacultyTabs } from './FacultyTabs';
 import { FacultyReviewDetailScreen } from '../screens/faculty/FacultyReviewDetailScreen';
 import { FacultyPaperDetailScreen } from '../screens/faculty/FacultyPaperDetailScreen';
-import { theme } from '../theme';
 import { Logo } from '../components/ui';
 import { ResearchDetailHeader } from './ResearchDetailHeader';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<StudentTabsParamList>();
 
-const tabIcons: Record<keyof StudentTabsParamList, keyof typeof Ionicons.glyphMap> = {
-  Dashboard: 'speedometer-outline',
-  MyPapers: 'folder-open-outline',
-  Browse: 'search-outline',
-  Notifications: 'notifications-outline',
-  Invitations: 'people-outline',
-};
-
 const StudentTabs = () => {
   return (
     <Tabs.Navigator
-      screenOptions={({ route }) => ({
-        headerTitleAlign: 'left',
-        headerStyle: {
-          backgroundColor: theme.colors.surface.base,
-        },
-        headerShadowVisible: false,
-        headerTitleStyle: {
-          ...theme.typography.h3,
-          color: theme.colors.text.primary,
-        },
-        tabBarStyle: {
-          backgroundColor: theme.colors.surface.raised,
-          borderTopColor: theme.colors.border.subtle,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          paddingTop: theme.spacing.xs,
-          paddingBottom: theme.spacing.sm,
-          height: 66,
-        },
-        tabBarLabelStyle: {
-          ...theme.typography.caption,
-          marginTop: 2,
-        },
-        tabBarActiveTintColor: theme.colors.brand.primary,
-        tabBarInactiveTintColor: theme.colors.text.muted,
-        tabBarIcon: ({ color, size, focused }) => (
-          <View style={styles.tabIconWrap}>
-            <Ionicons
-              name={tabIcons[route.name as keyof StudentTabsParamList]}
-              color={color}
-              size={size}
-            />
-            {focused ? <View style={styles.activeDot} /> : null}
-          </View>
-        ),
-      })}
+      tabBar={(props) => <StudentTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
     >
-      <Tabs.Screen
-        name="Dashboard"
-        component={DashboardScreen}
-        options={{ title: 'Dashboard', headerShown: false }}
-      />
-      <Tabs.Screen
-        name="MyPapers"
-        component={MyPapersScreen}
-        options={{ title: 'My Papers', headerShown: false }}
-      />
-      <Tabs.Screen
-        name="Browse"
-        component={BrowseScreen}
-        options={{ title: 'Browse', headerShown: false }}
-      />
-      <Tabs.Screen
-        name="Notifications"
-        component={NotificationsScreen}
-        options={{ title: 'Notifications', headerShown: false }}
-      />
-      <Tabs.Screen
-        name="Invitations"
-        component={InvitationsScreen}
-        options={{ title: 'Invites', headerShown: false }}
-      />
+      <Tabs.Screen name="Dashboard" component={DashboardScreen} />
+      <Tabs.Screen name="MyPapers" component={MyPapersScreen} />
+      <Tabs.Screen name="Browse" component={BrowseScreen} />
+      <Tabs.Screen name="Profile" component={ProfileScreen} />
     </Tabs.Navigator>
   );
 };
 
-const FullScreenLoader = () => (
-  <View style={styles.loaderContainer}>
-    <Logo size="sm" showWordmark={false} />
-    <ActivityIndicator size="large" color={theme.colors.brand.primary} />
-    <Text style={styles.loaderText}>Restoring session...</Text>
-  </View>
-);
+const FullScreenLoader = () => {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={styles.loaderContainer}>
+      <Logo size="sm" showWordmark={false} />
+      <ActivityIndicator size="large" color={theme.colors.brand.primary} />
+      <Text style={styles.loaderText}>Restoring session...</Text>
+    </View>
+  );
+};
 
 export const AppNavigator = () => {
   const { user, loading } = useAuth();
+  const { theme } = useTheme();
 
   if (loading) {
     return <FullScreenLoader />;
@@ -131,11 +74,7 @@ export const AppNavigator = () => {
         }}
       >
         {!user ? (
-          <Stack.Screen
-            name="Login"
-            component={LoginScreen}
-            options={{ headerShown: false }}
-          />
+          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
         ) : user.role === 'student' ? (
           <>
             <Stack.Screen
@@ -157,9 +96,9 @@ export const AppNavigator = () => {
               options={{ headerShown: false }}
             />
             <Stack.Screen
-              name="Profile"
-              component={ProfileScreen}
-              options={{ title: 'Profile' }}
+              name="Activity"
+              component={ActivityScreen}
+              options={{ headerShown: false }}
             />
           </>
         ) : user.role === 'faculty' ? (
@@ -198,27 +137,17 @@ export const AppNavigator = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  tabIconWrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-  },
-  activeDot: {
-    width: 5,
-    height: 5,
-    borderRadius: theme.radii.pill,
-    backgroundColor: theme.colors.brand.accent,
-  },
-  loaderContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.sm,
-    backgroundColor: theme.colors.surface.base,
-  },
-  loaderText: {
-    ...theme.typography.body,
-    color: theme.colors.text.secondary,
-  },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    loaderContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: t.spacing.sm,
+      backgroundColor: t.colors.surface.base,
+    },
+    loaderText: {
+      ...t.typography.body,
+      color: t.colors.text.secondary,
+    },
+  });
