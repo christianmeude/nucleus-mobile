@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
+import { PressableScale, Screen } from '../../components/ui';
 
 const initialsFor = (fullName?: string | null) => {
   const name = fullName?.trim();
@@ -78,14 +79,13 @@ const SettingsRow = ({
   }
 
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
-      style={({ pressed }) => [pressed && styles.rowPressed]}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
     >
       {content}
-    </Pressable>
+    </PressableScale>
   );
 };
 
@@ -104,7 +104,12 @@ export const ProfileScreen = () => {
   }, [user?.email, user?.program]);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    // Top edge intentionally opted out of Screen's own inset padding: the navy
+    // banner below is meant to bleed under the status bar, so its safe-area
+    // clearance is applied to the banner itself (not to Screen's outer box).
+    // Bottom edge is opted out too — the floating tab bar already owns it.
+    <Screen gutter={0} edges={{ top: false, bottom: false }}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={[styles.banner, { height: 120 + insets.top }]}>
         <Text style={styles.watermark}>N</Text>
       </View>
@@ -146,7 +151,8 @@ export const ProfileScreen = () => {
           accessibilityLabel="Sign out"
         />
       </View>
-    </ScrollView>
+      </ScrollView>
+    </Screen>
   );
 };
 
@@ -156,7 +162,6 @@ const makeStyles = (t: Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: t.colors.surface.base,
     },
     content: {
       paddingBottom: t.spacing['3xl'] + 56,
@@ -231,9 +236,6 @@ const makeStyles = (t: Theme) =>
     rowDivided: {
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: t.colors.border.subtle,
-    },
-    rowPressed: {
-      opacity: 0.6,
     },
     iconTile: {
       width: 36,

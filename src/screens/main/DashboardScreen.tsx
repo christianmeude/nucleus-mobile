@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
 import {
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -21,7 +20,14 @@ import { getPrimaryAuthorName, paperDate } from '../../utils/format';
 import { type Theme } from '../../theme';
 import { ResearchCard } from '../../components/ResearchCard';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
-import { Chip, EmptyState, InlineNotice, Skeleton } from '../../components/ui';
+import {
+  Chip,
+  EmptyState,
+  InlineNotice,
+  PressableScale,
+  Screen,
+  Skeleton,
+} from '../../components/ui';
 import {
   ACTION_STATUSES,
   ACTIVE_STATUSES,
@@ -183,18 +189,23 @@ export const DashboardScreen = () => {
   const openCategory = useCallback(() => navigation.navigate('Browse'), [navigation]);
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={() => loadData(true)}
-          tintColor={theme.colors.brand.primary}
-          colors={[theme.colors.brand.primary]}
-        />
-      }
-    >
+    // Top edge intentionally opted out of Screen's own inset padding: the hero
+    // band below is meant to bleed under the status bar, so its safe-area
+    // clearance is applied to the hero itself (not to Screen's outer box).
+    // Bottom edge is opted out too — the floating tab bar already owns it.
+    <Screen gutter={0} edges={{ top: false, bottom: false }}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => loadData(true)}
+            tintColor={theme.colors.brand.primary}
+            colors={[theme.colors.brand.primary]}
+          />
+        }
+      >
       <View style={styles.hero}>
         <LinearGradient
           colors={[theme.colors.brand.primary, theme.colors.brand.primaryHover]}
@@ -221,9 +232,9 @@ export const DashboardScreen = () => {
           </View>
 
           <View style={styles.heroActions}>
-            <Pressable
+            <PressableScale
               onPress={() => navigation.navigate('Activity')}
-              style={({ pressed }) => [styles.heroIconButton, pressed && styles.heroPressed]}
+              style={styles.heroIconButton}
               accessibilityRole="button"
               accessibilityLabel="Activity"
               hitSlop={8}
@@ -236,15 +247,15 @@ export const DashboardScreen = () => {
                   </Text>
                 </View>
               ) : null}
-            </Pressable>
-            <Pressable
+            </PressableScale>
+            <PressableScale
               onPress={() => navigation.navigate('Profile')}
-              style={({ pressed }) => [styles.heroAvatar, pressed && styles.heroPressed]}
+              style={styles.heroAvatar}
               accessibilityRole="button"
               accessibilityLabel="Profile"
             >
               <Text style={styles.heroAvatarText}>{initials}</Text>
-            </Pressable>
+            </PressableScale>
           </View>
         </View>
       </View>
@@ -252,8 +263,8 @@ export const DashboardScreen = () => {
       <View style={styles.body}>
         {error ? <InlineNotice tone="danger" message={error} /> : null}
 
-        <Pressable
-          style={({ pressed }) => [styles.submitCta, pressed && styles.submitCtaPressed]}
+        <PressableScale
+          style={styles.submitCta}
           onPress={() => navigation.navigate('SubmitResearch')}
           accessibilityRole="button"
           accessibilityLabel="Submit your research"
@@ -263,7 +274,7 @@ export const DashboardScreen = () => {
           </View>
           <Text style={styles.submitCtaLabel}>Submit your research</Text>
           <Ionicons name="chevron-forward" size={18} color={theme.colors.brand.accent} />
-        </Pressable>
+        </PressableScale>
 
         {inProgressPaper ? (
           <View style={styles.stageCard}>
@@ -351,9 +362,9 @@ export const DashboardScreen = () => {
             <Text style={styles.savedEmpty}>Papers you bookmark will appear here.</Text>
           ) : (
             savedPapers.map((paper) => (
-              <Pressable
+              <PressableScale
                 key={paper.id}
-                style={({ pressed }) => [styles.savedRow, pressed && styles.savedRowPressed]}
+                style={styles.savedRow}
                 onPress={() => navigation.navigate('ResearchDetail', { paperId: paper.id })}
                 accessibilityRole="button"
                 accessibilityLabel={paper.title || 'Saved paper'}
@@ -363,7 +374,7 @@ export const DashboardScreen = () => {
                   {paper.title || 'Untitled'}
                 </Text>
                 <Ionicons name="chevron-forward" size={14} color={theme.colors.text.muted} />
-              </Pressable>
+              </PressableScale>
             ))
           )}
         </View>
@@ -386,7 +397,7 @@ export const DashboardScreen = () => {
             ) : null}
 
             {exploreFeatured ? (
-              <Pressable
+              <PressableScale
                 style={styles.featuredCard}
                 onPress={() =>
                   navigation.navigate('ResearchDetail', { paperId: exploreFeatured.id })
@@ -405,12 +416,13 @@ export const DashboardScreen = () => {
                   <Text style={styles.featuredMetaSep}>·</Text>
                   <Text style={styles.featuredMetaText}>{viewsOf(exploreFeatured)} views</Text>
                 </View>
-              </Pressable>
+              </PressableScale>
             ) : null}
           </View>
         ) : null}
       </View>
-    </ScrollView>
+      </ScrollView>
+    </Screen>
   );
 };
 
@@ -418,7 +430,6 @@ const makeStyles = (t: Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: t.colors.surface.base,
     },
     content: {
       paddingBottom: t.spacing['3xl'],
@@ -497,9 +508,6 @@ const makeStyles = (t: Theme) =>
       justifyContent: 'center',
       backgroundColor: 'rgba(255, 255, 255, 0.14)',
     },
-    heroPressed: {
-      opacity: 0.7,
-    },
     heroBadge: {
       position: 'absolute',
       top: 2,
@@ -551,9 +559,6 @@ const makeStyles = (t: Theme) =>
       borderColor: t.colors.border.subtle,
       backgroundColor: t.colors.surface.raised,
       ...t.shadows.level1,
-    },
-    submitCtaPressed: {
-      opacity: 0.85,
     },
     submitCtaIconTile: {
       width: 44,
@@ -654,9 +659,6 @@ const makeStyles = (t: Theme) =>
       paddingVertical: t.spacing.sm,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: t.colors.border.subtle,
-    },
-    savedRowPressed: {
-      opacity: 0.6,
     },
     savedTitle: {
       flex: 1,
