@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Keyboard,
   Pressable,
@@ -9,16 +9,21 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
+  runOnJS,
   useAnimatedStyle,
   useSharedValue,
+  withRepeat,
+  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
+import { useHasSearchedOnce } from '../../hooks/useHasSearchedOnce';
 import { useRecentSearches } from '../../hooks/useRecentSearches';
 import { Category, ResearchPaper } from '../../types/domain';
 import { formatDate, getPrimaryAuthorName, paperDate } from '../../utils/format';
@@ -48,6 +53,11 @@ const GREETINGS = [
 
 const pickGreeting = () => GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
 
+/** Swipe-up-and-hold on the explore hint: full travel to reveal results, and
+ * the fraction of that travel a release must clear to commit vs. spring back. */
+const EXPLORE_DRAG_DISTANCE = 110;
+const EXPLORE_COMMIT_THRESHOLD = 0.4;
+
 const viewsOf = (paper: ResearchPaper) => paper.view_count || 0;
 const timeOf = (paper: ResearchPaper) => new Date(paperDate(paper) || 0).getTime();
 
@@ -68,11 +78,16 @@ export const BrowseScreen = () => {
   const [error, setError] = useState('');
 
   // Search-first landing: `searched` gates the idle→results morph. It flips on
-  // submit (Google-style), not on every keystroke; the Clear control resets it.
+  // submit (Google-style) or the explore gesture, not on every keystroke.
   const [searched, setSearched] = useState(false);
   const [greeting, setGreeting] = useState(pickGreeting);
   const progress = useSharedValue(0);
+  const bob = useSharedValue(0);
+  // Set when a persisted flag (or the explore gesture) forces `searched` without
+  // a user-initiated submit, so the morph jumps instead of replaying the 420ms tween.
+  const skipMorphAnim = useRef(false);
   const { recent, addRecent } = useRecentSearches();
+  const { hasSearchedOnce, loaded: hasSearchedOnceLoaded, markSearchedOnce } = useHasSearchedOnce();
 
   const loadData = useCallback(async (silent = false) => {
     if (!silent) {
@@ -108,13 +123,38 @@ export const BrowseScreen = () => {
     }, [loadData]),
   );
 
+  // Once the student has ever committed a search or explore gesture, Browse
+  // never collapses back to the idle greeting again — it stays in results
+  // mode (persisted until app cache is cleared).
+  useEffect(() => {
+    if (hasSearchedOnceLoaded && hasSearchedOnce) {
+      skipMorphAnim.current = true;
+      setSearched(true);
+    }
+  }, [hasSearchedOnceLoaded, hasSearchedOnce]);
+
   // Drive the whole transition off one shared value: 0 = idle, 1 = results.
   useEffect(() => {
+    if (skipMorphAnim.current) {
+      progress.value = searched ? 1 : 0;
+      skipMorphAnim.current = false;
+      return;
+    }
     progress.value = withTiming(searched ? 1 : 0, {
       duration: 420,
       easing: Easing.out(Easing.cubic),
     });
   }, [searched, progress]);
+
+  useEffect(() => {
+    bob.value = withRepeat(
+      withSequence(
+        withTiming(-6, { duration: 900, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 900, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+    );
+  }, [bob]);
 
   const spacerStyle = useAnimatedStyle(() => ({ flexGrow: 1 - progress.value }));
   const greetingStyle = useAnimatedStyle(() => ({ opacity: 1 - progress.value }));
@@ -123,6 +163,7 @@ export const BrowseScreen = () => {
     opacity: progress.value,
     transform: [{ translateY: (1 - progress.value) * 24 }],
   }));
+  const bobStyle = useAnimatedStyle(() => ({ transform: [{ translateY: bob.value }] }));
 
   const runSearch = useCallback(
     (term: string) => {
@@ -131,19 +172,49 @@ export const BrowseScreen = () => {
       addRecent(trimmed);
       setQuery(trimmed);
       setSearched(true);
+      markSearchedOnce();
       Keyboard.dismiss();
     },
-    [addRecent],
+    [addRecent, markSearchedOnce],
   );
 
   const submitSearch = useCallback(() => runSearch(query), [query, runSearch]);
 
-  const resetToIdle = useCallback(() => {
+  // Explore gesture commits into results mode with no query — browsing the
+  // full unfiltered repository, same destination the hint card advertises.
+  const commitExplore = useCallback(() => {
+    setSearched(true);
+    markSearchedOnce();
+  }, [markSearchedOnce]);
+
+  const exploreGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .onUpdate((event) => {
+          const travelled = Math.max(0, -event.translationY);
+          progress.value = Math.min(1, travelled / EXPLORE_DRAG_DISTANCE);
+        })
+        .onEnd(() => {
+          if (progress.value >= EXPLORE_COMMIT_THRESHOLD) {
+            progress.value = withTiming(1, { duration: 260, easing: Easing.out(Easing.cubic) });
+            runOnJS(commitExplore)();
+          } else {
+            progress.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.cubic) });
+          }
+        }),
+    [progress, commitExplore],
+  );
+
+  const clearSearch = useCallback(() => {
     setQuery('');
-    setSearched(false);
-    setGreeting(pickGreeting());
     Keyboard.dismiss();
-  }, []);
+    // Once explore mode has ever been entered, clearing the query stays in
+    // results (now unfiltered) instead of collapsing back to the greeting.
+    if (!hasSearchedOnce) {
+      setSearched(false);
+      setGreeting(pickGreeting());
+    }
+  }, [hasSearchedOnce]);
 
   const categoryNameById = useMemo(() => buildCategoryNameById(categories), [categories]);
 
@@ -264,7 +335,7 @@ export const BrowseScreen = () => {
               pointerEvents={showClear ? 'auto' : 'none'}
               style={showClear ? styles.clearVisible : styles.clearHidden}
             >
-              <Chip label="Clear" active={false} onPress={resetToIdle} variant="filter" />
+              <Chip label="Clear" active={false} onPress={clearSearch} variant="filter" />
             </View>
           </View>
 
@@ -297,6 +368,20 @@ export const BrowseScreen = () => {
                 ))}
               </ScrollView>
             </Animated.View>
+          ) : null}
+
+          {!searched ? (
+            <GestureDetector gesture={exploreGesture}>
+              <Animated.View style={[styles.exploreHint, greetingStyle]}>
+                <Animated.View style={[styles.exploreHintUp, bobStyle]}>
+                  <Ionicons name="chevron-up" size={18} color={theme.colors.brand.primary} />
+                </Animated.View>
+                <Text style={styles.exploreHintText}>
+                  <Text style={styles.exploreHintBold}>Swipe up & hold</Text>
+                  {'\n'}Release to explore the full repository
+                </Text>
+              </Animated.View>
+            </GestureDetector>
           ) : null}
         </View>
 
@@ -613,6 +698,35 @@ const makeStyles = (theme: Theme) =>
   recentChipText: {
     ...theme.typography.label,
     color: theme.colors.brand.primary,
+  },
+  exploreHint: {
+    marginTop: theme.spacing.sm,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: theme.colors.border.subtle,
+    borderRadius: theme.radii.xl,
+    paddingVertical: 22,
+    paddingHorizontal: theme.spacing.lg,
+  },
+  exploreHintUp: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    marginBottom: theme.spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.brand.primarySoft,
+  },
+  exploreHintText: {
+    ...theme.typography.caption,
+    textAlign: 'center',
+    lineHeight: 18,
+    color: theme.colors.text.muted,
+  },
+  exploreHintBold: {
+    fontFamily: theme.fontFamilies.ui.semibold,
+    color: theme.colors.text.primary,
   },
   loadingWrap: {
     gap: theme.spacing.md,
