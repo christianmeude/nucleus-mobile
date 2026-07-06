@@ -11,43 +11,63 @@ interface TopBarProps {
   title?: string;
   /** Custom left slot (greeting block, title + subtitle, etc.). */
   children?: ReactNode;
+  /**
+   * Visual tone for the bell. `'default'` sits on a light surface (bare
+   * glyph, `text.secondary`). `'hero'` sits on the Dashboard's navy gradient
+   * band (DESIGN.md Dashboard A3): a translucent white circle behind the
+   * glyph, `text.onBrand` color. The bell and its unread badge keep
+   * identical size/position across both tones — only color/background
+   * changes — so the control never visually "nudges" between screens.
+   */
+  variant?: 'default' | 'hero';
+  /** Optional content rendered after the bell (e.g. Dashboard's profile avatar). */
+  trailing?: ReactNode;
 }
 
 /**
  * Shared screen header: a flexible left slot (title or custom node) and a
  * right-side bell that opens the merged Activity screen with a combined
  * unread-notifications + pending-invitations badge. Adopted by every student
- * tab screen so the bell lives in one consistent place.
+ * tab screen — including the Dashboard hero via `variant="hero"` — so the
+ * bell lives in one consistent place with one consistent look.
  */
-export const TopBar = ({ title, children }: TopBarProps) => {
+export const TopBar = ({ title, children, variant = 'default', trailing }: TopBarProps) => {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const count = useActivityCount();
+  const isHero = variant === 'hero';
 
   return (
     <View style={styles.row}>
       <View style={styles.left}>
         {children ?? <Text style={styles.title}>{title}</Text>}
       </View>
-      <Pressable
-        onPress={() => navigation.navigate('Activity')}
-        style={({ pressed }) => [styles.bell, pressed && styles.bellPressed]}
-        accessibilityRole="button"
-        accessibilityLabel="Activity"
-        hitSlop={8}
-      >
-        <Ionicons
-          name="notifications-outline"
-          size={22}
-          color={theme.colors.text.secondary}
-        />
-        {count > 0 ? (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{count > 99 ? '99+' : count}</Text>
-          </View>
-        ) : null}
-      </Pressable>
+      <View style={styles.actions}>
+        <Pressable
+          onPress={() => navigation.navigate('Activity')}
+          style={({ pressed }) => [
+            styles.bell,
+            isHero && styles.bellHero,
+            pressed && styles.bellPressed,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Activity"
+          hitSlop={8}
+        >
+          <Ionicons
+            name="notifications-outline"
+            size={22}
+            color={isHero ? theme.colors.text.onBrand : theme.colors.text.secondary}
+          />
+          {count > 0 ? (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{count > 99 ? '99+' : count}</Text>
+            </View>
+          ) : null}
+        </Pressable>
+        {trailing}
+      </View>
     </View>
   );
 };
@@ -70,6 +90,11 @@ const makeStyles = (t: Theme) =>
       lineHeight: 32,
       color: t.colors.text.primary,
     },
+    actions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: t.spacing.sm,
+    },
     bell: {
       width: 44,
       height: 44,
@@ -77,6 +102,9 @@ const makeStyles = (t: Theme) =>
       justifyContent: 'center',
       borderRadius: t.radii.pill,
       borderCurve: 'continuous',
+    },
+    bellHero: {
+      backgroundColor: 'rgba(255, 255, 255, 0.14)',
     },
     bellPressed: {
       opacity: 0.6,
