@@ -127,6 +127,15 @@ components:
     rounded: "{rounded.pill}"
 ---
 
+> **Single source of truth for the NUcleus design system — tokens, motion, and
+> screen composition.** Authoritative, and matches the live tokens in
+> `src/theme/`. This file absorbed the former `docs/design/VISUAL_DIRECTION.md`
+> (the A-pillar redesign look + motion): the **Motion** and **Screens** sections
+> below are ported from it and reconciled to the tokens here. Where the two ever
+> disagreed, this file wins — every divergent hex in the old file was aspirational
+> and never adopted into the tokens. `docs/design/mockup.html` remains the literal
+> visual reference to eyeball against; build to the values in *this* file.
+
 ## Overview
 
 NUcleus Mobile is a research repository for National University Dasmariñas
@@ -284,4 +293,99 @@ already had it) and is now uniform.
 - **Not yet implemented:** a dark theme. Every screen ships light-only
   today; if dark mode is scoped as a future undertaking, it should extend
   `theme/colors.ts` with a parallel token set rather than hardcoding
-  per-screen overrides.
+  per-screen overrides. (`theme/colors.ts` already carries a `dark` scheme
+  behind the off `darkMode` flag; the flip is gated on a `SubmitResearch`
+  dark pass.)
+
+## Motion
+
+Motion is a spec, not a vibe — port the curve and duration exactly. All values
+below have no external dependency beyond `react-native-reanimated` (already in
+the app), so they ship as-is.
+
+- **Signature: the sliding selection pill (nav bar).** A `primary-surface`
+  rounded rect sits *behind* the tab row (`z-index 0`) and animates its
+  `left`/`width` to the active tab. The curve is a spring overshoot —
+  **`cubic-bezier(.34, 1.3, .4, 1)` over 420ms**, expressed in Reanimated as
+  `withTiming(target, { duration: 420, easing: Easing.bezier(.34, 1.3, .4, 1) })`.
+  The moving pill carries *all* the motion: the active icon + label just recolor
+  to `primary`, **no icon scale**. This replaces any static active-dot.
+- **Press feedback.** FAB and tab presses use a light haptic
+  (`expo-haptics` selection/impact-light) plus a scale-down on the FAB
+  (`:active` → `scale .9`). Every tappable element gives visual feedback within
+  ~100ms.
+- **Screen-enter.** New screens fade in with an 8px upward rise over ~320ms.
+- **Focus ring.** `border-focus` (navy `#2E5BC9`), 2px, 2px offset. *(The old
+  visual-direction doc specified a gold focus ring; `border-focus` supersedes
+  it, since focus is navigation state, not emphasis — gold stays reserved.)*
+- **Reduced motion.** Mirror `prefers-reduced-motion` via Reanimated's
+  `useReducedMotion()` — kill every animation and transition (the pill jumps to
+  the active tab with no slide, screens appear without the rise).
+
+## Screens (A-pillar redesign)
+
+Screen-composition specs ported from the redesign mockup, reconciled to the
+tokens above. Where a surface is larger than the `shape` scale tops out at
+(`xl` 18), a bespoke radius is called out — floating navigation and hero banners
+are the only surfaces allowed past the token scale. Likewise the floating bar
+and FAB carry bespoke drop shadows heavier than `level2`, because they float
+above all page content rather than resting on the background.
+
+### Navigation bar (A1)
+
+A floating, detached bar — four tabs split around a raised gold center Submit
+FAB. Labels: **Home · Papers · Browse · Profile**, laid out
+`[Home] [Papers] [·FAB·] [Browse] [Profile]`.
+
+- **Bar:** `position: absolute`, `left/right: 16`, `bottom: 14`, `height: 66`,
+  radius **26** (bespoke, past `xl`), `borderCurve: 'continuous'`,
+  `border-subtle` hairline. Shadow `0 14px 34px -14px rgba(11,27,71,.6)`.
+- **Selection pill:** `primary-surface` fill, `top: 9`, `height: 48`,
+  radius 16, behind the tabs. Animated per **Motion** above.
+- **Submit FAB:** gold **squircle**, `58×58`, radius 20, `top: -20` overhang,
+  `borderCurve: 'continuous'`. Fill = `accent`; glyph ink = **`#3A2600`**
+  (a warm ink-on-gold — this is the one place the FAB glyph departs from the
+  `text-on-accent` token, because slate/white tested poorly for contrast on
+  saturated gold; it is intentional and matches the shipped A1 code). Shadow
+  `0 10px 22px -6px rgba(245,166,35,.7), 0 2px 4px rgba(0,0,0,.2)`.
+- **Dependency-gated fidelity (deferred to A3 Polish).** The mockup's frosted
+  `blur(18px)` bar and gold-*gradient* FAB need `expo-blur` /
+  `expo-linear-gradient` (a dev-client rebuild). A1 ships a faithful
+  approximation: an opaque `surface-raised` bar and a solid `accent` FAB with a
+  sheen overlay + lit top edge. The motion — the point — is already exact.
+
+### Dashboard (A3)
+
+- **Navy hero header:** `linear-gradient(158deg, primary, primary-hover)`,
+  bottom radius 28 (bespoke). Greeting ("Good afternoon,") + name + sub-line;
+  **bell top-right** (badge = unread notifications + pending invites) + avatar.
+  Faint radial gold glow top-right; a giant translucent mono "N" watermark
+  bottom-right (`rgba(255,255,255,.05)` — decorative watermark, exempt from the
+  sans-only chrome rule).
+- **Submit CTA card:** `primary-surface` icon tile + "Submit your research" +
+  gold chevron.
+- **In-progress submission card — stage progress:** `Submitted → Faculty →
+  Dean → Published`. Done stages = `success` dot + `success` connector; the
+  **current stage = `accent` (gold) dot** with a `0 0 0 4px rgba(245,166,35,.25)`
+  ring; future stages = `border-subtle` line. *(Gold marks the current stage —
+  the one emphasis exception in an otherwise navy/ink screen.)*
+- **Explore:** horizontal category chips (active = `primary` fill) and a
+  "MOST READ" featured card (navy band + gold `label`-style tag).
+- Generous spacing — no cramped stat grid.
+
+### Browse (A2)
+
+- Big "Browse" title (`h1`); **search bar with a real clear button**
+  (chip-circle × on the right), radius 15.
+- **Recent searches** as `primary-surface` chips (clock icon on the first).
+- A **"Swipe up & hold — release to explore"** hint card (`1.5px dashed`
+  border, radius 18) with a bobbing up-chevron in a `primary-surface` tile.
+
+### Profile (A3)
+
+- **Navy banner** `height: 120`, bottom radius 26 (bespoke), mono "N" watermark.
+- Gold avatar squircle (`82×82`, radius 24, `borderCurve: 'continuous'`)
+  overlapping the banner (`margin-top: -42`, 4px `surface-base`-colored border).
+- Name + handle, centered.
+- Settings rows with `primary-surface` icon tiles: **Recovery email**,
+  **Password**, **Dark mode** (navy toggle), **Sign out**.

@@ -161,6 +161,10 @@ Issue numbers are canonical and fixed. **Claude Code is authorized to create and
 
 | # | Title | Status |
 |---|---|---|
+| 38 | `browse: results list uses ScrollView+map instead of FlatList` | 🔴 Open |
+| 37 | `browse: idle search landing feels bare — needs richer layout` | 🔴 Open |
+| 36 | `browse: redesign swipe-up explore gesture to pull-to-refresh style` | 🔴 Open |
+| 32 | `A0 follow-up: adopt Screen wrapper + motion primitives (deferred from #31)` | 🔴 Open |
 | 29 | `search: complete hybrid semantic search (Edge Functions, mobile facade, Browse wiring)` | 🔴 Open |
 | 21 | `test: unit coverage for API facades (research, invitations, notifications, faculty, collections)` | 🔴 Open |
 | 15 | `faculty: verify annotation overlays on papers returned from dean or program chair` | 🔴 Open |
@@ -179,7 +183,7 @@ Issue numbers are canonical and fixed. **Claude Code is authorized to create and
 | 2 | `Mobile auth: UUID mismatch between auth.users and public.users breaks RLS` | ✅ Closed |
 | 1 | `ResearchDetail: view and download counts not persisting after navigation` | ✅ Closed |
 
-**Current cap: #29.**
+**Current cap: #38.**
 
 ### Issue title format
 

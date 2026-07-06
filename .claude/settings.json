@@ -32,13 +32,13 @@
     ]
   },
   "hooks": {
-    "WorktreeCreate": [
+    "SessionStart": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "ROOT=\"$(git worktree list --porcelain | awk '/^worktree /{print $2; exit}')\"; for d in \"$ROOT\"/.claude/worktrees/*/; do [ -d \"$d\" ] && [ -f \"$ROOT/.env\" ] && [ ! -f \"${d}.env\" ] && cp \"$ROOT/.env\" \"${d}.env\"; done 2>/dev/null; true",
-            "statusMessage": "Copying .env into new worktree"
+            "command": "D=\"$(pwd)\"; case \"$D\" in *.claude/worktrees/*) R=\"$(git worktree list --porcelain | awk '/^worktree /{print $2; exit}')\"; [ -f \"$R/.env\" ] && [ ! -f \"$D/.env\" ] && cp \"$R/.env\" \"$D/.env\";; esac; true",
+            "statusMessage": "Copying .env into worktree"
           }
         ]
       }
