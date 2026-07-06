@@ -28,23 +28,23 @@ colors:
   danger: "#B91C1C"
 typography:
   display:
-    fontFamily: Montserrat
+    fontFamily: Roboto
     fontSize: 28px
     lineHeight: 36px
     fontWeight: 600
     letterSpacing: 0.15px
   h1:
-    fontFamily: Montserrat
+    fontFamily: Roboto
     fontSize: 24px
     lineHeight: 32px
     fontWeight: 700
   h2:
-    fontFamily: Montserrat
+    fontFamily: Roboto
     fontSize: 20px
     lineHeight: 28px
     fontWeight: 700
   h3:
-    fontFamily: Montserrat
+    fontFamily: Roboto
     fontSize: 17px
     lineHeight: 24px
     fontWeight: 600
@@ -144,14 +144,13 @@ app. The direction is **Modern Clarity**: a clean, sans-only system built for
 long reading sessions on a phone screen, calibrated against Material 3's
 type-scale and shape conventions rather than a bespoke scale.
 
-Two families carry the system. **Montserrat** takes heading roles —
-`display`, `h1`–`h3` — for screen titles, card titles, and paper titles.
-**Roboto** takes everything else: body copy, chrome, labels, metadata,
-buttons — it's also Material 3's own default typeface, so the UI layer reads
-as neutral and platform-native rather than stylized. Contrast comes from
-Montserrat's geometric, uppercase-friendly letterforms against Roboto's
-screen-tuned body text, not from size alone: heading sizes are pinned to
-Material 3 Headline/Title roles, not inflated past them.
+**Roboto is the single app-wide typeface** — every role, from headings
+(`display`, `h1`–`h3`) through body copy, chrome, labels, metadata, and
+buttons. It's also Material 3's own default typeface, so the UI layer reads
+as neutral and platform-native rather than stylized. Visual hierarchy comes
+from size, weight, and letter-spacing per token, not from a second family:
+heading sizes are pinned to Material 3 Headline/Title roles, not inflated
+past them.
 
 Brand color is navy-and-gold, drawn from the NUcleus wordmark: navy for
 primary actions, navigation, and links; gold reserved for emphasis (status
@@ -188,10 +187,10 @@ sized up arbitrarily:
 
 | Token | Family | Size / Line height | Weight | M3 role reference | Use |
 | --- | --- | --- | --- | --- | --- |
-| `display` | Montserrat | 28 / 36 | 600 | Headline Medium | Paper detail title |
-| `h1` | Montserrat | 24 / 32 | 700 | Headline Small | Screen titles ("Browse"), dashboard greeting |
-| `h2` | Montserrat | 20 / 28 | 700 | Title Large | Section headers, stat callouts |
-| `h3` | Montserrat | 17 / 24 | 600 | Title Medium | Card titles (paper cards, tiles), nav bar titles |
+| `display` | Roboto | 28 / 36 | 600 | Headline Medium | Paper detail title |
+| `h1` | Roboto | 24 / 32 | 700 | Headline Small | Screen titles ("Browse"), dashboard greeting |
+| `h2` | Roboto | 20 / 28 | 700 | Title Large | Section headers, stat callouts |
+| `h3` | Roboto | 17 / 24 | 600 | Title Medium | Card titles (paper cards, tiles), nav bar titles |
 | `body-strong` | Roboto | 15 / 22 | 600 | Body Large | Emphasized body copy |
 | `body` | Roboto | 15 / 22 | 400 | Body Large | Default reading copy |
 | `body-small` | Roboto | 13 / 20 | 400 | Body Medium | Secondary copy, affiliations |
@@ -200,15 +199,13 @@ sized up arbitrarily:
 | `caption` | Roboto | 11 / 16 | 400 | Label Small | Fine print, avatar initials |
 | `button` | Roboto | 15 / 20 | 600 | Label Large | Button and CTA labels |
 
-**Rule: Montserrat never appears in UI chrome.** Buttons, labels, chips,
-tabs, and metadata are always Roboto — Montserrat is for content the user is
-meant to read as a heading, not for controls they're meant to tap.
+Every token is Roboto — there is no second family, so there is no chrome-vs-
+heading family rule to enforce. Hierarchy is carried entirely by size,
+weight, and letter-spacing.
 
-Body/UI sizes are untouched from the previous system — only the heading
-roles (`display`, `h1`–`h3`) changed family and stepped to the nearest M3
-Headline/Title size, which in two cases (`display`, `h1`) is actually
-*smaller* than an earlier, unreleased draft of this pass that oversized
-headings past what the type scale called for.
+Body/UI sizes are untouched from the previous system — only the family on
+the heading roles (`display`, `h1`–`h3`) changed, from Montserrat to Roboto;
+sizes stay pinned to the nearest M3 Headline/Title role as before.
 
 ## Layout
 
@@ -279,8 +276,8 @@ already had it) and is now uniform.
 
 ## Do's and Don'ts
 
-- **Do** keep Montserrat to heading roles only. **Don't** put Montserrat on
-  a button, tab, or chip — chrome is Roboto, no exceptions.
+- **Do** use Roboto everywhere — headings, chrome, buttons, chips. **Don't**
+  introduce a second family; hierarchy comes from size and weight, not typeface.
 - **Do** check a heading size against the nearest Material 3 Headline/Title
   role before changing it. **Don't** size up a heading just because it "could
   be bigger" — if the scale needs to change, change the role mapping

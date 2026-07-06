@@ -16,7 +16,6 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@expo-google-fonts/montserrat": "^0.4.2",
     "@expo-google-fonts/roboto": "^0.4.3",
     "@expo/vector-icons": "^15.1.1",
     "@gorhom/bottom-sheet": "^5.2.14",

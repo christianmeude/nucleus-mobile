@@ -10,13 +10,6 @@ import {
   Roboto_600SemiBold,
   Roboto_700Bold,
 } from '@expo-google-fonts/roboto';
-import {
-  useFonts as useMontserrat,
-  Montserrat_400Regular,
-  Montserrat_500Medium,
-  Montserrat_600SemiBold,
-  Montserrat_700Bold,
-} from '@expo-google-fonts/montserrat';
 import { AuthProvider } from './src/context/AuthContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
@@ -42,21 +35,12 @@ const FontLoader = () => {
 const AppShell = () => {
   const { scheme } = useTheme();
 
-  const [uiLoaded] = useRoboto({
+  const [fontsReady] = useRoboto({
     Roboto_400Regular,
     Roboto_500Medium,
     Roboto_600SemiBold,
     Roboto_700Bold,
   });
-
-  const [displayLoaded] = useMontserrat({
-    Montserrat_400Regular,
-    Montserrat_500Medium,
-    Montserrat_600SemiBold,
-    Montserrat_700Bold,
-  });
-
-  const fontsReady = uiLoaded && displayLoaded;
 
   return (
     <>

@@ -3,22 +3,21 @@ import { PixelRatio, type TextStyle } from 'react-native';
 /**
  * NUcleus typography tokens.
  *
- * Two families ("Modern Clarity" pairing):
- *   - `families.ui = Roboto`       — every UI surface (default): chrome, labels,
- *                                  buttons, chips, metadata. Also Material 3's own
- *                                  default typeface.
- *   - `families.display = Montserrat` — heading roles only (display, h1-h3) and
- *                                  reading-view titles (e.g. ResearchDetail paper
- *                                  title, card titles). NEVER for UI chrome like
- *                                  buttons/labels.
+ * Single app-wide typeface: Roboto. Visual hierarchy comes from size/weight/
+ * letter-spacing per scale entry, not from a second family — per Christian's
+ * call on #51, Montserrat has been dropped entirely.
  *
- * Heading sizes are calibrated against the Material 3 type scale roles
+ * `families.ui` and `families.display` both resolve to Roboto weights; the
+ * two keys are kept (rather than collapsed to one) so existing call sites —
+ * `t.fontFamilies.display.*` for heading roles, `t.fontFamilies.ui.*` for
+ * everything else — don't need a mass find-replace across the codebase.
+ *
+ * Heading sizes are still calibrated against the Material 3 type scale roles
  * (Headline/Title), not sized up arbitrarily — see the `typography` scale below.
  *
  * React Native does not select a weight from a single family name + numeric weight;
- * each weight must reference its own registered font name. Both families ship via
- * `@expo-google-fonts/roboto` and `@expo-google-fonts/montserrat` and are loaded
- * in App.tsx.
+ * each weight must reference its own registered font name. Roboto ships via
+ * `@expo-google-fonts/roboto` and is loaded in App.tsx.
  */
 
 const MAX_FONT_SCALE = 1.3;
@@ -36,10 +35,10 @@ export const families = {
     bold: 'Roboto_700Bold',
   },
   display: {
-    regular: 'Montserrat_400Regular',
-    medium: 'Montserrat_500Medium',
-    semibold: 'Montserrat_600SemiBold',
-    bold: 'Montserrat_700Bold',
+    regular: 'Roboto_400Regular',
+    medium: 'Roboto_500Medium',
+    semibold: 'Roboto_600SemiBold',
+    bold: 'Roboto_700Bold',
   },
 } as const;
 
@@ -84,8 +83,8 @@ const make = (
  *   - `h1`       ≈ M3 Headline Small (24)
  *   - `h2`       ≈ M3 Title Large (20, unchanged)
  *   - `h3`       ≈ M3 Title Medium (17, unchanged)
- * `display` and `h1`-`h3` move to the Montserrat display family; body/UI
- * sizes are unchanged.
+ * `display` and `h1`-`h3` use the `display` family key, which now resolves
+ * to Roboto like everything else; sizes/weights are unchanged.
  */
 export const typography = {
   display: make('display', 'semibold', 28, 36, 0.15),
