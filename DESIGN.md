@@ -389,3 +389,67 @@ FAB. Labels: **Home · Papers · Browse · Profile**, laid out
 - Name + handle, centered.
 - Settings rows with `primary-surface` icon tiles: **Recovery email**,
   **Password**, **Dark mode** (navy toggle), **Sign out**.
+
+### First-run (A4)
+
+No raster illustration — the carousel is built entirely from `@expo/vector-icons`
+(`Ionicons`) inside token-styled tiles, so it costs no new dependency and stays
+locked to the palette rather than depending on external art generation. Four
+slides, one swipeable `FlatList` (`pagingEnabled`, horizontal), full-bleed
+`surface-base` background:
+
+- **Slide layout:** icon tile centered in the top ~45% of the screen — `132×132`
+  circle, `primary-surface` fill, the slide's `Ionicons` glyph at `56px` in
+  `primary` (last slide's glyph in `accent` — the one emphasis exception, since
+  it's the "you're ready" beat). Below: `h1` headline, `body` subcopy
+  (`text-secondary`), both center-aligned with `lg` side margins.
+- **Slide 1 — Discover NU Research.** Icon: `search-outline`. "Browse research
+  across every department — search, filter, and read what NU is publishing."
+- **Slide 2 — Submit in Minutes.** Icon: `cloud-upload-outline`. "Upload your
+  paper and send it straight into faculty review, right from your phone."
+- **Slide 3 — Follow Every Stage.** Illustration is literally the Dashboard's
+  own stage-progress motif (see **Dashboard (A3)** above) rendered mid-flow —
+  `Submitted → Faculty → Dean → Published` with the third dot in the `accent`
+  gold-ring current-stage treatment — reusing a component the student will
+  recognize on first login, not a generic icon. "Track your submission from
+  faculty review to publication, every step visible."
+- **Slide 4 — Stay in the Loop.** Icon: `notifications-outline` with a small
+  `accent`-filled badge dot top-right of the tile (glyph itself in `accent`,
+  the emphasis exception noted above). "Get notified the moment your status
+  changes or a co-author invites you in."
+- **Pagination:** dot row below the copy block, `sm` gap — active dot
+  `primary` fill `8px`, inactive `border-subtle` fill `6px`, animated width/opacity
+  cross-fade on page change (reuse the **Motion** section's screen-enter timing,
+  ~200ms, not the nav-pill spring — this is a content swap, not a selection).
+- **Controls:** `Skip` as plain `label`-style text (`text-secondary`) top-right,
+  safe-area padding. Bottom: pill `button-primary` reading "Next" on slides
+  1–3, becoming "Get Started" (still `button-primary`, no gold — gold stays on
+  the icon only, not a second emphasis surface) on slide 4.
+- **Persistence:** a `useHasOnboarded` hook, same shape as `useHasSearchedOnce`
+  (`src/hooks/useHasSearchedOnce.ts`) — one `AsyncStorage` boolean, checked
+  once at the `AppNavigator` auth gate (frozen file — needs the same
+  scoped-unfreeze move A1 used) between the "no user" and role branches, so a
+  returning student never sees this again after their first completed or
+  skipped pass.
+- **Reduced motion:** the page cross-fade and dot animation both no-op under
+  `useReducedMotion()` — swipe still works, just an instant cut instead of a
+  fade.
+
+#### Coachmarks (first-time nav, post-onboarding)
+
+Contextual tooltips shown once each, the first time a returning-from-onboarding
+student reaches the real UI — not part of the carousel itself.
+
+- **Bubble:** `primary` fill, `text-on-brand` `body-small` text, radius `md`,
+  a 6px triangle pointer aimed at the target control, `level2` shadow.
+  Dismiss button: small `label`-style "Got it" in `accent` (the one gold
+  element on an otherwise all-navy surface, same logic as the Dashboard's
+  current-stage dot).
+- **Targets, shown in sequence, one at a time:** the top-right notification
+  bell (`TopBar`) — "Your invites and updates show up here"; the Submit FAB —
+  "Tap to submit your research"; the Browse tab — "Discover papers by
+  category or search". Each dismissal reveals the next; dismissing or tapping
+  anywhere outside advances/ends the sequence.
+- **Persistence:** a single `AsyncStorage` array of seen coachmark ids (same
+  hook family as `useHasOnboarded`), so partial progress (e.g. app closed
+  mid-sequence) resumes rather than restarting.
