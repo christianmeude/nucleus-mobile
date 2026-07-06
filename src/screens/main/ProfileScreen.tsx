@@ -1,15 +1,10 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
-import { researchApi } from '../../api/research';
-import { getSavedPaperIds } from '../../api/collections';
-import { formatMonthYear } from '../../utils/format';
 import { type Theme } from '../../theme';
-import { TopBar } from '../../components/ui';
 
 const initialsFor = (fullName?: string | null) => {
   const name = fullName?.trim();
@@ -19,130 +14,143 @@ const initialsFor = (fullName?: string | null) => {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
 
-type InfoRowProps = {
+type SettingsRowTrailing = 'chevron' | 'toggle';
+
+type SettingsRowProps = {
+  icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  value: string;
+  subtitle?: string;
   divided?: boolean;
-  gold?: boolean;
-  selectable?: boolean;
+  trailing?: SettingsRowTrailing;
+  onPress?: () => void;
+  accessibilityLabel?: string;
 };
 
-const InfoRow = ({ label, value, divided, gold, selectable }: InfoRowProps) => {
-  const styles = useThemedStyles(makeStyles);
-  return (
-    <View style={[styles.infoRow, divided && styles.rowDivided]}>
-      <Text style={styles.infoKey}>{label}</Text>
-      <View style={styles.infoValWrap}>
-        {gold ? <View style={styles.goldDot} /> : null}
-        <Text style={styles.infoVal} selectable={selectable}>
-          {value}
-        </Text>
-      </View>
-    </View>
-  );
-};
-
-const PrefRow = ({ label, divided }: { label: string; divided?: boolean }) => {
+/**
+ * A single Profile (A3) settings row: `primary-surface` icon tile, label +
+ * optional subtitle, and a trailing chevron or (non-functional) toggle. Only
+ * rows with a real `onPress` (Sign out) are pressable — Recovery email and
+ * Password have no destination screen yet, so they stay informational,
+ * matching the app's existing convention for not-yet-wired settings entries.
+ */
+const SettingsRow = ({
+  icon,
+  label,
+  subtitle,
+  divided,
+  trailing,
+  onPress,
+  accessibilityLabel,
+}: SettingsRowProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  return (
-    <View style={[styles.prefRow, divided && styles.rowDivided]}>
-      <Text style={styles.prefLabel}>{label}</Text>
-      <Ionicons name="chevron-forward" size={16} color={theme.colors.text.disabled} />
+
+  const content = (
+    <View style={[styles.row, divided && styles.rowDivided]}>
+      <View style={styles.iconTile}>
+        <Ionicons name={icon} size={18} color={theme.colors.brand.primary} />
+      </View>
+      <View style={styles.rowText}>
+        <Text style={styles.rowLabel}>{label}</Text>
+        {subtitle ? (
+          <Text style={styles.rowSubtitle} numberOfLines={1}>
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
+      {trailing === 'chevron' ? (
+        <Ionicons name="chevron-forward" size={18} color={theme.colors.text.disabled} />
+      ) : trailing === 'toggle' ? (
+        <View
+          style={styles.toggleTrack}
+          accessibilityRole="switch"
+          accessibilityState={{ disabled: true, checked: false }}
+          accessibilityLabel="Dark mode (not yet available)"
+        >
+          <View style={styles.toggleThumb} />
+        </View>
+      ) : null}
     </View>
+  );
+
+  if (!onPress) {
+    return content;
+  }
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [pressed && styles.rowPressed]}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+    >
+      {content}
+    </Pressable>
   );
 };
 
 export const ProfileScreen = () => {
   const { user, signOut } = useAuth();
-  const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useThemedStyles(makeStyles);
-  const [paperCount, setPaperCount] = useState<number | null>(null);
-  const [savedCount, setSavedCount] = useState<number | null>(null);
-
-  const loadStats = useCallback(async () => {
-    const [papersResult, savedResult] = await Promise.allSettled([
-      researchApi.getMyPapers(),
-      getSavedPaperIds(),
-    ]);
-    setPaperCount(papersResult.status === 'fulfilled' ? papersResult.value.length : 0);
-    setSavedCount(savedResult.status === 'fulfilled' ? savedResult.value.length : 0);
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadStats();
-    }, [loadStats])
-  );
 
   const initials = useMemo(() => initialsFor(user?.fullName), [user?.fullName]);
-  const roleLabel = useMemo(() => {
-    if (!user?.role) return '';
-    return user.role.charAt(0).toUpperCase() + user.role.slice(1);
-  }, [user?.role]);
+
+  const handle = useMemo(() => {
+    const parts = [user?.email ? user.email.split('@')[0] : null, user?.program].filter(
+      (part): part is string => !!part
+    );
+    return parts.join(' · ');
+  }, [user?.email, user?.program]);
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-    >
-      <View style={[styles.topBar, { paddingTop: insets.top + theme.spacing.sm }]}>
-        <TopBar title="Profile" />
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <View style={[styles.banner, { height: 120 + insets.top }]}>
+        <Text style={styles.watermark}>N</Text>
       </View>
 
-      <View style={styles.band}>
+      <View style={styles.avatarWrap}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initials}</Text>
         </View>
         <Text style={styles.name}>{user?.fullName || 'Student'}</Text>
-        {roleLabel ? (
-          <View style={styles.rolePill}>
-            <Text style={styles.rolePillText}>{roleLabel}</Text>
-          </View>
-        ) : null}
+        {handle ? <Text style={styles.handle}>{handle}</Text> : null}
       </View>
 
-      <View style={styles.stats}>
-        <View style={styles.stat}>
-          <Text style={styles.statNum}>{paperCount ?? '—'}</Text>
-          <Text style={styles.statLabel}>Papers</Text>
-        </View>
-        <View style={[styles.stat, styles.statDivider]}>
-          <Text style={styles.statNum}>{savedCount ?? '—'}</Text>
-          <Text style={styles.statLabel}>Saved</Text>
-        </View>
+      <View style={styles.rowsSection}>
+        <SettingsRow
+          icon="mail-outline"
+          label="Recovery email"
+          subtitle="Add a personal email for password reset"
+          trailing="chevron"
+        />
+        <SettingsRow
+          icon="lock-closed-outline"
+          label="Password"
+          subtitle="Change your password"
+          divided
+          trailing="chevron"
+        />
+        <SettingsRow
+          icon="moon-outline"
+          label="Dark mode"
+          subtitle="Match system appearance"
+          divided
+          trailing="toggle"
+        />
+        <SettingsRow
+          icon="log-out-outline"
+          label="Sign out"
+          divided
+          onPress={signOut}
+          accessibilityLabel="Sign out"
+        />
       </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Account</Text>
-        <View style={styles.card}>
-          <InfoRow label="Email" value={user?.email || '—'} selectable />
-          <InfoRow label="Department" value={user?.department || '—'} divided />
-          <InfoRow label="Program" value={user?.program || '—'} divided />
-          <InfoRow label="Member since" value={formatMonthYear(user?.createdAt)} divided gold />
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>App preferences</Text>
-        <View style={styles.card}>
-          <PrefRow label="Notifications" />
-          <PrefRow label="Appearance" divided />
-        </View>
-      </View>
-
-      <Pressable
-        style={({ pressed }) => [styles.signout, pressed && styles.signoutPressed]}
-        onPress={signOut}
-        accessibilityRole="button"
-        accessibilityLabel="Sign out"
-      >
-        <Text style={styles.signoutText}>Sign out</Text>
-      </Pressable>
     </ScrollView>
   );
 };
+
+const monoFontFamily = Platform.select({ ios: 'Courier', android: 'monospace', default: 'monospace' });
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({
@@ -151,167 +159,123 @@ const makeStyles = (t: Theme) =>
       backgroundColor: t.colors.surface.base,
     },
     content: {
-      paddingBottom: t.spacing['3xl'],
+      paddingBottom: t.spacing['3xl'] + 56,
     },
-    topBar: {
-      paddingHorizontal: t.spacing.lg,
-      paddingBottom: t.spacing.md,
+    banner: {
+      backgroundColor: t.colors.brand.primary,
+      borderBottomLeftRadius: 26,
+      borderBottomRightRadius: 26,
+      borderCurve: 'continuous',
+      overflow: 'hidden',
     },
-    band: {
-      backgroundColor: t.colors.brand.primarySurface,
-      paddingVertical: t.spacing.xl,
-      paddingHorizontal: t.spacing.xl,
+    watermark: {
+      position: 'absolute',
+      right: t.spacing.lg,
+      bottom: -14,
+      fontFamily: monoFontFamily,
+      fontWeight: '800',
+      fontSize: 96,
+      lineHeight: 96,
+      letterSpacing: -6,
+      color: 'rgba(255, 255, 255, 0.06)',
+    },
+    avatarWrap: {
       alignItems: 'center',
     },
     avatar: {
-      width: 76,
-      height: 76,
-      borderRadius: t.radii.pill,
+      width: 82,
+      height: 82,
+      borderRadius: 24,
       borderCurve: 'continuous',
-      backgroundColor: t.colors.brand.primary,
+      backgroundColor: t.colors.brand.accent,
+      borderWidth: 4,
+      borderColor: t.colors.surface.base,
+      marginTop: -42,
       alignItems: 'center',
       justifyContent: 'center',
       ...t.shadows.level1,
     },
     avatarText: {
-      fontFamily: t.fontFamilies.ui.semibold,
-      fontSize: 27,
-      color: t.colors.text.onBrand,
+      fontFamily: t.fontFamilies.ui.bold,
+      fontSize: 28,
+      color: t.colors.text.onAccent,
     },
     name: {
-      fontFamily: t.fontFamilies.display.semibold,
-      fontSize: 23,
+      fontFamily: t.typography.h2.fontFamily,
+      fontWeight: t.typography.h2.fontWeight,
+      fontSize: t.typography.h2.fontSize,
+      lineHeight: t.typography.h2.lineHeight,
       color: t.colors.text.primary,
-      marginTop: t.spacing.md,
-    },
-    rolePill: {
+      textAlign: 'center',
       marginTop: t.spacing.sm,
-      backgroundColor: t.colors.surface.raised,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: t.colors.brand.primarySoft,
-      borderRadius: t.radii.pill,
-      paddingHorizontal: t.spacing.md,
-      paddingVertical: t.spacing.xs,
     },
-    rolePillText: {
-      fontFamily: t.fontFamilies.ui.semibold,
-      fontSize: 11,
-      letterSpacing: 0.6,
-      textTransform: 'uppercase',
-      color: t.colors.brand.primary,
-    },
-    stats: {
-      flexDirection: 'row',
-      marginHorizontal: t.spacing.xl,
-      marginTop: -t.spacing.lg,
-      backgroundColor: t.colors.surface.raised,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: t.colors.border.subtle,
-      borderRadius: t.radii.lg,
-      borderCurve: 'continuous',
-      ...t.shadows.level1,
-    },
-    stat: {
-      flex: 1,
-      paddingVertical: t.spacing.md,
-      alignItems: 'center',
-    },
-    statDivider: {
-      borderLeftWidth: StyleSheet.hairlineWidth,
-      borderLeftColor: t.colors.border.subtle,
-    },
-    statNum: {
-      fontFamily: t.fontFamilies.ui.semibold,
-      fontSize: 22,
-      color: t.colors.text.primary,
-      fontVariant: ['tabular-nums'],
-    },
-    statLabel: {
-      fontFamily: t.fontFamilies.ui.medium,
-      fontSize: 12,
+    handle: {
+      fontFamily: t.typography.metadata.fontFamily,
+      fontWeight: t.typography.metadata.fontWeight,
+      fontSize: t.typography.metadata.fontSize,
+      lineHeight: t.typography.metadata.lineHeight,
       color: t.colors.text.muted,
-      marginTop: 2,
+      textAlign: 'center',
+      marginTop: t.spacing.xs,
     },
-    section: {
-      marginHorizontal: t.spacing.xl,
+    rowsSection: {
       marginTop: t.spacing.xl,
-    },
-    sectionTitle: {
-      fontFamily: t.fontFamilies.ui.semibold,
-      fontSize: 12,
-      letterSpacing: 0.9,
-      textTransform: 'uppercase',
-      color: t.colors.text.disabled,
-      marginBottom: t.spacing.sm,
-    },
-    card: {
-      backgroundColor: t.colors.surface.raised,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: t.colors.border.subtle,
-      borderRadius: t.radii.lg,
-      borderCurve: 'continuous',
-      overflow: 'hidden',
-    },
-    infoRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 13,
       paddingHorizontal: t.spacing.lg,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: t.spacing.md,
+      paddingVertical: t.spacing.lg,
     },
     rowDivided: {
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: t.colors.border.subtle,
     },
-    infoKey: {
-      fontFamily: t.fontFamilies.ui.regular,
-      fontSize: 14,
-      color: t.colors.text.muted,
-    },
-    infoValWrap: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 7,
-      flexShrink: 1,
-      justifyContent: 'flex-end',
-      marginLeft: t.spacing.md,
-    },
-    infoVal: {
-      fontFamily: t.fontFamilies.ui.medium,
-      fontSize: 14,
-      color: t.colors.text.primary,
-      textAlign: 'right',
-      flexShrink: 1,
-    },
-    goldDot: {
-      width: 7,
-      height: 7,
-      borderRadius: t.radii.pill,
-      backgroundColor: t.colors.brand.accent,
-    },
-    prefRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 14,
-      paddingHorizontal: t.spacing.lg,
-    },
-    prefLabel: {
-      flex: 1,
-      fontFamily: t.fontFamilies.ui.regular,
-      fontSize: 14,
-      color: t.colors.text.primary,
-    },
-    signout: {
-      alignItems: 'center',
-      paddingVertical: t.spacing.xl,
-      marginTop: t.spacing.sm,
-    },
-    signoutPressed: {
+    rowPressed: {
       opacity: 0.6,
     },
-    signoutText: {
-      fontFamily: t.fontFamilies.ui.medium,
-      fontSize: 14,
-      color: t.colors.text.secondary,
+    iconTile: {
+      width: 36,
+      height: 36,
+      borderRadius: t.radii.md,
+      borderCurve: 'continuous',
+      backgroundColor: t.colors.brand.primarySurface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    rowText: {
+      flex: 1,
+      minWidth: 0,
+    },
+    rowLabel: {
+      fontFamily: t.typography.bodyStrong.fontFamily,
+      fontWeight: t.typography.bodyStrong.fontWeight,
+      fontSize: t.typography.bodyStrong.fontSize,
+      lineHeight: t.typography.bodyStrong.lineHeight,
+      color: t.colors.text.primary,
+    },
+    rowSubtitle: {
+      fontFamily: t.typography.caption.fontFamily,
+      fontWeight: t.typography.caption.fontWeight,
+      fontSize: t.typography.caption.fontSize,
+      lineHeight: t.typography.caption.lineHeight,
+      color: t.colors.text.muted,
+      marginTop: t.spacing.xs,
+    },
+    toggleTrack: {
+      width: 44,
+      height: 26,
+      borderRadius: t.radii.pill,
+      backgroundColor: t.colors.border.subtle,
+      justifyContent: 'center',
+      padding: 3,
+    },
+    toggleThumb: {
+      width: 20,
+      height: 20,
+      borderRadius: t.radii.pill,
+      backgroundColor: t.colors.surface.raised,
+      ...t.shadows.level1,
     },
   });
