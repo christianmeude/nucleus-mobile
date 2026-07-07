@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
+  Chip,
   EmptyState,
   InlineNotice,
   PressableCard,
@@ -20,7 +21,7 @@ import {
   type FacultyAssignedPaper,
   type FacultyWorkloadSummary,
 } from '../../api/faculty';
-import { facultyStatusLabel } from './facultyStatus';
+import { facultyStatusLabel, facultyStatusTone } from './facultyStatus';
 import { RootStackParamList } from '../../navigation/types';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
@@ -227,11 +228,18 @@ export const FacultyDashboardScreen = () => {
                           navigation.navigate('FacultyReviewDetail', { paperId: paper.id })
                         }
                       >
+                        <View style={styles.badgeRow}>
+                          <Chip
+                            label={facultyStatusLabel(paper.status)}
+                            variant="status"
+                            tone={facultyStatusTone(paper.status)}
+                          />
+                        </View>
                         <Text style={styles.paperTitle} numberOfLines={2}>
                           {paper.title}
                         </Text>
                         <Text style={styles.paperMeta} numberOfLines={1}>
-                          {paper.authorName} · {facultyStatusLabel(paper.status)} ·{' '}
+                          {paper.authorName} ·{' '}
                           {formatDate(paper.submissionDate || paper.createdAt)}
                         </Text>
                       </PressableCard>
@@ -345,9 +353,13 @@ const makeStyles = (theme: Theme) =>
   list: {
     gap: theme.spacing.md,
   },
+  badgeRow: {
+    flexDirection: 'row',
+  },
   paperTitle: {
     ...theme.typography.bodyStrong,
     color: theme.colors.text.primary,
+    marginTop: theme.spacing.xs,
   },
   paperMeta: {
     ...theme.typography.metadata,
