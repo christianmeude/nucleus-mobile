@@ -27,7 +27,11 @@ export function facultyStatusTone(status: string): ChipTone {
   switch (status) {
     case 'pending_faculty':
       return 'warning';
+    // `revision_required` is an actionable "needs changes" state, not a terminal
+    // failure — kept amber (warning) to match the student status chip
+    // (PaperStatusChip), so the same status reads the same across both roles.
     case 'revision_required':
+      return 'warning';
     case 'rejected':
       return 'danger';
     case 'approved':
