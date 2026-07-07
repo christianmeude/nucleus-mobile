@@ -2,18 +2,10 @@ import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
-import { formatMonthYear } from '../../utils/format';
+import { formatMonthYear, initialsFor } from '../../utils/format';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { PressableScale, Screen } from '../../components/ui';
-
-const initialsFor = (fullName?: string | null) => {
-  const name = fullName?.trim();
-  if (!name) return '?';
-  const parts = name.split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-};
 
 type InfoRowProps = {
   label: string;

@@ -15,7 +15,7 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { researchApi } from '../../api/research';
 import { getSavedPapers, SavedPaper } from '../../api/collections';
 import { ResearchPaper } from '../../types/domain';
-import { paperDate } from '../../utils/format';
+import { greetingForHour, initialsFor, paperDate } from '../../utils/format';
 import { type Theme } from '../../theme';
 import { ResearchCard } from '../../components/ResearchCard';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
@@ -43,20 +43,6 @@ import {
  */
 const HERO_GRADIENT_START = { x: 0.313, y: 0.036 };
 const HERO_GRADIENT_END = { x: 0.687, y: 0.964 };
-
-const initialsFor = (fullName?: string | null) => {
-  const name = fullName?.trim();
-  if (!name) return '?';
-  const parts = name.split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-};
-
-const greetingForHour = (hour: number) => {
-  if (hour < 12) return 'Good morning,';
-  if (hour < 18) return 'Good afternoon,';
-  return 'Good evening,';
-};
 
 export const DashboardScreen = () => {
   const navigation = useNavigation<any>();

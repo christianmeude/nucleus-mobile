@@ -124,6 +124,11 @@ export const AppNavigator = () => {
                 header: (props) => <ResearchDetailHeader {...props} />,
               }}
             />
+            <Stack.Screen
+              name="Activity"
+              component={ActivityScreen}
+              options={{ headerShown: false }}
+            />
           </>
         ) : (
           <Stack.Screen

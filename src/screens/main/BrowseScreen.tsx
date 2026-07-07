@@ -25,6 +25,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
+import { useAuth } from '../../context/AuthContext';
 import { useHasSearchedOnce } from '../../hooks/useHasSearchedOnce';
 import { useRecentSearches } from '../../hooks/useRecentSearches';
 import { Category, ResearchPaper } from '../../types/domain';
@@ -160,6 +161,7 @@ const BrowseGridCell = memo(function BrowseGridCell({
 
 export const BrowseScreen = () => {
   const navigation = useNavigation<any>();
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -416,9 +418,16 @@ export const BrowseScreen = () => {
 
   const listData = loading ? [] : gridItems;
 
+  // Browse is shared by both roles. A faculty tap opens the faculty paper-detail
+  // screen (registered on the faculty stack); a student tap opens the student
+  // research-detail screen. Both routes take the same `{ paperId }`.
   const openDetail = useCallback(
-    (paperId: string) => navigation.navigate('ResearchDetail', { paperId }),
-    [navigation],
+    (paperId: string) =>
+      navigation.navigate(
+        user?.role === 'faculty' ? 'FacultyPaperDetail' : 'ResearchDetail',
+        { paperId },
+      ),
+    [navigation, user?.role],
   );
 
   const keyExtractor = useCallback((item: ResearchPaper) => item.id, []);

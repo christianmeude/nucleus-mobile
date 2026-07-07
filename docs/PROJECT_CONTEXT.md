@@ -14,8 +14,9 @@ Core user value:
 
 ## Audience
 
-- Primary: enrolled students (role: `student`).
-- Non-students (faculty, staff, admin) are not the intended audience; the app surfaces a limited/unsupported experience for them.
+- Enrolled students (role: `student`) — the app's readers and authors.
+- Faculty (role: `faculty`) are also first-class mobile users: they work a review queue of papers assigned to them, open per-paper review detail, and track review workload. Faculty and students share the same repository (Browse) and the same app chrome.
+- Other roles (staff, admin, dean) are not the intended mobile audience and see a limited/unsupported experience.
 
 ## In-scope (What the app provides)
 
@@ -27,14 +28,15 @@ Core user value:
 - Notifications: listing, unread indicators, and mark-as-read behavior.
 - Co-author invitations: view, accept, and decline.
 - Research submission: students can submit new research papers and resubmit papers requiring revision, with draft autosave, file attachment, faculty adviser selection, structured co-author invitations, and full parity with the web submission flow.
+- Faculty review: faculty get a Home dashboard with review-workload stats, a Review queue (search + status filters) of papers assigned to them, per-paper review detail, and role-scoped notifications — all reading the same shared repository (Browse) students use.
 
 ## Out-of-scope (What the app does NOT provide)
 
-- Editorial and administrative workflows (faculty review, dean approval, admin actions).
-- Faculty, admin, or staff dashboards and management features.
-- Research submission by non-students.
+- Dean/administrative approval stages and any admin or staff management features.
+- Research submission by non-students (faculty do not submit papers from mobile).
+- Web-only editorial tooling and any service-role operation — the mobile client is anon key + RLS only.
 
-These exclusions keep the mobile product focused and safe for student use.
+These exclusions keep the mobile product focused and safe.
 
 ## High-level user flows
 
@@ -67,19 +69,20 @@ Notes:
 
 - Root stack:
     - `Login` — authentication screen
-    - `UnsupportedRole` — shown to non-students
+    - `UnsupportedRole` — shown to roles other than student/faculty
     - `StudentTabs` — bottom tabs for authenticated students
-- Student tabs:
-    - `Dashboard`
-    - `MyPapers`
-    - `Browse`
-    - `Notifications`
-    - `Invitations`
+    - `FacultyTabs` — bottom tabs for authenticated faculty
+- Student tabs: `Dashboard`, `MyPapers`, `Browse`, `Profile` — a floating, detached tab bar with a raised gold Submit FAB at center.
+- Faculty tabs: `FacultyDashboard` (Home), `FacultyReview` (Review), `FacultyRepository` (Browse — literally the same shared `BrowseScreen`), `FacultyProfile` (Profile) — the same floating tab bar, minus the Submit FAB.
+- Both roles reach notifications through the header (`TopBar`) bell, which opens the shared `Activity` screen. Students see a Notifications + Invites inbox; faculty see notifications only (no co-author invitations concept).
 - Additional stack screens:
-    - `ResearchDetail` — full paper details and file access; params: `{ paperId: string }`
-    - `SubmitResearch` — research submission and resubmission form; params: `{ resubmitPaperId?: string } | undefined`
+    - `ResearchDetail` — student paper details and file access; params `{ paperId: string }`
+    - `FacultyPaperDetail` — faculty repository paper details; params `{ paperId: string }`
+    - `FacultyReviewDetail` — faculty review view for an assigned paper; params `{ paperId: string }`
+    - `SubmitResearch` — student submission/resubmission form; params `{ resubmitPaperId?: string } | undefined`
+    - `Activity` — shared notifications (+ invites, students only) inbox reached from the bell
 
-Consult routing and gating in `src/navigation/AppNavigator.tsx` and `src/navigation/types.ts` when implementing behavior.
+Consult routing and gating in `src/navigation/AppNavigator.tsx` and `src/navigation/types.ts` when implementing behavior. The tab bar is shared: `src/navigation/FloatingTabBar.tsx` is the primitive; `StudentTabBar` and `FacultyTabBar` are thin configs over it.
 
 ## Data and domain expectations
 
@@ -99,7 +102,7 @@ Design guidance: map backend rows to these shapes without renaming fields unnece
 ## Access control & role model
 
 - Authoritative user profile: the application relies on a canonical user profile record as the authoritative user identity (for example, the `public.users` profile used by backend services). A valid, complete application profile is REQUIRED for an authenticated mobile session; users without a complete profile are not considered provisioned for the student product.
-- Role model: only users with the `student` role may access the student product experience. Non-student roles are presented with the `UnsupportedRole` flow and do not gain access to student tabs or data-scoped screens.
+- Role model: `student` and `faculty` roles each get their own product experience (student tabs / faculty tabs). Any other role is presented with the `UnsupportedRole` flow and gains no access to data-scoped screens. All access is anon key + RLS only; ownership is resolved by email (see CLAUDE.md → Critical Architecture).
 - Ownership: personal data and views (for example `My Papers`, Dashboard summaries, submission drafts) are scoped to the signed-in student unless explicitly documented as shared or global.
 
 ## Key source areas for onboarding
@@ -108,7 +111,8 @@ Design guidance: map backend rows to these shapes without renaming fields unnece
 - Auth surface: `src/context/AuthContext.tsx`
 - Navigation: `src/navigation/AppNavigator.tsx`, `src/navigation/types.ts`
 - Domain types: `src/types/domain.ts`
-- High-level API facades: `src/api/*` — `researchApi` for read paths and file access, `submitApi` for submission, drafts, policy, directories, and co-author invitations
+- High-level API facades: `src/api/*` — `researchApi` (read paths, file access, submission/drafts), `invitationsApi`, `notificationsApi`, and `facultyApi` (faculty read paths + review write RPCs)
+- Faculty surface: screens in `src/screens/faculty/*`; tabs in `src/navigation/FacultyTabs.tsx`; shared tab bar in `src/navigation/FloatingTabBar.tsx`
 
 ## Environment and configuration (conceptual)
 
@@ -121,10 +125,10 @@ Design guidance: map backend rows to these shapes without renaming fields unnece
 
 ## Principles
 
-- Student-only product experience: only users with the `student` role are permitted into the student product experience; non-student roles must be redirected to the `UnsupportedRole` flow.
-- Student-first product: the mobile app serves students as readers and authors; it provides no editorial, administrative, or faculty-facing capabilities.
+- Two supported roles: `student` (reader/author) and `faculty` (reviewer). Both get a full, visually unified app experience; any other role is redirected to the `UnsupportedRole` flow.
+- One design system for both roles: student and faculty share the same chrome (floating tab bar, `TopBar` bell, `Screen` wrapper) and the same repository — no surface gets a parallel set of conventions.
+- Mobile stays out of dean/admin approval and service-role operations; heavy or administrative tasks remain server-side.
 - Preserve navigation and UX contracts; avoid breaking changes unless required by product decisions.
-- Keep client responsibilities lightweight; prefer server-side operations for heavy or administrative tasks.
 
 ---
 

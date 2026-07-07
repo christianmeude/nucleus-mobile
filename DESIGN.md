@@ -351,6 +351,24 @@ FAB. Labels: **Home · Papers · Browse · Profile**, laid out
   approximation: an opaque `surface-raised` bar and a solid `accent` FAB with a
   sheen overlay + lit top edge. The motion — the point — is already exact.
 
+#### Faculty tabs
+
+The faculty navigator uses the **same** floating bar. There is one shared
+`FloatingTabBar` primitive; `StudentTabBar` and `FacultyTabBar` are thin configs
+over it. Faculty differ only in:
+
+- **No Submit FAB** (faculty don't submit). Four tabs fill the bar evenly —
+  `[Home] [Review] [Browse] [Profile]`, no center gap.
+- **Review** takes the student's *Papers* slot (icon: a check-review pair, so it
+  reads distinctly from Browse's search glyph). **Browse** is literally the same
+  shared repository screen both roles use.
+
+Everything else — the frosted blur bar, the sliding-spring selection pill, the
+`primary-surface` fill, radii, shadow, and motion — is identical by construction,
+so the two bars can't drift apart. Bell parity: faculty reach notifications
+through the same `TopBar` bell → `Activity` screen (notifications only; no
+invites segment). Faculty Profile matches student Profile — no bell.
+
 ### Dashboard (A3)
 
 - **Navy hero header:** `linear-gradient(158deg, primary, primary-hover)`,
