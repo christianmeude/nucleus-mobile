@@ -16,7 +16,6 @@ import { palette, type Theme } from '../theme';
 import { PressableScale } from '../components/ui';
 import { haptics } from '../lib/haptics';
 import { useReduceMotion } from '../hooks/useReduceMotion';
-import { navBlurTargetRef } from './navBlurTarget';
 import { StudentTabsParamList } from './types';
 
 type IconPair = [outline: keyof typeof Ionicons.glyphMap, filled: keyof typeof Ionicons.glyphMap];
@@ -42,16 +41,18 @@ const PILL_INSET = 8;
 // Dark ink on the gold FAB (mockup ink-on-gold) — white read as poor contrast.
 const FAB_INK = '#3A2600';
 
-// Mockup's frosted bar: `background: var(--nav); backdrop-filter: blur(18px)`.
-// expo-blur's `intensity` (1-100) isn't a literal px radius, so this is a
-// chosen approximation, not a measured conversion — verify on-device against
-// the mockup before treating it as final.
+// Mockup's frosted bar: `background: var(--nav) /* ~93% opaque */;
+// backdrop-filter: blur(18px)`. expo-blur's `intensity` (1-100) isn't a literal
+// px radius, so this is a chosen approximation, not a measured conversion —
+// verify on-device against the mockup before treating it as final.
 const BAR_BLUR_INTENSITY = 50;
 // Android has no real blur without an explicit method (default renders a flat
 // semi-transparent view per expo-blur's own docs); this is the SDK31+ native
-// implementation with automatic fallback to 'none' on older devices — paired
-// with `blurTarget` (below) so it doesn't actually hit that fallback.
+// implementation with automatic fallback to 'none' on older devices.
 const BAR_BLUR_METHOD = 'dimezisBlurViewSdk31Plus' as const;
+// Near-opaque tint over the blur, matching the mockup's `--nav` alpha (~0.93)
+// so the bar reads as frosted-but-legible rather than a see-through pane.
+const BAR_TINT_OPACITY = 0.9;
 
 // Mockup FAB fill: `linear-gradient(145deg, #F8C156, #F5A623)` — mode-invariant
 // (the mockup hardcodes these hex stops regardless of light/dark). 145deg
@@ -194,9 +195,9 @@ export const StudentTabBar = ({ state, navigation }: BottomTabBarProps) => {
             intensity={BAR_BLUR_INTENSITY}
             tint={scheme === 'dark' ? 'dark' : 'light'}
             blurMethod={BAR_BLUR_METHOD}
-            blurTarget={navBlurTargetRef}
             style={StyleSheet.absoluteFill}
           />
+          <View style={styles.barTint} pointerEvents="none" />
           <Animated.View style={[styles.indicator, indicatorStyle]} pointerEvents="none" />
 
           {renderTab(0)}
@@ -246,28 +247,30 @@ const makeStyles = (t: Theme) =>
       height: 66,
       borderRadius: 26,
       borderCurve: 'continuous',
-      backgroundColor: 'transparent',
       shadowColor: '#0B1B47',
       shadowOffset: { width: 0, height: 14 },
       shadowOpacity: 0.28,
       shadowRadius: 24,
       elevation: 12,
     },
-    // Only the pill itself carries any surface (the BlurView + its own
-    // `tint`) — no extra opaque fill behind it, so the bar reads as
-    // genuinely floating rather than a solid card.
     bar: {
       flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-around',
-      backgroundColor: 'transparent',
       // Mockup-exact radii — the floating detached bar.
       borderRadius: 26,
       borderCurve: 'continuous',
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: t.colors.border.subtle,
       overflow: 'hidden',
+    },
+    // Near-opaque tint layered over the BlurView so the frosted bar reads in
+    // the app's own surface color rather than the system default tint.
+    barTint: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: t.colors.surface.raised,
+      opacity: BAR_TINT_OPACITY,
     },
     indicator: {
       position: 'absolute',
