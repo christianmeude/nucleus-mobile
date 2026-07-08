@@ -21,8 +21,6 @@ import {
 import { facultyApi, type FacultyAssignedPaper } from '../../api/faculty';
 import {
   FACULTY_QUEUE_FILTERS,
-  facultyStatusLabel,
-  facultyStatusTone,
   matchesQueueFilter,
   type FacultyQueueFilter,
 } from './facultyStatus';
@@ -159,13 +157,6 @@ export const FacultyReviewScreen = () => {
                 accessibilityLabel={`Review ${paper.title}`}
                 onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: paper.id })}
               >
-                <View style={styles.badgeRow}>
-                  <Chip
-                    label={facultyStatusLabel(paper.status)}
-                    variant="status"
-                    tone={facultyStatusTone(paper.status)}
-                  />
-                </View>
                 <Text style={styles.paperTitle} numberOfLines={2}>
                   {paper.title}
                 </Text>
@@ -215,9 +206,6 @@ const makeStyles = (theme: Theme) =>
   },
   list: {
     gap: theme.spacing.md,
-  },
-  badgeRow: {
-    flexDirection: 'row',
   },
   paperTitle: {
     ...theme.typography.bodyStrong,

@@ -17,5 +17,6 @@ export { Screen } from './Screen';
 export { TopBar } from './TopBar';
 export { ProfileHeader } from './ProfileHeader';
 export { SettingsRow } from './SettingsRow';
+export { SheetPresenter } from './SheetPresenter';
 export { PressableScale } from './motion/PressableScale';
 export { FadeInView } from './motion/FadeInView';

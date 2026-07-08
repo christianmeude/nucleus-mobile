@@ -312,6 +312,16 @@ the app), so they ship as-is.
   (`:active` → `scale .9`). Every tappable element gives visual feedback within
   ~100ms.
 - **Screen-enter.** New screens fade in with an 8px upward rise over ~320ms.
+- **Sheet presentation (iOS card).** A full-screen sheet (e.g. the paper viewer
+  behind "View Full Paper") slides up from the bottom while the presenting screen
+  **scales down to `0.92` and rounds its corners to `14`** behind a dim scrim —
+  the native-iOS modal card zoom-out. Implemented in `SheetPresenter` with one
+  shared progress value: **open is a spring, `withSpring(1, { damping: 22,
+  stiffness: 240, mass: 0.9 })`**; **close is a `260ms` timed collapse**,
+  `withTiming(0, { duration: 260 })`. Drag the grabber down past ~28% of the
+  sheet height (or flick, `velocityY > 900`) to dismiss. Scrim tops out at `0.45`
+  black; the presenter also dims `0.35`. Under reduced motion the sheet snaps
+  open/closed with no scale, slide, or scrim fade.
 - **Focus ring.** `border-focus` (navy `#2E5BC9`), 2px, 2px offset. *(The old
   visual-direction doc specified a gold focus ring; `border-focus` supersedes
   it, since focus is navigation state, not emphasis — gold stays reserved.)*

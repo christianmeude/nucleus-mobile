@@ -12,7 +12,6 @@ import {
   BottomSheet,
   Button,
   Card,
-  Chip,
   InlineNotice,
   PressableScale,
   Screen,
@@ -25,7 +24,6 @@ import {
   type FacultyApprover,
   type FacultyReviewDetail,
 } from '../../api/faculty';
-import { facultyStatusLabel, facultyStatusTone } from './facultyStatus';
 import { RootStackParamList } from '../../navigation/types';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
@@ -260,14 +258,6 @@ export const FacultyReviewDetailScreen = () => {
     <>
       <Screen edges={{ top: false }}>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-        <View style={styles.badgeRow}>
-          <Chip
-            label={facultyStatusLabel(detail.status)}
-            variant="status"
-            tone={facultyStatusTone(detail.status)}
-          />
-        </View>
-
         <Text style={styles.title}>{detail.title}</Text>
         <Text style={styles.meta}>
           {detail.authorName}
@@ -519,9 +509,6 @@ const makeStyles = (theme: Theme) =>
   centered: {
     flex: 1,
     justifyContent: 'center',
-  },
-  badgeRow: {
-    flexDirection: 'row',
   },
   title: {
     fontFamily: theme.fontFamilies.display.semibold,

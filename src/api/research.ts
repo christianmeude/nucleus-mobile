@@ -453,7 +453,10 @@ export const researchApi = {
   },
 
   getResearchById: async (paperId: string) => {
-    await resolveCurrentStudentProfile();
+    // Role-agnostic: the repository detail is shared by students and faculty
+    // (faculty open the same ResearchDetail from the shared Browse). RLS gates
+    // which papers each caller can read, so no student assertion here.
+    await resolveCurrentProfile();
 
     const { data, error } = await supabase
       .from('research_papers')
@@ -487,7 +490,9 @@ export const researchApi = {
   },
 
   getResearchFile: async (paperId: string) => {
-    await resolveCurrentStudentProfile();
+    // Role-agnostic (see getResearchById): faculty open the shared ResearchDetail,
+    // which resolves the same signed file URL. RLS gates file access per caller.
+    await resolveCurrentProfile();
 
     // Load paper metadata to resolve file path.
     const { data: paperRow, error: paperError } = await supabase

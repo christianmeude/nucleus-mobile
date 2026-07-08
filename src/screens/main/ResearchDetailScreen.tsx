@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
 import { getSavedPaperIds, togglePaperSaved } from '../../api/collections';
@@ -15,11 +16,16 @@ import { Category, ResearchPaper, WorkflowEntry } from '../../types/domain';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
-import { EmptyState, InlineNotice, PressableScale, Screen, Skeleton } from '../../components/ui';
+import {
+  EmptyState,
+  InlineNotice,
+  PressableScale,
+  Screen,
+  SheetPresenter,
+} from '../../components/ui';
 import { PdfViewer } from '../../components/PdfViewer';
 import {
   formatDate,
-  formatRelativeTime,
   getPrimaryAuthorName,
   listCoAuthorNames,
   paperDate,
@@ -43,7 +49,7 @@ export const ResearchDetailScreen = () => {
   const route = useRoute<DetailRouteProp>();
   const navigation = useNavigation<any>();
   const { user } = useAuth();
-  const { theme } = useTheme();
+  const { theme, scheme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { paperId } = route.params;
 
@@ -57,6 +63,18 @@ export const ResearchDetailScreen = () => {
   const [saved, setSaved] = useState(false);
   const [savePending, setSavePending] = useState(false);
   const [error, setError] = useState('');
+  const [pdfOpen, setPdfOpen] = useState(false);
+  // Track a view the first time the reader actually opens the PDF, once per screen
+  // visit — the sheet unmounts on close, so without this guard each re-open would
+  // remount PdfViewer and re-fire onFirstLoad, over-counting views.
+  const viewTracked = useRef(false);
+
+  // Hide the stack header while the paper sheet is open so the whole screen —
+  // header included — scales away behind the sheet, leaving only the sheet on
+  // screen. Restored on close.
+  useEffect(() => {
+    navigation.setOptions({ headerShown: !pdfOpen });
+  }, [navigation, pdfOpen]);
 
   useEffect(() => {
     const run = async () => {
@@ -188,7 +206,25 @@ export const ResearchDetailScreen = () => {
   const displayDate = paper.published_date || paper.created_at;
 
   return (
-    <Screen edges={{ top: false }}>
+    <SheetPresenter
+      open={pdfOpen}
+      onClose={() => setPdfOpen(false)}
+      sheetAccessibilityLabel={`Full paper: ${paper.title}`}
+      sheet={
+        fileUri ? (
+          <PdfViewer
+            uri={fileUri}
+            variant="fill"
+            onFirstLoad={() => {
+              if (viewTracked.current) return;
+              viewTracked.current = true;
+              researchApi.trackView(paperId).catch(() => undefined);
+            }}
+          />
+        ) : null
+      }
+    >
+      <Screen edges={{ top: false }}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         {categoryName ? <Text style={styles.eyebrow}>{categoryName}</Text> : null}
 
@@ -226,15 +262,34 @@ export const ResearchDetailScreen = () => {
           <Text style={styles.sectionLabel}>Paper</Text>
           {fileError ? (
             <InlineNotice tone="danger" message={fileError} />
-          ) : fileUri ? (
-            <PdfViewer
-              uri={fileUri}
-              onFirstLoad={() => {
-                researchApi.trackView(paperId).catch(() => undefined);
-              }}
-            />
           ) : (
-            <Skeleton height={460} radius="lg" />
+            <PressableScale
+              style={styles.previewCard}
+              onPress={() => setPdfOpen(true)}
+              disabled={!fileUri}
+              accessibilityRole="button"
+              accessibilityLabel="View full paper"
+              accessibilityState={{ disabled: !fileUri }}
+            >
+              {fileUri ? (
+                <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                  <PdfViewer uri={fileUri} variant="preview" />
+                </View>
+              ) : null}
+              {/* Frost the page behind the button; a soft scrim guarantees the
+                  button reads even where a platform's blur is weak. */}
+              <BlurView
+                intensity={28}
+                tint={scheme === 'dark' ? 'dark' : 'light'}
+                style={StyleSheet.absoluteFill}
+                pointerEvents="none"
+              />
+              <View style={styles.previewScrim} pointerEvents="none" />
+              <View style={styles.previewButton} pointerEvents="none">
+                <Ionicons name="document-text" size={18} color={theme.colors.text.onBrand} />
+                <Text style={styles.previewButtonText}>View Full Paper</Text>
+              </View>
+            </PressableScale>
           )}
         </View>
 
@@ -269,7 +324,7 @@ export const ResearchDetailScreen = () => {
                   <PressableScale
                     key={item.id}
                     style={styles.relatedRow}
-                    onPress={() => navigation.push('ResearchDetail', { paperId: item.id })}
+                    onPress={() => navigation.push(route.name, { paperId: item.id })}
                     accessibilityRole="button"
                     accessibilityLabel={item.title || 'Untitled paper'}
                   >
@@ -327,7 +382,8 @@ export const ResearchDetailScreen = () => {
           </View>
         ) : null}
       </ScrollView>
-    </Screen>
+      </Screen>
+    </SheetPresenter>
   );
 };
 
@@ -411,6 +467,39 @@ const makeStyles = (theme: Theme) =>
   section: {
     marginTop: theme.spacing.xl,
     gap: theme.spacing.sm,
+  },
+  previewCard: {
+    height: 260,
+    borderRadius: theme.radii.lg,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+    backgroundColor: theme.colors.surface.sunken,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border.subtle,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previewScrim: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(15, 23, 42, 0.28)',
+  },
+  previewButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.radii.pill,
+    backgroundColor: theme.colors.brand.primary,
+    ...theme.shadows.level2,
+  },
+  previewButtonText: {
+    ...theme.typography.bodyStrong,
+    color: theme.colors.text.onBrand,
   },
   sectionLabel: {
     ...theme.typography.label,
