@@ -1,18 +1,15 @@
 import { useCallback, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
+  DashboardHero,
   EmptyState,
   InlineNotice,
-  PressableCard,
-  PressableScale,
   Screen,
   Skeleton,
-  TopBar,
 } from '../../components/ui';
+import { FacultyPaperCard } from '../../components/FacultyPaperCard';
 import {
   facultyApi,
   summarizeFacultyWorkload,
@@ -26,14 +23,6 @@ import { greetingForHour, initialsFor } from '../../utils/format';
 
 const RECENT_LIMIT = 5;
 
-/**
- * `linear-gradient(158deg, primary, primary-hover)` (DESIGN.md, Dashboard A3),
- * pre-converted to expo-linear-gradient's normalized start/end points — the
- * same hero band the student Dashboard uses, so both roles share one look.
- */
-const HERO_GRADIENT_START = { x: 0.313, y: 0.036 };
-const HERO_GRADIENT_END = { x: 0.687, y: 0.964 };
-
 /** Review-queue sort weight: papers awaiting this faculty's review lead, then
  * revisions, then everything else — so the dashboard surfaces what needs action. */
 const statusPriority = (status: string): number => {
@@ -41,13 +30,6 @@ const statusPriority = (status: string): number => {
   if (status === 'revision_required') return 1;
   return 2;
 };
-
-function formatDate(value?: string | null): string {
-  if (!value) return '—';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
 
 type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -64,7 +46,6 @@ const DashboardSkeleton = () => {
 
 export const FacultyDashboardScreen = () => {
   const navigation = useNavigation<FacultyNavigation>();
-  const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
@@ -143,42 +124,13 @@ export const FacultyDashboardScreen = () => {
           />
         }
       >
-        <View style={styles.hero}>
-          <LinearGradient
-            colors={[theme.colors.brand.primary, theme.colors.brand.primaryHover]}
-            start={HERO_GRADIENT_START}
-            end={HERO_GRADIENT_END}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={[styles.heroGlow, { backgroundColor: theme.colors.brand.accent }]} />
-          <Text style={[styles.heroWatermark, { color: theme.colors.text.onBrand }]}>N</Text>
-
-          <View style={[styles.heroContent, { paddingTop: insets.top + theme.spacing.md }]}>
-            <TopBar
-              variant="hero"
-              trailing={
-                <PressableScale
-                  onPress={() => navigation.navigate('FacultyProfile' as never)}
-                  style={styles.heroAvatar}
-                  accessibilityRole="button"
-                  accessibilityLabel="Profile"
-                >
-                  <Text style={styles.heroAvatarText}>{initials}</Text>
-                </PressableScale>
-              }
-            >
-              <Text style={styles.heroGreeting}>{greeting}</Text>
-              <Text style={styles.heroName} numberOfLines={1}>
-                {firstName || 'Faculty'}
-              </Text>
-              {statusLine ? (
-                <Text style={[styles.heroSubLine, statusLine.urgent && styles.heroSubLineUrgent]}>
-                  {statusLine.text}
-                </Text>
-              ) : null}
-            </TopBar>
-          </View>
-        </View>
+        <DashboardHero
+          greeting={greeting}
+          name={firstName || 'Faculty'}
+          initials={initials}
+          statusLine={statusLine}
+          onPressAvatar={() => navigation.navigate('FacultyProfile' as never)}
+        />
 
         <View style={styles.body}>
           {error ? <InlineNotice tone="danger" message={error} /> : null}
@@ -200,18 +152,11 @@ export const FacultyDashboardScreen = () => {
             ) : (
               <View style={styles.list}>
                 {queue.map((paper) => (
-                  <PressableCard
+                  <FacultyPaperCard
                     key={paper.id}
-                    accessibilityLabel={`Review ${paper.title}`}
+                    paper={paper}
                     onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: paper.id })}
-                  >
-                    <Text style={styles.paperTitle} numberOfLines={2}>
-                      {paper.title}
-                    </Text>
-                    <Text style={styles.paperMeta} numberOfLines={1}>
-                      {paper.authorName} · {formatDate(paper.submissionDate || paper.createdAt)}
-                    </Text>
-                  </PressableCard>
+                  />
                 ))}
               </View>
             )}
@@ -230,72 +175,6 @@ const makeStyles = (theme: Theme) =>
     content: {
       paddingBottom: theme.spacing['3xl'],
     },
-    hero: {
-      overflow: 'hidden',
-      borderBottomLeftRadius: 28,
-      borderBottomRightRadius: 28,
-      borderCurve: 'continuous',
-    },
-    heroGlow: {
-      position: 'absolute',
-      top: -60,
-      right: -60,
-      width: 180,
-      height: 180,
-      borderRadius: theme.radii.pill,
-      opacity: 0.18,
-    },
-    heroWatermark: {
-      position: 'absolute',
-      right: -18,
-      bottom: -36,
-      fontSize: 168,
-      lineHeight: 168,
-      fontFamily: theme.fontFamilies.display.bold,
-      opacity: 0.05,
-    },
-    heroContent: {
-      paddingHorizontal: theme.spacing.lg,
-      paddingBottom: theme.spacing.xl,
-    },
-    heroGreeting: {
-      fontFamily: theme.fontFamilies.ui.regular,
-      fontSize: 14,
-      color: theme.colors.text.onBrand,
-      opacity: 0.75,
-    },
-    heroName: {
-      ...theme.typography.h1,
-      color: theme.colors.text.onBrand,
-      marginTop: 2,
-    },
-    heroSubLine: {
-      fontFamily: theme.fontFamilies.ui.regular,
-      fontSize: 13,
-      color: theme.colors.text.onBrand,
-      opacity: 0.75,
-      marginTop: theme.spacing.xs,
-    },
-    heroSubLineUrgent: {
-      fontFamily: theme.fontFamilies.ui.semibold,
-      opacity: 1,
-    },
-    heroAvatar: {
-      width: 44,
-      height: 44,
-      borderRadius: theme.radii.pill,
-      borderCurve: 'continuous',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: 'rgba(255, 255, 255, 0.16)',
-      borderWidth: 1,
-      borderColor: 'rgba(255, 255, 255, 0.3)',
-    },
-    heroAvatarText: {
-      fontFamily: theme.fontFamilies.ui.semibold,
-      fontSize: 14,
-      color: theme.colors.text.onBrand,
-    },
     body: {
       paddingHorizontal: theme.spacing.lg,
       paddingTop: theme.spacing.xl,
@@ -310,15 +189,6 @@ const makeStyles = (theme: Theme) =>
     },
     list: {
       gap: theme.spacing.md,
-    },
-    paperTitle: {
-      ...theme.typography.bodyStrong,
-      color: theme.colors.text.primary,
-    },
-    paperMeta: {
-      ...theme.typography.metadata,
-      color: theme.colors.text.muted,
-      marginTop: theme.spacing.xs,
     },
     hint: {
       ...theme.typography.bodySmall,

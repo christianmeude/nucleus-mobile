@@ -13,11 +13,11 @@ import {
   Chip,
   EmptyState,
   InlineNotice,
-  PressableCard,
   Screen,
   Skeleton,
   TopBar,
 } from '../../components/ui';
+import { FacultyPaperCard } from '../../components/FacultyPaperCard';
 import { facultyApi, type FacultyAssignedPaper } from '../../api/faculty';
 import {
   FACULTY_QUEUE_FILTERS,
@@ -29,13 +29,6 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 
 type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
-
-function formatDate(value?: string | null): string {
-  if (!value) return '—';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
 
 export const FacultyReviewScreen = () => {
   const navigation = useNavigation<FacultyNavigation>();
@@ -152,18 +145,11 @@ export const FacultyReviewScreen = () => {
         ) : (
           <View style={styles.list}>
             {visible.map((paper) => (
-              <PressableCard
+              <FacultyPaperCard
                 key={paper.id}
-                accessibilityLabel={`Review ${paper.title}`}
+                paper={paper}
                 onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: paper.id })}
-              >
-                <Text style={styles.paperTitle} numberOfLines={2}>
-                  {paper.title}
-                </Text>
-                <Text style={styles.paperMeta} numberOfLines={1}>
-                  {paper.authorName} · {formatDate(paper.submissionDate || paper.createdAt)}
-                </Text>
-              </PressableCard>
+              />
             ))}
           </View>
         )}
@@ -206,16 +192,6 @@ const makeStyles = (theme: Theme) =>
   },
   list: {
     gap: theme.spacing.md,
-  },
-  paperTitle: {
-    ...theme.typography.bodyStrong,
-    color: theme.colors.text.primary,
-    marginTop: theme.spacing.xs,
-  },
-  paperMeta: {
-    ...theme.typography.metadata,
-    color: theme.colors.text.muted,
-    marginTop: theme.spacing.xs,
   },
   hint: {
     ...theme.typography.bodySmall,

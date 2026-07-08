@@ -27,17 +27,11 @@ import {
 import { RootStackParamList } from '../../navigation/types';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
+import { formatDate } from '../../utils/format';
 
 type FacultyDetailRoute = RouteProp<RootStackParamList, 'FacultyReviewDetail'>;
 type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
 type SheetKind = 'approve' | 'revision' | 'reject';
-
-function formatDate(value?: string | null): string {
-  if (!value) return '—';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
 
 function titleCase(value?: string | null, fallback = ''): string {
   if (!value) return fallback;
