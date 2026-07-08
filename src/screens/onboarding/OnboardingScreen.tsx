@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -113,7 +113,14 @@ export const OnboardingScreen = ({ onDone }: OnboardingScreenProps) => {
         style={StyleSheet.absoluteFill}
       />
       <View style={[styles.glow, { backgroundColor: theme.colors.brand.accent }]} />
-      <Text style={styles.watermark}>N</Text>
+      {/* NUcleus mark as an oversized translucent-white silhouette (the mark tinted
+          onBrand + low opacity keeps its alpha, so the logo shape reads). */}
+      <Image
+        source={require('../../../assets/images/nucleus-mark.png')}
+        style={styles.watermark}
+        resizeMode="contain"
+        accessibilityIgnoresInvertColors
+      />
 
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.topBar}>
@@ -334,13 +341,12 @@ const makeStyles = (t: Theme) =>
     },
     watermark: {
       position: 'absolute',
-      left: -24,
-      bottom: -52,
-      fontSize: 220,
-      lineHeight: 220,
-      fontFamily: t.fontFamilies.display.bold,
-      color: t.colors.text.onBrand,
-      opacity: 0.05,
+      left: -70,
+      bottom: -80,
+      width: 340,
+      height: 340,
+      tintColor: t.colors.text.onBrand,
+      opacity: 0.06,
     },
     safe: {
       flex: 1,
@@ -388,8 +394,8 @@ const makeStyles = (t: Theme) =>
     },
     badgeDot: {
       position: 'absolute',
-      top: 30,
-      right: 36,
+      top: 26,
+      right: 30,
       width: 16,
       height: 16,
       borderRadius: t.radii.pill,
