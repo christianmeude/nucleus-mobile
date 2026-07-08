@@ -31,17 +31,21 @@ export const palette = {
     800: '#0B1B47',
     900: '#06112E',
   },
+  // Retuned to a true metallic gold (2026-07-08): the prior ramp centered on
+  // #F5A623 read as a strong marigold yellow. This ramp is less orange/saturated
+  // — an "old gold" that reads as gold, not yellow — while keeping enough
+  // lightness for dark text (onAccent) to stay legible on the 400–500 fills.
   gold: {
-    50: '#FEF6E7',
-    100: '#FCE7BD',
-    200: '#FAD588',
-    300: '#F8C156',
-    400: '#F7B33B',
-    500: '#F5A623',
-    600: '#D9921F',
-    700: '#A86F17',
-    800: '#774E10',
-    900: '#473008',
+    50: '#FBF6E8',
+    100: '#F4E7BD',
+    200: '#E9D389',
+    300: '#DCC05B',
+    400: '#D3B03F',
+    500: '#CDA434',
+    600: '#AE8829',
+    700: '#82661E',
+    800: '#584615',
+    900: '#342908',
   },
   slate: {
     0: '#FFFFFF',
