@@ -57,11 +57,15 @@ No code expected (issue's own analysis: RLS read path already correct). Manual-Q
 Reading path already delivered (faculty-access-v3 Phases 12–14: `facultyApi.getAnnotations()` + `PdfViewer` overlays + comments section). Verify against acceptance criteria, then close or fold the remaining gap ("create" half) into #14.
 
 ### #14 — annotation creation write path ← main build
-Faculty highlight/note-pin/freehand-draw on the PDF during review:
-- Write to `research_comments` using web's meta envelope: `[[meta]]{json}[[/meta]]\n<note>`
-- Drawings: flattened PNG → `research-papers` storage bucket
-- Needs INSERT RLS policy or SECURITY DEFINER RPC + storage write grant — **SQL gate (Rule 3): plain-language brief → Christian approves → deploy via MCP → snapshot in `docs/sql/`**
-- UI inside `PdfViewer` (WebView + pdf.js) — selection/tap/draw capture across the WebView bridge is the hard part; spike first
+Faculty add page-anchored **sticky notes** to the PDF during review. Scope is
+notes-only by decision (2026-07-08): web intentionally removed freehand-draw and
+highlight-select from its annotation UI (`ae038e1`) and now only creates
+page-anchored `note` annotations, so mobile builds **only** the sticky-note path
+— no in-app drawing, no highlight-selection.
+- Write to `research_comments` using web's meta envelope: `[[meta]]{json}[[/meta]]\n<note>` with `annotationType: 'note'`, `pageNumber`, and `anchorPercent` (%-of-page point)
+- **No storage write path** (no drawing PNGs). The read-path `draw`/`highlight` overlay rendering in `PdfViewer` stays as-is for backward-compat with any historical web annotations — we drop *creation* of those types, not display of existing ones.
+- Needs INSERT RLS policy or SECURITY DEFINER RPC on `research_comments` — **SQL gate (Rule 3): plain-language brief → Christian approves → deploy via MCP → snapshot in `docs/sql/`**
+- UI: tap-to-place a note pin on the PDF page across the WebView bridge (simpler than text-selection/draw capture)
 - Own branch: `feat/faculty-annotation-write`
 
 ### #9 — email/push on review actions
