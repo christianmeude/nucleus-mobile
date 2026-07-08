@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../../context/AuthContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { Chip, PressableScale, Screen } from '../../components/ui';
@@ -11,15 +12,20 @@ import { InvitationsList } from '../../components/InvitationsList';
 type ActivityTab = 'notifications' | 'invites';
 
 /**
- * Merged inbox reached from the TopBar bell. A segmented control switches
- * between the Notifications and Invites feeds (their bodies extracted into
- * reusable list components); pushed over the tab bar as a focused stack screen.
+ * Merged inbox reached from the TopBar bell. For students a segmented control
+ * switches between the Notifications and Invites feeds (their bodies extracted
+ * into reusable list components). Faculty have no co-author invitations concept,
+ * so they see the Notifications feed alone — no segmented control. Pushed over
+ * the tab bar as a focused stack screen for both roles.
  */
 export const ActivityScreen = () => {
   const navigation = useNavigation<any>();
+  const { user } = useAuth();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [tab, setTab] = useState<ActivityTab>('notifications');
+
+  const isFaculty = user?.role === 'faculty';
 
   return (
     <Screen gutter={0}>
@@ -38,23 +44,25 @@ export const ActivityScreen = () => {
           <View style={styles.backSpacer} />
         </View>
 
-        <View style={styles.segmented}>
-          <Chip
-            label="Notifications"
-            variant="filter"
-            active={tab === 'notifications'}
-            onPress={() => setTab('notifications')}
-          />
-          <Chip
-            label="Invites"
-            variant="filter"
-            active={tab === 'invites'}
-            onPress={() => setTab('invites')}
-          />
-        </View>
+        {isFaculty ? null : (
+          <View style={styles.segmented}>
+            <Chip
+              label="Notifications"
+              variant="filter"
+              active={tab === 'notifications'}
+              onPress={() => setTab('notifications')}
+            />
+            <Chip
+              label="Invites"
+              variant="filter"
+              active={tab === 'invites'}
+              onPress={() => setTab('invites')}
+            />
+          </View>
+        )}
       </View>
 
-      {tab === 'notifications' ? <NotificationsList /> : <InvitationsList />}
+      {isFaculty || tab === 'notifications' ? <NotificationsList /> : <InvitationsList />}
     </Screen>
   );
 };

@@ -1,100 +1,34 @@
-import { StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
 import { FacultyTabsParamList } from './types';
 import { FacultyDashboardScreen } from '../screens/faculty/FacultyDashboardScreen';
 import { FacultyReviewScreen } from '../screens/faculty/FacultyReviewScreen';
-import { FacultyRepositoryScreen } from '../screens/faculty/FacultyRepositoryScreen';
-import { FacultyNotificationsScreen } from '../screens/faculty/FacultyNotificationsScreen';
+import { BrowseScreen } from '../screens/main/BrowseScreen';
 import { FacultyProfileScreen } from '../screens/faculty/FacultyProfileScreen';
-import { useTheme, useThemedStyles } from '../context/ThemeContext';
-import { type Theme } from '../theme';
+import { FacultyTabBar } from './FacultyTabBar';
 
 const Tabs = createBottomTabNavigator<FacultyTabsParamList>();
 
-const tabIcons: Record<keyof FacultyTabsParamList, keyof typeof Ionicons.glyphMap> = {
-  FacultyDashboard: 'speedometer-outline',
-  FacultyReview: 'document-text-outline',
-  FacultyRepository: 'library-outline',
-  FacultyNotifications: 'notifications-outline',
-  FacultyProfile: 'person-outline',
-};
-
+/**
+ * Faculty tabs: Home, Review, Browse, Profile — the same floating frosted bar
+ * as the student navigator (via {@link FacultyTabBar}), minus the Submit FAB.
+ * Browse is literally the student {@link BrowseScreen} (both roles read one
+ * shared repository); it detects the faculty role internally to route paper taps
+ * to the faculty detail screen. The old Notifications tab is gone — faculty
+ * reach notifications through the TopBar bell (the Activity screen), matching
+ * the student pattern. `FacultyTabsParamList` keeps its now-unused
+ * `FacultyNotifications` key; leaving it costs nothing and avoids touching the
+ * frozen navigation contract.
+ */
 export const FacultyTabs = () => {
-  const { theme } = useTheme();
-  const styles = useThemedStyles(makeStyles);
-  const insets = useSafeAreaInsets();
   return (
     <Tabs.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: theme.colors.surface.raised,
-          borderTopColor: theme.colors.border.subtle,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          paddingTop: theme.spacing.xs,
-          paddingBottom: insets.bottom || theme.spacing.sm,
-          height: 66 + insets.bottom,
-        },
-        tabBarLabelStyle: {
-          ...theme.typography.caption,
-          marginTop: 2,
-        },
-        tabBarActiveTintColor: theme.colors.brand.primary,
-        tabBarInactiveTintColor: theme.colors.text.muted,
-        tabBarIcon: ({ color, size, focused }) => (
-          <View style={styles.tabIconWrap}>
-            <Ionicons
-              name={tabIcons[route.name as keyof FacultyTabsParamList]}
-              color={color}
-              size={size}
-            />
-            {focused ? <View style={styles.activeDot} /> : null}
-          </View>
-        ),
-      })}
+      tabBar={(props) => <FacultyTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
     >
-      <Tabs.Screen
-        name="FacultyDashboard"
-        component={FacultyDashboardScreen}
-        options={{ title: 'Dashboard' }}
-      />
-      <Tabs.Screen
-        name="FacultyReview"
-        component={FacultyReviewScreen}
-        options={{ title: 'Review' }}
-      />
-      <Tabs.Screen
-        name="FacultyRepository"
-        component={FacultyRepositoryScreen}
-        options={{ title: 'Repository' }}
-      />
-      <Tabs.Screen
-        name="FacultyNotifications"
-        component={FacultyNotificationsScreen}
-        options={{ title: 'Notifications' }}
-      />
-      <Tabs.Screen
-        name="FacultyProfile"
-        component={FacultyProfileScreen}
-        options={{ title: 'Profile' }}
-      />
+      <Tabs.Screen name="FacultyDashboard" component={FacultyDashboardScreen} />
+      <Tabs.Screen name="FacultyReview" component={FacultyReviewScreen} />
+      <Tabs.Screen name="FacultyRepository" component={BrowseScreen} />
+      <Tabs.Screen name="FacultyProfile" component={FacultyProfileScreen} />
     </Tabs.Navigator>
   );
 };
-
-const makeStyles = (theme: Theme) =>
-  StyleSheet.create({
-  tabIconWrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-  },
-  activeDot: {
-    width: 5,
-    height: 5,
-    borderRadius: theme.radii.pill,
-    backgroundColor: theme.colors.brand.accent,
-  },
-});

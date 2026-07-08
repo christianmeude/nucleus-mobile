@@ -278,7 +278,11 @@ function filterPublishedRows(rows: ResearchPaperRow[], params?: ResearchListPara
   });
 }
 
-async function resolveCurrentStudentProfile() {
+// Resolves the current authenticated app profile regardless of role. Use for
+// shared/public read paths (e.g. the published repository, which faculty and
+// students both browse — RLS already grants published rows to any authenticated
+// caller). Role-scoped paths should use resolveCurrentStudentProfile instead.
+async function resolveCurrentProfile() {
   const { data: userData, error: userError } = await supabase.auth.getUser();
 
   if (userError) {
@@ -295,11 +299,17 @@ async function resolveCurrentStudentProfile() {
     throw new Error(profileResult.message || 'Your account is not provisioned for research access.');
   }
 
-  if (profileResult.user.role !== 'student') {
+  return profileResult.user;
+}
+
+async function resolveCurrentStudentProfile() {
+  const user = await resolveCurrentProfile();
+
+  if (user.role !== 'student') {
     throw new Error('Student access is required to load research data.');
   }
 
-  return profileResult.user;
+  return user;
 }
 
 function extractStoragePathFromUrl(fileUrl?: string | null) {
@@ -406,7 +416,10 @@ export const researchApi = {
   },
 
   getPublishedPapers: async (params?: ResearchListParams) => {
-    await resolveCurrentStudentProfile();
+    // Role-agnostic: the published repository is shared by students and faculty
+    // (faculty Browse reuses this screen). RLS already gates published rows to
+    // authenticated callers, so no student assertion here.
+    await resolveCurrentProfile();
 
     const { data, error } = await supabase
       .from('research_papers')

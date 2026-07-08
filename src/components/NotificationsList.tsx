@@ -3,6 +3,8 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'r
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { notificationsApi } from '../api/notifications';
+import { facultyApi } from '../api/faculty';
+import { useAuth } from '../context/AuthContext';
 import { NotificationItem } from '../types/domain';
 import { NotificationCard } from './NotificationCard';
 import { ListEntranceItem } from './ListEntranceItem';
@@ -14,17 +16,45 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Notifications feed — the body extracted from the retired NotificationsScreen,
- * now hosted inside the merged Activity screen's "Notifications" segment. Owns
- * its own fetch, grouping, and read-state actions.
+ * now hosted inside the merged Activity screen's "Notifications" segment and
+ * shared by both roles. It selects its data source by role: students read the
+ * student notifications API (taps open the student research detail); faculty
+ * read the faculty notifications API (taps open the faculty review detail),
+ * folding in the retired FacultyNotificationsScreen. Owns its own fetch,
+ * grouping, and read-state actions.
  */
 export const NotificationsList = () => {
   const navigation = useNavigation<any>();
+  const { user } = useAuth();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+
+  const isFaculty = user?.role === 'faculty';
+
+  // One adapter over the two role-specific notification facades. Both return the
+  // shared `NotificationItem` shape; only the method names, and the detail route
+  // a notification opens, differ.
+  const source = useMemo(
+    () =>
+      isFaculty
+        ? {
+            getMine: (limit: number) => facultyApi.getNotifications(limit),
+            markRead: (id: string) => facultyApi.markNotificationRead(id),
+            markAllRead: () => facultyApi.markAllNotificationsRead(),
+            detailRoute: 'FacultyReviewDetail' as const,
+          }
+        : {
+            getMine: (limit: number) => notificationsApi.getMine(limit),
+            markRead: (id: string) => notificationsApi.markRead(id),
+            markAllRead: () => notificationsApi.markAllRead(),
+            detailRoute: 'ResearchDetail' as const,
+          },
+    [isFaculty]
+  );
 
   const loadData = useCallback(async (silent = false) => {
     if (!silent) {
@@ -34,7 +64,7 @@ export const NotificationsList = () => {
     }
 
     try {
-      const rows = await notificationsApi.getMine(100);
+      const rows = await source.getMine(100);
       setNotifications(rows);
       setError('');
     } catch (_error) {
@@ -43,7 +73,7 @@ export const NotificationsList = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [source]);
 
   useFocusEffect(
     useCallback(() => {
@@ -81,7 +111,7 @@ export const NotificationsList = () => {
   const openNotification = async (item: NotificationItem) => {
     if (!item.is_read) {
       try {
-        await notificationsApi.markRead(item.id);
+        await source.markRead(item.id);
       } catch {
         // Keep navigation usable if read-state update fails.
       }
@@ -92,13 +122,13 @@ export const NotificationsList = () => {
     }
 
     if (item.research_id) {
-      navigation.navigate('ResearchDetail', { paperId: item.research_id });
+      navigation.navigate(source.detailRoute, { paperId: item.research_id });
     }
   };
 
   const markAllAsRead = async () => {
     try {
-      await notificationsApi.markAllRead();
+      await source.markAllRead();
       setNotifications((prev) => prev.map((entry) => ({ ...entry, is_read: true })));
     } catch {
       setError('Unable to mark all notifications as read.');

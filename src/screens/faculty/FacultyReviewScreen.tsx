@@ -16,6 +16,7 @@ import {
   PressableCard,
   Screen,
   Skeleton,
+  TopBar,
 } from '../../components/ui';
 import { facultyApi, type FacultyAssignedPaper } from '../../api/faculty';
 import {
@@ -94,7 +95,7 @@ export const FacultyReviewScreen = () => {
   return (
     <Screen gutter={0} edges={{ bottom: false }}>
       <View style={styles.header}>
-        <Text style={styles.title}>Review</Text>
+        <TopBar title="Review" />
         <TextInput
           value={search}
           onChangeText={setSearch}
@@ -211,13 +212,6 @@ const makeStyles = (theme: Theme) =>
     gap: theme.spacing.md,
     paddingBottom: theme.spacing['3xl'],
     flexGrow: 1,
-  },
-  title: {
-    fontFamily: theme.fontFamilies.display.semibold,
-    fontSize: 26,
-    lineHeight: 32,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
   },
   list: {
     gap: theme.spacing.md,

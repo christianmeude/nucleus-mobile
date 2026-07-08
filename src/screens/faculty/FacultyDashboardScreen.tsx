@@ -1,14 +1,19 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
+  Chip,
   EmptyState,
   InlineNotice,
   PressableCard,
+  PressableScale,
   Screen,
   Skeleton,
   Stat,
+  TopBar,
 } from '../../components/ui';
 import {
   facultyApi,
@@ -16,13 +21,22 @@ import {
   type FacultyAssignedPaper,
   type FacultyWorkloadSummary,
 } from '../../api/faculty';
-import { facultyStatusLabel } from './facultyStatus';
+import { facultyStatusLabel, facultyStatusTone } from './facultyStatus';
 import { RootStackParamList } from '../../navigation/types';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
+import { greetingForHour, initialsFor } from '../../utils/format';
 
 const RECENT_LIMIT = 5;
+
+/**
+ * `linear-gradient(158deg, primary, primary-hover)` (DESIGN.md, Dashboard A3),
+ * pre-converted to expo-linear-gradient's normalized start/end points — the
+ * same hero band the student Dashboard uses, so both roles share one look.
+ */
+const HERO_GRADIENT_START = { x: 0.313, y: 0.036 };
+const HERO_GRADIENT_END = { x: 0.687, y: 0.964 };
 
 function formatDate(value?: string | null): string {
   if (!value) return '—';
@@ -80,10 +94,13 @@ const DashboardSkeleton = () => {
 
 export const FacultyDashboardScreen = () => {
   const navigation = useNavigation<FacultyNavigation>();
+  const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
-  const firstName = user?.fullName?.trim().split(/\s+/)[0] ?? '';
+  const firstName = useMemo(() => user?.fullName?.trim().split(/\s+/)[0] ?? '', [user?.fullName]);
+  const greeting = useMemo(() => greetingForHour(new Date().getHours()), []);
+  const initials = useMemo(() => initialsFor(user?.fullName), [user?.fullName]);
   const [papers, setPapers] = useState<FacultyAssignedPaper[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -113,10 +130,26 @@ export const FacultyDashboardScreen = () => {
   const summary = papers ? summarizeFacultyWorkload(papers) : null;
   const recent = papers ? papers.slice(0, RECENT_LIMIT) : [];
 
+  // Faculty analogue of the student hero's status line: a one-glance read of the
+  // review queue, mapped from the same workload summary the grid uses.
+  const statusLine = summary
+    ? summary.pendingReview > 0
+      ? {
+          text: `${summary.pendingReview} paper${summary.pendingReview === 1 ? '' : 's'} pending review`,
+          urgent: true,
+        }
+      : summary.revisionRequired > 0
+        ? { text: `${summary.revisionRequired} awaiting revision`, urgent: false }
+        : { text: 'You’re all caught up', urgent: false }
+    : null;
+
   return (
-    <Screen edges={{ bottom: false }}>
+    // Top edge opted out of Screen's own inset padding: the navy hero band bleeds
+    // under the status bar, so its safe-area clearance is applied to the hero
+    // itself. Bottom edge is opted out too — the floating tab bar owns it.
+    <Screen gutter={0} edges={{ top: false, bottom: false }}>
       <ScrollView
-        style={styles.screen}
+        style={styles.container}
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl
@@ -127,54 +160,96 @@ export const FacultyDashboardScreen = () => {
           />
         }
       >
-      <View style={styles.headerRow}>
-        <Text style={styles.headerTitle}>
-          {firstName ? `Welcome, ${firstName}.` : 'Welcome.'}
-        </Text>
-      </View>
+        <View style={styles.hero}>
+          <LinearGradient
+            colors={[theme.colors.brand.primary, theme.colors.brand.primaryHover]}
+            start={HERO_GRADIENT_START}
+            end={HERO_GRADIENT_END}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={[styles.heroGlow, { backgroundColor: theme.colors.brand.accent }]} />
+          <Text style={[styles.heroWatermark, { color: theme.colors.text.onBrand }]}>N</Text>
 
-      {error ? <InlineNotice tone="danger" message={error} /> : null}
-
-      {papers === null ? (
-        error ? (
-          <Text style={styles.hint}>Pull down to retry.</Text>
-        ) : (
-          <DashboardSkeleton />
-        )
-      ) : (
-        <>
-          {summary ? <WorkloadGrid summary={summary} /> : null}
-
-          <Text style={styles.sectionTitle}>Recent assignments</Text>
-
-          {recent.length === 0 ? (
-            <EmptyState
-              title="No assigned papers"
-              message="Papers assigned to you for review will appear here."
-            />
-          ) : (
-            <View style={styles.list}>
-              {recent.map((paper) => (
-                <PressableCard
-                  key={paper.id}
-                  accessibilityLabel={`Review ${paper.title}`}
-                  onPress={() =>
-                    navigation.navigate('FacultyReviewDetail', { paperId: paper.id })
-                  }
+          <View style={[styles.heroContent, { paddingTop: insets.top + theme.spacing.md }]}>
+            <TopBar
+              variant="hero"
+              trailing={
+                <PressableScale
+                  onPress={() => navigation.navigate('FacultyProfile' as never)}
+                  style={styles.heroAvatar}
+                  accessibilityRole="button"
+                  accessibilityLabel="Profile"
                 >
-                  <Text style={styles.paperTitle} numberOfLines={2}>
-                    {paper.title}
-                  </Text>
-                  <Text style={styles.paperMeta} numberOfLines={1}>
-                    {paper.authorName} · {facultyStatusLabel(paper.status)} ·{' '}
-                    {formatDate(paper.submissionDate || paper.createdAt)}
-                  </Text>
-                </PressableCard>
-              ))}
-            </View>
+                  <Text style={styles.heroAvatarText}>{initials}</Text>
+                </PressableScale>
+              }
+            >
+              <Text style={styles.heroGreeting}>{greeting}</Text>
+              <Text style={styles.heroName} numberOfLines={1}>
+                {firstName || 'Faculty'}
+              </Text>
+              {statusLine ? (
+                <Text style={[styles.heroSubLine, statusLine.urgent && styles.heroSubLineUrgent]}>
+                  {statusLine.text}
+                </Text>
+              ) : null}
+            </TopBar>
+          </View>
+        </View>
+
+        <View style={styles.body}>
+          {error ? <InlineNotice tone="danger" message={error} /> : null}
+
+          {papers === null ? (
+            error ? (
+              <Text style={styles.hint}>Pull down to retry.</Text>
+            ) : (
+              <DashboardSkeleton />
+            )
+          ) : (
+            <>
+              {summary ? <WorkloadGrid summary={summary} /> : null}
+
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Recent assignments</Text>
+
+                {recent.length === 0 ? (
+                  <EmptyState
+                    title="No assigned papers"
+                    message="Papers assigned to you for review will appear here."
+                  />
+                ) : (
+                  <View style={styles.list}>
+                    {recent.map((paper) => (
+                      <PressableCard
+                        key={paper.id}
+                        accessibilityLabel={`Review ${paper.title}`}
+                        onPress={() =>
+                          navigation.navigate('FacultyReviewDetail', { paperId: paper.id })
+                        }
+                      >
+                        <View style={styles.badgeRow}>
+                          <Chip
+                            label={facultyStatusLabel(paper.status)}
+                            variant="status"
+                            tone={facultyStatusTone(paper.status)}
+                          />
+                        </View>
+                        <Text style={styles.paperTitle} numberOfLines={2}>
+                          {paper.title}
+                        </Text>
+                        <Text style={styles.paperMeta} numberOfLines={1}>
+                          {paper.authorName} ·{' '}
+                          {formatDate(paper.submissionDate || paper.createdAt)}
+                        </Text>
+                      </PressableCard>
+                    ))}
+                  </View>
+                )}
+              </View>
+            </>
           )}
-        </>
-      )}
+        </View>
       </ScrollView>
     </Screen>
   );
@@ -182,24 +257,85 @@ export const FacultyDashboardScreen = () => {
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-  screen: {
+  container: {
     flex: 1,
   },
   content: {
-    paddingTop: theme.spacing.md,
-    gap: theme.spacing.lg,
     paddingBottom: theme.spacing['3xl'],
   },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: theme.spacing.sm,
+  hero: {
+    overflow: 'hidden',
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    borderCurve: 'continuous',
   },
-  headerTitle: {
+  heroGlow: {
+    position: 'absolute',
+    top: -60,
+    right: -60,
+    width: 180,
+    height: 180,
+    borderRadius: theme.radii.pill,
+    opacity: 0.18,
+  },
+  heroWatermark: {
+    position: 'absolute',
+    right: -18,
+    bottom: -36,
+    fontSize: 168,
+    lineHeight: 168,
+    fontFamily: theme.fontFamilies.display.bold,
+    opacity: 0.05,
+  },
+  heroContent: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.xl,
+  },
+  heroGreeting: {
+    fontFamily: theme.fontFamilies.ui.regular,
+    fontSize: 14,
+    color: theme.colors.text.onBrand,
+    opacity: 0.75,
+  },
+  heroName: {
     ...theme.typography.h1,
-    color: theme.colors.text.primary,
-    flex: 1,
+    color: theme.colors.text.onBrand,
+    marginTop: 2,
+  },
+  heroSubLine: {
+    fontFamily: theme.fontFamilies.ui.regular,
+    fontSize: 13,
+    color: theme.colors.text.onBrand,
+    opacity: 0.75,
+    marginTop: theme.spacing.xs,
+  },
+  heroSubLineUrgent: {
+    fontFamily: theme.fontFamilies.ui.semibold,
+    opacity: 1,
+  },
+  heroAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: theme.radii.pill,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  heroAvatarText: {
+    fontFamily: theme.fontFamilies.ui.semibold,
+    fontSize: 14,
+    color: theme.colors.text.onBrand,
+  },
+  body: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.xl,
+    gap: theme.spacing.xl,
+  },
+  section: {
+    gap: theme.spacing.sm,
   },
   grid: {
     flexDirection: 'row',
@@ -217,9 +353,13 @@ const makeStyles = (theme: Theme) =>
   list: {
     gap: theme.spacing.md,
   },
+  badgeRow: {
+    flexDirection: 'row',
+  },
   paperTitle: {
     ...theme.typography.bodyStrong,
     color: theme.colors.text.primary,
+    marginTop: theme.spacing.xs,
   },
   paperMeta: {
     ...theme.typography.metadata,
