@@ -440,6 +440,47 @@ export const researchApi = {
       });
   },
 
+  /**
+   * Server-side hybrid search (Issue #29). Sends the query to the `search-papers`
+   * Edge Function, which embeds it with gte-small and blends full-text + vector
+   * similarity (RRF) — returning only `(paper_id, score)`. The actual rows are
+   * then re-fetched here under the caller's own session, so RLS stays the single
+   * content gate; the server relevance order is preserved.
+   */
+  searchPapers: async (query: string, opts?: { limit?: number }): Promise<ResearchPaper[]> => {
+    const trimmed = query.trim();
+    if (!trimmed) return [];
+
+    const { data, error } = await supabase.functions.invoke<{
+      results?: { paper_id: string; score: number }[];
+    }>('search-papers', { body: { q: trimmed, limit: opts?.limit ?? 20 } });
+
+    if (error) {
+      throw new Error(error.message || 'Search is unavailable right now.');
+    }
+
+    const ranked = data?.results ?? [];
+    if (ranked.length === 0) return [];
+
+    const order = new Map(ranked.map((entry, index) => [entry.paper_id, index]));
+    const ids = ranked.map((entry) => entry.paper_id);
+
+    const { data: rows, error: rowsError } = await supabase
+      .from('research_papers')
+      .select(PAPER_SELECT)
+      .in('id', ids)
+      .in('status', Array.from(PUBLISHED_STATUSES));
+
+    if (rowsError) {
+      throw new Error(rowsError.message || 'Unable to load search results.');
+    }
+
+    const list = Array.isArray(rows) ? (rows as unknown as ResearchPaperRow[]) : [];
+    return list
+      .map(toResearchPaper)
+      .sort((left, right) => (order.get(left.id) ?? 0) - (order.get(right.id) ?? 0));
+  },
+
   getCategories: async () => {
     const { data, error } = await supabase.from('research_categories').select('id, name').order('name', {
       ascending: true,
