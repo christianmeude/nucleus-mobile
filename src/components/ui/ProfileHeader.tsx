@@ -1,9 +1,7 @@
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
-
-const monoFontFamily = Platform.select({ ios: 'Courier', android: 'monospace', default: 'monospace' });
 
 interface ProfileHeaderProps {
   /** Two-letter initials for the avatar squircle. */
@@ -55,8 +53,9 @@ const makeStyles = (t: Theme) =>
       position: 'absolute',
       right: t.spacing.lg,
       bottom: -14,
-      fontFamily: monoFontFamily,
-      fontWeight: '800',
+      // Same faded "N" glyph as the dashboard hero — app display typeface, not
+      // monospace (the atom/mono motif was dropped project-wide).
+      fontFamily: t.fontFamilies.display.bold,
       fontSize: 96,
       lineHeight: 96,
       letterSpacing: -6,
