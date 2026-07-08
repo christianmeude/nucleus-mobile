@@ -85,9 +85,10 @@ const makeStyles = (t: Theme) =>
       minWidth: 0,
     },
     title: {
-      fontFamily: t.fontFamilies.display.semibold,
-      fontSize: 26,
-      lineHeight: 32,
+      // Screen-title role: the single "display" heading token, so every screen
+      // header (and ResearchDetail's own title) reads at one size instead of an
+      // off-scale 26.
+      ...t.typography.display,
       color: t.colors.text.primary,
     },
     actions: {

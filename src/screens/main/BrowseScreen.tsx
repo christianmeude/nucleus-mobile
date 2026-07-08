@@ -469,30 +469,22 @@ export const BrowseScreen = () => {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.chipsRow}
       >
-        <PressableScale
-          style={[styles.topicChip, !categoryFilter && styles.topicChipActive]}
+        <Chip
+          label="All"
+          variant="filter"
+          active={!categoryFilter}
           onPress={() => setCategoryFilter('')}
-          accessibilityRole="button"
-          accessibilityLabel="All categories"
-        >
-          <Text style={[styles.topicChipText, !categoryFilter && styles.topicChipTextActive]}>
-            All
-          </Text>
-        </PressableScale>
+        />
         {categories.map((category) => {
           const active = categoryFilter === category.id;
           return (
-            <PressableScale
+            <Chip
               key={category.id}
-              style={[styles.topicChip, active && styles.topicChipActive]}
+              label={category.name}
+              variant="filter"
+              active={active}
               onPress={() => setCategoryFilter(active ? '' : category.id)}
-              accessibilityRole="button"
-              accessibilityLabel={category.name}
-            >
-              <Text style={[styles.topicChipText, active && styles.topicChipTextActive]}>
-                {category.name}
-              </Text>
-            </PressableScale>
+            />
           );
         })}
       </ScrollView>
@@ -850,7 +842,7 @@ const makeStyles = (theme: Theme) =>
   recentChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 36,
+    minHeight: 44,
     paddingHorizontal: theme.spacing.md,
     borderRadius: theme.radii.pill,
     backgroundColor: theme.colors.brand.primarySoft,
@@ -881,7 +873,7 @@ const makeStyles = (theme: Theme) =>
   suggestedChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 36,
+    minHeight: 44,
     paddingHorizontal: theme.spacing.md,
     borderRadius: theme.radii.pill,
     borderWidth: StyleSheet.hairlineWidth,
@@ -1021,26 +1013,6 @@ const makeStyles = (theme: Theme) =>
     flexDirection: 'row',
     gap: theme.spacing.sm,
     paddingRight: theme.spacing.lg,
-  },
-  topicChip: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.radii.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.border.subtle,
-    backgroundColor: theme.colors.surface.raised,
-  },
-  topicChipActive: {
-    backgroundColor: theme.colors.brand.primary,
-    borderColor: theme.colors.brand.primary,
-  },
-  topicChipText: {
-    fontFamily: theme.fontFamilies.ui.medium,
-    fontSize: 13,
-    color: theme.colors.text.secondary,
-  },
-  topicChipTextActive: {
-    color: theme.colors.text.onBrand,
   },
   subbar: {
     flexDirection: 'row',

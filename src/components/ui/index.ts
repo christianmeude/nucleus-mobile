@@ -16,6 +16,7 @@ export { OrbitalAccent } from './OrbitalAccent';
 export { Screen } from './Screen';
 export { TopBar } from './TopBar';
 export { ProfileHeader } from './ProfileHeader';
+export { DashboardHero } from './DashboardHero';
 export { SettingsRow } from './SettingsRow';
 export { SheetPresenter } from './SheetPresenter';
 export { PressableScale } from './motion/PressableScale';

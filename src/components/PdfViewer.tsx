@@ -113,7 +113,7 @@ const buildViewerHtml = (
         pin.style.cssText = 'position:absolute;';
         pin.style.left = ann.anchorPercent.x + '%';
         pin.style.top = ann.anchorPercent.y + '%';
-        pin.style.background = safeColor(ann.highlightColor, 0.9) || '#f5a623';
+        pin.style.background = safeColor(ann.highlightColor, 0.9) || '#CDA434';
         wrapper.appendChild(pin);
       }
     });
