@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
 import { getSavedPaperIds, togglePaperSaved } from '../../api/collections';
@@ -25,7 +26,6 @@ import {
 import { PdfViewer } from '../../components/PdfViewer';
 import {
   formatDate,
-  formatRelativeTime,
   getPrimaryAuthorName,
   listCoAuthorNames,
   paperDate,
@@ -49,7 +49,7 @@ export const ResearchDetailScreen = () => {
   const route = useRoute<DetailRouteProp>();
   const navigation = useNavigation<any>();
   const { user } = useAuth();
-  const { theme } = useTheme();
+  const { theme, scheme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { paperId } = route.params;
 
@@ -68,6 +68,13 @@ export const ResearchDetailScreen = () => {
   // visit — the sheet unmounts on close, so without this guard each re-open would
   // remount PdfViewer and re-fire onFirstLoad, over-counting views.
   const viewTracked = useRef(false);
+
+  // Hide the stack header while the paper sheet is open so the whole screen —
+  // header included — scales away behind the sheet, leaving only the sheet on
+  // screen. Restored on close.
+  useEffect(() => {
+    navigation.setOptions({ headerShown: !pdfOpen });
+  }, [navigation, pdfOpen]);
 
   useEffect(() => {
     const run = async () => {
@@ -257,27 +264,31 @@ export const ResearchDetailScreen = () => {
             <InlineNotice tone="danger" message={fileError} />
           ) : (
             <PressableScale
-              style={styles.viewPaperBtn}
+              style={styles.previewCard}
               onPress={() => setPdfOpen(true)}
               disabled={!fileUri}
               accessibilityRole="button"
               accessibilityLabel="View full paper"
               accessibilityState={{ disabled: !fileUri }}
             >
-              <View style={styles.viewPaperIcon}>
-                <Ionicons
-                  name="document-text-outline"
-                  size={20}
-                  color={theme.colors.text.onBrand}
-                />
+              {fileUri ? (
+                <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                  <PdfViewer uri={fileUri} variant="preview" />
+                </View>
+              ) : null}
+              {/* Frost the page behind the button; a soft scrim guarantees the
+                  button reads even where a platform's blur is weak. */}
+              <BlurView
+                intensity={28}
+                tint={scheme === 'dark' ? 'dark' : 'light'}
+                style={StyleSheet.absoluteFill}
+                pointerEvents="none"
+              />
+              <View style={styles.previewScrim} pointerEvents="none" />
+              <View style={styles.previewButton} pointerEvents="none">
+                <Ionicons name="document-text" size={18} color={theme.colors.text.onBrand} />
+                <Text style={styles.previewButtonText}>View Full Paper</Text>
               </View>
-              <View style={styles.viewPaperText}>
-                <Text style={styles.viewPaperTitle}>View Full Paper</Text>
-                <Text style={styles.viewPaperSub}>
-                  {fileUri ? 'Open the PDF' : 'Preparing…'}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={theme.colors.text.muted} />
             </PressableScale>
           )}
         </View>
@@ -313,7 +324,7 @@ export const ResearchDetailScreen = () => {
                   <PressableScale
                     key={item.id}
                     style={styles.relatedRow}
-                    onPress={() => navigation.push('ResearchDetail', { paperId: item.id })}
+                    onPress={() => navigation.push(route.name, { paperId: item.id })}
                     accessibilityRole="button"
                     accessibilityLabel={item.title || 'Untitled paper'}
                   >
@@ -457,37 +468,38 @@ const makeStyles = (theme: Theme) =>
     marginTop: theme.spacing.xl,
     gap: theme.spacing.sm,
   },
-  viewPaperBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-    padding: theme.spacing.lg,
+  previewCard: {
+    height: 260,
     borderRadius: theme.radii.lg,
     borderCurve: 'continuous',
-    backgroundColor: theme.colors.surface.raised,
+    overflow: 'hidden',
+    backgroundColor: theme.colors.surface.sunken,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.border.subtle,
-  },
-  viewPaperIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: theme.radii.md,
-    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  previewScrim: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(15, 23, 42, 0.28)',
+  },
+  previewButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.radii.pill,
     backgroundColor: theme.colors.brand.primary,
+    ...theme.shadows.level2,
   },
-  viewPaperText: {
-    flex: 1,
-    gap: 2,
-  },
-  viewPaperTitle: {
+  previewButtonText: {
     ...theme.typography.bodyStrong,
-    color: theme.colors.text.primary,
-  },
-  viewPaperSub: {
-    ...theme.typography.caption,
-    color: theme.colors.text.muted,
+    color: theme.colors.text.onBrand,
   },
   sectionLabel: {
     ...theme.typography.label,

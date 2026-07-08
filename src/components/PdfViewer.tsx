@@ -39,15 +39,20 @@ export interface PdfAnnotationOverlay {
   drawImageUrl?: string | null;
 }
 
-/** Self-contained HTML that pulls pdf.js from a CDN and renders the signed URL to canvases. */
-const buildViewerHtml = (uri: string, backgroundColor: string): string => `<!DOCTYPE html>
+/** Self-contained HTML that pulls pdf.js from a CDN and renders the signed URL to canvases.
+ * `firstPageOnly` renders just page 1 with no scroll — used for the tap-to-open preview. */
+const buildViewerHtml = (
+  uri: string,
+  backgroundColor: string,
+  firstPageOnly = false,
+): string => `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=4, user-scalable=yes" />
 <style>
-  html, body { margin: 0; padding: 0; background: ${backgroundColor}; }
-  #container { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px; }
+  html, body { margin: 0; padding: 0; background: ${backgroundColor}; ${firstPageOnly ? 'overflow: hidden;' : ''} }
+  #container { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: ${firstPageOnly ? '0' : '8px'}; }
   .page-wrapper { position: relative; width: 100%; }
   canvas { width: 100%; height: auto; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.15); display: block; }
   .ann-overlay { position: absolute; pointer-events: none; display: none; }
@@ -140,7 +145,8 @@ const buildViewerHtml = (uri: string, backgroundColor: string): string => `<!DOC
         var width = container.clientWidth || window.innerWidth;
         var firstDone = false;
         var chain = Promise.resolve();
-        for (var i = 1; i <= pdf.numPages; i++) {
+        var lastPage = ${firstPageOnly ? 1 : 'pdf.numPages'};
+        for (var i = 1; i <= lastPage; i++) {
           (function (pageNum) {
             chain = chain.then(function () {
               return pdf.getPage(pageNum).then(function (page) {
@@ -175,10 +181,21 @@ interface PdfSurfaceProps {
   onLoaded?: () => void;
   annotations?: PdfAnnotationOverlay[];
   showAnnotations?: boolean;
+  /** Render only page 1 (for the tap-to-open preview). */
+  firstPageOnly?: boolean;
+  /** Disable WebView scrolling (preview is a fixed, non-scrollable page). */
+  scrollEnabled?: boolean;
 }
 
 /** Renders the PDF via a pdf.js-in-WebView surface with its own loading + error handling. */
-const PdfSurface = ({ uri, onLoaded, annotations, showAnnotations = false }: PdfSurfaceProps) => {
+const PdfSurface = ({
+  uri,
+  onLoaded,
+  annotations,
+  showAnnotations = false,
+  firstPageOnly = false,
+  scrollEnabled = true,
+}: PdfSurfaceProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const webViewRef = useRef<WebView>(null);
@@ -250,13 +267,17 @@ const PdfSurface = ({ uri, onLoaded, annotations, showAnnotations = false }: Pdf
       <WebView
         ref={webViewRef}
         key={uri}
-        source={{ html: buildViewerHtml(uri, theme.colors.surface.sunken), baseUrl: 'https://localhost/' }}
+        source={{
+          html: buildViewerHtml(uri, theme.colors.surface.sunken, firstPageOnly),
+          baseUrl: 'https://localhost/',
+        }}
         originWhitelist={['*']}
         javaScriptEnabled
         domStorageEnabled
         setSupportMultipleWindows={false}
         androidLayerType="hardware"
         nestedScrollEnabled
+        scrollEnabled={scrollEnabled}
         onMessage={handleMessage}
         onError={(e) => {
           setErrored(true);
@@ -289,9 +310,10 @@ interface PdfViewerProps {
    * 'inline' (default): a fixed-height rounded panel with a fullscreen-expand
    * toggle. 'fill': stretches to fill its parent (e.g. inside `SheetPresenter`) —
    * no expand toggle and no panel chrome, since the host sheet already owns the
-   * full-screen frame.
+   * full-screen frame. 'preview': fills its parent showing only page 1,
+   * non-scrollable, no controls — for a tap-to-open blurred preview.
    */
-  variant?: 'inline' | 'fill';
+  variant?: 'inline' | 'fill' | 'preview';
 }
 
 export const PdfViewer = ({
@@ -308,6 +330,16 @@ export const PdfViewer = ({
 
   const fill = variant === 'fill';
   const hasPositionedAnnotations = (annotations ?? []).some((a) => a.pageNumber !== null);
+
+  // Preview: page 1 only, non-scrollable, no controls or fullscreen — the host
+  // (a blurred preview card) owns the frame and the tap-to-open affordance.
+  if (variant === 'preview') {
+    return (
+      <View style={styles.fillRoot}>
+        <PdfSurface uri={uri} onLoaded={onFirstLoad} firstPageOnly scrollEnabled={false} />
+      </View>
+    );
+  }
 
   return (
     <View style={fill ? styles.fillRoot : undefined}>
