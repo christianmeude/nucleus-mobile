@@ -7,10 +7,10 @@ colors:
   primary-pressed: "#102560"
   primary-soft: "#D2DEF5"
   primary-surface: "#EAF0FB"
-  accent: "#F5A623"
-  accent-hover: "#D9921F"
-  accent-soft: "#FCE7BD"
-  accent-surface: "#FEF6E7"
+  accent: "#CDA434"
+  accent-hover: "#AE8829"
+  accent-soft: "#F4E7BD"
+  accent-surface: "#FBF6E8"
   text-primary: "#0F172A"
   text-secondary: "#475569"
   text-muted: "#64748B"
@@ -162,9 +162,11 @@ chips, category eyebrows, save/bookmark state) and never used decoratively.
   links, focus rings. `primary-hover` / `primary-pressed` step down in
   lightness for interaction states; `primary-soft` / `primary-surface` are
   tint backgrounds for badges and selected rows.
-- **Accent (`#F5A623`)** — brand gold. Reserved for emphasis: status chips,
-  category eyebrows, the bookmark/save affordance. Never used for large
-  fills or decoration — gold that appears everywhere stops meaning anything.
+- **Accent (`#CDA434`)** — brand gold (a true metallic gold; retuned 2026-07-08
+  from the prior marigold `#F5A623`, which read as a strong yellow). Reserved for
+  emphasis: status chips, category eyebrows, the bookmark/save affordance, and
+  the Submit FAB. Never used for large fills or decoration — gold that appears
+  everywhere stops meaning anything.
 - **Text** — `text-primary` (`#0F172A`) for headings and primary reading
   text, `text-secondary` (`#475569`) for supporting copy, `text-muted`
   (`#64748B`) for metadata and captions, `text-disabled` (`#94A3B8`) for
@@ -340,8 +342,9 @@ above all page content rather than resting on the background.
 
 ### Navigation bar (A1)
 
-A floating, detached bar — four tabs split around a raised gold center Submit
-FAB. Labels: **Home · Papers · Browse · Profile**, laid out
+A floating, detached bar — four tabs split around a gold center Submit FAB (a
+solid 3D button centered in the bar, not raised). Labels: **Home · Papers ·
+Browse · Profile**, laid out
 `[Home] [Papers] [·FAB·] [Browse] [Profile]`.
 
 - **Bar:** `position: absolute`, `left/right: 16`, `bottom: 14`, `height: 66`,
@@ -349,12 +352,16 @@ FAB. Labels: **Home · Papers · Browse · Profile**, laid out
   `border-subtle` hairline. Shadow `0 14px 34px -14px rgba(11,27,71,.6)`.
 - **Selection pill:** `primary-surface` fill, `top: 9`, `height: 48`,
   radius 16, behind the tabs. Animated per **Motion** above.
-- **Submit FAB:** gold **squircle**, `58×58`, radius 20, `top: -20` overhang,
-  `borderCurve: 'continuous'`. Fill = `accent`; glyph ink = **`#3A2600`**
-  (a warm ink-on-gold — this is the one place the FAB glyph departs from the
+- **Submit FAB:** gold **squircle**, `58×58`, radius 22, **vertically centered in
+  the bar** (`top: 4`, no overhang — retuned 2026-07-08 from the earlier
+  `top: -20` lift). `borderCurve: 'continuous'`. Reads as a **solid 3D button**:
+  a vertical top-lit gold gradient (`gold.200 → gold.500`), a white specular
+  gloss over the top ~55%, a `rgba(255,255,255,.5)` bevel rim, and a grounded
+  deep-gold drop shadow (`shadowColor #4A3800`, `y 8`, blur 12, opacity .45,
+  `elevation 12`). Glyph = a bold rounded **`add`** (plus); ink **`#3A2600`**
+  (a warm ink-on-gold — the one place the FAB glyph departs from the
   `text-on-accent` token, because slate/white tested poorly for contrast on
-  saturated gold; it is intentional and matches the shipped A1 code). Shadow
-  `0 10px 22px -6px rgba(245,166,35,.7), 0 2px 4px rgba(0,0,0,.2)`.
+  gold; intentional).
 - **Dependency-gated fidelity (deferred to A3 Polish).** The mockup's frosted
   `blur(18px)` bar and gold-*gradient* FAB need `expo-blur` /
   `expo-linear-gradient` (a dev-client rebuild). A1 ships a faithful

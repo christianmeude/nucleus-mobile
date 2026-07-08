@@ -16,12 +16,15 @@ import { type Theme } from '../../theme';
 import { Button, Logo } from '../../components/ui';
 import { consumeLoginRejection, LoginIntent, setLoginIntent } from '../../state/loginIntent';
 
+type FocusField = 'email' | 'password' | null;
+
 export const LoginScreen = () => {
   const { signIn } = useAuth();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [focused, setFocused] = useState<FocusField>(null);
   const [submittingIntent, setSubmittingIntent] = useState<LoginIntent | null>(null);
   const [error, setError] = useState(() => consumeLoginRejection() || '');
 
@@ -44,8 +47,13 @@ export const LoginScreen = () => {
     }
   };
 
+  const iconColor = (field: FocusField) =>
+    focused === field ? theme.colors.brand.primary : theme.colors.text.muted;
+
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* Blue-dominant background accents (both navy-family; gold is reserved for
+          the single emphasis underline below, never decoration). */}
       <View style={styles.blobTop} />
       <View style={styles.blobBottom} />
       <KeyboardAvoidingView
@@ -60,20 +68,23 @@ export const LoginScreen = () => {
         >
           <View style={styles.header}>
             <Logo size="lg" showWordmark />
-            <Text style={styles.title}>Welcome back</Text>
+            <View style={styles.headingBlock}>
+              <Text style={styles.title}>Welcome back</Text>
+              <View style={styles.accentUnderline} />
+            </View>
             <Text style={styles.subtitle}>
-              Sign in to browse, track, and submit your research.
+              Sign in to browse, track, and submit National University Dasmariñas research.
             </Text>
           </View>
 
           <View style={styles.card}>
             <View style={styles.formGroup}>
               <Text style={styles.label}>Email</Text>
-              <View style={styles.inputWrap}>
+              <View style={[styles.inputWrap, focused === 'email' && styles.inputWrapFocused]}>
                 <Ionicons
                   name="mail-outline"
                   size={18}
-                  color={theme.colors.text.muted}
+                  color={iconColor('email')}
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -84,17 +95,19 @@ export const LoginScreen = () => {
                   style={styles.input}
                   value={email}
                   onChangeText={setEmail}
+                  onFocus={() => setFocused('email')}
+                  onBlur={() => setFocused(null)}
                 />
               </View>
             </View>
 
             <View style={styles.formGroup}>
               <Text style={styles.label}>Password</Text>
-              <View style={styles.inputWrap}>
+              <View style={[styles.inputWrap, focused === 'password' && styles.inputWrapFocused]}>
                 <Ionicons
                   name="lock-closed-outline"
                   size={18}
-                  color={theme.colors.text.muted}
+                  color={iconColor('password')}
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -104,6 +117,8 @@ export const LoginScreen = () => {
                   style={styles.input}
                   value={password}
                   onChangeText={setPassword}
+                  onFocus={() => setFocused('password')}
+                  onBlur={() => setFocused(null)}
                 />
               </View>
             </View>
@@ -133,8 +148,8 @@ export const LoginScreen = () => {
           </View>
 
           <Text style={styles.note}>
-            NUcleus connects students and faculty to National University Dasmariñas research —
-            discover, review, and submit papers in one place.
+            Choose the option that matches your account — a student account can only sign in as
+            Student, and a faculty account only as Faculty.
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -144,105 +159,126 @@ export const LoginScreen = () => {
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: theme.colors.surface.base,
-    overflow: 'hidden',
-  },
-  flex: {
-    flex: 1,
-  },
-  blobTop: {
-    position: 'absolute',
-    top: -120,
-    right: -100,
-    width: 280,
-    height: 280,
-    borderRadius: theme.radii.pill,
-    backgroundColor: theme.colors.brand.primarySoft,
-  },
-  blobBottom: {
-    position: 'absolute',
-    bottom: -140,
-    left: -110,
-    width: 300,
-    height: 300,
-    borderRadius: theme.radii.pill,
-    backgroundColor: theme.colors.brand.accentSoft,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: theme.spacing.xl,
-    gap: theme.spacing.xl,
-  },
-  header: {
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  title: {
-    ...theme.typography.h1,
-    color: theme.colors.text.primary,
-    textAlign: 'center',
-  },
-  subtitle: {
-    ...theme.typography.body,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-  },
-  card: {
-    backgroundColor: theme.colors.surface.raised,
-    borderRadius: theme.radii.lg,
-    padding: theme.spacing.xl,
-    gap: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border.subtle,
-    ...theme.shadows.level2,
-  },
-  formGroup: {
-    gap: theme.spacing.xs,
-  },
-  label: {
-    ...theme.typography.label,
-    color: theme.colors.text.secondary,
-  },
-  inputWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border.strong,
-    borderRadius: theme.radii.md,
-    paddingHorizontal: theme.spacing.md,
-    backgroundColor: theme.colors.surface.raised,
-  },
-  inputIcon: {
-    marginRight: theme.spacing.sm,
-  },
-  input: {
-    flex: 1,
-    paddingVertical: theme.spacing.sm,
-    ...theme.typography.body,
-    color: theme.colors.text.primary,
-  },
-  errorBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-    backgroundColor: theme.colors.state.dangerSurface,
-    borderRadius: theme.radii.md,
-    padding: theme.spacing.sm,
-  },
-  error: {
-    ...theme.typography.bodySmall,
-    color: theme.colors.state.danger,
-    flexShrink: 1,
-  },
-  actions: {
-    gap: theme.spacing.sm,
-  },
-  note: {
-    ...theme.typography.caption,
-    color: theme.colors.text.muted,
-    textAlign: 'center',
-  },
-});
+    safeArea: {
+      flex: 1,
+      backgroundColor: theme.colors.surface.base,
+      overflow: 'hidden',
+    },
+    flex: {
+      flex: 1,
+    },
+    blobTop: {
+      position: 'absolute',
+      top: -130,
+      right: -90,
+      width: 300,
+      height: 300,
+      borderRadius: theme.radii.pill,
+      backgroundColor: theme.colors.brand.primarySoft,
+    },
+    blobBottom: {
+      position: 'absolute',
+      bottom: -150,
+      left: -120,
+      width: 320,
+      height: 320,
+      borderRadius: theme.radii.pill,
+      backgroundColor: theme.colors.brand.primarySurface,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      justifyContent: 'center',
+      padding: theme.spacing.xl,
+      gap: theme.spacing.xl,
+    },
+    header: {
+      alignItems: 'center',
+      gap: theme.spacing.md,
+    },
+    headingBlock: {
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+    },
+    title: {
+      ...theme.typography.h1,
+      color: theme.colors.text.primary,
+      textAlign: 'center',
+    },
+    // The single gold emphasis on the screen — a short underline under the
+    // heading, per the "gold for emphasis only, never decoration" rule.
+    accentUnderline: {
+      width: 44,
+      height: 3,
+      borderRadius: theme.radii.pill,
+      backgroundColor: theme.colors.brand.accent,
+    },
+    subtitle: {
+      ...theme.typography.body,
+      color: theme.colors.text.secondary,
+      textAlign: 'center',
+    },
+    card: {
+      backgroundColor: theme.colors.surface.raised,
+      borderRadius: theme.radii.xl,
+      borderCurve: 'continuous',
+      padding: theme.spacing.xl,
+      gap: theme.spacing.md,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.border.subtle,
+      ...theme.shadows.level2,
+    },
+    formGroup: {
+      gap: theme.spacing.xs,
+    },
+    label: {
+      ...theme.typography.label,
+      color: theme.colors.text.secondary,
+    },
+    inputWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1.5,
+      borderColor: theme.colors.border.subtle,
+      borderRadius: theme.radii.md,
+      borderCurve: 'continuous',
+      paddingHorizontal: theme.spacing.md,
+      backgroundColor: theme.colors.surface.sunken,
+    },
+    // Navy focus ring + subtle navy fill — the main (blue) color leading the
+    // interaction state.
+    inputWrapFocused: {
+      borderColor: theme.colors.brand.primary,
+      backgroundColor: theme.colors.brand.primarySurface,
+    },
+    inputIcon: {
+      marginRight: theme.spacing.sm,
+    },
+    input: {
+      flex: 1,
+      paddingVertical: theme.spacing.sm + 2,
+      ...theme.typography.body,
+      color: theme.colors.text.primary,
+    },
+    errorBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.xs,
+      backgroundColor: theme.colors.state.dangerSurface,
+      borderRadius: theme.radii.md,
+      padding: theme.spacing.sm,
+    },
+    error: {
+      ...theme.typography.bodySmall,
+      color: theme.colors.state.danger,
+      flexShrink: 1,
+    },
+    actions: {
+      gap: theme.spacing.sm,
+      marginTop: theme.spacing.xs,
+    },
+    note: {
+      ...theme.typography.caption,
+      color: theme.colors.text.muted,
+      textAlign: 'center',
+    },
+  });

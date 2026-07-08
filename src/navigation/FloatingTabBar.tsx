@@ -56,11 +56,11 @@ const BAR_BLUR_METHOD = 'dimezisBlurViewSdk31Plus' as const;
 // so the bar reads as frosted-but-legible rather than a see-through pane.
 const BAR_TINT_OPACITY = 0.9;
 
-// Mockup FAB fill: `linear-gradient(145deg, #F8C156, #F5A623)` — mode-invariant
-// (the mockup hardcodes these hex stops regardless of light/dark). 145deg
-// converted to expo-linear-gradient's normalized start/end points.
-const FAB_GRADIENT_START = { x: 0.21, y: 0.09 };
-const FAB_GRADIENT_END = { x: 0.79, y: 0.91 };
+// FAB fill: a **vertical** light→deep gold gradient (top-lit). Combined with the
+// gloss overlay + bevel rim + grounded shadow below, the button reads as a
+// convex, solid 3D control centered in the bar — not a flat overhanging chip.
+const FAB_GRADIENT_START = { x: 0.5, y: 0 };
+const FAB_GRADIENT_END = { x: 0.5, y: 1 };
 
 interface TabItemProps {
   routeName: string;
@@ -113,8 +113,9 @@ interface FloatingTabBarProps extends BottomTabBarProps {
  * Shared floating tab bar built to the visual-direction mockup: a detached
  * rounded frosted bar with a navy-soft **pill that slides on a spring** behind
  * the active tab, and a bottom safe-area inset. Both roles render this one
- * primitive — the student passes a `fab` (the raised gold Submit squircle, tabs
- * split 2/2 around it); the faculty bar omits it (four tabs, evenly spaced).
+ * primitive — the student passes a `fab` (the gold Submit button, a solid 3D
+ * control centered in the bar, tabs split 2/2 around it); the faculty bar omits
+ * it (four tabs, evenly spaced).
  * Keeping the blur/pill/motion in one place is what stops the two bars from
  * drifting apart (the failure mode PR #54 had to fix once, for one bar).
  */
@@ -229,19 +230,27 @@ export const FloatingTabBar = ({ state, navigation, tabMeta, fab }: FloatingTabB
             <PressableScale
               style={styles.fab}
               haptic="medium"
-              scaleTo={0.9}
+              scaleTo={0.92}
               onPress={fab.onPress}
               accessibilityRole="button"
               accessibilityLabel={fab.accessibilityLabel}
             >
               <LinearGradient
-                colors={[palette.gold[300], palette.gold[500]]}
+                colors={[palette.gold[200], palette.gold[500]]}
                 start={FAB_GRADIENT_START}
                 end={FAB_GRADIENT_END}
                 style={styles.fabGradient}
                 pointerEvents="none"
               />
-              <Ionicons name={fab.icon} size={26} color={FAB_INK} />
+              {/* Top-lit specular gloss — the convex sheen of a solid 3D button. */}
+              <LinearGradient
+                colors={['rgba(255, 255, 255, 0.45)', 'rgba(255, 255, 255, 0)']}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={styles.fabGloss}
+                pointerEvents="none"
+              />
+              <Ionicons name={fab.icon} size={30} color={FAB_INK} />
             </PressableScale>
           </View>
         ) : null}
@@ -260,8 +269,8 @@ const makeStyles = (t: Theme) =>
     // Outer shadow container: iOS shadow rendering gets clipped by
     // `overflow: hidden`, so the shadow/elevation live here while the actual
     // frosted-glass clipping lives on the inner `bar`. The FAB slot is a
-    // sibling of `bar` (not a child) so its `top: -20` overhang isn't clipped
-    // by the inner view's `overflow: hidden`.
+    // sibling of `bar` (not a child) so the FAB — and its own drop shadow —
+    // aren't clipped by the inner view's `overflow: hidden`.
     barShadow: {
       height: 66,
       borderRadius: 26,
@@ -316,33 +325,46 @@ const makeStyles = (t: Theme) =>
     spacer: {
       width: 58,
     },
+    // Centered vertically in the 66px bar (was `top: -20` overhang). The FAB no
+    // longer lifts above the bar — it sits as a solid button within it.
     fabSlot: {
       position: 'absolute',
       left: '50%',
-      top: -20,
+      top: 4,
       marginLeft: -29,
       zIndex: 3,
     },
     fab: {
       width: 58,
       height: 58,
-      borderRadius: 24,
+      borderRadius: 22,
       borderCurve: 'continuous',
       alignItems: 'center',
       justifyContent: 'center',
-      // Shadow values are mockup-exact (DESIGN.md) — unchanged by the A3
-      // gradient-fill swap.
-      shadowColor: t.colors.brand.accent,
-      shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.6,
-      shadowRadius: 16,
-      elevation: 10,
+      // Bevel rim + grounded deep-gold shadow give the solid button its 3D depth.
+      borderWidth: 1,
+      borderColor: 'rgba(255, 255, 255, 0.5)',
+      shadowColor: '#4A3800',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.45,
+      shadowRadius: 12,
+      elevation: 12,
     },
-    // Real gold gradient fill (A3) — replaces the A1 solid-fill + sheen
-    // approximation now that expo-linear-gradient is available.
+    // Deep→light gold base fill (top-lit vertical gradient).
     fabGradient: {
       ...StyleSheet.absoluteFill,
-      borderRadius: 24,
+      borderRadius: 22,
+      borderCurve: 'continuous',
+    },
+    // Specular gloss over the top half — the convex sheen of a solid button.
+    fabGloss: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: '55%',
+      borderTopLeftRadius: 22,
+      borderTopRightRadius: 22,
       borderCurve: 'continuous',
     },
   });
