@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -15,7 +15,13 @@ import { Category, ResearchPaper, WorkflowEntry } from '../../types/domain';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
-import { EmptyState, InlineNotice, PressableScale, Screen, Skeleton } from '../../components/ui';
+import {
+  EmptyState,
+  InlineNotice,
+  PressableScale,
+  Screen,
+  SheetPresenter,
+} from '../../components/ui';
 import { PdfViewer } from '../../components/PdfViewer';
 import {
   formatDate,
@@ -57,6 +63,11 @@ export const ResearchDetailScreen = () => {
   const [saved, setSaved] = useState(false);
   const [savePending, setSavePending] = useState(false);
   const [error, setError] = useState('');
+  const [pdfOpen, setPdfOpen] = useState(false);
+  // Track a view the first time the reader actually opens the PDF, once per screen
+  // visit — the sheet unmounts on close, so without this guard each re-open would
+  // remount PdfViewer and re-fire onFirstLoad, over-counting views.
+  const viewTracked = useRef(false);
 
   useEffect(() => {
     const run = async () => {
@@ -188,7 +199,25 @@ export const ResearchDetailScreen = () => {
   const displayDate = paper.published_date || paper.created_at;
 
   return (
-    <Screen edges={{ top: false }}>
+    <SheetPresenter
+      open={pdfOpen}
+      onClose={() => setPdfOpen(false)}
+      sheetAccessibilityLabel={`Full paper: ${paper.title}`}
+      sheet={
+        fileUri ? (
+          <PdfViewer
+            uri={fileUri}
+            variant="fill"
+            onFirstLoad={() => {
+              if (viewTracked.current) return;
+              viewTracked.current = true;
+              researchApi.trackView(paperId).catch(() => undefined);
+            }}
+          />
+        ) : null
+      }
+    >
+      <Screen edges={{ top: false }}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         {categoryName ? <Text style={styles.eyebrow}>{categoryName}</Text> : null}
 
@@ -226,15 +255,30 @@ export const ResearchDetailScreen = () => {
           <Text style={styles.sectionLabel}>Paper</Text>
           {fileError ? (
             <InlineNotice tone="danger" message={fileError} />
-          ) : fileUri ? (
-            <PdfViewer
-              uri={fileUri}
-              onFirstLoad={() => {
-                researchApi.trackView(paperId).catch(() => undefined);
-              }}
-            />
           ) : (
-            <Skeleton height={460} radius="lg" />
+            <PressableScale
+              style={styles.viewPaperBtn}
+              onPress={() => setPdfOpen(true)}
+              disabled={!fileUri}
+              accessibilityRole="button"
+              accessibilityLabel="View full paper"
+              accessibilityState={{ disabled: !fileUri }}
+            >
+              <View style={styles.viewPaperIcon}>
+                <Ionicons
+                  name="document-text-outline"
+                  size={20}
+                  color={theme.colors.text.onBrand}
+                />
+              </View>
+              <View style={styles.viewPaperText}>
+                <Text style={styles.viewPaperTitle}>View Full Paper</Text>
+                <Text style={styles.viewPaperSub}>
+                  {fileUri ? 'Open the PDF' : 'Preparing…'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={theme.colors.text.muted} />
+            </PressableScale>
           )}
         </View>
 
@@ -327,7 +371,8 @@ export const ResearchDetailScreen = () => {
           </View>
         ) : null}
       </ScrollView>
-    </Screen>
+      </Screen>
+    </SheetPresenter>
   );
 };
 
@@ -411,6 +456,38 @@ const makeStyles = (theme: Theme) =>
   section: {
     marginTop: theme.spacing.xl,
     gap: theme.spacing.sm,
+  },
+  viewPaperBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    padding: theme.spacing.lg,
+    borderRadius: theme.radii.lg,
+    borderCurve: 'continuous',
+    backgroundColor: theme.colors.surface.raised,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border.subtle,
+  },
+  viewPaperIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: theme.radii.md,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.brand.primary,
+  },
+  viewPaperText: {
+    flex: 1,
+    gap: 2,
+  },
+  viewPaperTitle: {
+    ...theme.typography.bodyStrong,
+    color: theme.colors.text.primary,
+  },
+  viewPaperSub: {
+    ...theme.typography.caption,
+    color: theme.colors.text.muted,
   },
   sectionLabel: {
     ...theme.typography.label,

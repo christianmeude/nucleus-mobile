@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRoute, type RouteProp } from '@react-navigation/native';
-import { InlineNotice, Screen, Skeleton } from '../../components/ui';
+import {
+  InlineNotice,
+  PressableScale,
+  Screen,
+  SheetPresenter,
+  Skeleton,
+} from '../../components/ui';
 import { PdfViewer } from '../../components/PdfViewer';
 import { facultyApi, type FacultyReviewDetail } from '../../api/faculty';
 import { RootStackParamList } from '../../navigation/types';
-import { useThemedStyles } from '../../context/ThemeContext';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 
 type FacultyPaperDetailRoute = RouteProp<RootStackParamList, 'FacultyPaperDetail'>;
@@ -24,12 +31,14 @@ function formatDate(value?: string | null): string {
  */
 export const FacultyPaperDetailScreen = () => {
   const route = useRoute<FacultyPaperDetailRoute>();
+  const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { paperId } = route.params;
   const [detail, setDetail] = useState<FacultyReviewDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fileUri, setFileUri] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [pdfOpen, setPdfOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -91,7 +100,13 @@ export const FacultyPaperDetailScreen = () => {
   }
 
   return (
-    <Screen edges={{ top: false }}>
+    <SheetPresenter
+      open={pdfOpen}
+      onClose={() => setPdfOpen(false)}
+      sheetAccessibilityLabel={`Full paper: ${detail.title}`}
+      sheet={fileUri ? <PdfViewer uri={fileUri} variant="fill" /> : null}
+    >
+      <Screen edges={{ top: false }}>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
         <Text style={styles.title}>{detail.title}</Text>
         <Text style={styles.meta}>
@@ -104,10 +119,28 @@ export const FacultyPaperDetailScreen = () => {
           <Text style={styles.sectionTitle}>Paper</Text>
           {fileError ? (
             <InlineNotice tone="danger" message={fileError} />
-          ) : fileUri ? (
-            <PdfViewer uri={fileUri} />
           ) : (
-            <Skeleton height={460} radius="lg" />
+            <PressableScale
+              style={styles.viewPaperBtn}
+              onPress={() => setPdfOpen(true)}
+              disabled={!fileUri}
+              accessibilityRole="button"
+              accessibilityLabel="View full paper"
+              accessibilityState={{ disabled: !fileUri }}
+            >
+              <View style={styles.viewPaperIcon}>
+                <Ionicons
+                  name="document-text-outline"
+                  size={20}
+                  color={theme.colors.text.onBrand}
+                />
+              </View>
+              <View style={styles.viewPaperText}>
+                <Text style={styles.viewPaperTitle}>View Full Paper</Text>
+                <Text style={styles.viewPaperSub}>{fileUri ? 'Open the PDF' : 'Preparing…'}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={theme.colors.text.muted} />
+            </PressableScale>
           )}
         </View>
 
@@ -123,7 +156,8 @@ export const FacultyPaperDetailScreen = () => {
           </View>
         ) : null}
       </ScrollView>
-    </Screen>
+      </Screen>
+    </SheetPresenter>
   );
 };
 
@@ -157,6 +191,38 @@ const makeStyles = (theme: Theme) =>
   sectionTitle: {
     ...theme.typography.h3,
     color: theme.colors.text.primary,
+  },
+  viewPaperBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    padding: theme.spacing.lg,
+    borderRadius: theme.radii.lg,
+    borderCurve: 'continuous',
+    backgroundColor: theme.colors.surface.raised,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border.subtle,
+  },
+  viewPaperIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: theme.radii.md,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.brand.primary,
+  },
+  viewPaperText: {
+    flex: 1,
+    gap: 2,
+  },
+  viewPaperTitle: {
+    ...theme.typography.bodyStrong,
+    color: theme.colors.text.primary,
+  },
+  viewPaperSub: {
+    ...theme.typography.caption,
+    color: theme.colors.text.muted,
   },
   body: {
     ...theme.typography.body,

@@ -277,7 +277,7 @@ interface PdfViewerProps {
   uri: string;
   /** Fired once, the first time the inline PDF finishes rendering (e.g. to track a view). */
   onFirstLoad?: () => void;
-  /** Inline panel height. Defaults to 460. */
+  /** Inline panel height. Defaults to 460. Ignored when variant is 'fill'. */
   height?: number;
   /**
    * Optional annotation overlays (faculty review only). When provided and at least one
@@ -285,19 +285,33 @@ interface PdfViewerProps {
    * Student screens omit this prop entirely.
    */
   annotations?: PdfAnnotationOverlay[];
+  /**
+   * 'inline' (default): a fixed-height rounded panel with a fullscreen-expand
+   * toggle. 'fill': stretches to fill its parent (e.g. inside `SheetPresenter`) —
+   * no expand toggle and no panel chrome, since the host sheet already owns the
+   * full-screen frame.
+   */
+  variant?: 'inline' | 'fill';
 }
 
-export const PdfViewer = ({ uri, onFirstLoad, height = 460, annotations }: PdfViewerProps) => {
+export const PdfViewer = ({
+  uri,
+  onFirstLoad,
+  height = 460,
+  annotations,
+  variant = 'inline',
+}: PdfViewerProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [fullscreen, setFullscreen] = useState(false);
   const [showAnnotations, setShowAnnotations] = useState(false);
 
+  const fill = variant === 'fill';
   const hasPositionedAnnotations = (annotations ?? []).some((a) => a.pageNumber !== null);
 
   return (
-    <View>
-      <View style={[styles.panel, { height }]}>
+    <View style={fill ? styles.fillRoot : undefined}>
+      <View style={[fill ? styles.panelFill : styles.panel, fill ? undefined : { height }]}>
         <PdfSurface
           uri={uri}
           onLoaded={onFirstLoad}
@@ -319,40 +333,44 @@ export const PdfViewer = ({ uri, onFirstLoad, height = 460, annotations }: PdfVi
               />
             </Pressable>
           ) : null}
-          <Pressable
-            onPress={() => setFullscreen(true)}
-            accessibilityRole="button"
-            accessibilityLabel="View PDF fullscreen"
-            style={styles.controlButton}
-          >
-            <Ionicons name="expand-outline" size={18} color={theme.colors.text.onBrand} />
-          </Pressable>
+          {fill ? null : (
+            <Pressable
+              onPress={() => setFullscreen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="View PDF fullscreen"
+              style={styles.controlButton}
+            >
+              <Ionicons name="expand-outline" size={18} color={theme.colors.text.onBrand} />
+            </Pressable>
+          )}
         </View>
       </View>
 
-      <Modal
-        visible={fullscreen}
-        animationType="slide"
-        onRequestClose={() => setFullscreen(false)}
-      >
-        <SafeAreaView style={styles.modal} edges={['top', 'bottom']}>
-          <View style={styles.modalHeader}>
-            <Pressable
-              onPress={() => setFullscreen(false)}
-              accessibilityRole="button"
-              accessibilityLabel="Close fullscreen PDF"
-              style={styles.closeButton}
-            >
-              <Ionicons name="close" size={24} color={theme.colors.text.primary} />
-            </Pressable>
-          </View>
-          <View style={styles.modalBody}>
-            {fullscreen ? (
-              <PdfSurface uri={uri} annotations={annotations} showAnnotations={showAnnotations} />
-            ) : null}
-          </View>
-        </SafeAreaView>
-      </Modal>
+      {fill ? null : (
+        <Modal
+          visible={fullscreen}
+          animationType="slide"
+          onRequestClose={() => setFullscreen(false)}
+        >
+          <SafeAreaView style={styles.modal} edges={['top', 'bottom']}>
+            <View style={styles.modalHeader}>
+              <Pressable
+                onPress={() => setFullscreen(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Close fullscreen PDF"
+                style={styles.closeButton}
+              >
+                <Ionicons name="close" size={24} color={theme.colors.text.primary} />
+              </Pressable>
+            </View>
+            <View style={styles.modalBody}>
+              {fullscreen ? (
+                <PdfSurface uri={uri} annotations={annotations} showAnnotations={showAnnotations} />
+              ) : null}
+            </View>
+          </SafeAreaView>
+        </Modal>
+      )}
     </View>
   );
 };
@@ -365,6 +383,14 @@ const makeStyles = (t: Theme) =>
       backgroundColor: t.colors.surface.sunken,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: t.colors.border.subtle,
+    },
+    fillRoot: {
+      flex: 1,
+    },
+    panelFill: {
+      flex: 1,
+      overflow: 'hidden',
+      backgroundColor: t.colors.surface.sunken,
     },
     webview: {
       flex: 1,
