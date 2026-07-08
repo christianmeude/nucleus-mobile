@@ -14,6 +14,16 @@ import { PressableScale } from './motion/PressableScale';
 const HERO_GRADIENT_START = { x: 0.313, y: 0.036 };
 const HERO_GRADIENT_END = { x: 0.687, y: 0.964 };
 
+/**
+ * Gold gradient for the profile avatar squircle — `linear-gradient(135deg,
+ * #F8C156, #F5A623)` from the redesign mockup's `.avatar` (gold[300] → gold[500]).
+ * Fixed hex (not theme-scoped) so the avatar reads as the same solid gold chip
+ * the mockup shows, and distinct from the translucent-white Activity bell beside
+ * it. `AVATAR_INK` is the warm ink-on-gold glyph color shared with the A1 FAB.
+ */
+const AVATAR_GRADIENT = ['#F8C156', '#F5A623'] as const;
+const AVATAR_INK = '#3A2600';
+
 interface DashboardHeroProps {
   greeting: string;
   name: string;
@@ -61,6 +71,12 @@ export const DashboardHero = ({
               accessibilityRole="button"
               accessibilityLabel="Profile"
             >
+              <LinearGradient
+                colors={AVATAR_GRADIENT}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
               <Text style={styles.heroAvatarText}>{initials}</Text>
             </PressableScale>
           }
@@ -135,17 +151,15 @@ const makeStyles = (t: Theme) =>
     heroAvatar: {
       width: 44,
       height: 44,
-      borderRadius: t.radii.pill,
+      borderRadius: t.radii.lg,
       borderCurve: 'continuous',
+      overflow: 'hidden',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: 'rgba(255, 255, 255, 0.16)',
-      borderWidth: 1,
-      borderColor: 'rgba(255, 255, 255, 0.3)',
     },
     heroAvatarText: {
-      fontFamily: t.fontFamilies.ui.semibold,
-      fontSize: 14,
-      color: t.colors.text.onBrand,
+      fontFamily: t.fontFamilies.ui.bold,
+      fontSize: 15,
+      color: AVATAR_INK,
     },
   });

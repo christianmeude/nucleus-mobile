@@ -30,6 +30,10 @@ import {
   ACTIVE_STATUSES,
 } from '../../components/PaperStatusChip';
 
+// Warm ink-on-gold for the CTA's gold chevron tile — the same glyph color the
+// A1 Submit FAB uses on saturated gold (slate/white tested poorly for contrast).
+const CTA_GO_INK = '#3A2600';
+
 export const DashboardScreen = () => {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
@@ -141,12 +145,27 @@ export const DashboardScreen = () => {
           <View style={styles.submitCtaIconTile}>
             <Ionicons name="document-text-outline" size={22} color={theme.colors.brand.primary} />
           </View>
-          <Text style={styles.submitCtaLabel}>Submit your research</Text>
-          <Ionicons name="chevron-forward" size={18} color={theme.colors.brand.accent} />
+          <View style={styles.submitCtaText}>
+            <Text style={styles.submitCtaLabel}>Submit your research</Text>
+            <Text style={styles.submitCtaSub}>Upload a paper for faculty review</Text>
+          </View>
+          <View style={styles.submitCtaGo}>
+            <Ionicons name="chevron-forward" size={16} color={CTA_GO_INK} />
+          </View>
         </PressableScale>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent papers</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent papers</Text>
+            <PressableScale
+              onPress={() => navigation.navigate('MyPapers')}
+              accessibilityRole="button"
+              accessibilityLabel="View all my papers"
+              hitSlop={8}
+            >
+              <Text style={styles.sectionLink}>My Papers ›</Text>
+            </PressableScale>
+          </View>
           {loading ? (
             <View style={styles.skeletonList}>
               <Skeleton height={108} />
@@ -173,7 +192,9 @@ export const DashboardScreen = () => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Saved</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Saved</Text>
+          </View>
           {savedPapers.length === 0 ? (
             <Text style={styles.savedEmpty}>Papers you bookmark will appear here.</Text>
           ) : (
@@ -218,7 +239,7 @@ const makeStyles = (t: Theme) =>
       alignItems: 'center',
       gap: t.spacing.md,
       padding: t.spacing.lg,
-      borderRadius: t.radii.lg,
+      borderRadius: t.radii.xl,
       borderCurve: 'continuous',
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: t.colors.border.subtle,
@@ -226,25 +247,55 @@ const makeStyles = (t: Theme) =>
       ...t.shadows.level1,
     },
     submitCtaIconTile: {
-      width: 44,
-      height: 44,
-      borderRadius: t.radii.md,
+      width: 46,
+      height: 46,
+      borderRadius: t.radii.lg,
       borderCurve: 'continuous',
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: t.colors.brand.primarySurface,
     },
-    submitCtaLabel: {
+    submitCtaText: {
       flex: 1,
+      gap: 2,
+    },
+    submitCtaLabel: {
       ...t.typography.bodyStrong,
       color: t.colors.text.primary,
+    },
+    submitCtaSub: {
+      ...t.typography.bodySmall,
+      color: t.colors.text.muted,
+    },
+    submitCtaGo: {
+      width: 30,
+      height: 30,
+      borderRadius: t.radii.md,
+      borderCurve: 'continuous',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: t.colors.brand.accent,
     },
     section: {
       gap: t.spacing.sm,
     },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
     sectionTitle: {
-      ...t.typography.h3,
-      color: t.colors.text.primary,
+      fontFamily: t.fontFamilies.ui.bold,
+      fontSize: 12,
+      lineHeight: 16,
+      letterSpacing: 0.8,
+      textTransform: 'uppercase',
+      color: t.colors.text.muted,
+    },
+    sectionLink: {
+      fontFamily: t.fontFamilies.ui.semibold,
+      fontSize: 13,
+      color: t.colors.brand.primary,
     },
     skeletonList: {
       gap: t.spacing.sm,
