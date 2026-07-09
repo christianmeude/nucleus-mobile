@@ -21,6 +21,8 @@ import { FacultyReviewDetailScreen } from '../screens/faculty/FacultyReviewDetai
 import { FacultyPaperDetailScreen } from '../screens/faculty/FacultyPaperDetailScreen';
 import { Logo } from '../components/ui';
 import { ResearchDetailHeader } from './ResearchDetailHeader';
+import { useHasOnboarded } from '../hooks/useHasOnboarded';
+import { OnboardingScreen } from '../screens/onboarding/OnboardingScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<StudentTabsParamList>();
@@ -54,9 +56,19 @@ const FullScreenLoader = () => {
 export const AppNavigator = () => {
   const { user, loading } = useAuth();
   const { theme } = useTheme();
+  const { hasOnboarded, loaded: onboardingLoaded, markOnboarded } = useHasOnboarded();
 
-  if (loading) {
+  // Wait for auth and — for students — the persisted onboarding flag before
+  // deciding what to show, so a returning student never flashes the A4 carousel.
+  if (loading || (user?.role === 'student' && !onboardingLoaded)) {
     return <FullScreenLoader />;
+  }
+
+  // First-run (A4): a student sees the intro carousel until they finish or skip
+  // it. Rendered ahead of the navigator (not as a route) so no navigation-types
+  // change is needed; faculty and other roles skip it entirely.
+  if (user?.role === 'student' && !hasOnboarded) {
+    return <OnboardingScreen onDone={markOnboarded} />;
   }
 
   return (
