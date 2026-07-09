@@ -23,7 +23,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
 import { useAuth } from '../../context/AuthContext';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
@@ -163,6 +163,7 @@ const BrowseGridCell = memo(function BrowseGridCell({
 
 export const BrowseScreen = () => {
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
@@ -244,6 +245,19 @@ export const BrowseScreen = () => {
       setSearched(true);
     }
   }, [hasSearchedOnceLoaded, hasSearchedOnce]);
+
+  // Deep-link from the Dashboard's "Explore by field" chips: arrive with
+  // { categoryId }, preselect that filter and jump straight to results (no morph
+  // replay), then clear the param so a later plain visit to Browse isn't
+  // re-filtered by a stale route param.
+  const paramCategoryId: string | undefined = route.params?.categoryId;
+  useEffect(() => {
+    if (!paramCategoryId) return;
+    skipMorphAnim.current = true;
+    setCategoryFilter(paramCategoryId);
+    setSearched(true);
+    navigation.setParams({ categoryId: undefined });
+  }, [paramCategoryId, navigation]);
 
   // Drive the whole transition off one shared value: 0 = idle, 1 = results.
   useEffect(() => {

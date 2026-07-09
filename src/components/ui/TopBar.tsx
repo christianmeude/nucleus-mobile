@@ -20,7 +20,13 @@ interface TopBarProps {
    * changes — so the control never visually "nudges" between screens.
    */
   variant?: 'default' | 'hero';
-  /** Optional content rendered after the bell (e.g. Dashboard's profile avatar). */
+  /**
+   * Optional content rendered *before* the bell (e.g. Dashboard's profile
+   * avatar). The bell stays rightmost — it is the global element; the avatar is
+   * an account control that sits to its left (DESIGN.md bell placement).
+   */
+  leading?: ReactNode;
+  /** Optional content rendered after the bell. */
   trailing?: ReactNode;
 }
 
@@ -31,7 +37,7 @@ interface TopBarProps {
  * tab screen — including the Dashboard hero via `variant="hero"` — so the
  * bell lives in one consistent place with one consistent look.
  */
-export const TopBar = ({ title, children, variant = 'default', trailing }: TopBarProps) => {
+export const TopBar = ({ title, children, variant = 'default', leading, trailing }: TopBarProps) => {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -44,11 +50,12 @@ export const TopBar = ({ title, children, variant = 'default', trailing }: TopBa
         {children ?? <Text style={styles.title}>{title}</Text>}
       </View>
       <View style={styles.actions}>
+        {leading}
         <Pressable
           onPress={() => navigation.navigate('Activity')}
           style={({ pressed }) => [
             styles.bell,
-            isHero && styles.bellHero,
+            isHero ? styles.bellHero : styles.bellDefault,
             pressed && styles.bellPressed,
           ]}
           accessibilityRole="button"
@@ -106,6 +113,12 @@ const makeStyles = (t: Theme) =>
     },
     bellHero: {
       backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    },
+    // Light-surface twin of bellHero: a subtle sunken circle so the bell reads
+    // as the same control on every screen, not a bare glyph on some and a
+    // circle on others (consistent notification placement — DESIGN.md).
+    bellDefault: {
+      backgroundColor: t.colors.surface.sunken,
     },
     bellPressed: {
       opacity: 0.6,
