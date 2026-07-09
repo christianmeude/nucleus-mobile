@@ -136,13 +136,6 @@ export const DashboardScreen = () => {
   const greeting = useMemo(() => greetingForHour(new Date().getHours()), []);
   const initials = useMemo(() => initialsFor(user?.fullName), [user?.fullName]);
 
-  // Hero sub-line = institution + program (mockup), not submission status —
-  // the status now lives in the "Your submissions" glance below.
-  const subLine = useMemo(() => {
-    const text = ['NU Dasmariñas', user?.program?.trim()].filter(Boolean).join(' · ');
-    return { text, urgent: false };
-  }, [user?.program]);
-
   // Submissions-at-a-glance counts (routes to My Papers for the detail).
   const counts = useMemo(() => {
     return {
@@ -202,7 +195,6 @@ export const DashboardScreen = () => {
           greeting={greeting}
           name={firstName || 'Student'}
           initials={initials}
-          statusLine={subLine}
           onPressAvatar={() => navigation.navigate('Profile')}
         />
 

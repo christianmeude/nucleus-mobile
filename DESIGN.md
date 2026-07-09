@@ -324,6 +324,22 @@ the app), so they ship as-is.
   sheet height (or flick, `velocityY > 900`) to dismiss. Scrim tops out at `0.45`
   black; the presenter also dims `0.35`. Under reduced motion the sheet snaps
   open/closed with no scale, slide, or scrim fade.
+  **The zoom-out, dim, and scrim track the sheet's live top — the open/close
+  spring *and* any active drag — not `progress` alone.** A `reveal` (1 fully up
+  → 0 hidden) is derived each frame from the sheet's current top and drives all
+  three, so dragging the sheet down *pans the presenter back in and lightens the
+  scrim smoothly in proportion to the sheet's height*, rather than holding the
+  full zoom until release.
+- **Bottom sheets (menus & pickers).** Short sheets (Browse sort/field, etc.)
+  use `BottomSheet`, which drives **both** the slide and the backdrop dim off one
+  shared progress (open `spring.sheet`, close `240ms` timed) so **the dim fades in
+  lock-step with the sheet's height instead of snapping to full opacity when the
+  modal mounts**. Same drag-to-dismiss (grabber, ~30% / `velocityY > 900`); the
+  dim lightens as the sheet is pulled away. Reduced motion → instant, no fade.
+- **Confirming pop.** A save/bookmark toggling *on* gives a quick scale
+  overshoot on the icon — `withSequence(withTiming(1.32, 120ms),
+  withSpring(1, spring.pop))` (`spring.pop` = low-damping overshoot). Only on the
+  affirmative action (not un-saving), and a no-op under reduced motion.
 - **Focus ring.** `border-focus` (navy `#2E5BC9`), 2px, 2px offset. *(The old
   visual-direction doc specified a gold focus ring; `border-focus` supersedes
   it, since focus is navigation state, not emphasis — gold stays reserved.)*
@@ -406,9 +422,13 @@ Reader-first Home — a glance at your own submissions, then discovery. It is
 **not** a trimmed My Papers.
 
 - **Navy hero header:** `linear-gradient(158deg, primary, primary-hover)`,
-  bottom radius 28 (bespoke). Greeting + name + a one-line sub-line
-  (`institution · program`, **not** submission status). Faint radial gold glow;
-  a giant translucent "N" watermark bottom-right (`rgba(255,255,255,.05)`).
+  bottom radius 28 (bespoke). **Student Home shows only greeting + name** — no
+  sub-line under it (the institution/program line was dropped; program lives in
+  Profile, submission status in the glance strip below). The block is padded
+  down off the status bar (`insets.top + spacing.xl`) so it reads as centered in
+  the band, not jammed to the top. Faculty keeps a one-line status sub-line
+  (review summary) via the shared hero's optional `statusLine`. Faint radial gold
+  glow; a giant translucent "N" watermark bottom-right (`rgba(255,255,255,.05)`).
   Right side: **profile avatar, then the bell** (bell rightmost per Shared
   refinements). Avatar = gold squircle (`44×44`, radius `lg`,
   `borderCurve: 'continuous'`), ink-on-gold (`#3A2600`) initials.

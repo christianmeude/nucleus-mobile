@@ -61,7 +61,7 @@ export const DashboardHero = ({
       <View style={[styles.heroGlow, { backgroundColor: theme.colors.brand.accent }]} />
       <Text style={[styles.heroWatermark, { color: theme.colors.text.onBrand }]}>N</Text>
 
-      <View style={[styles.heroContent, { paddingTop: insets.top + theme.spacing.md }]}>
+      <View style={[styles.heroContent, { paddingTop: insets.top + theme.spacing.xl }]}>
         <TopBar
           variant="hero"
           leading={
