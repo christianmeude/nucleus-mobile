@@ -26,8 +26,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
 import { useAuth } from '../../context/AuthContext';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useHasSearchedOnce } from '../../hooks/useHasSearchedOnce';
 import { useRecentSearches } from '../../hooks/useRecentSearches';
+import { flags } from '../../config/flags';
 import { Category, ResearchPaper } from '../../types/domain';
 import { formatDate, getPrimaryAuthorName, paperDate } from '../../utils/format';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
@@ -181,6 +183,9 @@ export const BrowseScreen = () => {
   // submit (Google-style) or the explore gesture, not on every keystroke.
   const [searched, setSearched] = useState(false);
   const [greeting, setGreeting] = useState(pickGreeting);
+  const [serverResults, setServerResults] = useState<ResearchPaper[] | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState('');
   const progress = useSharedValue(0);
   // Explore-gesture fill (0..1): drives the arrow's pull-to-refresh-style fill
   // while held. Deliberately independent of `progress` — the hold only shows
@@ -291,6 +296,41 @@ export const BrowseScreen = () => {
 
   const submitSearch = useCallback(() => runSearch(query), [query, runSearch]);
 
+  // Server-side hybrid search (Issue #29), behind the `hybridSearch` flag. A
+  // non-empty query — debounced — hits the search-papers Edge Function and comes
+  // back relevance-ranked. Flag off or empty query keeps the local list/filter.
+  const debouncedQuery = useDebouncedValue(query.trim(), 350);
+  const useServerSearch = flags.hybridSearch && debouncedQuery.length > 0;
+
+  useEffect(() => {
+    if (!useServerSearch) {
+      setServerResults(null);
+      setSearchError('');
+      setSearchLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setSearchLoading(true);
+    researchApi
+      .searchPapers(debouncedQuery)
+      .then((rows) => {
+        if (cancelled) return;
+        setServerResults(rows);
+        setSearchError('');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setServerResults([]);
+        setSearchError('Search is unavailable right now. Try again in a moment.');
+      })
+      .finally(() => {
+        if (!cancelled) setSearchLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [useServerSearch, debouncedQuery]);
+
   // Explore gesture commits into results mode with no query — browsing the
   // full unfiltered repository, same destination the hint card advertises.
   // `exploreReveal` is only ever flagged true here, on the JS thread — the
@@ -379,8 +419,15 @@ export const BrowseScreen = () => {
 
   /** Papers matching the active category + search, before sorting. */
   const matched = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
+    // Server hybrid search: the query is already applied + relevance-ranked
+    // server-side, so only the category Chip is re-applied here (order kept).
+    if (useServerSearch) {
+      const rows = serverResults ?? [];
+      return categoryFilter ? rows.filter((paper) => paper.category === categoryFilter) : rows;
+    }
 
+    // Local fallback (flag off / empty query): category + substring filter.
+    const normalized = query.trim().toLowerCase();
     return papers
       .filter((paper) => {
         if (!categoryFilter) return true;
@@ -393,9 +440,12 @@ export const BrowseScreen = () => {
         const target = `${paper.title} ${paper.abstract} ${keywords} ${authorName}`.toLowerCase();
         return target.includes(normalized);
       });
-  }, [categoryFilter, papers, query]);
+  }, [useServerSearch, serverResults, categoryFilter, papers, query]);
 
   const sorted = useMemo(() => {
+    // Server results arrive relevance-ranked — preserve that order. Only the
+    // local path honors the newest/most-viewed sort toggle.
+    if (useServerSearch) return matched;
     const arr = [...matched];
     if (sort === 'most_viewed') {
       arr.sort((left, right) => viewsOf(right) - viewsOf(left));
@@ -403,7 +453,7 @@ export const BrowseScreen = () => {
       arr.sort((left, right) => timeOf(right) - timeOf(left));
     }
     return arr;
-  }, [matched, sort]);
+  }, [useServerSearch, matched, sort]);
 
   /** Featured = most-viewed published paper, shown only on the unfiltered default view. */
   const featured = useMemo(() => {
@@ -416,7 +466,7 @@ export const BrowseScreen = () => {
     return sorted.filter((paper) => paper.id !== featured.id);
   }, [featured, sorted]);
 
-  const listData = loading ? [] : gridItems;
+  const listData = loading || (useServerSearch && searchLoading) ? [] : gridItems;
 
   // Browse is shared by both roles. A faculty tap opens the faculty paper-detail
   // screen (registered on the faculty stack); a student tap opens the student
@@ -559,13 +609,19 @@ export const BrowseScreen = () => {
     </>
   );
 
-  const listEmptyElement = loading ? (
+  const listEmptyElement = loading || (useServerSearch && searchLoading) ? (
     <View style={styles.loadingWrap}>
       <Skeleton height={140} />
       <Skeleton height={84} />
       <Skeleton height={84} />
       <Skeleton height={84} />
     </View>
+  ) : searchError ? (
+    <EmptyState
+      icon={<Ionicons name="cloud-offline-outline" size={24} color={theme.colors.text.muted} />}
+      title="Search unavailable"
+      message={searchError}
+    />
   ) : sorted.length === 0 ? (
     <EmptyState
       icon={<Ionicons name="library-outline" size={24} color={theme.colors.text.muted} />}

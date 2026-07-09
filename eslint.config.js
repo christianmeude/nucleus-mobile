@@ -11,6 +11,9 @@ module.exports = [
       '.expo/**',
       'dist/**',
       'coverage/**',
+      // Supabase Edge Functions are Deno (Deno.*/Supabase.ai globals + remote
+      // esm.sh imports) — not part of the RN/Expo program; lint them separately.
+      'supabase/**',
       'babel.config.js',
       'jest.config.js',
       'eslint.config.js',

@@ -10,6 +10,15 @@
  */
 export const flags = {
   darkMode: false,
+
+  /**
+   * `hybridSearch` gates Browse's server-side hybrid search (Issue #29): a
+   * non-empty query hits the `search-papers` Edge Function (full-text + pgvector
+   * RRF) instead of the local substring filter. Stays off until the embedding
+   * backfill (`embed-papers`) has run and search is QA'd end-to-end; while false,
+   * Browse keeps its existing on-device filtering.
+   */
+  hybridSearch: false,
 } as const;
 
 export type Flags = typeof flags;
