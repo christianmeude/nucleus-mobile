@@ -17,13 +17,12 @@ export const FacultyProfileScreen = () => {
     return user.role.charAt(0).toUpperCase() + user.role.slice(1);
   }, [user?.role]);
 
-  const handle = useMemo(() => {
-    const parts = [
-      user?.email ? user.email.split('@')[0] : null,
-      user?.department || user?.program,
-    ].filter((part): part is string => !!part);
-    return parts.join(' · ');
-  }, [user?.email, user?.department, user?.program]);
+  // Program first, department beneath — same identity block as the student
+  // Profile. The email-prefix "handle" was dropped (read as a random username).
+  const identityLines = useMemo(
+    () => [user?.program?.trim(), user?.department?.trim()].filter((part): part is string => !!part),
+    [user?.program, user?.department]
+  );
 
   return (
     // Same frame as the student Profile: navy banner bleeds under the status bar
@@ -33,7 +32,8 @@ export const FacultyProfileScreen = () => {
         <ProfileHeader
           initials={initials}
           name={user?.fullName || 'Faculty'}
-          handle={handle || undefined}
+          handle={identityLines[0]}
+          subhandle={identityLines[1]}
         />
 
         <View style={styles.rowsSection}>
