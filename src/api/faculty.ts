@@ -559,6 +559,41 @@ function toFacultyAnnotation(row: FacultyAnnotationRow): FacultyAnnotation {
   };
 }
 
+// -----------------------------------------------------------------------------
+// Annotation write path (#14) — note pins only. Faculty place a note pin on a PDF
+// page during review. The comment is stored as the same meta-in-text envelope the
+// web uses, so subsequent web reviewers see it. A direct INSERT fails RLS here
+// (the deployed policy checks user_id = auth.uid(), which != public.users.id), so
+// the write goes through the SECURITY DEFINER create_faculty_annotation RPC, which
+// re-validates faculty identity + paper assignment server-side.
+// -----------------------------------------------------------------------------
+
+/** Input for creating a note-pin annotation on an assigned paper's PDF. */
+export interface CreateFacultyNoteInput {
+  paperId: string;
+  note: string;
+  pageNumber: number;
+  anchorPercent: FacultyAnnotationPoint;
+  highlightColor?: string;
+}
+
+/** Gold pin, matching the PdfViewer note-pin fallback color. */
+const NOTE_PIN_COLOR = '#CDA434';
+
+/** Assemble the web-compatible meta-in-text envelope for a note-pin annotation. */
+function buildNoteEnvelope(input: CreateFacultyNoteInput): string {
+  const meta = {
+    annotationType: 'note' as const,
+    pageNumber: Math.max(1, Math.floor(input.pageNumber)),
+    anchorPercent: {
+      x: Math.min(100, Math.max(0, input.anchorPercent.x)),
+      y: Math.min(100, Math.max(0, input.anchorPercent.y)),
+    },
+    highlightColor: input.highlightColor ?? NOTE_PIN_COLOR,
+  };
+  return `${ANNOTATION_META_OPEN}${JSON.stringify(meta)}${ANNOTATION_META_CLOSE}\n${input.note.trim()}`;
+}
+
 // =============================================================================
 // Repository + Notifications (read-only, #12)
 // -----------------------------------------------------------------------------
@@ -767,6 +802,32 @@ export const facultyApi = {
 
     const rows = Array.isArray(data) ? (data as unknown as FacultyAnnotationRow[]) : [];
     return rows.map(toFacultyAnnotation);
+  },
+
+  /**
+   * Create a note-pin annotation on an assigned paper (write path, #14). Assembles the
+   * web-compatible meta envelope client-side and inserts via the SECURITY DEFINER
+   * create_faculty_annotation RPC (a direct insert fails RLS: auth.uid() != public.users.id).
+   * Returns the new annotation id.
+   */
+  createNoteAnnotation: async (input: CreateFacultyNoteInput): Promise<string> => {
+    await resolveCurrentFacultyProfile();
+
+    const note = input.note.trim();
+    if (!note) {
+      throw new Error('Add a note before saving.');
+    }
+
+    const { data, error } = await supabase.rpc('create_faculty_annotation', {
+      p_paper_id: input.paperId,
+      p_comment: buildNoteEnvelope({ ...input, note }),
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Unable to save the annotation.');
+    }
+
+    return String(data ?? '');
   },
 
   /** Published papers, newest first — same Repository content students browse. RLS-scoped. */
