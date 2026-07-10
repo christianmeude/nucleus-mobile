@@ -12,12 +12,13 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
-import { palette, type Theme } from '../theme';
-import { PressableScale } from '../components/ui';
+import { motion, palette, type Theme } from '../theme';
+import { FadeInView, PressableScale } from '../components/ui';
 import { haptics } from '../lib/haptics';
 import { useReduceMotion } from '../hooks/useReduceMotion';
 import { useCoachmarkTarget } from '../components/coachmarks/CoachmarkProvider';
 import { type CoachmarkId } from '../components/coachmarks/sequence';
+import { isFirstEntranceArmed } from '../lib/firstEntrance';
 
 export type IconPair = [outline: keyof typeof Ionicons.glyphMap, filled: keyof typeof Ionicons.glyphMap];
 
@@ -140,6 +141,9 @@ export const FloatingTabBar = ({ state, navigation, tabMeta, fab }: FloatingTabB
   // First-run coachmark target (#69): only the student bar renders a FAB, so
   // this registers the Submit FAB for students and is inert for the faculty bar.
   const fabCoachmarkRef = useCoachmarkTarget('submitFab');
+  // One-time "assemble" entrance: the bar slides up on the first launch straight
+  // out of onboarding (armed there, student-only), static otherwise.
+  const [assemble] = useState(isFirstEntranceArmed);
 
   const layouts = useRef<Record<number, { x: number; width: number }>>({});
   const indX = useSharedValue(0);
@@ -223,7 +227,13 @@ export const FloatingTabBar = ({ state, navigation, tabMeta, fab }: FloatingTabB
   });
 
   return (
-    <View style={[styles.wrap, { paddingBottom: insets.bottom || theme.spacing.sm }]}>
+    <FadeInView
+      active={assemble}
+      distance={48}
+      duration={motion.duration.slow}
+      delay={120}
+      style={[styles.wrap, { paddingBottom: insets.bottom || theme.spacing.sm }]}
+    >
       <View style={styles.barShadow}>
         <View style={styles.bar}>
           <BlurView
@@ -268,7 +278,7 @@ export const FloatingTabBar = ({ state, navigation, tabMeta, fab }: FloatingTabB
           </View>
         ) : null}
       </View>
-    </View>
+    </FadeInView>
   );
 };
 

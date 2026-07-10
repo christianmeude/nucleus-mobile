@@ -15,6 +15,7 @@ import { useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { useReduceMotion } from '../../hooks/useReduceMotion';
 import { useSeenCoachmarks } from '../../hooks/useSeenCoachmarks';
+import { isFirstEntranceArmed } from '../../lib/firstEntrance';
 import { COACHMARK_COPY, type CoachmarkId, nextCoachmark } from './sequence';
 
 // Bubble geometry (DESIGN.md: 6px triangle pointer, radius md, level2 shadow).
@@ -143,6 +144,7 @@ const CoachmarkOverlay = ({ step, rect, onAdvance }: OverlayProps) => {
 export const CoachmarkProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const { seen, loaded, markSeen } = useSeenCoachmarks();
+  const reduceMotion = useReduceMotion();
   const targets = useRef<Partial<Record<CoachmarkId, View | null>>>({});
   // The measured rect is tagged with the step it belongs to, so a stale rect
   // from the previous step self-hides via the render guard below (no
@@ -158,6 +160,9 @@ export const CoachmarkProvider = ({ children }: { children: ReactNode }) => {
 
   // Measure the current target, retrying until it has laid out, then reveal the
   // bubble. Re-runs whenever the step changes (a dismissal advances `current`).
+  // On the first launch out of onboarding the home chrome is still sliding into
+  // place, so the first measurement waits for that entrance to settle — measuring
+  // mid-animation would anchor the bubble to a target's transient position.
   useEffect(() => {
     if (!current) return;
     let cancelled = false;
@@ -182,12 +187,13 @@ export const CoachmarkProvider = ({ children }: { children: ReactNode }) => {
         else retry();
       });
     };
-    measure();
+    const settle = isFirstEntranceArmed() && !reduceMotion ? 900 : 0;
+    timer = setTimeout(measure, settle);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [current]);
+  }, [current, reduceMotion]);
 
   const ctxValue = useMemo<CoachmarkContextValue>(() => ({ register }), [register]);
 
@@ -213,6 +219,7 @@ const styles = StyleSheet.create({
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({
+    // A standard light card: white surface, hairline outline, soft elevation.
     bubble: {
       position: 'absolute',
       flexDirection: 'row',
@@ -220,19 +227,21 @@ const makeStyles = (t: Theme) =>
       gap: t.spacing.sm,
       paddingVertical: t.spacing.sm,
       paddingHorizontal: t.spacing.md,
-      backgroundColor: t.colors.brand.primary,
+      backgroundColor: t.colors.surface.raised,
       borderRadius: t.radii.md,
       borderCurve: 'continuous',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: t.colors.border.subtle,
       ...t.shadows.level2,
     },
     bubbleText: {
       flex: 1,
       ...t.typography.bodySmall,
-      color: t.colors.text.onBrand,
+      color: t.colors.text.primary,
     },
     gotIt: {
       ...t.typography.label,
-      color: t.colors.brand.accent,
+      color: t.colors.brand.primary,
     },
     gotItPressed: {
       opacity: 0.6,
@@ -246,7 +255,7 @@ const makeStyles = (t: Theme) =>
       borderBottomWidth: POINTER_H,
       borderLeftColor: 'transparent',
       borderRightColor: 'transparent',
-      borderBottomColor: t.colors.brand.primary,
+      borderBottomColor: t.colors.surface.raised,
     },
     pointerDown: {
       position: 'absolute',
@@ -257,6 +266,6 @@ const makeStyles = (t: Theme) =>
       borderTopWidth: POINTER_H,
       borderLeftColor: 'transparent',
       borderRightColor: 'transparent',
-      borderTopColor: t.colors.brand.primary,
+      borderTopColor: t.colors.surface.raised,
     },
   });

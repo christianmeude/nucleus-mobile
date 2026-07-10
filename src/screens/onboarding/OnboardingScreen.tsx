@@ -1,16 +1,13 @@
 import { Fragment, useCallback, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
-  Easing,
   Extrapolation,
   interpolate,
-  runOnJS,
   useAnimatedRef,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
-  withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { PressableScale } from '../../components/ui';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
+import { armFirstEntrance } from '../../lib/firstEntrance';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -88,7 +86,6 @@ export const OnboardingScreen = ({ onDone }: OnboardingScreenProps) => {
   const reducedMotion = useReducedMotion();
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const scrollX = useSharedValue(0);
-  const fade = useSharedValue(1);
   const [index, setIndex] = useState(0);
 
   const isLast = index === SLIDES.length - 1;
@@ -106,27 +103,20 @@ export const OnboardingScreen = ({ onDone }: OnboardingScreenProps) => {
     [scrollRef, width, reducedMotion],
   );
 
-  // Finishing fades the whole carousel out (revealing the navy app beneath it),
-  // so proceeding into the app reads as a smooth cross-fade rather than a hard
-  // cut. Reduced motion skips straight to the flag flip.
+  // Finishing arms the one-time home "assemble" entrance, then flips the flag so
+  // the app mounts immediately (no fade-to-blank gap) and its chrome animates
+  // itself in — header dropping in, cards rising, navbar sliding up.
   const onNext = useCallback(() => {
     if (!isLast) {
       goTo(index + 1);
       return;
     }
-    if (reducedMotion) {
-      onDone();
-      return;
-    }
-    fade.value = withTiming(0, { duration: 320, easing: Easing.in(Easing.ease) }, (finished) => {
-      if (finished) runOnJS(onDone)();
-    });
-  }, [isLast, onDone, goTo, index, reducedMotion, fade]);
-
-  const rootFadeStyle = useAnimatedStyle(() => ({ opacity: fade.value }));
+    armFirstEntrance();
+    onDone();
+  }, [isLast, onDone, goTo, index]);
 
   return (
-    <Animated.View style={[styles.root, rootFadeStyle]}>
+    <View style={styles.root}>
       <LinearGradient
         colors={[theme.colors.brand.primary, theme.colors.brand.primaryHover]}
         start={HERO_START}
@@ -218,7 +208,7 @@ export const OnboardingScreen = ({ onDone }: OnboardingScreenProps) => {
           </PressableScale>
         </View>
       </SafeAreaView>
-    </Animated.View>
+    </View>
   );
 };
 

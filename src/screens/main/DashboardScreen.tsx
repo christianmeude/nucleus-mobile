@@ -15,12 +15,14 @@ import { researchApi } from '../../api/research';
 import { getSavedPapers, SavedPaper } from '../../api/collections';
 import { Category, ResearchPaper } from '../../types/domain';
 import { greetingForHour, initialsFor, paperDate } from '../../utils/format';
-import { type Theme } from '../../theme';
+import { motion, type Theme } from '../../theme';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
+import { isFirstEntranceArmed } from '../../lib/firstEntrance';
 import {
   Chip,
   DashboardHero,
   EmptyState,
+  FadeInView,
   InlineNotice,
   PressableScale,
   Screen,
@@ -80,6 +82,10 @@ export const DashboardScreen = () => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
+  // Read once at mount: play the one-time "assemble" entrance only on the first
+  // launch straight out of onboarding (armed there); every other launch renders
+  // statically. Locked into state so a later data-driven re-render can't restart it.
+  const [assemble] = useState(isFirstEntranceArmed);
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
   const [published, setPublished] = useState<ResearchPaper[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -191,18 +197,22 @@ export const DashboardScreen = () => {
           />
         }
       >
-        <DashboardHero
-          greeting={greeting}
-          name={firstName || 'Student'}
-          initials={initials}
-          statusLine={subLine}
-          onPressAvatar={() => navigation.navigate('Profile')}
-        />
+        {/* Header drops in from above on the first post-onboarding launch. */}
+        <FadeInView active={assemble} distance={-32} duration={motion.duration.slow}>
+          <DashboardHero
+            greeting={greeting}
+            name={firstName || 'Student'}
+            initials={initials}
+            statusLine={subLine}
+            onPressAvatar={() => navigation.navigate('Profile')}
+          />
+        </FadeInView>
 
         <View style={styles.body}>
           {error ? <InlineNotice tone="danger" message={error} /> : null}
 
           {/* Your submissions — at a glance */}
+          <FadeInView active={assemble} delay={90} distance={18} fromScale={0.98}>
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Your submissions</Text>
@@ -240,7 +250,10 @@ export const DashboardScreen = () => {
             </PressableScale>
           </View>
 
+          </FadeInView>
+
           {/* Recommended by department (most-read fallback) */}
+          <FadeInView active={assemble} delay={150} distance={18} fromScale={0.98}>
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle} numberOfLines={1}>
@@ -317,8 +330,11 @@ export const DashboardScreen = () => {
             )}
           </View>
 
+          </FadeInView>
+
           {/* Explore by field */}
           {categories.length > 0 ? (
+            <FadeInView active={assemble} delay={210} distance={18} fromScale={0.98}>
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Explore by field</Text>
@@ -347,9 +363,11 @@ export const DashboardScreen = () => {
                 ))}
               </ScrollView>
             </View>
+            </FadeInView>
           ) : null}
 
           {/* Saved */}
+          <FadeInView active={assemble} delay={270} distance={18} fromScale={0.98}>
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Saved</Text>
@@ -381,6 +399,7 @@ export const DashboardScreen = () => {
               ))
             )}
           </View>
+          </FadeInView>
         </View>
       </ScrollView>
     </Screen>
