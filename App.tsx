@@ -13,6 +13,7 @@ import { AuthProvider } from './src/context/AuthContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { RoleGuard } from './src/navigation/RoleGuard';
+import { CoachmarkProvider } from './src/components/coachmarks/CoachmarkProvider';
 
 const FontLoader = () => {
   const { theme } = useTheme();
@@ -46,7 +47,9 @@ const AppShell = () => {
       {fontsReady ? (
         <AuthProvider>
           <RoleGuard>
-            <AppNavigator />
+            <CoachmarkProvider>
+              <AppNavigator />
+            </CoachmarkProvider>
           </RoleGuard>
         </AuthProvider>
       ) : (
