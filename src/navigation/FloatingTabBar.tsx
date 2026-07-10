@@ -12,7 +12,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
-import { motion, palette, type Theme } from '../theme';
+import { palette, type Theme } from '../theme';
 import { FadeInView, PressableScale } from '../components/ui';
 import { haptics } from '../lib/haptics';
 import { useReduceMotion } from '../hooks/useReduceMotion';
@@ -229,9 +229,10 @@ export const FloatingTabBar = ({ state, navigation, tabMeta, fab }: FloatingTabB
   return (
     <FadeInView
       active={assemble}
-      distance={48}
-      duration={motion.duration.slow}
-      delay={120}
+      distance={30}
+      duration={460}
+      fromScale={0.94}
+      delay={250}
       style={[styles.wrap, { paddingBottom: insets.bottom || theme.spacing.sm }]}
     >
       <View style={styles.barShadow}>

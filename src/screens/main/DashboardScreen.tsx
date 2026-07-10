@@ -15,7 +15,7 @@ import { researchApi } from '../../api/research';
 import { getSavedPapers, SavedPaper } from '../../api/collections';
 import { Category, ResearchPaper } from '../../types/domain';
 import { greetingForHour, initialsFor, paperDate } from '../../utils/format';
-import { motion, type Theme } from '../../theme';
+import { type Theme } from '../../theme';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
 import { isFirstEntranceArmed } from '../../lib/firstEntrance';
 import {
@@ -35,6 +35,12 @@ import {
 } from '../../components/PaperStatusChip';
 
 const RAIL_LIMIT = 6;
+
+// One-time "assemble" entrance (first launch out of onboarding). Uniform motion
+// for every element — same travel, duration, pop, and ease-out curve — with a
+// top-to-bottom stagger so the screen builds itself in one coherent gesture.
+const ASSEMBLE = { distance: 30, duration: 460, fromScale: 0.94 };
+const ASSEMBLE_STAGGER = 100;
 
 /** Year label for a paper's most-relevant date, for the discovery rail meta. */
 const paperYear = (paper: ResearchPaper): string => {
@@ -198,7 +204,12 @@ export const DashboardScreen = () => {
         }
       >
         {/* Header drops in from above on the first post-onboarding launch. */}
-        <FadeInView active={assemble} distance={-32} duration={motion.duration.slow}>
+        <FadeInView
+          active={assemble}
+          distance={-ASSEMBLE.distance}
+          duration={ASSEMBLE.duration}
+          fromScale={ASSEMBLE.fromScale}
+        >
           <DashboardHero
             greeting={greeting}
             name={firstName || 'Student'}
@@ -212,7 +223,13 @@ export const DashboardScreen = () => {
           {error ? <InlineNotice tone="danger" message={error} /> : null}
 
           {/* Your submissions — at a glance */}
-          <FadeInView active={assemble} delay={90} distance={18} fromScale={0.98}>
+          <FadeInView
+            active={assemble}
+            delay={ASSEMBLE_STAGGER}
+            distance={ASSEMBLE.distance}
+            duration={ASSEMBLE.duration}
+            fromScale={ASSEMBLE.fromScale}
+          >
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Your submissions</Text>
@@ -253,7 +270,13 @@ export const DashboardScreen = () => {
           </FadeInView>
 
           {/* Recommended by department (most-read fallback) */}
-          <FadeInView active={assemble} delay={150} distance={18} fromScale={0.98}>
+          <FadeInView
+            active={assemble}
+            delay={ASSEMBLE_STAGGER * 2}
+            distance={ASSEMBLE.distance}
+            duration={ASSEMBLE.duration}
+            fromScale={ASSEMBLE.fromScale}
+          >
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle} numberOfLines={1}>
@@ -334,7 +357,13 @@ export const DashboardScreen = () => {
 
           {/* Explore by field */}
           {categories.length > 0 ? (
-            <FadeInView active={assemble} delay={210} distance={18} fromScale={0.98}>
+            <FadeInView
+              active={assemble}
+              delay={ASSEMBLE_STAGGER * 3}
+              distance={ASSEMBLE.distance}
+              duration={ASSEMBLE.duration}
+              fromScale={ASSEMBLE.fromScale}
+            >
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Explore by field</Text>
@@ -367,7 +396,13 @@ export const DashboardScreen = () => {
           ) : null}
 
           {/* Saved */}
-          <FadeInView active={assemble} delay={270} distance={18} fromScale={0.98}>
+          <FadeInView
+            active={assemble}
+            delay={ASSEMBLE_STAGGER * 4}
+            distance={ASSEMBLE.distance}
+            duration={ASSEMBLE.duration}
+            fromScale={ASSEMBLE.fromScale}
+          >
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Saved</Text>

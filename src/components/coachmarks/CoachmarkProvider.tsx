@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
 import { useAuth } from '../../context/AuthContext';
 import { useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
@@ -18,12 +19,15 @@ import { useSeenCoachmarks } from '../../hooks/useSeenCoachmarks';
 import { isFirstEntranceArmed } from '../../lib/firstEntrance';
 import { COACHMARK_COPY, type CoachmarkId, nextCoachmark } from './sequence';
 
-// Bubble geometry (DESIGN.md: 6px triangle pointer, radius md, level2 shadow).
-const POINTER_H = 7;
-const POINTER_HALF = 7;
+// Bubble geometry (triangle pointer, radius md, level2 shadow).
+const POINTER_H = 9;
+const POINTER_HALF = 9;
 const EDGE = 16; // min gap from screen edge
-const GAP = 8; // gap between the target control and the pointer tip
-const BUBBLE_MAX = 280;
+const GAP = 10; // gap between the target control and the pointer tip
+const BUBBLE_MAX = 300;
+// Backdrop blur (Android needs an explicit method; matches FloatingTabBar).
+const BACKDROP_BLUR_INTENSITY = 16;
+const BACKDROP_BLUR_METHOD = 'dimezisBlurViewSdk31Plus' as const;
 
 interface TargetRect {
   x: number;
@@ -94,12 +98,27 @@ const CoachmarkOverlay = ({ step, rect, onAdvance }: OverlayProps) => {
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+      {/* Full-screen tap catcher that also dims + blurs the app behind the tip. */}
       <Pressable
         style={StyleSheet.absoluteFill}
         onPress={onAdvance}
         accessibilityRole="button"
         accessibilityLabel="Dismiss tip"
-      />
+      >
+        <Animated.View
+          style={StyleSheet.absoluteFill}
+          entering={reduceMotion ? undefined : FadeIn.duration(220)}
+          pointerEvents="none"
+        >
+          <BlurView
+            intensity={BACKDROP_BLUR_INTENSITY}
+            tint="dark"
+            blurMethod={BACKDROP_BLUR_METHOD}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.dim} />
+        </Animated.View>
+      </Pressable>
       <Animated.View
         key={step}
         entering={reduceMotion ? undefined : FadeIn.duration(180)}
@@ -187,7 +206,7 @@ export const CoachmarkProvider = ({ children }: { children: ReactNode }) => {
         else retry();
       });
     };
-    const settle = isFirstEntranceArmed() && !reduceMotion ? 900 : 0;
+    const settle = isFirstEntranceArmed() && !reduceMotion ? 1000 : 0;
     timer = setTimeout(measure, settle);
     return () => {
       cancelled = true;
@@ -219,16 +238,21 @@ const styles = StyleSheet.create({
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({
+    // Dark scrim under the blur so the tip reads as a spotlight over the app.
+    dim: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: 'rgba(8, 15, 35, 0.32)',
+    },
     // A standard light card: white surface, hairline outline, soft elevation.
     bubble: {
       position: 'absolute',
       flexDirection: 'row',
       alignItems: 'center',
-      gap: t.spacing.sm,
-      paddingVertical: t.spacing.sm,
-      paddingHorizontal: t.spacing.md,
+      gap: t.spacing.md,
+      paddingVertical: t.spacing.md,
+      paddingHorizontal: t.spacing.lg,
       backgroundColor: t.colors.surface.raised,
-      borderRadius: t.radii.md,
+      borderRadius: t.radii.lg,
       borderCurve: 'continuous',
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: t.colors.border.subtle,
@@ -236,7 +260,7 @@ const makeStyles = (t: Theme) =>
     },
     bubbleText: {
       flex: 1,
-      ...t.typography.bodySmall,
+      ...t.typography.body,
       color: t.colors.text.primary,
     },
     gotIt: {

@@ -1,6 +1,8 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
 import Animated, {
+  Easing,
+  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -8,6 +10,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { motion } from '../../../theme';
 import { useReduceMotion } from '../../../hooks/useReduceMotion';
+
+// Entrances decelerate into place (ease-out) per the ui-ux-pro-max ux rule
+// ("ease-out for entering"); the default in-out curve read as clunky.
+const ENTRANCE_EASING = Easing.out(Easing.cubic);
 
 interface FadeInViewProps {
   children: ReactNode;
@@ -36,6 +42,12 @@ interface FadeInViewProps {
  * Fade + rise/drop (+ optional pop) entrance (Reanimated), wired to
  * `motion.entrance` and respectful of the OS "reduce motion" setting (renders
  * the final state instantly when on, or when `active` is false).
+ *
+ * While animating, the subtree is composited to a single hardware texture on
+ * Android. Without it, children that cast `elevation` shadows leak a gray
+ * "ghost" of the shadow at full strength while the wrapper's opacity is < 1
+ * (the shadow ignores the ancestor's animated opacity). The flag is dropped
+ * once the entrance settles so the crisp static shadow returns.
  */
 export const FadeInView = ({
   children,
@@ -47,15 +59,23 @@ export const FadeInView = ({
   style,
 }: FadeInViewProps) => {
   const reduceMotion = useReduceMotion();
-  const progress = useSharedValue(0);
+  const play = active && !reduceMotion;
+  const progress = useSharedValue(play ? 0 : 1);
+  const [rasterize, setRasterize] = useState(play);
 
   useEffect(() => {
-    if (reduceMotion || !active) {
+    if (!play) {
+      // rasterize already initialised to `play` (false) — nothing to animate.
       progress.value = 1;
       return;
     }
-    progress.value = withDelay(delay, withTiming(1, { duration }));
-  }, [reduceMotion, active, delay, duration, progress]);
+    progress.value = withDelay(
+      delay,
+      withTiming(1, { duration, easing: ENTRANCE_EASING }, (finished) => {
+        if (finished) runOnJS(setRasterize)(false);
+      }),
+    );
+  }, [play, delay, duration, progress]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: progress.value,
@@ -65,5 +85,9 @@ export const FadeInView = ({
     ],
   }));
 
-  return <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>;
+  return (
+    <Animated.View style={[style, animatedStyle]} renderToHardwareTextureAndroid={rasterize}>
+      {children}
+    </Animated.View>
+  );
 };
