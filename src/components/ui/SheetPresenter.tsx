@@ -93,18 +93,31 @@ export const SheetPresenter = ({
     return () => sub.remove();
   }, [open, onClose]);
 
-  const presenterStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(progress.value, [0, 1], [1, PRESENTER_MIN_SCALE]) }],
-    borderRadius: interpolate(progress.value, [0, 1], [0, PRESENTER_RADIUS]),
-  }));
+  // `reveal` is the sheet's live progress up the screen (1 fully up, 0 hidden),
+  // computed from the sheet's actual top — the open/close spring *and* any active
+  // drag. Driving the zoom-out, dim, and scrim off it (not off `progress` alone)
+  // makes the presenter pan smoothly back in as the sheet is dragged down, and
+  // the scrim lighten with it, instead of staying fully zoomed until release.
+  const presenterStyle = useAnimatedStyle(() => {
+    const currentTop = interpolate(progress.value, [0, 1], [height, sheetTop]) + drag.value;
+    const reveal = Math.min(1, Math.max(0, (height - currentTop) / sheetHeight));
+    return {
+      transform: [{ scale: interpolate(reveal, [0, 1], [1, PRESENTER_MIN_SCALE]) }],
+      borderRadius: interpolate(reveal, [0, 1], [0, PRESENTER_RADIUS]),
+    };
+  });
 
-  const dimStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 1], [0, PRESENTER_DIM_OPACITY]),
-  }));
+  const dimStyle = useAnimatedStyle(() => {
+    const currentTop = interpolate(progress.value, [0, 1], [height, sheetTop]) + drag.value;
+    const reveal = Math.min(1, Math.max(0, (height - currentTop) / sheetHeight));
+    return { opacity: interpolate(reveal, [0, 1], [0, PRESENTER_DIM_OPACITY]) };
+  });
 
-  const scrimStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 1], [0, 1]),
-  }));
+  const scrimStyle = useAnimatedStyle(() => {
+    const currentTop = interpolate(progress.value, [0, 1], [height, sheetTop]) + drag.value;
+    const reveal = Math.min(1, Math.max(0, (height - currentTop) / sheetHeight));
+    return { opacity: reveal };
+  });
 
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [

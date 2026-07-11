@@ -176,6 +176,7 @@ export const BrowseScreen = () => {
   const [sort, setSort] = useState<SortKey>('newest');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [sortSheetOpen, setSortSheetOpen] = useState(false);
+  const [fieldSheetOpen, setFieldSheetOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -522,37 +523,15 @@ export const BrowseScreen = () => {
   );
 
   const sortLabel = SORT_OPTIONS.find((option) => option.value === sort)?.label ?? 'Newest';
+  const fieldLabel = categoryFilter
+    ? resolveCategoryName(categoryFilter, categoryNameById) ?? 'Field'
+    : 'All fields';
   const showClear = searched || Boolean(query.trim());
 
   // Sort sheet trigger, category chips, and featured hero render as the
   // FlatList's header, not separately-scrolled content above it (Issue #38).
   const listHeaderElement = (
     <>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipsRow}
-      >
-        <Chip
-          label="All"
-          variant="filter"
-          active={!categoryFilter}
-          onPress={() => setCategoryFilter('')}
-        />
-        {categories.map((category) => {
-          const active = categoryFilter === category.id;
-          return (
-            <Chip
-              key={category.id}
-              label={category.name}
-              variant="filter"
-              active={active}
-              onPress={() => setCategoryFilter(active ? '' : category.id)}
-            />
-          );
-        })}
-      </ScrollView>
-
       <View style={styles.subbar}>
         <Text style={styles.resultCount}>
           {sorted.length} {sorted.length === 1 ? 'Paper' : 'Papers'}
@@ -560,9 +539,22 @@ export const BrowseScreen = () => {
         <View style={styles.subbarRight}>
           <PressableScale
             style={styles.sortLink}
+            onPress={() => setFieldSheetOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel={`Field: ${fieldLabel}`}
+            hitSlop={8}
+          >
+            <Text style={styles.fieldLinkText} numberOfLines={1}>
+              {fieldLabel}
+            </Text>
+            <Ionicons name="chevron-down" size={13} color={theme.colors.brand.primary} />
+          </PressableScale>
+          <PressableScale
+            style={styles.sortLink}
             onPress={() => setSortSheetOpen(true)}
             accessibilityRole="button"
             accessibilityLabel={`Sort: ${sortLabel}`}
+            hitSlop={8}
           >
             <Text style={styles.sortLinkText}>{sortLabel}</Text>
             <Ionicons name="chevron-down" size={13} color={theme.colors.brand.primary} />
@@ -669,12 +661,7 @@ export const BrowseScreen = () => {
           </Animated.Text>
 
           <View style={styles.searchWrap}>
-            <Ionicons
-              name="search-outline"
-              size={18}
-              color={theme.colors.text.muted}
-              style={styles.searchIcon}
-            />
+            <Ionicons name="search-outline" size={18} color={theme.colors.text.muted} />
             <TextInput
               value={query}
               onChangeText={setQuery}
@@ -827,6 +814,49 @@ export const BrowseScreen = () => {
           );
         })}
       </BottomSheet>
+
+      <BottomSheet visible={fieldSheetOpen} onClose={() => setFieldSheetOpen(false)}>
+        <Text style={styles.sheetTitle}>Field</Text>
+        <ScrollView style={styles.sheetScroll} showsVerticalScrollIndicator={false}>
+          <PressableScale
+            style={styles.sheetRow}
+            onPress={() => {
+              setCategoryFilter('');
+              setFieldSheetOpen(false);
+            }}
+          >
+            <Text style={[styles.sheetRowText, !categoryFilter ? styles.sheetRowActive : null]}>
+              All fields
+            </Text>
+            {!categoryFilter ? (
+              <Ionicons name="checkmark" size={18} color={theme.colors.brand.primary} />
+            ) : null}
+          </PressableScale>
+          {categories.map((category) => {
+            const active = categoryFilter === category.id;
+            return (
+              <PressableScale
+                key={category.id}
+                style={styles.sheetRow}
+                onPress={() => {
+                  setCategoryFilter(category.id);
+                  setFieldSheetOpen(false);
+                }}
+              >
+                <Text
+                  style={[styles.sheetRowText, active ? styles.sheetRowActive : null]}
+                  numberOfLines={1}
+                >
+                  {category.name}
+                </Text>
+                {active ? (
+                  <Ionicons name="checkmark" size={18} color={theme.colors.brand.primary} />
+                ) : null}
+              </PressableScale>
+            );
+          })}
+        </ScrollView>
+      </BottomSheet>
     </>
   );
 };
@@ -868,29 +898,26 @@ const makeStyles = (theme: Theme) =>
     paddingTop: theme.spacing.md,
     paddingBottom: theme.spacing.xl,
   },
+  // Matches My Papers' search field exactly (one shared look): sunken fill,
+  // hairline border, continuous-curve md radius, icon-to-input gap.
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 44,
-    borderWidth: 1,
+    gap: theme.spacing.sm,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.border.subtle,
     borderRadius: theme.radii.md,
+    borderCurve: 'continuous',
     paddingHorizontal: theme.spacing.md,
-    paddingVertical: 0,
-    backgroundColor: theme.colors.surface.raised,
+    paddingVertical: theme.spacing.sm,
+    backgroundColor: theme.colors.surface.sunken,
   },
   searchInput: {
     flex: 1,
-    height: 24,
     ...theme.typography.body,
     color: theme.colors.text.primary,
     paddingVertical: 0,
-    textAlign: 'left',
-    textAlignVertical: 'center',
     includeFontPadding: false,
-  },
-  searchIcon: {
-    marginRight: theme.spacing.sm,
   },
   clearVisible: {
     marginLeft: theme.spacing.sm,
@@ -1074,15 +1101,17 @@ const makeStyles = (theme: Theme) =>
   sheetRowText: {
     ...theme.typography.body,
     color: theme.colors.text.secondary,
+    flex: 1,
+    marginRight: theme.spacing.sm,
   },
   sheetRowActive: {
     color: theme.colors.brand.primary,
     fontFamily: theme.fontFamilies.ui.semibold,
   },
-  chipsRow: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-    paddingRight: theme.spacing.lg,
+  // Field list can run to all 9 categories — cap its height so a long list
+  // scrolls inside the sheet instead of pushing the sheet off-screen.
+  sheetScroll: {
+    maxHeight: 360,
   },
   subbar: {
     flexDirection: 'row',
@@ -1099,7 +1128,7 @@ const makeStyles = (theme: Theme) =>
   subbarRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
   sortLink: {
     flexDirection: 'row',
@@ -1110,6 +1139,14 @@ const makeStyles = (theme: Theme) =>
     fontFamily: theme.fontFamilies.ui.medium,
     fontSize: 13,
     color: theme.colors.brand.primary,
+  },
+  // Twin of sortLinkText, but a selected field name can be long — cap it so
+  // the toolbar keeps one line (chevron and view toggle stay put).
+  fieldLinkText: {
+    fontFamily: theme.fontFamilies.ui.medium,
+    fontSize: 13,
+    color: theme.colors.brand.primary,
+    maxWidth: 128,
   },
   viewToggle: {
     flexDirection: 'row',

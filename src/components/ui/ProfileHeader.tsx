@@ -8,8 +8,10 @@ interface ProfileHeaderProps {
   initials: string;
   /** Display name under the avatar. */
   name: string;
-  /** Optional secondary line (handle / email · program). */
+  /** Optional primary secondary line (e.g. the student's program). */
   handle?: string;
+  /** Optional third line under `handle` (e.g. the department). */
+  subhandle?: string;
 }
 
 /**
@@ -19,7 +21,7 @@ interface ProfileHeaderProps {
  * drift (DESIGN.md Profile A3). Render it as the first child of a `gutter={0}`,
  * top-edge-opted-out `Screen`.
  */
-export const ProfileHeader = ({ initials, name, handle }: ProfileHeaderProps) => {
+export const ProfileHeader = ({ initials, name, handle, subhandle }: ProfileHeaderProps) => {
   const insets = useSafeAreaInsets();
   const styles = useThemedStyles(makeStyles);
 
@@ -35,6 +37,7 @@ export const ProfileHeader = ({ initials, name, handle }: ProfileHeaderProps) =>
         </View>
         <Text style={styles.name}>{name}</Text>
         {handle ? <Text style={styles.handle}>{handle}</Text> : null}
+        {subhandle ? <Text style={styles.subhandle}>{subhandle}</Text> : null}
       </View>
     </>
   );
@@ -92,12 +95,22 @@ const makeStyles = (t: Theme) =>
       marginTop: t.spacing.sm,
     },
     handle: {
+      fontFamily: t.fontFamilies.ui.medium,
+      fontSize: t.typography.metadata.fontSize,
+      lineHeight: t.typography.metadata.lineHeight,
+      color: t.colors.text.secondary,
+      textAlign: 'center',
+      marginTop: t.spacing.xs,
+      paddingHorizontal: t.spacing.lg,
+    },
+    subhandle: {
       fontFamily: t.typography.metadata.fontFamily,
       fontWeight: t.typography.metadata.fontWeight,
       fontSize: t.typography.metadata.fontSize,
       lineHeight: t.typography.metadata.lineHeight,
       color: t.colors.text.muted,
       textAlign: 'center',
-      marginTop: t.spacing.xs,
+      marginTop: 2,
+      paddingHorizontal: t.spacing.lg,
     },
   });

@@ -8,6 +8,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
 import { getSavedPaperIds, togglePaperSaved } from '../../api/collections';
@@ -15,7 +23,7 @@ import { RootStackParamList } from '../../navigation/types';
 import { Category, ResearchPaper, WorkflowEntry } from '../../types/domain';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
-import { type Theme } from '../../theme';
+import { motion, type Theme } from '../../theme';
 import {
   EmptyState,
   InlineNotice,
@@ -62,6 +70,13 @@ export const ResearchDetailScreen = () => {
   const [fileError, setFileError] = useState('');
   const [saved, setSaved] = useState(false);
   const [savePending, setSavePending] = useState(false);
+  const reducedMotion = useReducedMotion();
+  // Bookmark "pop": a quick spring overshoot on the icon when a paper is saved,
+  // confirming the action. No-op under reduced motion.
+  const savePop = useSharedValue(1);
+  const savePopStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: savePop.value }],
+  }));
   const [error, setError] = useState('');
   const [pdfOpen, setPdfOpen] = useState(false);
   // Track a view the first time the reader actually opens the PDF, once per screen
@@ -151,7 +166,15 @@ export const ResearchDetailScreen = () => {
   const handleToggleSave = async () => {
     if (savePending) return;
     setSavePending(true);
-    setSaved((prev) => !prev);
+    const next = !saved;
+    setSaved(next);
+    // Pop only when saving (not when un-saving) — it reads as a confirming beat.
+    if (next && !reducedMotion) {
+      savePop.value = withSequence(
+        withTiming(1.32, { duration: 120 }),
+        withSpring(1, motion.spring.pop)
+      );
+    }
     try {
       const nowSaved = await togglePaperSaved(paperId);
       setSaved(nowSaved);
@@ -250,11 +273,13 @@ export const ResearchDetailScreen = () => {
             accessibilityRole="button"
             accessibilityLabel={saved ? 'Remove from saved' : 'Save paper'}
           >
-            <Ionicons
-              name={saved ? 'bookmark' : 'bookmark-outline'}
-              size={22}
-              color={saved ? theme.colors.brand.accent : theme.colors.text.muted}
-            />
+            <Animated.View style={savePopStyle}>
+              <Ionicons
+                name={saved ? 'bookmark' : 'bookmark-outline'}
+                size={22}
+                color={saved ? theme.colors.brand.accent : theme.colors.text.muted}
+              />
+            </Animated.View>
           </PressableScale>
         </View>
 

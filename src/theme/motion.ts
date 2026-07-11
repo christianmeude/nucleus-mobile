@@ -25,6 +25,9 @@ export const motion = {
     press: { damping: 18, stiffness: 320, mass: 0.6 },
     gentle: { damping: 20, stiffness: 180, mass: 1 },
     sheet: { damping: 24, stiffness: 240, mass: 0.9 },
+    // Lively overshoot for a confirming "pop" (e.g. the save/bookmark toggle):
+    // low damping so it springs past 1 and settles back.
+    pop: { damping: 9, stiffness: 340, mass: 0.6 },
   },
 
   // — interaction —
