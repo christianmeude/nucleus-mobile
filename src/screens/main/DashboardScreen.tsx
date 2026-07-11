@@ -17,9 +17,11 @@ import { Category, ResearchPaper } from '../../types/domain';
 import { greetingForHour, initialsFor, paperDate } from '../../utils/format';
 import { type Theme } from '../../theme';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
+import { isFirstEntranceArmed } from '../../lib/firstEntrance';
 import {
   DashboardHero,
   EmptyState,
+  FadeInView,
   InlineNotice,
   PressableScale,
   Screen,
@@ -32,6 +34,12 @@ import {
 } from '../../components/PaperStatusChip';
 
 const RAIL_LIMIT = 6;
+
+// One-time "assemble" entrance (first launch out of onboarding). Uniform motion
+// for every element — same travel, duration, pop, and ease-out curve — with a
+// top-to-bottom stagger so the screen builds itself in one coherent gesture.
+const ASSEMBLE = { distance: 30, duration: 460, fromScale: 0.94 };
+const ASSEMBLE_STAGGER = 100;
 
 /**
  * Every discovery-rail card is the same size regardless of how long its title
@@ -87,6 +95,10 @@ export const DashboardScreen = () => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
+  // Read once at mount: play the one-time "assemble" entrance only on the first
+  // launch straight out of onboarding (armed there); every other launch renders
+  // statically. Locked into state so a later data-driven re-render can't restart it.
+  const [assemble] = useState(isFirstEntranceArmed);
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
   const [published, setPublished] = useState<ResearchPaper[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -135,6 +147,13 @@ export const DashboardScreen = () => {
 
   const greeting = useMemo(() => greetingForHour(new Date().getHours()), []);
   const initials = useMemo(() => initialsFor(user?.fullName), [user?.fullName]);
+
+  // Hero sub-line = institution + program (mockup), not submission status —
+  // the status now lives in the "Your submissions" glance below.
+  const subLine = useMemo(() => {
+    const text = ['NU Dasmariñas', user?.program?.trim()].filter(Boolean).join(' · ');
+    return { text, urgent: false };
+  }, [user?.program]);
 
   // Submissions-at-a-glance counts (routes to My Papers for the detail).
   const counts = useMemo(() => {
@@ -191,17 +210,33 @@ export const DashboardScreen = () => {
           />
         }
       >
-        <DashboardHero
-          greeting={greeting}
-          name={firstName || 'Student'}
-          initials={initials}
-          onPressAvatar={() => navigation.navigate('Profile')}
-        />
+        {/* Header drops in from above on the first post-onboarding launch. */}
+        <FadeInView
+          active={assemble}
+          distance={-ASSEMBLE.distance}
+          duration={ASSEMBLE.duration}
+          fromScale={ASSEMBLE.fromScale}
+        >
+          <DashboardHero
+            greeting={greeting}
+            name={firstName || 'Student'}
+            initials={initials}
+            statusLine={subLine}
+            onPressAvatar={() => navigation.navigate('Profile')}
+          />
+        </FadeInView>
 
         <View style={styles.body}>
           {error ? <InlineNotice tone="danger" message={error} /> : null}
 
           {/* Your submissions — at a glance */}
+          <FadeInView
+            active={assemble}
+            delay={ASSEMBLE_STAGGER}
+            distance={ASSEMBLE.distance}
+            duration={ASSEMBLE.duration}
+            fromScale={ASSEMBLE.fromScale}
+          >
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Your submissions</Text>
@@ -239,7 +274,16 @@ export const DashboardScreen = () => {
             </PressableScale>
           </View>
 
+          </FadeInView>
+
           {/* Recommended by department (most-read fallback) */}
+          <FadeInView
+            active={assemble}
+            delay={ASSEMBLE_STAGGER * 2}
+            distance={ASSEMBLE.distance}
+            duration={ASSEMBLE.duration}
+            fromScale={ASSEMBLE.fromScale}
+          >
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle} numberOfLines={1}>
@@ -316,8 +360,17 @@ export const DashboardScreen = () => {
             )}
           </View>
 
+          </FadeInView>
+
           {/* Explore by field */}
           {categories.length > 0 ? (
+            <FadeInView
+              active={assemble}
+              delay={ASSEMBLE_STAGGER * 3}
+              distance={ASSEMBLE.distance}
+              duration={ASSEMBLE.duration}
+              fromScale={ASSEMBLE.fromScale}
+            >
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Explore by field</Text>
@@ -353,9 +406,17 @@ export const DashboardScreen = () => {
                 ))}
               </View>
             </View>
+            </FadeInView>
           ) : null}
 
           {/* Saved */}
+          <FadeInView
+            active={assemble}
+            delay={ASSEMBLE_STAGGER * 4}
+            distance={ASSEMBLE.distance}
+            duration={ASSEMBLE.duration}
+            fromScale={ASSEMBLE.fromScale}
+          >
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Saved</Text>
@@ -387,6 +448,7 @@ export const DashboardScreen = () => {
               ))
             )}
           </View>
+          </FadeInView>
         </View>
       </ScrollView>
     </Screen>

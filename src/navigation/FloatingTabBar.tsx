@@ -13,14 +13,22 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { palette, type Theme } from '../theme';
-import { PressableScale } from '../components/ui';
+import { FadeInView, PressableScale } from '../components/ui';
 import { haptics } from '../lib/haptics';
 import { useReduceMotion } from '../hooks/useReduceMotion';
+import { useCoachmarkTarget } from '../components/coachmarks/CoachmarkProvider';
+import { type CoachmarkId } from '../components/coachmarks/sequence';
+import { isFirstEntranceArmed } from '../lib/firstEntrance';
 
 export type IconPair = [outline: keyof typeof Ionicons.glyphMap, filled: keyof typeof Ionicons.glyphMap];
 
-/** Per-tab label + outline/filled icon pair, keyed by route name. */
-export type TabMeta = Record<string, { label: string; icon: IconPair }>;
+/**
+ * Per-tab label + outline/filled icon pair, keyed by route name. An optional
+ * `coachmarkId` registers that tab as a first-run coachmark target (#69) — the
+ * student bar maps it on Browse; the faculty bar leaves it unset, so nothing
+ * registers there.
+ */
+export type TabMeta = Record<string, { label: string; icon: IconPair; coachmarkId?: CoachmarkId }>;
 
 /** Optional raised center action (student Submit FAB). When absent, tabs fill the bar evenly. */
 export interface FabConfig {
@@ -84,9 +92,12 @@ const TabItem = ({
   inactiveColor,
 }: TabItemProps) => {
   const color = focused ? activeColor : inactiveColor;
+  // No-op unless this tab carries a coachmarkId (student Browse tab, #69).
+  const coachmarkRef = useCoachmarkTarget(meta.coachmarkId);
 
   return (
     <Pressable
+      ref={coachmarkRef}
       style={styles.tab}
       onLayout={onLayout}
       onPress={onPress}
@@ -127,6 +138,12 @@ export const FloatingTabBar = ({ state, navigation, tabMeta, fab }: FloatingTabB
 
   const activeColor = theme.colors.brand.primary;
   const inactiveColor = theme.colors.text.muted;
+  // First-run coachmark target (#69): only the student bar renders a FAB, so
+  // this registers the Submit FAB for students and is inert for the faculty bar.
+  const fabCoachmarkRef = useCoachmarkTarget('submitFab');
+  // One-time "assemble" entrance: the bar slides up on the first launch straight
+  // out of onboarding (armed there, student-only), static otherwise.
+  const [assemble] = useState(isFirstEntranceArmed);
 
   const layouts = useRef<Record<number, { x: number; width: number }>>({});
   const indX = useSharedValue(0);
@@ -210,7 +227,14 @@ export const FloatingTabBar = ({ state, navigation, tabMeta, fab }: FloatingTabB
   });
 
   return (
-    <View style={[styles.wrap, { paddingBottom: insets.bottom || theme.spacing.sm }]}>
+    <FadeInView
+      active={assemble}
+      distance={30}
+      duration={460}
+      fromScale={0.94}
+      delay={250}
+      style={[styles.wrap, { paddingBottom: insets.bottom || theme.spacing.sm }]}
+    >
       <View style={styles.barShadow}>
         <View style={styles.bar}>
           <BlurView
@@ -226,7 +250,7 @@ export const FloatingTabBar = ({ state, navigation, tabMeta, fab }: FloatingTabB
         </View>
 
         {fab ? (
-          <View style={styles.fabSlot} pointerEvents="box-none">
+          <View ref={fabCoachmarkRef} style={styles.fabSlot} pointerEvents="box-none">
             <PressableScale
               style={styles.fab}
               haptic="medium"
@@ -255,7 +279,7 @@ export const FloatingTabBar = ({ state, navigation, tabMeta, fab }: FloatingTabB
           </View>
         ) : null}
       </View>
-    </View>
+    </FadeInView>
   );
 };
 

@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { useActivityCount } from '../../hooks/useActivityCount';
+import { useCoachmarkTarget } from '../coachmarks/CoachmarkProvider';
 
 interface TopBarProps {
   /** Convenience left content. Ignored when `children` is provided. */
@@ -43,6 +44,8 @@ export const TopBar = ({ title, children, variant = 'default', leading, trailing
   const styles = useThemedStyles(makeStyles);
   const count = useActivityCount();
   const isHero = variant === 'hero';
+  // First-run coachmark target (#69): the bell is the sequence's first stop.
+  const bellCoachmarkRef = useCoachmarkTarget('bell');
 
   return (
     <View style={styles.row}>
@@ -52,6 +55,7 @@ export const TopBar = ({ title, children, variant = 'default', leading, trailing
       <View style={styles.actions}>
         {leading}
         <Pressable
+          ref={bellCoachmarkRef}
           onPress={() => navigation.navigate('Activity')}
           style={({ pressed }) => [
             styles.bell,

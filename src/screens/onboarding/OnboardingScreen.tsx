@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { PressableScale } from '../../components/ui';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
+import { armFirstEntrance } from '../../lib/firstEntrance';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -42,7 +43,7 @@ const SLIDES: Slide[] = [
   {
     key: 'stages',
     kind: 'stages',
-    title: 'Follow Every Stage',
+    title: 'Track your Progress',
     body: 'Track your submission from faculty review all the way to publication — every step visible.',
   },
   {
@@ -102,7 +103,17 @@ export const OnboardingScreen = ({ onDone }: OnboardingScreenProps) => {
     [scrollRef, width, reducedMotion],
   );
 
-  const onNext = useCallback(() => (isLast ? onDone() : goTo(index + 1)), [isLast, onDone, goTo, index]);
+  // Finishing arms the one-time home "assemble" entrance, then flips the flag so
+  // the app mounts immediately (no fade-to-blank gap) and its chrome animates
+  // itself in — header dropping in, cards rising, navbar sliding up.
+  const onNext = useCallback(() => {
+    if (!isLast) {
+      goTo(index + 1);
+      return;
+    }
+    armFirstEntrance();
+    onDone();
+  }, [isLast, onDone, goTo, index]);
 
   return (
     <View style={styles.root}>
@@ -283,43 +294,56 @@ const Dot = ({ index, scrollX, width, active, reducedMotion }: DotProps) => {
   return <Animated.View style={[styles.dot, style]} />;
 };
 
+/**
+ * Slide 3 art: a wordless journey map (DESIGN.md kept the same navy/gold palette,
+ * labels dropped for a cleaner, prouder read). Travelled stages are solid white
+ * with a check, the current stage is a glowing gold ring, and the final stage is
+ * the goal — a larger gold node crowned with a trophy and its own halo, reached
+ * by a dashed "path ahead" connector.
+ */
 const StageStrip = () => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const lastIndex = STAGES.length - 1;
+
   return (
     <View style={styles.stageStrip}>
-      <View style={styles.stageDotsRow}>
-        {STAGES.map((label, i) => (
+      {STAGES.map((label, i) => {
+        const done = i < CURRENT_STAGE;
+        const current = i === CURRENT_STAGE;
+        const goal = i === lastIndex;
+        return (
           <Fragment key={label}>
-            <View
-              style={[
-                styles.stageDot,
-                i < CURRENT_STAGE && styles.stageDotDone,
-                i === CURRENT_STAGE && styles.stageDotCurrent,
-              ]}
-            >
-              {i < CURRENT_STAGE ? (
-                <Ionicons name="checkmark" size={12} color={theme.colors.brand.primary} />
-              ) : i === CURRENT_STAGE ? (
-                <View style={styles.stageDotCurrentCore} />
-              ) : null}
-            </View>
-            {i < STAGES.length - 1 ? (
-              <View style={[styles.stageConnector, i < CURRENT_STAGE && styles.stageConnectorDone]} />
+            {i > 0 ? (
+              <View
+                style={[
+                  styles.stageConnector,
+                  i <= CURRENT_STAGE ? styles.stageConnectorDone : styles.stageConnectorAhead,
+                ]}
+              />
             ) : null}
+            <View style={styles.stageNodeWrap}>
+              {current ? <View style={styles.stageGlow} /> : null}
+              {goal ? <View style={[styles.stageGlow, styles.stageGlowGoal]} /> : null}
+              {goal ? (
+                <View style={styles.stageGoal}>
+                  <Ionicons name="trophy" size={18} color={theme.colors.brand.primary} />
+                </View>
+              ) : current ? (
+                <View style={styles.stageCurrent}>
+                  <View style={styles.stageCurrentCore} />
+                </View>
+              ) : done ? (
+                <View style={styles.stageDone}>
+                  <Ionicons name="checkmark" size={13} color={theme.colors.brand.primary} />
+                </View>
+              ) : (
+                <View style={styles.stageUpcoming} />
+              )}
+            </View>
           </Fragment>
-        ))}
-      </View>
-      <View style={styles.stageLabelsRow}>
-        {STAGES.map((label, i) => (
-          <Text
-            key={label}
-            style={[styles.stageLabel, i === CURRENT_STAGE && styles.stageLabelCurrent]}
-          >
-            {label}
-          </Text>
-        ))}
-      </View>
+        );
+      })}
     </View>
   );
 };
@@ -342,11 +366,13 @@ const makeStyles = (t: Theme) =>
     watermark: {
       position: 'absolute',
       left: -70,
-      bottom: -80,
+      // Lifted up off the bottom so the CTA button no longer sits fully over the
+      // mark — more of the NUcleus silhouette reads above the footer.
+      bottom: 40,
       width: 340,
       height: 340,
       tintColor: t.colors.text.onBrand,
-      opacity: 0.06,
+      opacity: 0.07,
     },
     safe: {
       flex: 1,
@@ -450,60 +476,87 @@ const makeStyles = (t: Theme) =>
       ...t.typography.button,
       color: t.colors.brand.primary,
     },
-    // Slide 3 — stage-progress strip, adapted to the navy ground.
+    // Slide 3 — wordless stage journey on the navy ground (labels removed).
     stageStrip: {
-      width: 268,
-    },
-    stageDotsRow: {
+      width: 288,
       flexDirection: 'row',
       alignItems: 'center',
     },
-    stageDot: {
+    stageNodeWrap: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    // Soft gold halo behind the current + goal nodes (approximates a glow without
+    // a blur dependency — a low-opacity oversized gold disc).
+    stageGlow: {
+      position: 'absolute',
+      width: 46,
+      height: 46,
+      borderRadius: t.radii.pill,
+      backgroundColor: t.colors.brand.accent,
+      opacity: 0.18,
+    },
+    stageGlowGoal: {
+      width: 58,
+      height: 58,
+      opacity: 0.22,
+    },
+    stageDone: {
       width: 24,
       height: 24,
+      borderRadius: t.radii.pill,
+      backgroundColor: t.colors.text.onBrand,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    stageCurrent: {
+      width: 30,
+      height: 30,
+      borderRadius: t.radii.pill,
+      borderWidth: 3,
+      borderColor: t.colors.brand.accent,
+      backgroundColor: 'rgba(205, 164, 52, 0.16)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    stageCurrentCore: {
+      width: 9,
+      height: 9,
+      borderRadius: t.radii.pill,
+      backgroundColor: t.colors.brand.accent,
+    },
+    // The goal: a larger solid-gold node capped with a trophy — the proud finish.
+    stageGoal: {
+      width: 38,
+      height: 38,
+      borderRadius: t.radii.pill,
+      backgroundColor: t.colors.brand.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 2,
+      borderColor: 'rgba(255, 255, 255, 0.55)',
+    },
+    stageUpcoming: {
+      width: 22,
+      height: 22,
       borderRadius: t.radii.pill,
       borderWidth: 2,
       borderColor: 'rgba(255, 255, 255, 0.3)',
       backgroundColor: 'rgba(255, 255, 255, 0.08)',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    stageDotDone: {
-      backgroundColor: t.colors.text.onBrand,
-      borderColor: t.colors.text.onBrand,
-    },
-    stageDotCurrent: {
-      backgroundColor: 'rgba(205, 164, 52, 0.14)',
-      borderColor: t.colors.brand.accent,
-      borderWidth: 3,
-    },
-    stageDotCurrentCore: {
-      width: 8,
-      height: 8,
-      borderRadius: t.radii.pill,
-      backgroundColor: t.colors.brand.accent,
     },
     stageConnector: {
       flex: 1,
       height: 2,
-      marginHorizontal: 2,
-      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+      marginHorizontal: 4,
     },
     stageConnectorDone: {
-      backgroundColor: t.colors.text.onBrand,
+      backgroundColor: t.colors.brand.accent,
     },
-    stageLabelsRow: {
-      flexDirection: 'row',
-      marginTop: t.spacing.xs,
-    },
-    stageLabel: {
-      flex: 1,
-      ...t.typography.caption,
-      color: 'rgba(255, 255, 255, 0.6)',
-      textAlign: 'center',
-    },
-    stageLabelCurrent: {
-      color: t.colors.brand.accent,
-      fontFamily: t.fontFamilies.ui.semibold,
+    stageConnectorAhead: {
+      height: 0,
+      borderRadius: 1,
+      borderTopWidth: 2,
+      borderStyle: 'dashed',
+      borderColor: 'rgba(255, 255, 255, 0.35)',
     },
   });
