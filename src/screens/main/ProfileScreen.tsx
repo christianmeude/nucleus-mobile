@@ -14,12 +14,12 @@ export const ProfileScreen = () => {
 
   const initials = useMemo(() => initialsFor(user?.fullName), [user?.fullName]);
 
-  const handle = useMemo(() => {
-    const parts = [user?.email ? user.email.split('@')[0] : null, user?.program].filter(
-      (part): part is string => !!part
-    );
-    return parts.join(' · ');
-  }, [user?.email, user?.program]);
+  // Identity lines under the name: program first, department beneath it. The
+  // email-prefix "handle" was dropped — it read as a random username.
+  const identityLines = useMemo(
+    () => [user?.program?.trim(), user?.department?.trim()].filter((part): part is string => !!part),
+    [user?.program, user?.department]
+  );
 
   return (
     // Top edge opted out of Screen's own inset padding: the navy banner (inside
@@ -30,7 +30,8 @@ export const ProfileScreen = () => {
         <ProfileHeader
           initials={initials}
           name={user?.fullName || 'Student'}
-          handle={handle || undefined}
+          handle={identityLines[0]}
+          subhandle={identityLines[1]}
         />
 
         <View style={styles.rowsSection}>

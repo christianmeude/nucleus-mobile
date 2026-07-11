@@ -19,7 +19,6 @@ import { type Theme } from '../../theme';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
 import { isFirstEntranceArmed } from '../../lib/firstEntrance';
 import {
-  Chip,
   DashboardHero,
   EmptyState,
   FadeInView,
@@ -41,6 +40,14 @@ const RAIL_LIMIT = 6;
 // top-to-bottom stagger so the screen builds itself in one coherent gesture.
 const ASSEMBLE = { distance: 30, duration: 460, fromScale: 0.94 };
 const ASSEMBLE_STAGGER = 100;
+
+/**
+ * Every discovery-rail card is the same size regardless of how long its title
+ * runs — a fixed width + height so the row reads as one even shelf, not a
+ * ragged strip (three-line title clamp keeps tall titles from breaking it).
+ */
+const RAIL_CARD_WIDTH = 208;
+const RAIL_CARD_HEIGHT = 202;
 
 /** Year label for a paper's most-relevant date, for the discovery rail meta. */
 const paperYear = (paper: ResearchPaper): string => {
@@ -293,8 +300,8 @@ export const DashboardScreen = () => {
             </View>
             {loading ? (
               <View style={styles.railSkeleton}>
-                <Skeleton height={150} width={158} />
-                <Skeleton height={150} width={158} />
+                <Skeleton height={RAIL_CARD_HEIGHT} width={RAIL_CARD_WIDTH} />
+                <Skeleton height={RAIL_CARD_HEIGHT} width={RAIL_CARD_WIDTH} />
               </View>
             ) : recommended.length === 0 ? (
               <EmptyState
@@ -367,30 +374,37 @@ export const DashboardScreen = () => {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Explore by field</Text>
-              </View>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.chipsRow}
-              >
-                <Chip
-                  label="All"
-                  variant="filter"
-                  active
+                <PressableScale
                   onPress={() => navigation.navigate('Browse')}
-                />
+                  accessibilityRole="button"
+                  accessibilityLabel="Browse all fields"
+                  hitSlop={8}
+                >
+                  <Text style={styles.sectionLink}>All ›</Text>
+                </PressableScale>
+              </View>
+              <View style={styles.fieldGrid}>
                 {categories.map((category) => (
-                  <Chip
+                  <PressableScale
                     key={category.id}
-                    label={category.name}
-                    variant="filter"
-                    active={false}
+                    style={styles.fieldTile}
                     onPress={() =>
                       navigation.navigate('Browse', { categoryId: category.id })
                     }
-                  />
+                    accessibilityRole="button"
+                    accessibilityLabel={`Explore ${category.name}`}
+                  >
+                    <Text style={styles.fieldTileText} numberOfLines={2}>
+                      {category.name}
+                    </Text>
+                    <Ionicons
+                      name="arrow-forward"
+                      size={15}
+                      color={theme.colors.text.muted}
+                    />
+                  </PressableScale>
                 ))}
-              </ScrollView>
+              </View>
             </View>
             </FadeInView>
           ) : null}
@@ -523,7 +537,8 @@ const makeStyles = (t: Theme) =>
       gap: t.spacing.md,
     },
     railCard: {
-      width: 158,
+      width: RAIL_CARD_WIDTH,
+      height: RAIL_CARD_HEIGHT,
       borderRadius: t.radii.lg,
       borderCurve: 'continuous',
       borderWidth: StyleSheet.hairlineWidth,
@@ -533,7 +548,7 @@ const makeStyles = (t: Theme) =>
       ...t.shadows.level1,
     },
     railBand: {
-      height: 56,
+      height: 76,
       justifyContent: 'center',
     },
     railTag: {
@@ -552,13 +567,14 @@ const makeStyles = (t: Theme) =>
       color: '#3A2600',
     },
     railBody: {
+      flex: 1,
       padding: t.spacing.md,
-      gap: t.spacing.sm,
+      justifyContent: 'space-between',
     },
     railTitle: {
       fontFamily: t.fontFamilies.ui.semibold,
-      fontSize: 12,
-      lineHeight: 16,
+      fontSize: 14,
+      lineHeight: 19,
       color: t.colors.text.primary,
     },
     railMeta: {
@@ -571,10 +587,36 @@ const makeStyles = (t: Theme) =>
       color: t.colors.text.muted,
     },
 
-    // Explore chips
-    chipsRow: {
+    // Explore by field — two-column tile grid (bigger tap targets than the old
+    // chip row, and always renders as a filled shelf).
+    fieldGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      rowGap: t.spacing.sm,
+    },
+    fieldTile: {
+      width: '48%',
+      minHeight: 60,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       gap: t.spacing.sm,
-      paddingRight: t.spacing.sm,
+      paddingHorizontal: t.spacing.md,
+      paddingVertical: t.spacing.md,
+      borderRadius: t.radii.lg,
+      borderCurve: 'continuous',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: t.colors.border.subtle,
+      backgroundColor: t.colors.surface.raised,
+      ...t.shadows.level1,
+    },
+    fieldTileText: {
+      flex: 1,
+      fontFamily: t.fontFamilies.ui.semibold,
+      fontSize: 13,
+      lineHeight: 17,
+      color: t.colors.text.primary,
     },
 
     // Saved

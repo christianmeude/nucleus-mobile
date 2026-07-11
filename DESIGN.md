@@ -324,6 +324,22 @@ the app), so they ship as-is.
   sheet height (or flick, `velocityY > 900`) to dismiss. Scrim tops out at `0.45`
   black; the presenter also dims `0.35`. Under reduced motion the sheet snaps
   open/closed with no scale, slide, or scrim fade.
+  **The zoom-out, dim, and scrim track the sheet's live top — the open/close
+  spring *and* any active drag — not `progress` alone.** A `reveal` (1 fully up
+  → 0 hidden) is derived each frame from the sheet's current top and drives all
+  three, so dragging the sheet down *pans the presenter back in and lightens the
+  scrim smoothly in proportion to the sheet's height*, rather than holding the
+  full zoom until release.
+- **Bottom sheets (menus & pickers).** Short sheets (Browse sort/field, etc.)
+  use `BottomSheet`, which drives **both** the slide and the backdrop dim off one
+  shared progress (open `spring.sheet`, close `240ms` timed) so **the dim fades in
+  lock-step with the sheet's height instead of snapping to full opacity when the
+  modal mounts**. Same drag-to-dismiss (grabber, ~30% / `velocityY > 900`); the
+  dim lightens as the sheet is pulled away. Reduced motion → instant, no fade.
+- **Confirming pop.** A save/bookmark toggling *on* gives a quick scale
+  overshoot on the icon — `withSequence(withTiming(1.32, 120ms),
+  withSpring(1, spring.pop))` (`spring.pop` = low-damping overshoot). Only on the
+  affirmative action (not un-saving), and a no-op under reduced motion.
 - **Focus ring.** `border-focus` (navy `#2E5BC9`), 2px, 2px offset. *(The old
   visual-direction doc specified a gold focus ring; `border-focus` supersedes
   it, since focus is navigation state, not emphasis — gold stays reserved.)*
@@ -386,33 +402,77 @@ so the two bars can't drift apart. Bell parity: faculty reach notifications
 through the same `TopBar` bell → `Activity` screen (notifications only; no
 invites segment). Faculty Profile matches student Profile — no bell.
 
+### Shared refinements (2026-07-09)
+
+- **One notification bell, one look, one slot.** The `TopBar` bell is the only
+  global element and is **always rightmost** — a subtle circle on every screen
+  (`surface-sunken` on light headers, `rgba(255,255,255,.14)` on the navy hero),
+  same size/badge/position throughout, so it never nudges between screens. Any
+  account control (the profile avatar) sits to its **left**, never displacing it.
+- **Filter chips are retired for browsing/sorting.** Category and sort controls
+  are delivered as **toolbar dropdown links → bottom sheets** (Browse) or
+  **tappable tile grids** (Dashboard "Explore by field"), not chip rows. Status
+  chips inside My Papers stay (fixed, few, self-describing).
+- **One search field.** Browse and My Papers share the exact same search-field
+  treatment (see Browse).
+
 ### Dashboard (A3)
 
+Reader-first Home — a glance at your own submissions, then discovery. It is
+**not** a trimmed My Papers.
+
 - **Navy hero header:** `linear-gradient(158deg, primary, primary-hover)`,
-  bottom radius 28 (bespoke). Greeting ("Good afternoon,") + name + sub-line;
-  **bell top-right** (badge = unread notifications + pending invites) + avatar.
-  Faint radial gold glow top-right; a giant translucent mono "N" watermark
-  bottom-right (`rgba(255,255,255,.05)` — decorative watermark, exempt from the
-  sans-only chrome rule).
-- **Submit CTA card:** `primary-surface` icon tile + "Submit your research" +
-  gold chevron.
-- **Recent papers** and **Saved** section lists.
+  bottom radius 28 (bespoke). **Student Home shows only greeting + name** — no
+  sub-line under it (the institution/program line was dropped; program lives in
+  Profile, submission status in the glance strip below). The block is padded
+  down off the status bar (`insets.top + spacing.xl`) so it reads as centered in
+  the band, not jammed to the top. Faculty keeps a one-line status sub-line
+  (review summary) via the shared hero's optional `statusLine`. Faint radial gold
+  glow; a giant translucent "N" watermark bottom-right (`rgba(255,255,255,.05)`).
+  Right side: **profile avatar, then the bell** (bell rightmost per Shared
+  refinements). Avatar = gold squircle (`44×44`, radius `lg`,
+  `borderCurve: 'continuous'`), ink-on-gold (`#3A2600`) initials.
+- **No Submit CTA.** Submitting is the always-present Submit FAB on every
+  screen; a second call-to-action on Home is redundant and was removed.
+- **Your submissions (glance):** a 4-tile strip — Total / In review / Revise
+  (warning color) / Published (success color) — the whole strip is one tap
+  target to My Papers. Tiles are `surface-raised`, radius `lg`, `level1` shadow.
+- **Recommended · <field>** discovery rail (horizontal): papers in the
+  student's field, most-read first, falling back to **Most read** overall when
+  the field has < 3 published. Cards are a **fixed size — `208 × 202`, uniform
+  for every paper** — gradient band on top, gold `MOST READ` tag on the first
+  card, 3-line title clamp, view-count/year meta pinned to the card bottom.
+- **Explore by field:** a **two-column tile grid** (not chips) — one
+  `surface-raised` tile per research category (radius `lg`, hairline border,
+  `level1`, `minHeight 60`, name + `arrow-forward`), each deep-linking into
+  Browse with that field preselected. Header carries an `All ›` link to Browse.
+- **Saved** section list.
 - Generous spacing — no cramped stat grid.
 
 ### Browse (A2)
 
-- Big "Browse" title (`h1`); **search bar with a real clear button**
-  (chip-circle × on the right), radius 15.
-- **Recent searches** as `primary-surface` chips (clock icon on the first).
-- A **"Swipe up & hold — release to explore"** hint card (`1.5px dashed`
-  border, radius 18) with a bobbing up-chevron in a `primary-surface` tile.
+- **Search bar is the shared field** — identical to My Papers': `surface-sunken`
+  fill, hairline `border-subtle`, radius `md`, `borderCurve: 'continuous'`,
+  search glyph + input + a "Clear" chip. The two screens' search fields stay
+  visually identical.
+- **Recent searches** as `primary-surface` chips (clock icon on the first) and a
+  **Popular searches** row.
+- A **"Swipe up to browse papers"** explore hint with a fill-on-hold up-arrow
+  tile in a `primary-surface` tile.
+- **Filtering & sorting live in the results toolbar, not a chip row** — two
+  dropdown links, `All fields ▾` and `Newest ▾`, each opening a bottom sheet
+  (the field list scrolls, capped at `360`; a checkmark marks the active row).
+  A selected field name is truncated (`maxWidth 128`) so the toolbar keeps one
+  line.
 
 ### Profile (A3)
 
 - **Navy banner** `height: 120`, bottom radius 26 (bespoke), mono "N" watermark.
 - Gold avatar squircle (`82×82`, radius 24, `borderCurve: 'continuous'`)
   overlapping the banner (`margin-top: -42`, 4px `surface-base`-colored border).
-- Name + handle, centered.
+- Name, then **program**, then **department** beneath it — centered. No
+  email-prefix "handle" (it read as a random username). Same identity block on
+  the faculty Profile.
 - Settings rows with `primary-surface` icon tiles: **Recovery email**,
   **Password**, **Dark mode** (navy toggle), **Sign out**.
 
