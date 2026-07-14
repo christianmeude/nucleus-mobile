@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
@@ -126,6 +126,30 @@ const buildViewerHtml = (
     document.querySelectorAll('.ann-overlay').forEach(function(el) { el.style.display = 'none'; });
   };
 
+  // Note-placement mode (faculty write path). When on, a tap on a page posts the
+  // tapped point as page-percentage coords so the host can open a note composer.
+  window.__annotationMode = false;
+  window.__setAnnotationMode = function(on) {
+    window.__annotationMode = !!on;
+    document.body.style.cursor = on ? 'crosshair' : '';
+  };
+  document.addEventListener('click', function(ev) {
+    if (!window.__annotationMode) return;
+    var wrappers = Array.from(document.querySelectorAll('.page-wrapper'));
+    for (var i = 0; i < wrappers.length; i++) {
+      var r = wrappers[i].getBoundingClientRect();
+      if (ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom) {
+        post({
+          type: 'placeNote',
+          pageNumber: i + 1,
+          x: ((ev.clientX - r.left) / r.width) * 100,
+          y: ((ev.clientY - r.top) / r.height) * 100,
+        });
+        return;
+      }
+    }
+  });
+
   try {
     var url = ${JSON.stringify(uri)};
     var pdfjsLib = window.pdfjsLib;
@@ -185,6 +209,9 @@ interface PdfSurfaceProps {
   firstPageOnly?: boolean;
   /** Disable WebView scrolling (preview is a fixed, non-scrollable page). */
   scrollEnabled?: boolean;
+  /** When true, a tap on a page reports its position via onPlaceNote (faculty add-note mode). */
+  annotationMode?: boolean;
+  onPlaceNote?: (pageNumber: number, anchor: { x: number; y: number }) => void;
 }
 
 /** Renders the PDF via a pdf.js-in-WebView surface with its own loading + error handling. */
@@ -195,6 +222,8 @@ const PdfSurface = ({
   showAnnotations = false,
   firstPageOnly = false,
   scrollEnabled = true,
+  annotationMode = false,
+  onPlaceNote,
 }: PdfSurfaceProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -225,8 +254,23 @@ const PdfSurface = ({
     webViewRef.current.injectJavaScript(cmd);
   }, [showAnnotations, loaded]);
 
+  // Toggle note-placement mode in the WebView whenever annotationMode or loaded changes.
+  useEffect(() => {
+    if (!loaded || !webViewRef.current) return;
+    webViewRef.current.injectJavaScript(
+      `window.__setAnnotationMode && window.__setAnnotationMode(${annotationMode ? 'true' : 'false'}); true;`,
+    );
+  }, [annotationMode, loaded]);
+
   const handleMessage = (event: WebViewMessageEvent) => {
-    let payload: { type?: string; message?: string; pages?: number } = {};
+    let payload: {
+      type?: string;
+      message?: string;
+      pages?: number;
+      pageNumber?: number;
+      x?: number;
+      y?: number;
+    } = {};
     try {
       payload = JSON.parse(event.nativeEvent.data);
     } catch {
@@ -243,6 +287,14 @@ const PdfSurface = ({
       console.log('[PdfViewer] render error', payload.message);
       setErrored(true);
       setErrorText(payload.message ?? null);
+    } else if (payload.type === 'placeNote') {
+      if (
+        typeof payload.pageNumber === 'number' &&
+        typeof payload.x === 'number' &&
+        typeof payload.y === 'number'
+      ) {
+        onPlaceNote?.(payload.pageNumber, { x: payload.x, y: payload.y });
+      }
     }
   };
 
@@ -314,6 +366,18 @@ interface PdfViewerProps {
    * non-scrollable, no controls — for a tap-to-open blurred preview.
    */
   variant?: 'inline' | 'fill' | 'preview';
+  /**
+   * Faculty review only (#14): enable placing note-pin annotations. When true, a
+   * pencil toggle appears; tapping the PDF drops a pin and opens a note composer.
+   * Student screens omit this prop, so the viewer stays read-only for them.
+   */
+  canAnnotate?: boolean;
+  /** Persist a new note pin. Resolves once saved so the viewer can refresh + reset. */
+  onCreateNote?: (input: {
+    pageNumber: number;
+    anchorPercent: { x: number; y: number };
+    note: string;
+  }) => Promise<void>;
 }
 
 export const PdfViewer = ({
@@ -322,14 +386,63 @@ export const PdfViewer = ({
   height = 460,
   annotations,
   variant = 'inline',
+  canAnnotate = false,
+  onCreateNote,
 }: PdfViewerProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [fullscreen, setFullscreen] = useState(false);
   const [showAnnotations, setShowAnnotations] = useState(false);
 
+  // Note-placement state (faculty add-note mode).
+  const [annotating, setAnnotating] = useState(false);
+  const [pendingAnchor, setPendingAnchor] = useState<{
+    pageNumber: number;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [noteText, setNoteText] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
+  const [noteError, setNoteError] = useState<string | null>(null);
+
   const fill = variant === 'fill';
   const hasPositionedAnnotations = (annotations ?? []).some((a) => a.pageNumber !== null);
+  const annotateEnabled = canAnnotate && !!onCreateNote;
+  // While placing, keep existing pins visible so the reviewer can position relative to them.
+  const overlaysVisible = showAnnotations || annotating;
+
+  const closeComposer = () => {
+    if (savingNote) return;
+    setPendingAnchor(null);
+    setNoteText('');
+    setNoteError(null);
+  };
+
+  const saveNote = async () => {
+    if (!pendingAnchor || !onCreateNote) return;
+    const note = noteText.trim();
+    if (!note) {
+      setNoteError('Add a note before saving.');
+      return;
+    }
+    setSavingNote(true);
+    setNoteError(null);
+    try {
+      await onCreateNote({
+        pageNumber: pendingAnchor.pageNumber,
+        anchorPercent: { x: pendingAnchor.x, y: pendingAnchor.y },
+        note,
+      });
+      setSavingNote(false);
+      setPendingAnchor(null);
+      setNoteText('');
+      setAnnotating(false);
+      setShowAnnotations(true);
+    } catch (err) {
+      setSavingNote(false);
+      setNoteError(err instanceof Error ? err.message : 'Unable to save the annotation.');
+    }
+  };
 
   // Preview: page 1 only, non-scrollable, no controls or fullscreen — the host
   // (a blurred preview card) owns the frame and the tap-to-open affordance.
@@ -348,9 +461,33 @@ export const PdfViewer = ({
           uri={uri}
           onLoaded={onFirstLoad}
           annotations={annotations}
-          showAnnotations={showAnnotations}
+          showAnnotations={overlaysVisible}
+          annotationMode={annotating && !pendingAnchor}
+          onPlaceNote={(pageNumber, anchor) => {
+            setNoteError(null);
+            setNoteText('');
+            setPendingAnchor({ pageNumber, x: anchor.x, y: anchor.y });
+          }}
         />
         <View style={styles.controls}>
+          {annotateEnabled ? (
+            <Pressable
+              onPress={() => {
+                setAnnotating((prev) => !prev);
+                setPendingAnchor(null);
+              }}
+              accessibilityRole="button"
+              accessibilityState={{ selected: annotating }}
+              accessibilityLabel={annotating ? 'Cancel adding a note' : 'Add a note'}
+              style={[styles.controlButton, annotating ? styles.controlButtonActive : null]}
+            >
+              <Ionicons
+                name={annotating ? 'close' : 'create-outline'}
+                size={18}
+                color={theme.colors.text.onBrand}
+              />
+            </Pressable>
+          ) : null}
           {hasPositionedAnnotations ? (
             <Pressable
               onPress={() => setShowAnnotations((prev) => !prev)}
@@ -376,6 +513,11 @@ export const PdfViewer = ({
             </Pressable>
           )}
         </View>
+        {annotating && !pendingAnchor ? (
+          <View style={styles.hint} pointerEvents="none">
+            <Text style={styles.hintText}>Tap the page to place a note</Text>
+          </View>
+        ) : null}
       </View>
 
       {fill ? null : (
@@ -403,6 +545,58 @@ export const PdfViewer = ({
           </SafeAreaView>
         </Modal>
       )}
+
+      <Modal
+        visible={pendingAnchor !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={closeComposer}
+      >
+        <View style={styles.composerBackdrop}>
+          <View style={styles.composerCard}>
+            <Text style={styles.composerTitle}>Add note</Text>
+            {pendingAnchor ? (
+              <Text style={styles.composerHint}>Page {pendingAnchor.pageNumber}</Text>
+            ) : null}
+            <TextInput
+              value={noteText}
+              onChangeText={setNoteText}
+              placeholder="Write a note for this spot"
+              placeholderTextColor={theme.colors.text.muted}
+              style={styles.composerInput}
+              multiline
+              autoFocus
+              editable={!savingNote}
+            />
+            {noteError ? <Text style={styles.composerError}>{noteError}</Text> : null}
+            <View style={styles.composerButtons}>
+              <Pressable
+                onPress={closeComposer}
+                disabled={savingNote}
+                accessibilityRole="button"
+                style={styles.composerBtnGhost}
+              >
+                <Text style={styles.composerBtnGhostText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={saveNote}
+                disabled={savingNote || !noteText.trim()}
+                accessibilityRole="button"
+                style={[
+                  styles.composerBtnPrimary,
+                  savingNote || !noteText.trim() ? styles.composerBtnDisabled : null,
+                ]}
+              >
+                {savingNote ? (
+                  <ActivityIndicator size="small" color={theme.colors.text.onBrand} />
+                ) : (
+                  <Text style={styles.composerBtnPrimaryText}>Save</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -460,6 +654,92 @@ const makeStyles = (t: Theme) =>
       justifyContent: 'center',
       backgroundColor: t.colors.brand.primary,
       ...t.shadows.level2,
+    },
+    controlButtonActive: {
+      backgroundColor: t.colors.brand.accent,
+    },
+    hint: {
+      position: 'absolute',
+      top: t.spacing.sm,
+      left: t.spacing.sm,
+      paddingHorizontal: t.spacing.sm,
+      paddingVertical: t.spacing.xs,
+      borderRadius: t.radii.pill,
+      backgroundColor: t.colors.brand.primary,
+      ...t.shadows.level2,
+    },
+    hintText: {
+      ...t.typography.caption,
+      color: t.colors.text.onBrand,
+    },
+    composerBackdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.45)',
+      justifyContent: 'center',
+      padding: t.spacing.lg,
+    },
+    composerCard: {
+      backgroundColor: t.colors.surface.raised,
+      borderRadius: t.radii.lg,
+      padding: t.spacing.lg,
+      gap: t.spacing.sm,
+      ...t.shadows.level2,
+    },
+    composerTitle: {
+      ...t.typography.h3,
+      color: t.colors.text.primary,
+    },
+    composerHint: {
+      ...t.typography.bodySmall,
+      color: t.colors.text.muted,
+    },
+    composerInput: {
+      ...t.typography.body,
+      color: t.colors.text.primary,
+      backgroundColor: t.colors.surface.base,
+      borderWidth: 1,
+      borderColor: t.colors.border.subtle,
+      borderRadius: t.radii.md,
+      paddingHorizontal: t.spacing.md,
+      paddingVertical: t.spacing.sm,
+      minHeight: 96,
+      textAlignVertical: 'top',
+    },
+    composerError: {
+      ...t.typography.bodySmall,
+      color: t.colors.state.danger,
+    },
+    composerButtons: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+      gap: t.spacing.sm,
+      marginTop: t.spacing.xs,
+    },
+    composerBtnGhost: {
+      paddingHorizontal: t.spacing.md,
+      paddingVertical: t.spacing.sm,
+      borderRadius: t.radii.md,
+    },
+    composerBtnGhostText: {
+      ...t.typography.bodyStrong,
+      color: t.colors.text.secondary,
+    },
+    composerBtnPrimary: {
+      minWidth: 84,
+      paddingHorizontal: t.spacing.md,
+      paddingVertical: t.spacing.sm,
+      borderRadius: t.radii.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: t.colors.brand.primary,
+    },
+    composerBtnPrimaryText: {
+      ...t.typography.bodyStrong,
+      color: t.colors.text.onBrand,
+    },
+    composerBtnDisabled: {
+      opacity: 0.5,
     },
     modal: {
       flex: 1,

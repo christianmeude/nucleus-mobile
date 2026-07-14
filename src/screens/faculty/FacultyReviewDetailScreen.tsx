@@ -100,25 +100,35 @@ export const FacultyReviewDetailScreen = () => {
     };
   }, [paperId]);
 
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        setAnnotationsError(null);
-        const data = await facultyApi.getAnnotations(paperId);
-        if (active) setAnnotations(data);
-      } catch (err) {
-        if (active) {
-          setAnnotationsError(
-            err instanceof Error ? err.message : 'Unable to load reviewer annotations.',
-          );
-        }
-      }
-    })();
-    return () => {
-      active = false;
-    };
+  const loadAnnotations = useCallback(async () => {
+    try {
+      const data = await facultyApi.getAnnotations(paperId);
+      setAnnotations(data);
+      setAnnotationsError(null);
+    } catch (err) {
+      setAnnotationsError(
+        err instanceof Error ? err.message : 'Unable to load reviewer annotations.',
+      );
+    }
   }, [paperId]);
+
+  useEffect(() => {
+    void (async () => {
+      await loadAnnotations();
+    })();
+  }, [loadAnnotations]);
+
+  const handleCreateNote = useCallback(
+    async (input: {
+      pageNumber: number;
+      anchorPercent: { x: number; y: number };
+      note: string;
+    }) => {
+      await facultyApi.createNoteAnnotation({ paperId, ...input });
+      await loadAnnotations();
+    },
+    [paperId, loadAnnotations],
+  );
 
   const closeSheet = useCallback(() => {
     if (acting) return;
@@ -271,7 +281,12 @@ export const FacultyReviewDetailScreen = () => {
           {fileError ? (
             <InlineNotice tone="danger" message={fileError} />
           ) : fileUri ? (
-            <PdfViewer uri={fileUri} annotations={overlays} />
+            <PdfViewer
+              uri={fileUri}
+              annotations={overlays}
+              canAnnotate={canReview}
+              onCreateNote={handleCreateNote}
+            />
           ) : (
             <Skeleton height={460} radius="lg" />
           )}

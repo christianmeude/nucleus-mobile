@@ -339,6 +339,58 @@ describe('facultyApi.getAnnotations', () => {
   });
 });
 
+describe('facultyApi.createNoteAnnotation', () => {
+  it('assembles the meta envelope and inserts via the SECURITY DEFINER RPC', async () => {
+    queueProfileLookup(mockSupabase, { profileRow: facultyProfile() });
+    mockSupabase.rpc.mockResolvedValueOnce({ data: 'annotation-1', error: null });
+
+    const result = await facultyApi.createNoteAnnotation({
+      paperId: 'p1',
+      note: '  see fig 2  ',
+      pageNumber: 3,
+      anchorPercent: { x: 25, y: 50 },
+    });
+
+    expect(mockSupabase.rpc).toHaveBeenCalledWith('create_faculty_annotation', {
+      p_paper_id: 'p1',
+      p_comment:
+        '[[meta]]{"annotationType":"note","pageNumber":3,"anchorPercent":{"x":25,"y":50},"highlightColor":"#CDA434"}[[/meta]]\nsee fig 2',
+    });
+    expect(result).toBe('annotation-1');
+  });
+
+  it('rejects an empty note before hitting the RPC', async () => {
+    queueProfileLookup(mockSupabase, { profileRow: facultyProfile() });
+
+    await expect(
+      facultyApi.createNoteAnnotation({
+        paperId: 'p1',
+        note: '   ',
+        pageNumber: 1,
+        anchorPercent: { x: 0, y: 0 },
+      })
+    ).rejects.toThrow('Add a note before saving');
+    expect(mockSupabase.rpc).not.toHaveBeenCalled();
+  });
+
+  it('propagates an RPC error', async () => {
+    queueProfileLookup(mockSupabase, { profileRow: facultyProfile() });
+    mockSupabase.rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'not assigned to you' },
+    });
+
+    await expect(
+      facultyApi.createNoteAnnotation({
+        paperId: 'p1',
+        note: 'x',
+        pageNumber: 1,
+        anchorPercent: { x: 0, y: 0 },
+      })
+    ).rejects.toThrow('not assigned to you');
+  });
+});
+
 describe('facultyApi.getPublishedPapers', () => {
   it('queries published/approved statuses, newest first', async () => {
     queueProfileLookup(mockSupabase, { profileRow: facultyProfile() });
