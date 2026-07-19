@@ -14,8 +14,9 @@ import { palette, schemes, type SchemeName } from './colors';
 import { families, fontWeightToKey, typography } from './typography';
 import { spacing } from './spacing';
 import { shadows } from './shadows';
-import { radii } from './radii';
+import { radii, borderCurve } from './radii';
 import { motion } from './motion';
+import { gradients } from './gradients';
 
 const buildTheme = (scheme: SchemeName) => ({
   colors: schemes[scheme],
@@ -25,8 +26,10 @@ const buildTheme = (scheme: SchemeName) => ({
   fontWeights: fontWeightToKey,
   spacing,
   radii,
+  borderCurve,
   shadows,
   motion,
+  gradients,
 });
 
 /** Full theme objects per scheme — consumed by `ThemeProvider`. */
@@ -40,7 +43,7 @@ export const theme = themes.light;
 
 export type Theme = typeof themes.light;
 
-export { colors, palette, schemes } from './colors';
+export { colors, palette, schemes, platformColors } from './colors';
 export type { Colors, Palette, SchemeName } from './colors';
 export {
   families as fontFamilies,
@@ -55,9 +58,11 @@ export type {
 } from './typography';
 export { spacing } from './spacing';
 export type { Spacing, SpacingKey } from './spacing';
-export { radii } from './radii';
+export { radii, borderCurve } from './radii';
 export type { Radii, RadiiKey } from './radii';
 export { shadows } from './shadows';
 export type { Shadows, ShadowsKey } from './shadows';
 export { motion } from './motion';
 export type { Motion } from './motion';
+export { gradients } from './gradients';
+export type { Gradients, GradientKey } from './gradients';

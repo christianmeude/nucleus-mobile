@@ -11,5 +11,7 @@ export const radii = {
   pill: 999,
 } as const;
 
+export const borderCurve = 'continuous' as const;
+
 export type Radii = typeof radii;
 export type RadiiKey = keyof Radii;

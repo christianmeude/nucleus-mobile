@@ -40,10 +40,30 @@ const level2: ViewStyle = {
   elevation: 4,
 };
 
+const tinted = {
+  /** Navy tinted shadow for floating elements (like nav bar) */
+  primary: {
+    shadowColor: 'rgba(11, 27, 71, 0.6)',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 1,
+    shadowRadius: 34,
+    elevation: 12,
+  } as ViewStyle,
+  /** Gold tinted shadow for the Submit FAB */
+  accent: {
+    shadowColor: '#4A3800',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+    elevation: 12,
+  } as ViewStyle,
+};
+
 export const shadows = {
   level0,
   level1,
   level2,
+  tinted,
 } as const;
 
 export type Shadows = typeof shadows;

@@ -1,3 +1,5 @@
+import { PlatformColor } from 'react-native';
+
 /**
  * NUcleus brand color tokens.
  *
@@ -213,6 +215,20 @@ export const dark: ColorScheme = {
 
 /** Backward-compat alias — `theme.colors` resolves to the light scheme. */
 export const colors = light;
+
+/** OS-specific platform colors */
+export const platformColors = {
+  ios: {
+    primary: PlatformColor('systemBlue'),
+    background: PlatformColor('systemBackground'),
+    text: PlatformColor('label'),
+  },
+  android: {
+    primary: PlatformColor('@android:color/holo_blue_light'),
+    background: PlatformColor('@android:color/background_light'),
+    text: PlatformColor('@android:color/primary_text_light'),
+  },
+};
 
 /** Runtime-swappable semantic schemes, keyed by name. */
 export const schemes = { light, dark };
