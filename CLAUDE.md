@@ -170,3 +170,17 @@ The `public.users` SELECT policy cannot reference itself — triggers `42P17`. C
 | `src/components/ui/` | Shared UI primitives |
 | `src/components/PdfViewer.tsx` | Shared in-app PDF reader (WebView + pdf.js); used by both roles |
 | `src/navigation/FacultyTabs.tsx` | Faculty tab navigator (headerless; per-screen safe-area insets) |
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default triage labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context repo layout. See `docs/agents/domain.md`.
