@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, StyleSheet, View } from 'react-native';
+import { LegendList } from '@legendapp/list';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { invitationsApi } from '../api/invitations';
@@ -74,7 +75,7 @@ export const InvitationsList = () => {
   };
 
   return (
-    <ScrollView
+    <LegendList
       style={styles.container}
       contentContainerStyle={styles.content}
       refreshControl={
@@ -85,44 +86,47 @@ export const InvitationsList = () => {
           colors={[theme.colors.brand.primary]}
         />
       }
-    >
-      {error ? <InlineNotice tone="danger" message={error} /> : null}
+      ListHeaderComponent={
+        <View style={styles.header}>
+          {error ? <InlineNotice tone="danger" message={error} /> : null}
 
-      {loading ? (
-        <View style={styles.skeletonList}>
-          <Skeleton height={132} />
-          <Skeleton height={132} />
-          <Skeleton height={132} />
+          {loading ? (
+            <View style={styles.skeletonList}>
+              <Skeleton height={132} />
+              <Skeleton height={132} />
+              <Skeleton height={132} />
+            </View>
+          ) : invitations.length === 0 ? (
+            <EmptyState
+              icon={<Ionicons name="mail-open-outline" size={24} color={theme.colors.text.muted} />}
+              title="No invitations available"
+              message="Co-author invitations you receive will appear here."
+            />
+          ) : null}
         </View>
-      ) : invitations.length === 0 ? (
-        <EmptyState
-          icon={<Ionicons name="mail-open-outline" size={24} color={theme.colors.text.muted} />}
-          title="No invitations available"
-          message="Co-author invitations you receive will appear here."
-        />
-      ) : (
-        <View style={styles.list}>
-          {invitations.map((invitation, index) => {
-            const calendarExpired = invitation.status === 'pending' && isExpired(invitation);
-            const cardInvitation: CoAuthorInvitation = calendarExpired
-              ? { ...invitation, status: 'expired' }
-              : invitation;
-            const canAct = invitation.status === 'pending' && !calendarExpired;
+      }
+      data={loading || invitations.length === 0 ? [] : invitations}
+      keyExtractor={(item) => item.id}
+      estimatedItemSize={132}
+      renderItem={({ item, index }) => {
+        const calendarExpired = item.status === 'pending' && isExpired(item);
+        const cardInvitation: CoAuthorInvitation = calendarExpired
+          ? { ...item, status: 'expired' }
+          : item;
+        const canAct = item.status === 'pending' && !calendarExpired;
 
-            return (
-              <ListEntranceItem key={invitation.id} index={index}>
-                <InvitationCard
-                  invitation={cardInvitation}
-                  acting={actingToken === invitation.token}
-                  onAccept={canAct ? () => runAction(invitation.token, 'accept') : undefined}
-                  onDecline={canAct ? () => runAction(invitation.token, 'decline') : undefined}
-                />
-              </ListEntranceItem>
-            );
-          })}
-        </View>
-      )}
-    </ScrollView>
+        return (
+          <ListEntranceItem key={item.id} index={index}>
+            <InvitationCard
+              invitation={cardInvitation}
+              acting={actingToken === item.token}
+              onAccept={canAct ? () => runAction(item.token, 'accept') : undefined}
+              onDecline={canAct ? () => runAction(item.token, 'decline') : undefined}
+            />
+          </ListEntranceItem>
+        );
+      }}
+    />
   );
 };
 
@@ -135,6 +139,9 @@ const makeStyles = (t: Theme) =>
       paddingHorizontal: t.spacing.lg,
       paddingTop: t.spacing.md,
       paddingBottom: t.spacing['3xl'],
+      gap: t.spacing.sm,
+    },
+    header: {
       gap: t.spacing.sm,
     },
     skeletonList: {

@@ -7,6 +7,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { LegendList } from '@legendapp/list';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
@@ -107,7 +108,7 @@ export const MyPapersScreen = () => {
 
   return (
     <Screen edges={{ bottom: false }}>
-      <ScrollView
+      <LegendList
         style={styles.scroll}
         contentContainerStyle={styles.content}
         refreshControl={
@@ -118,90 +119,93 @@ export const MyPapersScreen = () => {
             colors={[theme.colors.brand.primary]}
           />
         }
-      >
-        <TopBar>
-          <Text style={styles.title}>My Papers</Text>
-          <Text style={styles.subtitle}>{subtitle}</Text>
-        </TopBar>
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <TopBar>
+              <Text style={styles.title}>My Papers</Text>
+              <Text style={styles.subtitle}>{subtitle}</Text>
+            </TopBar>
 
-        <View style={styles.searchWrap}>
-          <Ionicons name="search-outline" size={18} color={theme.colors.text.muted} />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search your papers"
-            placeholderTextColor={theme.colors.text.disabled}
-            style={styles.searchInput}
-            accessibilityLabel="Search papers"
-            accessibilityHint="Filters your papers by title, abstract, or keywords"
-          />
-          {query ? (
-            <Chip label="Clear" active={false} onPress={() => setQuery('')} variant="filter" />
-          ) : null}
-        </View>
+            <View style={styles.searchWrap}>
+              <Ionicons name="search-outline" size={18} color={theme.colors.text.muted} />
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder="Search your papers"
+                placeholderTextColor={theme.colors.text.disabled}
+                style={styles.searchInput}
+                accessibilityLabel="Search papers"
+                accessibilityHint="Filters your papers by title, abstract, or keywords"
+              />
+              {query ? (
+                <Chip label="Clear" active={false} onPress={() => setQuery('')} variant="filter" />
+              ) : null}
+            </View>
 
-        <View style={styles.filters}>
-          <Chip
-            label="All"
-            variant="filter"
-            active={activeFilter === 'all'}
-            onPress={() => setActiveFilter('all')}
-          />
-          <Chip
-            label="In review"
-            variant="filter"
-            active={activeFilter === 'active'}
-            onPress={() => setActiveFilter('active')}
-            tone="info"
-          />
-          <Chip
-            label="Needs revision"
-            variant="filter"
-            active={activeFilter === 'action'}
-            onPress={() => setActiveFilter('action')}
-            tone="warning"
-          />
-          <Chip
-            label="Published"
-            variant="filter"
-            active={activeFilter === 'published'}
-            onPress={() => setActiveFilter('published')}
-            tone="success"
-          />
-        </View>
+            <View style={styles.filters}>
+              <Chip
+                label="All"
+                variant="filter"
+                active={activeFilter === 'all'}
+                onPress={() => setActiveFilter('all')}
+              />
+              <Chip
+                label="In review"
+                variant="filter"
+                active={activeFilter === 'active'}
+                onPress={() => setActiveFilter('active')}
+                tone="info"
+              />
+              <Chip
+                label="Needs revision"
+                variant="filter"
+                active={activeFilter === 'action'}
+                onPress={() => setActiveFilter('action')}
+                tone="warning"
+              />
+              <Chip
+                label="Published"
+                variant="filter"
+                active={activeFilter === 'published'}
+                onPress={() => setActiveFilter('published')}
+                tone="success"
+              />
+            </View>
 
-        {error ? <InlineNotice tone="danger" message={error} /> : null}
+            {error ? <InlineNotice tone="danger" message={error} /> : null}
 
-        {loading ? (
-          <View style={styles.skeletonList}>
-            <Skeleton height={104} />
-            <Skeleton height={104} />
-            <Skeleton height={104} />
+            {loading ? (
+              <View style={styles.skeletonList}>
+                <Skeleton height={104} />
+                <Skeleton height={104} />
+                <Skeleton height={104} />
+              </View>
+            ) : filtered.length === 0 ? (
+              <EmptyState
+                icon={<Ionicons name="folder-open-outline" size={24} color={theme.colors.text.muted} />}
+                title="No papers found"
+                message={
+                  papers.length === 0
+                    ? 'Submit your first research paper to see it here.'
+                    : 'No papers match your current filter.'
+                }
+              />
+            ) : null}
           </View>
-        ) : filtered.length === 0 ? (
-          <EmptyState
-            icon={<Ionicons name="folder-open-outline" size={24} color={theme.colors.text.muted} />}
-            title="No papers found"
-            message={
-              papers.length === 0
-                ? 'Submit your first research paper to see it here.'
-                : 'No papers match your current filter.'
-            }
-          />
-        ) : (
-          <View style={styles.list}>
-            {filtered.map((paper, index) => (
-              <ListEntranceItem key={paper.id} index={index}>
-                <MyPaperCard
-                  paper={paper}
-                  category={resolveCategoryName(paper.category, categoryNameById)}
-                  onPress={() => navigation.navigate('ResearchDetail', { paperId: paper.id })}
-                />
-              </ListEntranceItem>
-            ))}
-          </View>
+        }
+        data={loading || filtered.length === 0 ? [] : filtered}
+        keyExtractor={(item) => item.id}
+        estimatedItemSize={104}
+        renderItem={({ item, index }) => (
+          <ListEntranceItem key={item.id} index={index}>
+            <MyPaperCard
+              paper={item}
+              category={resolveCategoryName(item.category, categoryNameById)}
+              onPress={() => navigation.navigate('ResearchDetail', { paperId: item.id })}
+            />
+          </ListEntranceItem>
         )}
-      </ScrollView>
+      />
     </Screen>
   );
 };
@@ -218,6 +222,9 @@ const makeStyles = (t: Theme) =>
     content: {
       paddingTop: t.spacing.md,
       paddingBottom: t.spacing['3xl'] + 56,
+      gap: t.spacing.md,
+    },
+    header: {
       gap: t.spacing.md,
     },
     title: {
