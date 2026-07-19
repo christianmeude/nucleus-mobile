@@ -7,11 +7,11 @@ import Animated, {
   withTiming,
   interpolate,
   Easing,
+  useReducedMotion,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
-import { type Theme } from '../../../theme';
-import { useReduceMotion } from '../../../hooks/useReduceMotion';
+import { useThemedStyles, useTheme } from '../../../context/ThemeContext';
+import { motion, type Theme } from '../../../theme';
 
 interface ShimmerSkeletonProps {
   height?: number;
@@ -26,7 +26,7 @@ export const ShimmerSkeleton = ({
 }: ShimmerSkeletonProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const reduceMotion = useReduceMotion();
+  const reduceMotion = useReducedMotion();
   const progress = useSharedValue(0);
 
   useEffect(() => {
@@ -34,11 +34,11 @@ export const ShimmerSkeleton = ({
       return;
     }
     progress.value = withRepeat(
-      withTiming(1, { duration: theme.motion.skeletonCycleDuration, easing: Easing.linear }),
+      withTiming(1, { duration: motion.skeletonCycleDuration, easing: Easing.linear }),
       -1,
       false
     );
-  }, [progress, reduceMotion, theme.motion.skeletonCycleDuration]);
+  }, [progress, reduceMotion]);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -81,5 +81,4 @@ const makeStyles = (t: Theme) =>
     },
     overflowHidden: {
       overflow: 'hidden',
-    },
   });

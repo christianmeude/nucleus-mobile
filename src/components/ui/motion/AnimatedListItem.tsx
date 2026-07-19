@@ -9,7 +9,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { motion } from '../../../theme';
-import { useReduceMotion } from '../../../hooks/useReduceMotion';
+import { useReducedMotion } from 'react-native-reanimated';
 
 const ENTRANCE_EASING = Easing.out(Easing.cubic);
 
@@ -45,7 +45,7 @@ export const AnimatedListItem = ({
   active = true,
   style,
 }: AnimatedListItemProps) => {
-  const reduceMotion = useReduceMotion();
+  const reduceMotion = useReducedMotion();
   const play = active && !reduceMotion;
   const progress = useSharedValue(play ? 0 : 1);
   const [rasterize, setRasterize] = useState(play);

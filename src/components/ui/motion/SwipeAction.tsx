@@ -1,20 +1,19 @@
 import React, { ReactNode, useRef } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Animated } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
-import { useReduceMotion } from '../../../hooks/useReduceMotion';
 
 interface SwipeActionProps {
   children: ReactNode;
   /** Component to render on the right when swiped */
   rightActions?: (
-    progressAnimatedValue: any,
-    dragAnimatedValue: any,
+    progressAnimatedValue: Animated.AnimatedInterpolation<number>,
+    dragAnimatedValue: Animated.AnimatedInterpolation<number>,
     swipeable: Swipeable
   ) => React.ReactNode;
   /** Component to render on the left when swiped */
   leftActions?: (
-    progressAnimatedValue: any,
-    dragAnimatedValue: any,
+    progressAnimatedValue: Animated.AnimatedInterpolation<number>,
+    dragAnimatedValue: Animated.AnimatedInterpolation<number>,
     swipeable: Swipeable
   ) => React.ReactNode;
   /** Callback when swiped open on the right */
@@ -27,7 +26,6 @@ interface SwipeActionProps {
 
 /**
  * A swipeable row component for revealing contextual actions.
- * Disables swiping if reduced motion is enabled.
  */
 export const SwipeAction = ({
   children,
@@ -37,24 +35,18 @@ export const SwipeAction = ({
   onSwipeLeft,
   enabled = true,
 }: SwipeActionProps) => {
-  const reduceMotion = useReduceMotion();
   const swipeableRef = useRef<Swipeable>(null);
-
-  const handleSwipeableOpen = (direction: 'left' | 'right') => {
-    if (direction === 'right' && onSwipeRight) {
-      onSwipeRight();
-    } else if (direction === 'left' && onSwipeLeft) {
-      onSwipeLeft();
-    }
-  };
 
   return (
     <Swipeable
       ref={swipeableRef}
-      enabled={enabled && !reduceMotion}
+      enabled={enabled}
       renderRightActions={rightActions}
       renderLeftActions={leftActions}
-      onSwipeableOpen={handleSwipeableOpen}
+      onSwipeableOpen={(direction) => {
+        if (direction === 'right') onSwipeRight?.();
+        else if (direction === 'left') onSwipeLeft?.();
+      }}
       containerStyle={styles.container}
     >
       {children}

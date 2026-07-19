@@ -6,8 +6,8 @@ import Animated, {
   useSharedValue,
   interpolate,
   Extrapolation,
+  useReducedMotion,
 } from 'react-native-reanimated';
-import { useReduceMotion } from '../../../hooks/useReduceMotion';
 
 interface ParallaxHeaderProps {
   /** The content to be rendered as the parallax header */
@@ -33,7 +33,7 @@ export const ParallaxHeader = ({
   style,
   backgroundColor,
 }: ParallaxHeaderProps) => {
-  const reduceMotion = useReduceMotion();
+  const reduceMotion = useReducedMotion();
   const scrollY = useSharedValue(0);
 
   const scrollHandler = useAnimatedScrollHandler({
