@@ -18,6 +18,13 @@ export const motion = {
     base: 240,
     slow: 360,
     sheet: 320,
+    sheetClose: 260,
+    nav: 420,
+  },
+
+  // — easing / curves —
+  easing: {
+    navSpring: [0.34, 1.3, 0.4, 1], // cubic-bezier for signature selection pill
   },
 
   // — reanimated withSpring presets —
@@ -35,8 +42,8 @@ export const motion = {
 
   // — list / element entrance —
   entrance: {
-    distance: 12,
-    duration: 360,
+    distance: 8,
+    duration: 320,
     stagger: 60,
   },
 } as const;

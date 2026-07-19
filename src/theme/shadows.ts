@@ -43,19 +43,11 @@ const level2: ViewStyle = {
 const tinted = {
   /** Navy tinted shadow for floating elements (like nav bar) */
   primary: {
-    shadowColor: 'rgba(11, 27, 71, 0.6)',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 1,
-    shadowRadius: 34,
-    elevation: 12,
+    boxShadow: '0 14px 34px -14px rgba(11, 27, 71, 0.6)',
   } as ViewStyle,
   /** Gold tinted shadow for the Submit FAB */
   accent: {
-    shadowColor: '#4A3800',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.45,
-    shadowRadius: 12,
-    elevation: 12,
+    boxShadow: '0 8px 12px 0 rgba(74, 56, 0, 0.45)',
   } as ViewStyle,
 };
 

@@ -27,19 +27,16 @@ export const scaledFontSize = (size: number): number => {
   return Math.round(size * scale);
 };
 
+const roboto = {
+  regular: 'Roboto_400Regular',
+  medium: 'Roboto_500Medium',
+  semibold: 'Roboto_600SemiBold',
+  bold: 'Roboto_700Bold',
+} as const;
+
 export const families = {
-  ui: {
-    regular: 'Roboto_400Regular',
-    medium: 'Roboto_500Medium',
-    semibold: 'Roboto_600SemiBold',
-    bold: 'Roboto_700Bold',
-  },
-  display: {
-    regular: 'Roboto_400Regular',
-    medium: 'Roboto_500Medium',
-    semibold: 'Roboto_600SemiBold',
-    bold: 'Roboto_700Bold',
-  },
+  ui: roboto,
+  display: roboto,
 } as const;
 
 export type FontFamilyKey = 'ui' | 'display';

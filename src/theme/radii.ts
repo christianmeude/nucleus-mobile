@@ -9,9 +9,8 @@ export const radii = {
   lg: 14,
   xl: 18,
   pill: 999,
+  borderCurve: 'continuous',
 } as const;
-
-export const borderCurve = 'continuous' as const;
 
 export type Radii = typeof radii;
 export type RadiiKey = keyof Radii;
