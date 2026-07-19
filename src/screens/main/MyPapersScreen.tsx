@@ -7,7 +7,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { LegendList } from '@legendapp/list';
+import { LegendList } from '@legendapp/list/react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { researchApi } from '../../api/research';

@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { SectionList as LegendSectionList } from '@legendapp/list/section-list';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { notificationsApi } from '../api/notifications';
@@ -102,10 +103,10 @@ export const NotificationsList = () => {
     });
 
     return [
-      { key: 'today', title: 'Today', items: today },
-      { key: 'week', title: 'This week', items: week },
-      { key: 'earlier', title: 'Earlier', items: earlier },
-    ].filter((group) => group.items.length > 0);
+      { key: 'today', title: 'Today', data: today },
+      { key: 'week', title: 'This week', data: week },
+      { key: 'earlier', title: 'Earlier', data: earlier },
+    ].filter((group) => group.data.length > 0);
   }, [notifications]);
 
   const openNotification = async (item: NotificationItem) => {
@@ -136,7 +137,7 @@ export const NotificationsList = () => {
   };
 
   return (
-    <ScrollView
+    <LegendSectionList
       style={styles.container}
       contentContainerStyle={styles.content}
       refreshControl={
@@ -147,51 +148,54 @@ export const NotificationsList = () => {
           colors={[theme.colors.brand.primary]}
         />
       }
-    >
-      <View style={styles.subheader}>
-        <Text style={styles.subtitle}>
-          {unreadCount > 0 ? `${unreadCount} unread` : 'You’re all caught up'}
-        </Text>
-        <Pressable
-          onPress={markAllAsRead}
-          disabled={unreadCount === 0}
-          accessibilityRole="button"
-          accessibilityLabel="Mark all notifications as read"
-          hitSlop={8}
-        >
-          <Text style={[styles.markAll, unreadCount === 0 && styles.markAllDisabled]}>
-            Mark all read
-          </Text>
-        </Pressable>
-      </View>
-
-      {error ? <InlineNotice tone="danger" message={error} /> : null}
-
-      {loading ? (
-        <View style={styles.skeletonList}>
-          <Skeleton height={72} />
-          <Skeleton height={72} />
-          <Skeleton height={72} />
-        </View>
-      ) : notifications.length === 0 ? (
-        <EmptyState
-          icon={<Ionicons name="notifications-outline" size={24} color={theme.colors.text.muted} />}
-          title="No notifications yet"
-          message="Updates on your papers and activity will appear here."
-        />
-      ) : (
-        groups.map((group) => (
-          <View key={group.key} style={styles.group}>
-            <Text style={styles.groupTitle}>{group.title}</Text>
-            {group.items.map((item, index) => (
-              <ListEntranceItem key={item.id} index={index}>
-                <NotificationCard notification={item} onPress={() => openNotification(item)} />
-              </ListEntranceItem>
-            ))}
+      ListHeaderComponent={
+        <View style={styles.header}>
+          <View style={styles.subheader}>
+            <Text style={styles.subtitle}>
+              {unreadCount > 0 ? `${unreadCount} unread` : 'You’re all caught up'}
+            </Text>
+            <Pressable
+              onPress={markAllAsRead}
+              disabled={unreadCount === 0}
+              accessibilityRole="button"
+              accessibilityLabel="Mark all notifications as read"
+              hitSlop={8}
+            >
+              <Text style={[styles.markAll, unreadCount === 0 && styles.markAllDisabled]}>
+                Mark all read
+              </Text>
+            </Pressable>
           </View>
-        ))
+
+          {error ? <InlineNotice tone="danger" message={error} /> : null}
+
+          {loading ? (
+            <View style={styles.skeletonList}>
+              <Skeleton height={72} />
+              <Skeleton height={72} />
+              <Skeleton height={72} />
+            </View>
+          ) : notifications.length === 0 ? (
+            <EmptyState
+              icon={<Ionicons name="notifications-outline" size={24} color={theme.colors.text.muted} />}
+              title="No notifications yet"
+              message="Updates on your papers and activity will appear here."
+            />
+          ) : null}
+        </View>
+      }
+      sections={loading || notifications.length === 0 ? [] : groups}
+      keyExtractor={(item) => item.id}
+      estimatedItemSize={72}
+      renderSectionHeader={({ section }) => (
+        <Text style={styles.groupTitle}>{section.title}</Text>
       )}
-    </ScrollView>
+      renderItem={({ item, index }) => (
+        <ListEntranceItem key={item.id} index={index}>
+          <NotificationCard notification={item} onPress={() => openNotification(item)} />
+        </ListEntranceItem>
+      )}
+    />
   );
 };
 
@@ -204,6 +208,9 @@ const makeStyles = (t: Theme) =>
       paddingHorizontal: t.spacing.lg,
       paddingTop: t.spacing.md,
       paddingBottom: t.spacing['3xl'],
+      gap: t.spacing.md,
+    },
+    header: {
       gap: t.spacing.md,
     },
     subheader: {

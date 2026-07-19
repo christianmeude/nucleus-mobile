@@ -7,6 +7,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
@@ -113,7 +114,7 @@ export const FacultyReviewScreen = () => {
         </ScrollView>
       </View>
 
-      <ScrollView
+      <LegendList
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         refreshControl={
@@ -124,36 +125,38 @@ export const FacultyReviewScreen = () => {
             colors={[theme.colors.brand.primary]}
           />
         }
-      >
-        {error ? <InlineNotice tone="danger" message={error} /> : null}
+        ListHeaderComponent={
+          <View style={styles.listHeader}>
+            {error ? <InlineNotice tone="danger" message={error} /> : null}
 
-        {papers === null ? (
-          error ? (
-            <Text style={styles.hint}>Pull down to retry.</Text>
-          ) : (
-            <View style={styles.list}>
-              {[0, 1, 2, 3].map((key) => (
-                <Skeleton key={key} height={84} radius="lg" />
-              ))}
-            </View>
-          )
-        ) : visible.length === 0 ? (
-          <EmptyState
-            title="No papers"
-            message={search.trim() ? 'No papers match your search.' : 'Nothing in this view yet.'}
-          />
-        ) : (
-          <View style={styles.list}>
-            {visible.map((paper) => (
-              <FacultyPaperCard
-                key={paper.id}
-                paper={paper}
-                onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: paper.id })}
+            {papers === null ? (
+              error ? (
+                <Text style={styles.hint}>Pull down to retry.</Text>
+              ) : (
+                <View style={styles.list}>
+                  {[0, 1, 2, 3].map((key) => (
+                    <Skeleton key={key} height={84} radius="lg" />
+                  ))}
+                </View>
+              )
+            ) : visible.length === 0 ? (
+              <EmptyState
+                title="No papers"
+                message={search.trim() ? 'No papers match your search.' : 'Nothing in this view yet.'}
               />
-            ))}
+            ) : null}
           </View>
+        }
+        data={papers === null || visible.length === 0 ? [] : visible}
+        keyExtractor={(item) => item.id}
+        estimatedItemSize={84}
+        renderItem={({ item }) => (
+          <FacultyPaperCard
+            paper={item}
+            onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: item.id })}
+          />
         )}
-      </ScrollView>
+      />
     </Screen>
   );
 };
@@ -189,6 +192,9 @@ const makeStyles = (theme: Theme) =>
     gap: theme.spacing.md,
     paddingBottom: theme.spacing['3xl'],
     flexGrow: 1,
+  },
+  listHeader: {
+    gap: theme.spacing.md,
   },
   list: {
     gap: theme.spacing.md,
