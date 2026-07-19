@@ -9,6 +9,15 @@ import {
   WorkflowEntry,
 } from '../types/domain';
 import { getPrimaryAuthorName, paperDate } from '../utils/format';
+import {
+  parseAnnotationMeta,
+  normalizeAnnotationType,
+  sanitizeHighlightRects,
+  sanitizeAnchorPercent,
+  AnnotationType,
+  AnnotationRect,
+  AnnotationPoint,
+} from '../utils/annotation';
 
 interface ResearchDetailPayload {
   paper: ResearchPaper;
@@ -405,7 +414,109 @@ async function loadResearchRows(selectQuery: string, filters?: ResearchListParam
   return filterPublishedRows(Array.from(mergedRows.values()), filters);
 }
 
+export interface StudentAnnotation {
+  id: string;
+  parentId: string | null;
+  annotationType: AnnotationType;
+  note: string;
+  pageNumber: number | null;
+  highlightColor: string | null;
+  sectionLabel: string | null;
+  selectedText: string | null;
+  highlightRects: AnnotationRect[] | null;
+  anchorPercent: AnnotationPoint | null;
+  drawImageUrl: string | null;
+  createdAt: string | null;
+  reviewerName: string;
+  reviewerRole: string | null;
+}
+
+interface StudentAnnotationUserRow extends ResearchAuthorRow {
+  role?: string | null;
+}
+
+interface StudentAnnotationRow {
+  id: string;
+  parent_id?: string | null;
+  comment?: string | null;
+  created_at?: string | null;
+  reviewer?: StudentAnnotationUserRow | StudentAnnotationUserRow[] | null;
+}
+
+const STUDENT_ANNOTATION_SELECT = `
+  id,
+  parent_id,
+  comment,
+  created_at,
+  reviewer:users!research_comments_user_id_fkey(
+    id,
+    email,
+    first_name,
+    middle_name,
+    last_name,
+    role
+  )
+`;
+
+function pickReviewerRow(
+  rel?: StudentAnnotationUserRow | StudentAnnotationUserRow[] | null,
+): StudentAnnotationUserRow | null {
+  if (!rel) return null;
+  if (Array.isArray(rel)) return rel[0] ?? null;
+  return rel;
+}
+
+function toStudentAnnotation(row: StudentAnnotationRow): StudentAnnotation {
+  const reviewer = pickReviewerRow(row.reviewer);
+  const text = String(row.comment ?? '');
+
+  const { meta, note } = parseAnnotationMeta(text);
+
+  const pageRaw = Number(meta.pageNumber);
+  const pageNumber = Number.isFinite(pageRaw) && pageRaw >= 1 ? Math.floor(pageRaw) : null;
+  const drawImageUrl =
+    typeof meta.drawImageUrl === 'string' && /^https?:\/\//i.test(meta.drawImageUrl)
+      ? meta.drawImageUrl.slice(0, 2048)
+      : null;
+
+  return {
+    id: row.id,
+    parentId: row.parent_id ?? null,
+    annotationType: normalizeAnnotationType(meta.annotationType),
+    note,
+    pageNumber,
+    highlightColor: typeof meta.highlightColor === 'string' ? meta.highlightColor : null,
+    sectionLabel: typeof meta.sectionLabel === 'string' ? meta.sectionLabel : null,
+    selectedText: typeof meta.selectedText === 'string' ? meta.selectedText : null,
+    highlightRects: sanitizeHighlightRects(meta.highlightRects),
+    anchorPercent: sanitizeAnchorPercent(meta.anchorPercent),
+    drawImageUrl,
+    createdAt: row.created_at ?? null,
+    reviewerName: (reviewer ? buildFullName(reviewer) : '') || 'Reviewer',
+    reviewerRole: reviewer?.role ?? null,
+  };
+}
+
 export const researchApi = {
+  fetchAnnotations: async (paperId: string): Promise<StudentAnnotation[]> => {
+    // Only fetch for a paper the student is assigned to (enforced by RLS)
+    await resolveCurrentStudentProfile();
+
+    const { data, error } = await supabase
+      .from('research_comments')
+      .select(STUDENT_ANNOTATION_SELECT)
+      .eq('research_id', paperId)
+      .eq('is_internal', false)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      throw new Error(error.message || 'Unable to load annotations.');
+    }
+
+    const rows = Array.isArray(data) ? (data as unknown as StudentAnnotationRow[]) : [];
+    return rows.map(toStudentAnnotation);
+  },
+
   getMyPapers: async () => {
     const rows = await loadResearchRows(PAPER_SELECT);
     return rows.map(toResearchPaper).sort((left, right) => {
