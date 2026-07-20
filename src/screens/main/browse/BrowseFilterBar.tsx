@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { PressableScale } from '../../../components/ui';
+import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import { type Theme } from '../../../theme';
 
 type ViewMode = 'list' | 'grid';
@@ -13,8 +14,6 @@ export interface BrowseFilterBarProps {
   onOpenFieldSheet: () => void;
   onOpenSortSheet: () => void;
   onChangeViewMode: (mode: ViewMode) => void;
-  styles: ReturnType<typeof makeStyles>;
-  theme: Theme;
 }
 
 export const BrowseFilterBar = ({
@@ -25,9 +24,10 @@ export const BrowseFilterBar = ({
   onOpenFieldSheet,
   onOpenSortSheet,
   onChangeViewMode,
-  styles,
-  theme,
 }: BrowseFilterBarProps) => {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   return (
     <View style={styles.subbar}>
       <Text style={styles.resultCount}>

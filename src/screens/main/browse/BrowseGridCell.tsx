@@ -2,6 +2,7 @@ import { memo, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ResearchPaper } from '../../../types/domain';
 import { ResearchTile } from '../../../components/ResearchTile';
+import { useThemedStyles } from '../../../context/ThemeContext';
 import { type Theme } from '../../../theme';
 
 export interface BrowseGridCellProps {
@@ -9,7 +10,6 @@ export interface BrowseGridCellProps {
   category: string | null;
   categoryColor: string;
   onOpen: (paperId: string) => void;
-  styles: ReturnType<typeof makeStyles>;
 }
 
 export const BrowseGridCell = memo(function BrowseGridCell({
@@ -17,8 +17,8 @@ export const BrowseGridCell = memo(function BrowseGridCell({
   category,
   categoryColor,
   onOpen,
-  styles,
 }: BrowseGridCellProps) {
+  const styles = useThemedStyles(makeStyles);
   const handlePress = useCallback(() => onOpen(paper.id), [onOpen, paper.id]);
 
   return (

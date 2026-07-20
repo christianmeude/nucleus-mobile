@@ -592,12 +592,12 @@ export const researchApi = {
       .sort((left, right) => (order.get(left.id) ?? 0) - (order.get(right.id) ?? 0));
   },
 
-  getRelatedPapers: async (paperId: string, title: string, abstract: string, limit: number = 3): Promise<ResearchPaper[]> => {
+  getRelatedPapers: async (paper: ResearchPaper, limit: number = 3): Promise<ResearchPaper[]> => {
     // Semantic relatedness via hybrid search
-    const query = `${title} ${abstract}`;
+    const query = `${paper.title} ${paper.abstract}`;
     // Fetch a bit more in case the current paper is in the top results
     const results = await researchApi.searchPapers(query, { limit: limit + 2 });
-    return results.filter(p => p.id !== paperId).slice(0, limit);
+    return results.filter(p => p.id !== paper.id).slice(0, limit);
   },
 
   getCategories: async () => {

@@ -2,16 +2,18 @@ import { StyleSheet, Text, View } from 'react-native';
 import { ResearchPaper } from '../../../types/domain';
 import { getPrimaryAuthorName } from '../../../utils/format';
 import { PressableScale } from '../../../components/ui';
+import { useThemedStyles } from '../../../context/ThemeContext';
 import { type Theme } from '../../../theme';
 
 export interface BrowseHeroProps {
   featured: ResearchPaper;
   viewsOf: (paper: ResearchPaper) => number;
   onOpen: (paperId: string) => void;
-  styles: ReturnType<typeof makeStyles>;
 }
 
-export const BrowseHero = ({ featured, viewsOf, onOpen, styles }: BrowseHeroProps) => {
+export const BrowseHero = ({ featured, viewsOf, onOpen }: BrowseHeroProps) => {
+  const styles = useThemedStyles(makeStyles);
+
   return (
     <PressableScale
       style={styles.hero}

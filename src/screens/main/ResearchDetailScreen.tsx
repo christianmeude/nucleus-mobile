@@ -101,7 +101,7 @@ export const ResearchDetailScreen = () => {
         
         const [categoryRows, relatedRows, savedIds] = await Promise.all([
           researchApi.getCategories(),
-          researchApi.getRelatedPapers(paperId, detail.paper.title, detail.paper.abstract, MAX_RELATED).catch(() => []),
+          researchApi.getRelatedPapers(detail.paper, MAX_RELATED).catch(() => []),
           getSavedPaperIds().catch(() => [] as string[]),
         ]);
 

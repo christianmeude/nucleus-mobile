@@ -337,7 +337,6 @@ export const BrowseScreen = () => {
               category={categoryName}
               categoryColor={categoryColor}
               onOpen={openDetail}
-              styles={styles as any}
             />
           ) : (
             <BrowseListCard
@@ -345,7 +344,6 @@ export const BrowseScreen = () => {
               categoryColor={categoryColor}
               categoryName={categoryName}
               onOpen={openDetail}
-              styles={styles as any}
             />
           )}
         </Animated.View>
@@ -371,8 +369,6 @@ export const BrowseScreen = () => {
           onOpenFieldSheet={() => setFieldSheetOpen(true)}
           onOpenSortSheet={() => setSortSheetOpen(true)}
           onChangeViewMode={setViewMode}
-          styles={styles as any}
-          theme={theme}
         />
 
         {error ? <InlineNotice tone="danger" message={error} /> : null}
@@ -382,7 +378,6 @@ export const BrowseScreen = () => {
             featured={featured}
             viewsOf={viewsOf}
             onOpen={openDetail}
-            styles={styles as any}
           />
         ) : null}
       </Animated.View>
@@ -427,7 +422,7 @@ export const BrowseScreen = () => {
 
           <BrowseHeader
             greeting={greeting}
-            greetingStyle={greetingStyle}
+            greetingStyle={greetingStyle as any}
             query={query}
             setQuery={setQuery}
             submitSearch={submitSearch}
@@ -438,13 +433,10 @@ export const BrowseScreen = () => {
             runSearch={runSearch}
             onExploreCommit={commitExplore}
             reducedMotion={reducedMotion}
-            styles={styles as any}
-            theme={theme}
           />
 
           <Animated.View style={[styles.resultsWrap, resultsStyle]}>
             <LegendList
-              key={viewMode}
               style={styles.scroll}
               contentContainerStyle={styles.resultsContent}
               data={listData}

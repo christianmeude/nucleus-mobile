@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Keyboard, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type TextStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Chip, PressableScale } from '../../../components/ui';
+import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import { type Theme } from '../../../theme';
 
 const EXPLORE_DRAG_DISTANCE = 110;
@@ -28,7 +29,7 @@ const SUGGESTED_SEARCHES = [
 
 export interface BrowseHeaderProps {
   greeting: string;
-  greetingStyle: any;
+  greetingStyle: StyleProp<TextStyle>;
   query: string;
   setQuery: (text: string) => void;
   submitSearch: () => void;
@@ -39,8 +40,6 @@ export interface BrowseHeaderProps {
   runSearch: (term: string) => void;
   onExploreCommit: () => void;
   reducedMotion: boolean;
-  styles: ReturnType<typeof makeStyles>;
-  theme: Theme;
 }
 
 export const BrowseHeader = ({
@@ -56,9 +55,9 @@ export const BrowseHeader = ({
   runSearch,
   onExploreCommit,
   reducedMotion,
-  styles,
-  theme,
 }: BrowseHeaderProps) => {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const exploreFill = useSharedValue(0);
   const explorePop = useSharedValue(1);
 

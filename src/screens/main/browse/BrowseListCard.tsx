@@ -1,8 +1,9 @@
 import { memo, useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { ResearchPaper } from '../../../types/domain';
-import { formatDate, getPrimaryAuthorName, paperDate } from '../../../utils/format';
+import { getPrimaryAuthorName, formatDate, paperDate } from '../../../utils/format';
 import { PressableScale } from '../../../components/ui';
+import { useThemedStyles } from '../../../context/ThemeContext';
 import { type Theme } from '../../../theme';
 
 export interface BrowseListCardProps {
@@ -10,7 +11,6 @@ export interface BrowseListCardProps {
   categoryColor: string;
   categoryName: string | null;
   onOpen: (paperId: string) => void;
-  styles: ReturnType<typeof makeStyles>;
 }
 
 export const BrowseListCard = memo(function BrowseListCard({
@@ -18,8 +18,8 @@ export const BrowseListCard = memo(function BrowseListCard({
   categoryColor,
   categoryName,
   onOpen,
-  styles,
 }: BrowseListCardProps) {
+  const styles = useThemedStyles(makeStyles);
   const handlePress = useCallback(() => onOpen(paper.id), [onOpen, paper.id]);
 
   return (
