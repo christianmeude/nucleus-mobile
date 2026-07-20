@@ -15,10 +15,16 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { Button, Logo } from '../../components/ui';
 import { consumeLoginRejection, LoginIntent, setLoginIntent } from '../../state/loginIntent';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../navigation/types';
+
+type LoginNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
 type FocusField = 'email' | 'password' | null;
 
 export const LoginScreen = () => {
+  const navigation = useNavigation<LoginNavigationProp>();
   const { signIn } = useAuth();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -142,6 +148,12 @@ export const LoginScreen = () => {
                 variant="secondary"
                 onPress={() => onSubmit('faculty')}
                 loading={submittingIntent === 'faculty'}
+                disabled={submittingIntent !== null}
+              />
+              <Button
+                label="Forgot password?"
+                variant="subtle"
+                onPress={() => navigation.navigate('ForgotPassword', { email: email.trim() })}
                 disabled={submittingIntent !== null}
               />
             </View>

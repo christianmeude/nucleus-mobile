@@ -1,5 +1,6 @@
 export type RootStackParamList = {
   Login: undefined;
+  ForgotPassword: { email?: string } | undefined;
   UnsupportedRole: undefined;
   StudentTabs: undefined;
   ResearchDetail: { paperId: string };
