@@ -125,6 +125,9 @@ const buildViewerHtml = (
         wrapper.appendChild(pin);
       }
     });
+    if (window.__isAnnotationsVisible) {
+      window.__showAnnotations();
+    }
   };
 
   window.__jumpToPage = function(pageNumber) {
@@ -134,10 +137,13 @@ const buildViewerHtml = (
     }
   };
 
+  window.__isAnnotationsVisible = false;
   window.__showAnnotations = function() {
-    document.querySelectorAll('.ann-overlay').forEach(function(el) { el.style.display = ''; });
+    window.__isAnnotationsVisible = true;
+    document.querySelectorAll('.ann-overlay').forEach(function(el) { el.style.display = 'block'; });
   };
   window.__hideAnnotations = function() {
+    window.__isAnnotationsVisible = false;
     document.querySelectorAll('.ann-overlay').forEach(function(el) { el.style.display = 'none'; });
   };
 
@@ -474,6 +480,53 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(({
     }
   };
 
+  const renderControls = (isFullscreen = false) => (
+    <View style={styles.controls}>
+      {annotateEnabled ? (
+        <Pressable
+          onPress={() => {
+            setAnnotating((prev) => !prev);
+            setPendingAnchor(null);
+          }}
+          accessibilityRole="button"
+          accessibilityState={{ selected: annotating }}
+          accessibilityLabel={annotating ? 'Cancel adding a note' : 'Add a note'}
+          style={[styles.controlButton, annotating ? styles.controlButtonActive : null]}
+        >
+          <Ionicons
+            name={annotating ? 'close' : 'create-outline'}
+            size={18}
+            color={theme.colors.text.onBrand}
+          />
+        </Pressable>
+      ) : null}
+      {hasPositionedAnnotations ? (
+        <Pressable
+          onPress={() => setShowAnnotations((prev) => !prev)}
+          accessibilityRole="button"
+          accessibilityLabel={showAnnotations ? 'Hide annotations' : 'Show annotations'}
+          style={styles.controlButton}
+        >
+          <Ionicons
+            name={showAnnotations ? 'eye' : 'eye-outline'}
+            size={18}
+            color={theme.colors.text.onBrand}
+          />
+        </Pressable>
+      ) : null}
+      {fill || isFullscreen ? null : (
+        <Pressable
+          onPress={() => setFullscreen(true)}
+          accessibilityRole="button"
+          accessibilityLabel="View PDF fullscreen"
+          style={styles.controlButton}
+        >
+          <Ionicons name="expand-outline" size={18} color={theme.colors.text.onBrand} />
+        </Pressable>
+      )}
+    </View>
+  );
+
   // Preview: page 1 only, non-scrollable, no controls or fullscreen — the host
   // (a blurred preview card) owns the frame and the tap-to-open affordance.
   if (variant === 'preview') {
@@ -501,50 +554,7 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(({
           }}
           onAnnotationPress={onAnnotationPress}
         />
-        <View style={styles.controls}>
-          {annotateEnabled ? (
-            <Pressable
-              onPress={() => {
-                setAnnotating((prev) => !prev);
-                setPendingAnchor(null);
-              }}
-              accessibilityRole="button"
-              accessibilityState={{ selected: annotating }}
-              accessibilityLabel={annotating ? 'Cancel adding a note' : 'Add a note'}
-              style={[styles.controlButton, annotating ? styles.controlButtonActive : null]}
-            >
-              <Ionicons
-                name={annotating ? 'close' : 'create-outline'}
-                size={18}
-                color={theme.colors.text.onBrand}
-              />
-            </Pressable>
-          ) : null}
-          {hasPositionedAnnotations ? (
-            <Pressable
-              onPress={() => setShowAnnotations((prev) => !prev)}
-              accessibilityRole="button"
-              accessibilityLabel={showAnnotations ? 'Hide annotations' : 'Show annotations'}
-              style={styles.controlButton}
-            >
-              <Ionicons
-                name={showAnnotations ? 'eye' : 'eye-outline'}
-                size={18}
-                color={theme.colors.text.onBrand}
-              />
-            </Pressable>
-          ) : null}
-          {fill ? null : (
-            <Pressable
-              onPress={() => setFullscreen(true)}
-              accessibilityRole="button"
-              accessibilityLabel="View PDF fullscreen"
-              style={styles.controlButton}
-            >
-              <Ionicons name="expand-outline" size={18} color={theme.colors.text.onBrand} />
-            </Pressable>
-          )}
-        </View>
+        {renderControls(false)}
         {annotating && !pendingAnchor ? (
           <View style={styles.hint} pointerEvents="none">
             <Text style={styles.hintText}>Tap the page to place a note</Text>
@@ -571,13 +581,27 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(({
             </View>
             <View style={styles.modalBody}>
               {fullscreen ? (
-                <PdfSurface 
-                  ref={ref} 
-                  uri={uri} 
-                  annotations={annotations} 
-                  showAnnotations={showAnnotations} 
-                  onAnnotationPress={onAnnotationPress}
-                />
+                <>
+                  <PdfSurface 
+                    ref={ref} 
+                    uri={uri} 
+                    annotations={annotations} 
+                    showAnnotations={showAnnotations} 
+                    onAnnotationPress={onAnnotationPress}
+                    annotationMode={annotating && !pendingAnchor}
+                    onPlaceNote={(pageNumber, anchor) => {
+                      setNoteError(null);
+                      setNoteText('');
+                      setPendingAnchor({ pageNumber, x: anchor.x, y: anchor.y });
+                    }}
+                  />
+                  {renderControls(true)}
+                  {annotating && !pendingAnchor ? (
+                    <View style={styles.hint} pointerEvents="none">
+                      <Text style={styles.hintText}>Tap the page to place a note</Text>
+                    </View>
+                  ) : null}
+                </>
               ) : null}
             </View>
           </SafeAreaView>
