@@ -44,3 +44,12 @@ This document maps the Ionicons glyphs currently used in the app to their Lucide
 | `time-outline` | `Clock` | |
 | `trending-up-outline` | `TrendingUp` | |
 | `trophy` | `Trophy` | |
+| `person-add-outline` | `UserPlus` | |
+| `chatbubble-ellipses-outline` | `MessageSquareMore` | |
+| `business-outline` | `Building` | |
+| `school-outline` | `GraduationCap` | |
+| `calendar-outline` | `Calendar` | |
+| `log-out-outline` | `LogOut` | |
+| `moon-outline` | `Moon` | |
+| `refresh-outline` | `RefreshCcw` | |
+| `ribbon-outline` | `Award` | |
