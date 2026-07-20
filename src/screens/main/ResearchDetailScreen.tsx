@@ -32,7 +32,7 @@ import {
   SheetPresenter,
 } from '../../components/ui';
 import { PdfViewer, type PdfViewerRef } from '../../components/PdfViewer';
-import { AnnotationPanel, type AnnotationPanelRef } from '../../components/AnnotationPanel';
+import { AnnotationPanel } from '../../components/AnnotationPanel';
 import {
   formatDate,
   getPrimaryAuthorName,
@@ -65,6 +65,7 @@ export const ResearchDetailScreen = () => {
   const [paper, setPaper] = useState<ResearchPaper | null>(null);
   const [annotations, setAnnotations] = useState<any[]>([]);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
   const [workflow, setWorkflow] = useState<WorkflowEntry[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [related, setRelated] = useState<ResearchPaper[]>([]);
@@ -84,7 +85,6 @@ export const ResearchDetailScreen = () => {
   const [pdfOpen, setPdfOpen] = useState(false);
   
   const pdfRef = useRef<PdfViewerRef>(null);
-  const panelRef = useRef<AnnotationPanelRef>(null);
 
   // Track a view the first time the reader actually opens the PDF, once per screen
   // visit — the sheet unmounts on close, so without this guard each re-open would
@@ -232,10 +232,8 @@ export const ResearchDetailScreen = () => {
               researchApi.trackView(paperId).catch(() => undefined);
             }}
             onAnnotationPress={(id) => {
+              setSelectedAnnotationId(id);
               setPanelOpen(true);
-              setTimeout(() => {
-                panelRef.current?.scrollToAnnotation(id);
-              }, 400);
             }}
           />
         ) : null
@@ -413,20 +411,26 @@ export const ResearchDetailScreen = () => {
         ) : null}
       </ScrollView>
       </Screen>
-      <AnnotationPanel
-        ref={panelRef}
-        annotations={annotations}
-        visible={panelOpen}
-        onClose={() => setPanelOpen(false)}
-        onAnnotationPress={(ann) => {
-          if (ann.pageNumber) {
-            setPdfOpen(true);
-            setTimeout(() => {
-              pdfRef.current?.jumpToPage(ann.pageNumber!);
-            }, 400);
-          }
-        }}
-      />
+      {annotations.length > 0 && (
+        <AnnotationPanel
+          annotations={annotations}
+          visible={panelOpen}
+          selectedAnnotationId={selectedAnnotationId}
+          onClose={() => {
+            setPanelOpen(false);
+            setSelectedAnnotationId(null);
+          }}
+          onAnnotationPress={(ann) => {
+            setPanelOpen(false);
+            if (ann.pageNumber) {
+              setPdfOpen(true);
+              setTimeout(() => {
+                pdfRef.current?.jumpToPage(ann.pageNumber!);
+              }, 400);
+            }
+          }}
+        />
+      )}
     </SheetPresenter>
   );
 };

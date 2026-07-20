@@ -414,7 +414,7 @@ async function loadResearchRows(selectQuery: string, filters?: ResearchListParam
   return filterPublishedRows(Array.from(mergedRows.values()), filters);
 }
 
-export interface StudentAnnotation {
+export interface PaperAnnotation {
   id: string;
   parentId: string | null;
   annotationType: AnnotationType;
@@ -431,16 +431,16 @@ export interface StudentAnnotation {
   reviewerRole: string | null;
 }
 
-interface StudentAnnotationUserRow extends ResearchAuthorRow {
+interface PaperAnnotationUserRow extends ResearchAuthorRow {
   role?: string | null;
 }
 
-interface StudentAnnotationRow {
+interface PaperAnnotationRow {
   id: string;
   parent_id?: string | null;
   comment?: string | null;
   created_at?: string | null;
-  reviewer?: StudentAnnotationUserRow | StudentAnnotationUserRow[] | null;
+  reviewer?: PaperAnnotationUserRow | PaperAnnotationUserRow[] | null;
 }
 
 const STUDENT_ANNOTATION_SELECT = `
@@ -459,14 +459,14 @@ const STUDENT_ANNOTATION_SELECT = `
 `;
 
 function pickReviewerRow(
-  rel?: StudentAnnotationUserRow | StudentAnnotationUserRow[] | null,
-): StudentAnnotationUserRow | null {
+  rel?: PaperAnnotationUserRow | PaperAnnotationUserRow[] | null,
+): PaperAnnotationUserRow | null {
   if (!rel) return null;
   if (Array.isArray(rel)) return rel[0] ?? null;
   return rel;
 }
 
-function toStudentAnnotation(row: StudentAnnotationRow): StudentAnnotation {
+function toPaperAnnotation(row: PaperAnnotationRow): PaperAnnotation {
   const reviewer = pickReviewerRow(row.reviewer);
   const text = String(row.comment ?? '');
 
@@ -498,7 +498,7 @@ function toStudentAnnotation(row: StudentAnnotationRow): StudentAnnotation {
 }
 
 export const researchApi = {
-  fetchAnnotations: async (paperId: string): Promise<StudentAnnotation[]> => {
+  fetchAnnotations: async (paperId: string): Promise<PaperAnnotation[]> => {
     // Only fetch for a paper the student is assigned to (enforced by RLS)
     await resolveCurrentStudentProfile();
 
@@ -513,8 +513,8 @@ export const researchApi = {
       throw new Error(error.message || 'Unable to load annotations.');
     }
 
-    const rows = Array.isArray(data) ? (data as unknown as StudentAnnotationRow[]) : [];
-    return rows.map(toStudentAnnotation);
+    const rows = Array.isArray(data) ? (data as unknown as PaperAnnotationRow[]) : [];
+    return rows.map(toPaperAnnotation);
   },
 
   getMyPapers: async () => {

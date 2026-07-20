@@ -24,6 +24,8 @@ import { Button, InlineNotice } from './ui';
 
 const PDFJS_VERSION = '3.11.174';
 
+import { AnnotationType, AnnotationRect, AnnotationPoint } from '../utils/annotation';
+
 /**
  * A positioned annotation overlay to render on top of a PDF page.
  * Pass an array of these to PdfViewer.annotations (faculty review only; student screen omits).
@@ -33,10 +35,10 @@ const PDFJS_VERSION = '3.11.174';
 export interface PdfAnnotationOverlay {
   id: string;
   pageNumber: number | null;
-  annotationType: 'comment' | 'note' | 'draw';
+  annotationType: AnnotationType;
   highlightColor?: string | null;
-  highlightRects?: Array<{ left: number; top: number; width: number; height: number }> | null;
-  anchorPercent?: { x: number; y: number } | null;
+  highlightRects?: AnnotationRect[] | null;
+  anchorPercent?: AnnotationPoint | null;
   drawImageUrl?: string | null;
 }
 
@@ -105,10 +107,10 @@ const buildViewerHtml = (
           var el = document.createElement('div');
           el.className = 'ann-overlay';
           el.style.cssText = 'position:absolute;border-radius:2px;pointer-events:auto;cursor:pointer;';
-          el.style.left = rect.left + '%';
-          el.style.top = rect.top + '%';
-          el.style.width = rect.width + '%';
-          el.style.height = rect.height + '%';
+          el.style.left = rect.x + '%';
+          el.style.top = rect.y + '%';
+          el.style.width = rect.w + '%';
+          el.style.height = rect.h + '%';
           el.style.background = safeColor(ann.highlightColor, 0.35) || 'rgba(255,220,0,0.35)';
           el.onclick = function(e) { e.stopPropagation(); post({ type: 'tapAnnotation', id: ann.id }); };
           wrapper.appendChild(el);

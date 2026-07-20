@@ -2,53 +2,55 @@ import React, { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheet } from './ui';
-import { StudentAnnotation } from '../api/research';
+import { PaperAnnotation } from '../api/research';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
 import { formatDate } from '../utils/format';
 import { ANNOTATION_ICONS } from '../utils/annotation';
 
 interface AnnotationPanelProps {
-  annotations: StudentAnnotation[];
+  annotations: PaperAnnotation[];
   visible: boolean;
   onClose: () => void;
-  onAnnotationPress?: (annotation: StudentAnnotation) => void;
-}
-
-export interface AnnotationPanelRef {
-  scrollToAnnotation: (id: string) => void;
+  onAnnotationPress?: (annotation: PaperAnnotation) => void;
+  selectedAnnotationId?: string | null;
 }
 
 type AnnotationGroupKey = number | 'general';
 
 interface ThreadedAnnotation {
-  annotation: StudentAnnotation;
-  replies: StudentAnnotation[];
+  annotation: PaperAnnotation;
+  replies: PaperAnnotation[];
 }
 
-export const AnnotationPanel = forwardRef<AnnotationPanelRef, AnnotationPanelProps>(({
+export const AnnotationPanel = ({
   annotations,
   visible,
   onClose,
   onAnnotationPress,
-}, ref) => {
+  selectedAnnotationId,
+}: AnnotationPanelProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const scrollViewRef = useRef<ScrollView>(null);
   const itemLayouts = useRef<Record<string, number>>({});
 
-  useImperativeHandle(ref, () => ({
-    scrollToAnnotation: (id: string) => {
-      const y = itemLayouts.current[id];
-      if (y !== undefined && scrollViewRef.current) {
-        scrollViewRef.current.scrollTo({ y, animated: true });
-      }
-    },
-  }));
+  React.useEffect(() => {
+    if (visible && selectedAnnotationId) {
+      // Small timeout allows the BottomSheet to transition and the ScrollView to layout
+      const timer = setTimeout(() => {
+        const y = itemLayouts.current[selectedAnnotationId];
+        if (y !== undefined && scrollViewRef.current) {
+          scrollViewRef.current.scrollTo({ y, animated: true });
+        }
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [visible, selectedAnnotationId]);
 
   const threadedGroups = useMemo(() => {
     const topLevel = new Map<string, ThreadedAnnotation>();
-    const replies: StudentAnnotation[] = [];
+    const replies: PaperAnnotation[] = [];
 
     annotations.forEach((annotation) => {
       if (annotation.parentId) {
@@ -91,7 +93,7 @@ export const AnnotationPanel = forwardRef<AnnotationPanelRef, AnnotationPanelPro
     return a - b;
   });
 
-  const renderAnnotationItem = (annotation: StudentAnnotation, isReply: boolean = false) => {
+  const renderAnnotationItem = (annotation: PaperAnnotation, isReply: boolean = false) => {
     const iconName = ANNOTATION_ICONS[annotation.annotationType] || 'chatbubble-outline';
 
     return (
@@ -166,7 +168,7 @@ export const AnnotationPanel = forwardRef<AnnotationPanelRef, AnnotationPanelPro
       </ScrollView>
     </BottomSheet>
   );
-});
+};
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({

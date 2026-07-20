@@ -1,5 +1,13 @@
 import { fetchAppUserProfile } from '../auth/fetchAppUserProfile';
-import { PUBLISHED_STATUSES } from './research';
+import {
+  PUBLISHED_STATUSES,
+  PaperAnnotation,
+} from './research';
+import {
+  AnnotationType,
+  AnnotationRect,
+  AnnotationPoint,
+} from '../utils/annotation';
 import { supabase } from '../lib/supabase';
 import { NotificationItem, PaperStatus } from '../types/domain';
 
@@ -411,38 +419,7 @@ export function summarizeFacultyWorkload(papers: FacultyAssignedPaper[]): Facult
 // PDF. The data layer carries both; the UI decides presentation.
 // =============================================================================
 
-export type FacultyAnnotationType = 'comment' | 'note' | 'draw';
-
-/** A highlight rectangle, in page-percentage units (0–100). */
-export interface FacultyAnnotationRect {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-}
-
-/** A note pin's anchor on the page, in page-percentage units (0–100). */
-export interface FacultyAnnotationPoint {
-  x: number;
-  y: number;
-}
-
-export interface FacultyAnnotation {
-  id: string;
-  parentId: string | null;
-  annotationType: FacultyAnnotationType;
-  note: string;
-  pageNumber: number | null;
-  highlightColor: string | null;
-  sectionLabel: string | null;
-  selectedText: string | null;
-  highlightRects: FacultyAnnotationRect[] | null;
-  anchorPercent: FacultyAnnotationPoint | null;
-  drawImageUrl: string | null;
-  createdAt: string | null;
-  reviewerName: string;
-  reviewerRole: string | null;
-}
+// Removed FacultyAnnotation types, imported from research.ts
 
 interface FacultyAnnotationUserRow extends FacultyAuthorRow {
   role?: string | null;
@@ -480,9 +457,9 @@ function clampPercent(value: unknown): number | null {
   return Math.min(100, Math.max(0, n));
 }
 
-function sanitizeHighlightRects(input: unknown): FacultyAnnotationRect[] | null {
+function sanitizeHighlightRects(input: unknown): AnnotationRect[] | null {
   if (!Array.isArray(input)) return null;
-  const out: FacultyAnnotationRect[] = [];
+  const out: AnnotationRect[] = [];
   for (const raw of input.slice(0, 80)) {
     if (!raw || typeof raw !== 'object') continue;
     const rect = raw as Record<string, unknown>;
@@ -492,12 +469,12 @@ function sanitizeHighlightRects(input: unknown): FacultyAnnotationRect[] | null 
     const height = clampPercent(rect.height);
     if (left === null || top === null || width === null || height === null) continue;
     if (width <= 0 || height <= 0) continue;
-    out.push({ left, top, width, height });
+    out.push({ x: left, y: top, w: width, h: height });
   }
   return out.length ? out : null;
 }
 
-function sanitizeAnchorPercent(input: unknown): FacultyAnnotationPoint | null {
+function sanitizeAnchorPercent(input: unknown): AnnotationPoint | null {
   if (!input || typeof input !== 'object') return null;
   const point = input as Record<string, unknown>;
   const x = clampPercent(point.x);
@@ -506,8 +483,8 @@ function sanitizeAnchorPercent(input: unknown): FacultyAnnotationPoint | null {
   return { x, y };
 }
 
-function normalizeAnnotationType(value: unknown): FacultyAnnotationType {
-  return value === 'draw' || value === 'note' ? value : 'comment';
+function normalizeAnnotationType(value: unknown): AnnotationType {
+  return (value === 'draw' || value === 'note' ? value : 'comment') as AnnotationType;
 }
 
 function pickReviewer(
@@ -517,7 +494,7 @@ function pickReviewer(
   return Array.isArray(rel) ? rel[0] ?? null : rel;
 }
 
-function toFacultyAnnotation(row: FacultyAnnotationRow): FacultyAnnotation {
+function toFacultyAnnotation(row: FacultyAnnotationRow): PaperAnnotation {
   const reviewer = pickReviewer(row.reviewer);
   const text = String(row.comment ?? '');
 
@@ -573,7 +550,7 @@ export interface CreateFacultyNoteInput {
   paperId: string;
   note: string;
   pageNumber: number;
-  anchorPercent: FacultyAnnotationPoint;
+  anchorPercent: AnnotationPoint;
   highlightColor?: string;
 }
 
@@ -787,7 +764,7 @@ export const facultyApi = {
    * no RPC is needed. Returns chronological order (oldest first); the caller
    * groups replies via parentId.
    */
-  getAnnotations: async (paperId: string): Promise<FacultyAnnotation[]> => {
+  getAnnotations: async (paperId: string): Promise<PaperAnnotation[]> => {
     await resolveCurrentFacultyProfile();
 
     const { data, error } = await supabase
