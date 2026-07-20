@@ -478,20 +478,20 @@ Reader-first Home — a glance at your own submissions, then discovery. It is
 
 ### First-run (A4)
 
-No raster illustration — the carousel is built entirely from `@expo/vector-icons`
-(`Ionicons`) inside token-styled tiles, so it costs no new dependency and stays
-locked to the palette rather than depending on external art generation. Four
+No raster illustration — the carousel is built entirely from `lucide-react-native`
+inside token-styled tiles, which matches the app's modern iconography standard and
+stays locked to the palette rather than depending on external art generation. Four
 slides, one swipeable `FlatList` (`pagingEnabled`, horizontal), full-bleed
 `surface-base` background:
 
 - **Slide layout:** icon tile centered in the top ~45% of the screen — `132×132`
-  circle, `primary-surface` fill, the slide's `Ionicons` glyph at `56px` in
+  circle, `primary-surface` fill, the slide's Lucide glyph at `56px` in
   `primary` (last slide's glyph in `accent` — the one emphasis exception, since
   it's the "you're ready" beat). Below: `h1` headline, `body` subcopy
   (`text-secondary`), both center-aligned with `lg` side margins.
-- **Slide 1 — Discover NU Research.** Icon: `search-outline`. "Browse research
+- **Slide 1 — Discover NU Research.** Icon: `Search`. "Browse research
   across every department — search, filter, and read what NU is publishing."
-- **Slide 2 — Submit in Minutes.** Icon: `cloud-upload-outline`. "Upload your
+- **Slide 2 — Submit in Minutes.** Icon: `CloudUpload`. "Upload your
   paper and send it straight into faculty review, right from your phone."
 - **Slide 3 — Follow Every Stage.** Illustration is a standalone stage-progress
   strip — `Submitted → Faculty → Dean → Published` with the third dot in the

@@ -4,6 +4,7 @@ import { Bell } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
+import { Icon } from './Icon';
 import { useActivityCount } from '../../hooks/useActivityCount';
 import { useCoachmarkTarget } from '../coachmarks/CoachmarkProvider';
 
@@ -66,7 +67,8 @@ export const TopBar = ({ title, children, variant = 'default', leading, trailing
           accessibilityLabel="Activity"
           hitSlop={8}
         >
-          <Bell
+          <Icon
+            icon={Bell}
             size={22}
             color={isHero ? theme.colors.text.onBrand : theme.colors.text.secondary}
           />
