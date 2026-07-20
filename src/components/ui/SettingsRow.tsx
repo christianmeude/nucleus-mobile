@@ -1,13 +1,15 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { type LucideIcon } from 'lucide-react-native';
+import { ChevronRight } from 'lucide-react-native';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { PressableScale } from './motion/PressableScale';
+import { Icon } from './Icon';
 
 type SettingsRowTrailing = 'chevron' | 'toggle';
 
 interface SettingsRowProps {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: LucideIcon;
   label: string;
   subtitle?: string;
   divided?: boolean;
@@ -38,7 +40,7 @@ export const SettingsRow = ({
   const content = (
     <View style={[styles.row, divided && styles.rowDivided]}>
       <View style={styles.iconTile}>
-        <Ionicons name={icon} size={18} color={theme.colors.brand.primary} />
+        <Icon icon={icon} size={18} color={theme.colors.brand.primary} />
       </View>
       <View style={styles.rowText}>
         <Text style={styles.rowLabel}>{label}</Text>
@@ -49,7 +51,7 @@ export const SettingsRow = ({
         ) : null}
       </View>
       {trailing === 'chevron' ? (
-        <Ionicons name="chevron-forward" size={18} color={theme.colors.text.disabled} />
+        <Icon icon={ChevronRight} size={18} color={theme.colors.text.disabled} />
       ) : trailing === 'toggle' ? (
         <View
           style={styles.toggleTrack}

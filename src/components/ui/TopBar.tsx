@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Bell } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
@@ -66,8 +66,7 @@ export const TopBar = ({ title, children, variant = 'default', leading, trailing
           accessibilityLabel="Activity"
           hitSlop={8}
         >
-          <Ionicons
-            name="notifications-outline"
+          <Bell
             size={22}
             color={isHero ? theme.colors.text.onBrand : theme.colors.text.secondary}
           />

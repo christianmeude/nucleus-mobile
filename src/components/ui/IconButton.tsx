@@ -1,10 +1,11 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, ViewStyle } from 'react-native';
+import { type LucideIcon } from 'lucide-react-native';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
+import { Icon } from './Icon';
 
 interface IconButtonProps {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: LucideIcon;
   onPress: () => void;
   accessibilityLabel: string;
   color?: string;
@@ -33,7 +34,7 @@ export const IconButton = ({
         pressed ? styles.pressedScale : null,
       ]}
     >
-      <Ionicons name={icon} size={20} color={iconColor} />
+      <Icon icon={icon} size={20} color={iconColor} />
     </Pressable>
   );
 };

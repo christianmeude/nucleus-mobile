@@ -5,6 +5,7 @@ import { formatMonthYear, initialsFor } from '../../utils/format';
 import { useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { ProfileHeader, Screen, SettingsRow } from '../../components/ui';
+import { Award, Mail, Building, GraduationCap, Calendar, LogOut } from 'lucide-react-native';
 
 export const FacultyProfileScreen = () => {
   const { user, signOut } = useAuth();
@@ -38,34 +39,34 @@ export const FacultyProfileScreen = () => {
 
         <View style={styles.rowsSection}>
           {roleLabel ? (
-            <SettingsRow icon="ribbon-outline" label="Role" subtitle={roleLabel} />
+            <SettingsRow icon={Award} label="Role" subtitle={roleLabel} />
           ) : null}
           <SettingsRow
-            icon="mail-outline"
+            icon={Mail}
             label="Email"
             subtitle={user?.email || '—'}
             divided={!!roleLabel}
           />
           <SettingsRow
-            icon="business-outline"
+            icon={Building}
             label="Department"
             subtitle={user?.department || '—'}
             divided
           />
           <SettingsRow
-            icon="school-outline"
+            icon={GraduationCap}
             label="Program"
             subtitle={user?.program || '—'}
             divided
           />
           <SettingsRow
-            icon="calendar-outline"
+            icon={Calendar}
             label="Member since"
             subtitle={formatMonthYear(user?.createdAt)}
             divided
           />
           <SettingsRow
-            icon="log-out-outline"
+            icon={LogOut}
             label="Sign out"
             divided
             onPress={signOut}

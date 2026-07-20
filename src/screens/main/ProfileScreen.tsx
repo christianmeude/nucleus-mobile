@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { ProfileHeader, Screen, SettingsRow } from '../../components/ui';
+import { Mail, Lock, Moon, LogOut, RefreshCcw } from 'lucide-react-native';
 import { initialsFor } from '../../utils/format';
 // TEMP QA helper (#69) — remove with the row below before merging.
 import { resetFirstRun } from '../../lib/devResetFirstRun';
@@ -36,27 +37,27 @@ export const ProfileScreen = () => {
 
         <View style={styles.rowsSection}>
           <SettingsRow
-            icon="mail-outline"
+            icon={Mail}
             label="Recovery email"
             subtitle="Add a personal email for password reset"
             trailing="chevron"
           />
           <SettingsRow
-            icon="lock-closed-outline"
+            icon={Lock}
             label="Password"
             subtitle="Change your password"
             divided
             trailing="chevron"
           />
           <SettingsRow
-            icon="moon-outline"
+            icon={Moon}
             label="Dark mode"
             subtitle="Match system appearance"
             divided
             trailing="toggle"
           />
           <SettingsRow
-            icon="log-out-outline"
+            icon={LogOut}
             label="Sign out"
             divided
             onPress={signOut}
@@ -64,7 +65,7 @@ export const ProfileScreen = () => {
           />
           {/* TEMP QA (#69) — replay onboarding + coachmarks. Remove before merge. */}
           <SettingsRow
-            icon="refresh-outline"
+            icon={RefreshCcw}
             label="Reset first-run (DEV)"
             subtitle="Replay onboarding + coachmarks"
             divided
