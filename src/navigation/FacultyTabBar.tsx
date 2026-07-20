@@ -7,10 +7,10 @@ import { FacultyTabsParamList } from './types';
 // follow the student outline/filled convention: Review uses a check-review pair
 // to read distinctly from Browse's search glyph.
 const TAB_META: Partial<Record<keyof FacultyTabsParamList, TabMeta[string]>> = {
-  FacultyDashboard: { label: 'Home', icon: ['house', 'house.fill'] },
-  FacultyReview: { label: 'Review', icon: ['checkmark.seal', 'checkmark.seal.fill'] },
-  FacultyRepository: { label: 'Browse', icon: ['magnifyingglass', 'magnifyingglass'] },
-  FacultyProfile: { label: 'Profile', icon: ['person', 'person.fill'] },
+  FacultyDashboard: { label: 'Home', icon: ['house', 'house.fill', 'home-outline', 'home'] },
+  FacultyReview: { label: 'Review', icon: ['checkmark.seal', 'checkmark.seal.fill', 'checkmark-done-circle-outline', 'checkmark-done-circle'] },
+  FacultyRepository: { label: 'Browse', icon: ['magnifyingglass', 'magnifyingglass', 'search-outline', 'search'] },
+  FacultyProfile: { label: 'Profile', icon: ['person', 'person.fill', 'person-outline', 'person'] },
 };
 
 /**

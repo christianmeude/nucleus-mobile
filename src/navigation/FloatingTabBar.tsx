@@ -2,6 +2,7 @@ import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SymbolView, SFSymbol } from 'expo-symbols';
+import { Ionicons } from '@expo/vector-icons';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,7 +21,7 @@ import { useCoachmarkTarget } from '../components/coachmarks/CoachmarkProvider';
 import { type CoachmarkId } from '../components/coachmarks/sequence';
 import { isFirstEntranceArmed } from '../lib/firstEntrance';
 
-export type IconPair = [outline: SFSymbol, filled: SFSymbol];
+export type IconPair = [outline: SFSymbol, filled: SFSymbol, ionOutline: keyof typeof Ionicons.glyphMap, ionFilled: keyof typeof Ionicons.glyphMap];
 
 /**
  * Per-tab label + outline/filled icon pair, keyed by route name. An optional
@@ -33,6 +34,7 @@ export type TabMeta = Record<string, { label: string; icon: IconPair; coachmarkI
 /** Optional raised center action (student Submit FAB). When absent, tabs fill the bar evenly. */
 export interface FabConfig {
   icon: SFSymbol;
+  ionIcon: keyof typeof Ionicons.glyphMap;
   accessibilityLabel: string;
   onPress: () => void;
 }
@@ -104,7 +106,12 @@ const TabItem = ({
       accessibilityState={{ selected: focused }}
       accessibilityLabel={meta.label}
     >
-      <SymbolView name={focused ? meta.icon[1] : meta.icon[0]} size={22} tintColor={color} />
+      <SymbolView 
+        name={focused ? meta.icon[1] : meta.icon[0]} 
+        size={22} 
+        tintColor={color} 
+        fallback={<Ionicons name={focused ? meta.icon[3] : meta.icon[2]} size={22} color={color} />} 
+      />
       <Text style={[styles.tabLabel, { color }]} numberOfLines={1}>
         {meta.label}
       </Text>
@@ -272,7 +279,12 @@ export const FloatingTabBar = ({ state, navigation, tabMeta, fab }: FloatingTabB
                 style={styles.fabGloss}
                 pointerEvents="none"
               />
-              <SymbolView name={fab.icon} size={30} tintColor={FAB_INK} />
+              <SymbolView 
+                name={fab.icon} 
+                size={30} 
+                tintColor={FAB_INK} 
+                fallback={<Ionicons name={fab.ionIcon} size={30} color={FAB_INK} />} 
+              />
             </PressableScale>
           </View>
         ) : null}
