@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -17,7 +17,9 @@ import {
   Screen,
   Skeleton,
 } from '../../components/ui';
-import { PdfViewer, type PdfAnnotationOverlay } from '../../components/PdfViewer';
+import { PdfViewer, type PdfAnnotationOverlay, type PdfViewerRef } from '../../components/PdfViewer';
+import { AnnotationPanel, type AnnotationPanelRef } from '../../components/AnnotationPanel';
+import { StudentAnnotation } from '../../api/research';
 import {
   facultyApi,
   type FacultyAnnotation,
@@ -50,6 +52,9 @@ export const FacultyReviewDetailScreen = () => {
   const [fileError, setFileError] = useState<string | null>(null);
   const [annotations, setAnnotations] = useState<FacultyAnnotation[] | null>(null);
   const [annotationsError, setAnnotationsError] = useState<string | null>(null);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const pdfRef = useRef<PdfViewerRef>(null);
+  const panelRef = useRef<AnnotationPanelRef>(null);
 
   // Review-action state
   const [sheet, setSheet] = useState<SheetKind | null>(null);
@@ -282,10 +287,17 @@ export const FacultyReviewDetailScreen = () => {
             <InlineNotice tone="danger" message={fileError} />
           ) : fileUri ? (
             <PdfViewer
+              ref={pdfRef}
               uri={fileUri}
               annotations={overlays}
               canAnnotate={canReview}
               onCreateNote={handleCreateNote}
+              onAnnotationPress={(id) => {
+                setPanelOpen(true);
+                setTimeout(() => {
+                  panelRef.current?.scrollToAnnotation(id);
+                }, 400);
+              }}
             />
           ) : (
             <Skeleton height={460} radius="lg" />
@@ -501,6 +513,20 @@ export const FacultyReviewDetailScreen = () => {
           </>
         ) : null}
       </BottomSheet>
+
+      <AnnotationPanel
+        ref={panelRef}
+        annotations={(annotations || []) as unknown as StudentAnnotation[]}
+        visible={panelOpen}
+        onClose={() => setPanelOpen(false)}
+        onAnnotationPress={(ann) => {
+          if (ann.pageNumber) {
+            // Note: In Faculty view, PdfViewer is always rendered inline (no fullscreen modal by default), 
+            // so we can jump immediately.
+            pdfRef.current?.jumpToPage(ann.pageNumber);
+          }
+        }}
+      />
     </>
   );
 };
