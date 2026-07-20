@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
+import { forwardRef, useImperativeHandle } from 'react';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
 import { Button, InlineNotice } from './ui';
@@ -37,6 +38,10 @@ export interface PdfAnnotationOverlay {
   highlightRects?: Array<{ left: number; top: number; width: number; height: number }> | null;
   anchorPercent?: { x: number; y: number } | null;
   drawImageUrl?: string | null;
+}
+
+export interface PdfViewerRef {
+  jumpToPage: (pageNumber: number) => void;
 }
 
 /** Self-contained HTML that pulls pdf.js from a CDN and renders the signed URL to canvases.
@@ -91,32 +96,42 @@ const buildViewerHtml = (
         var img = document.createElement('img');
         img.className = 'ann-overlay';
         img.src = ann.drawImageUrl;
-        img.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;opacity:0.85;';
+        img.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;opacity:0.85;pointer-events:auto;cursor:pointer;';
+        img.onclick = function(e) { e.stopPropagation(); post({ type: 'tapAnnotation', id: ann.id }); };
         wrapper.appendChild(img);
       }
       if (ann.highlightRects && ann.highlightRects.length) {
         ann.highlightRects.forEach(function(rect) {
           var el = document.createElement('div');
           el.className = 'ann-overlay';
-          el.style.cssText = 'position:absolute;border-radius:2px;';
+          el.style.cssText = 'position:absolute;border-radius:2px;pointer-events:auto;cursor:pointer;';
           el.style.left = rect.left + '%';
           el.style.top = rect.top + '%';
           el.style.width = rect.width + '%';
           el.style.height = rect.height + '%';
           el.style.background = safeColor(ann.highlightColor, 0.35) || 'rgba(255,220,0,0.35)';
+          el.onclick = function(e) { e.stopPropagation(); post({ type: 'tapAnnotation', id: ann.id }); };
           wrapper.appendChild(el);
         });
       }
       if (ann.annotationType === 'note' && ann.anchorPercent) {
         var pin = document.createElement('div');
         pin.className = 'ann-overlay ann-pin';
-        pin.style.cssText = 'position:absolute;';
+        pin.style.cssText = 'position:absolute;pointer-events:auto;cursor:pointer;';
         pin.style.left = ann.anchorPercent.x + '%';
         pin.style.top = ann.anchorPercent.y + '%';
         pin.style.background = safeColor(ann.highlightColor, 0.9) || '#CDA434';
+        pin.onclick = function(e) { e.stopPropagation(); post({ type: 'tapAnnotation', id: ann.id }); };
         wrapper.appendChild(pin);
       }
     });
+  };
+
+  window.__jumpToPage = function(pageNumber) {
+    var wrappers = document.querySelectorAll('.page-wrapper');
+    if (wrappers[pageNumber - 1]) {
+      wrappers[pageNumber - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   window.__showAnnotations = function() {
@@ -212,10 +227,11 @@ interface PdfSurfaceProps {
   /** When true, a tap on a page reports its position via onPlaceNote (faculty add-note mode). */
   annotationMode?: boolean;
   onPlaceNote?: (pageNumber: number, anchor: { x: number; y: number }) => void;
+  onAnnotationPress?: (id: string) => void;
 }
 
 /** Renders the PDF via a pdf.js-in-WebView surface with its own loading + error handling. */
-const PdfSurface = ({
+const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(({
   uri,
   onLoaded,
   annotations,
@@ -224,7 +240,8 @@ const PdfSurface = ({
   scrollEnabled = true,
   annotationMode = false,
   onPlaceNote,
-}: PdfSurfaceProps) => {
+  onAnnotationPress,
+}, ref) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const webViewRef = useRef<WebView>(null);
@@ -232,6 +249,14 @@ const PdfSurface = ({
   const [errored, setErrored] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);
   const firedFirstLoad = useRef(false);
+
+  useImperativeHandle(ref, () => ({
+    jumpToPage: (pageNumber: number) => {
+      if (webViewRef.current) {
+        webViewRef.current.injectJavaScript(`window.__jumpToPage && window.__jumpToPage(${pageNumber}); true;`);
+      }
+    },
+  }));
 
   // Inject annotation overlay data whenever the PDF finishes loading or annotations change.
   // Overlays are created hidden; the visibility effect below controls show/hide independently.
@@ -270,6 +295,7 @@ const PdfSurface = ({
       pageNumber?: number;
       x?: number;
       y?: number;
+      id?: string;
     } = {};
     try {
       payload = JSON.parse(event.nativeEvent.data);
@@ -295,6 +321,8 @@ const PdfSurface = ({
       ) {
         onPlaceNote?.(payload.pageNumber, { x: payload.x, y: payload.y });
       }
+    } else if (payload.type === 'tapAnnotation' && payload.id) {
+      onAnnotationPress?.(payload.id);
     }
   };
 
@@ -344,7 +372,7 @@ const PdfSurface = ({
       ) : null}
     </View>
   );
-};
+});
 
 interface PdfViewerProps {
   uri: string;
@@ -378,9 +406,10 @@ interface PdfViewerProps {
     anchorPercent: { x: number; y: number };
     note: string;
   }) => Promise<void>;
+  onAnnotationPress?: (id: string) => void;
 }
 
-export const PdfViewer = ({
+export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(({
   uri,
   onFirstLoad,
   height = 460,
@@ -388,7 +417,8 @@ export const PdfViewer = ({
   variant = 'inline',
   canAnnotate = false,
   onCreateNote,
-}: PdfViewerProps) => {
+  onAnnotationPress,
+}, ref) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [fullscreen, setFullscreen] = useState(false);
@@ -449,7 +479,7 @@ export const PdfViewer = ({
   if (variant === 'preview') {
     return (
       <View style={styles.fillRoot}>
-        <PdfSurface uri={uri} onLoaded={onFirstLoad} firstPageOnly scrollEnabled={false} />
+        <PdfSurface ref={ref} uri={uri} onLoaded={onFirstLoad} firstPageOnly scrollEnabled={false} />
       </View>
     );
   }
@@ -458,6 +488,7 @@ export const PdfViewer = ({
     <View style={fill ? styles.fillRoot : undefined}>
       <View style={[fill ? styles.panelFill : styles.panel, fill ? undefined : { height }]}>
         <PdfSurface
+          ref={ref}
           uri={uri}
           onLoaded={onFirstLoad}
           annotations={annotations}
@@ -468,6 +499,7 @@ export const PdfViewer = ({
             setNoteText('');
             setPendingAnchor({ pageNumber, x: anchor.x, y: anchor.y });
           }}
+          onAnnotationPress={onAnnotationPress}
         />
         <View style={styles.controls}>
           {annotateEnabled ? (
@@ -539,7 +571,13 @@ export const PdfViewer = ({
             </View>
             <View style={styles.modalBody}>
               {fullscreen ? (
-                <PdfSurface uri={uri} annotations={annotations} showAnnotations={showAnnotations} />
+                <PdfSurface 
+                  ref={ref} 
+                  uri={uri} 
+                  annotations={annotations} 
+                  showAnnotations={showAnnotations} 
+                  onAnnotationPress={onAnnotationPress}
+                />
               ) : null}
             </View>
           </SafeAreaView>
@@ -599,7 +637,7 @@ export const PdfViewer = ({
       </Modal>
     </View>
   );
-};
+});
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({

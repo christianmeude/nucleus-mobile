@@ -31,8 +31,8 @@ import {
   Screen,
   SheetPresenter,
 } from '../../components/ui';
-import { PdfViewer } from '../../components/PdfViewer';
-import { AnnotationPanel } from '../../components/AnnotationPanel';
+import { PdfViewer, type PdfViewerRef } from '../../components/PdfViewer';
+import { AnnotationPanel, type AnnotationPanelRef } from '../../components/AnnotationPanel';
 import {
   formatDate,
   getPrimaryAuthorName,
@@ -82,6 +82,10 @@ export const ResearchDetailScreen = () => {
   }));
   const [error, setError] = useState('');
   const [pdfOpen, setPdfOpen] = useState(false);
+  
+  const pdfRef = useRef<PdfViewerRef>(null);
+  const panelRef = useRef<AnnotationPanelRef>(null);
+
   // Track a view the first time the reader actually opens the PDF, once per screen
   // visit — the sheet unmounts on close, so without this guard each re-open would
   // remount PdfViewer and re-fire onFirstLoad, over-counting views.
@@ -218,12 +222,20 @@ export const ResearchDetailScreen = () => {
       sheet={
         fileUri ? (
           <PdfViewer
+            ref={pdfRef}
             uri={fileUri}
             variant="fill"
+            annotations={annotations}
             onFirstLoad={() => {
               if (viewTracked.current) return;
               viewTracked.current = true;
               researchApi.trackView(paperId).catch(() => undefined);
+            }}
+            onAnnotationPress={(id) => {
+              setPanelOpen(true);
+              setTimeout(() => {
+                panelRef.current?.scrollToAnnotation(id);
+              }, 400);
             }}
           />
         ) : null
@@ -402,9 +414,18 @@ export const ResearchDetailScreen = () => {
       </ScrollView>
       </Screen>
       <AnnotationPanel
+        ref={panelRef}
         annotations={annotations}
         visible={panelOpen}
         onClose={() => setPanelOpen(false)}
+        onAnnotationPress={(ann) => {
+          if (ann.pageNumber) {
+            setPdfOpen(true);
+            setTimeout(() => {
+              pdfRef.current?.jumpToPage(ann.pageNumber!);
+            }, 400);
+          }
+        }}
       />
     </SheetPresenter>
   );

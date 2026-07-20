@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheet } from './ui';
 import { StudentAnnotation } from '../api/research';
@@ -12,6 +12,11 @@ interface AnnotationPanelProps {
   annotations: StudentAnnotation[];
   visible: boolean;
   onClose: () => void;
+  onAnnotationPress?: (annotation: StudentAnnotation) => void;
+}
+
+export interface AnnotationPanelRef {
+  scrollToAnnotation: (id: string) => void;
 }
 
 type AnnotationGroupKey = number | 'general';
@@ -21,9 +26,25 @@ interface ThreadedAnnotation {
   replies: StudentAnnotation[];
 }
 
-export const AnnotationPanel = ({ annotations, visible, onClose }: AnnotationPanelProps) => {
+export const AnnotationPanel = forwardRef<AnnotationPanelRef, AnnotationPanelProps>(({
+  annotations,
+  visible,
+  onClose,
+  onAnnotationPress,
+}, ref) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const itemLayouts = useRef<Record<string, number>>({});
+
+  useImperativeHandle(ref, () => ({
+    scrollToAnnotation: (id: string) => {
+      const y = itemLayouts.current[id];
+      if (y !== undefined && scrollViewRef.current) {
+        scrollViewRef.current.scrollTo({ y, animated: true });
+      }
+    },
+  }));
 
   const threadedGroups = useMemo(() => {
     const topLevel = new Map<string, ThreadedAnnotation>();
@@ -74,8 +95,17 @@ export const AnnotationPanel = ({ annotations, visible, onClose }: AnnotationPan
     const iconName = ANNOTATION_ICONS[annotation.annotationType] || 'chatbubble-outline';
 
     return (
-      <View key={annotation.id} style={[styles.item, isReply && styles.itemReply]}>
-        <View style={styles.itemHeader}>
+      <View
+        key={annotation.id}
+        style={[styles.item, isReply && styles.itemReply]}
+        onLayout={(e) => {
+          itemLayouts.current[annotation.id] = e.nativeEvent.layout.y;
+        }}
+      >
+        <Pressable
+          style={styles.itemHeader}
+          onPress={() => onAnnotationPress?.(annotation)}
+        >
           <View style={styles.itemMeta}>
             <Ionicons name={iconName} size={20} color={theme.colors.text.muted} />
             <Text style={styles.reviewerName}>{annotation.reviewerName}</Text>
@@ -84,7 +114,7 @@ export const AnnotationPanel = ({ annotations, visible, onClose }: AnnotationPan
             ) : null}
           </View>
           <Text style={styles.date}>{formatDate(annotation.createdAt)}</Text>
-        </View>
+        </Pressable>
 
         {annotation.selectedText ? (
           <View style={styles.quoteBlock}>
@@ -111,7 +141,7 @@ export const AnnotationPanel = ({ annotations, visible, onClose }: AnnotationPan
       <View style={styles.header}>
         <Text style={styles.title}>Reviewer Feedback</Text>
       </View>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView ref={scrollViewRef} contentContainerStyle={styles.content}>
         {annotations.length === 0 ? (
           <Text style={styles.empty}>No annotations for this paper.</Text>
         ) : (
@@ -136,7 +166,7 @@ export const AnnotationPanel = ({ annotations, visible, onClose }: AnnotationPan
       </ScrollView>
     </BottomSheet>
   );
-};
+});
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
