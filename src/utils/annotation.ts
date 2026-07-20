@@ -72,3 +72,9 @@ export function normalizeAnnotationType(value: unknown): AnnotationType {
   if (str === 'note' || str === 'draw') return str;
   return 'comment';
 }
+
+export const ANNOTATION_ICONS = {
+  note: 'document-text-outline',
+  draw: 'brush-outline',
+  comment: 'chatbubble-outline',
+} as const;

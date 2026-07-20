@@ -46,15 +46,19 @@ export const ForgotPasswordScreen = () => {
     setLoading(true);
     setError('');
     
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim());
+    const { data, error: invokeError } = await supabase.functions.invoke('request-otp', {
+      body: { email: email.trim() },
+    });
     
     setLoading(false);
     
-    if (resetError) {
-      setError(resetError.message);
+    if (invokeError) {
+      setError(invokeError.message);
+    } else if (data?.error) {
+      setError(data.error);
     } else {
       setStep(2);
-      setSuccessMsg('Verification code sent to your email.');
+      setSuccessMsg('Verification code sent to your recovery email.');
     }
   };
 
@@ -67,34 +71,22 @@ export const ForgotPasswordScreen = () => {
     setLoading(true);
     setError('');
     
-    // Verify OTP for password recovery
-    const { data, error: verifyError } = await supabase.auth.verifyOtp({
-      email: email.trim(),
-      token: code.trim(),
-      type: 'recovery',
-    });
-    
-    if (verifyError) {
-      setLoading(false);
-      setError(verifyError.message);
-      return;
-    }
-    
-    // Now the user is signed in temporarily, update the password
-    const { error: updateError } = await supabase.auth.updateUser({
-      password: newPassword,
+    const { data, error: invokeError } = await supabase.functions.invoke('verify-otp', {
+      body: { 
+        email: email.trim(),
+        code: code.trim(),
+        newPassword,
+      },
     });
     
     setLoading(false);
     
-    if (updateError) {
-      setError(updateError.message);
+    if (invokeError) {
+      setError(invokeError.message);
+    } else if (data?.error) {
+      setError(data.error);
     } else {
       // Successfully updated password, navigate back to login
-      // auth context will probably pick up the session and redirect automatically if we don't sign them out,
-      // but in this flow we might just let AuthContext handle the navigation.
-      // If we want them to log in again:
-      await supabase.auth.signOut();
       navigation.replace('Login');
     }
   };
