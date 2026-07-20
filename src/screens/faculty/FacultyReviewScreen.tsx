@@ -113,6 +113,7 @@ export const FacultyReviewScreen = () => {
       </View>
 
       <LegendList
+        recycleItems={false}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         refreshControl={

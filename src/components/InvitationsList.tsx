@@ -74,6 +74,7 @@ export const InvitationsList = () => {
 
   return (
     <LegendList
+      recycleItems={false}
       style={styles.container}
       contentContainerStyle={styles.content}
       refreshControl={

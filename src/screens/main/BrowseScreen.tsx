@@ -437,6 +437,7 @@ export const BrowseScreen = () => {
 
           <Animated.View style={[styles.resultsWrap, resultsStyle]}>
             <LegendList
+              recycleItems={false}
               style={styles.scroll}
               contentContainerStyle={styles.resultsContent}
               data={listData}
@@ -545,6 +546,7 @@ const makeStyles = (theme: Theme) =>
     },
     resultsWrap: {
       flexBasis: 0,
+      minHeight: 1,
       overflow: 'hidden',
     },
     scroll: {

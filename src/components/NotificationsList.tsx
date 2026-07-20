@@ -136,6 +136,7 @@ export const NotificationsList = () => {
 
   return (
     <LegendSectionList
+      recycleItems={false}
       style={styles.container}
       contentContainerStyle={styles.content}
       refreshControl={

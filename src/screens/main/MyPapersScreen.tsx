@@ -107,6 +107,7 @@ export const MyPapersScreen = () => {
   return (
     <Screen edges={{ bottom: false }}>
       <LegendList
+        recycleItems={false}
         style={styles.scroll}
         contentContainerStyle={styles.content}
         refreshControl={
