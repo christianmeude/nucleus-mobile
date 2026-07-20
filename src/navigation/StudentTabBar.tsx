@@ -4,10 +4,10 @@ import { StudentTabsParamList } from './types';
 
 const TAB_META: Record<keyof StudentTabsParamList, TabMeta[string]> = {
   Dashboard: { label: 'Home', icon: ['house', 'house.fill', 'home-outline', 'home'] },
-  MyPapers: { label: 'Papers', icon: ['folder', 'folder.fill', 'folder-open-outline', 'folder-open'] },
+  MyPapers: { label: 'Papers', icon: ['doc.on.doc', 'doc.on.doc.fill', 'folder-open-outline', 'folder-open'] },
   // `coachmarkId` marks Browse as the third first-run coachmark target (#69).
-  Browse: { label: 'Browse', icon: ['magnifyingglass', 'magnifyingglass', 'search-outline', 'search'], coachmarkId: 'browseTab' },
-  Profile: { label: 'Profile', icon: ['person', 'person.fill', 'person-outline', 'person'] },
+  Browse: { label: 'Browse', icon: ['sparkle.magnifyingglass', 'sparkle.magnifyingglass', 'search-outline', 'search'], coachmarkId: 'browseTab' },
+  Profile: { label: 'Profile', icon: ['person.crop.circle', 'person.crop.circle.fill', 'person-outline', 'person'] },
 };
 
 /**
