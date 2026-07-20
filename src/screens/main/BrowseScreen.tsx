@@ -20,7 +20,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { LegendList } from '@legendapp/list';
+import { LegendList } from '@legendapp/list/react-native';
 
 import { researchApi } from '../../api/research';
 import { useAuth } from '../../context/AuthContext';
@@ -325,8 +325,8 @@ export const BrowseScreen = () => {
 
   const keyExtractor = useCallback((item: ResearchPaper) => item.id, []);
 
-  const renderItem: ListRenderItem<ResearchPaper> = useCallback(
-    ({ item }) => {
+  const renderItem = useCallback(
+    ({ item }: { item: ResearchPaper }) => {
       const categoryColor = colorForCategory(item.category);
       const categoryName = resolveCategoryName(item.category, categoryNameById);
       return (
