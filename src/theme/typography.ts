@@ -3,11 +3,10 @@ import { PixelRatio, type TextStyle } from 'react-native';
 /**
  * NUcleus typography tokens.
  *
- * Single app-wide typeface: Roboto. Visual hierarchy comes from size/weight/
- * letter-spacing per scale entry, not from a second family — per Christian's
- * call on #51, Montserrat has been dropped entirely.
+ * Single app-wide typeface: Inter. Visual hierarchy comes from size/weight/
+ * letter-spacing per scale entry, not from a second family.
  *
- * `families.ui` and `families.display` both resolve to Roboto weights; the
+ * `families.ui` and `families.display` both resolve to Inter weights; the
  * two keys are kept (rather than collapsed to one) so existing call sites —
  * `t.fontFamilies.display.*` for heading roles, `t.fontFamilies.ui.*` for
  * everything else — don't need a mass find-replace across the codebase.
@@ -16,8 +15,8 @@ import { PixelRatio, type TextStyle } from 'react-native';
  * (Headline/Title), not sized up arbitrarily — see the `typography` scale below.
  *
  * React Native does not select a weight from a single family name + numeric weight;
- * each weight must reference its own registered font name. Roboto ships via
- * `@expo-google-fonts/roboto` and is loaded in App.tsx.
+ * each weight must reference its own registered font name. Inter ships via
+ * `@expo-google-fonts/inter` and is loaded in App.tsx.
  */
 
 const MAX_FONT_SCALE = 1.3;
@@ -27,16 +26,16 @@ export const scaledFontSize = (size: number): number => {
   return Math.round(size * scale);
 };
 
-const roboto = {
-  regular: 'Roboto_400Regular',
-  medium: 'Roboto_500Medium',
-  semibold: 'Roboto_600SemiBold',
-  bold: 'Roboto_700Bold',
+const inter = {
+  regular: 'Inter_400Regular',
+  medium: 'Inter_500Medium',
+  semibold: 'Inter_600SemiBold',
+  bold: 'Inter_700Bold',
 } as const;
 
 export const families = {
-  ui: roboto,
-  display: roboto,
+  ui: inter,
+  display: inter,
 } as const;
 
 export type FontFamilyKey = 'ui' | 'display';
@@ -81,12 +80,12 @@ const make = (
  *   - `h2`       ≈ M3 Title Large (20, unchanged)
  *   - `h3`       ≈ M3 Title Medium (17, unchanged)
  * `display` and `h1`-`h3` use the `display` family key, which now resolves
- * to Roboto like everything else; sizes/weights are unchanged.
+ * to Inter like everything else; sizes/weights are unchanged.
  */
 export const typography = {
-  display: make('display', 'semibold', 28, 36, 0.15),
-  h1: make('display', 'bold', 24, 32, 0),
-  h2: make('display', 'bold', 20, 28, 0),
+  display: make('display', 'semibold', 28, 36, -0.3),
+  h1: make('display', 'bold', 24, 32, -0.3),
+  h2: make('display', 'bold', 20, 28, -0.3),
   h3: make('display', 'semibold', 17, 24, 0),
   bodyStrong: make('ui', 'semibold', 15, 22, 0),
   body: make('ui', 'regular', 15, 22, 0),

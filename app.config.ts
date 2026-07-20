@@ -46,7 +46,8 @@ export default ({ config }: ConfigContext): any => {
       'expo-dev-client',
       'expo-web-browser',
       'expo-font',
-      'expo-status-bar'
+      'expo-status-bar',
+      'expo-splash-screen'
     ],
     extra: {
       eas: {

@@ -17,7 +17,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@expo-google-fonts/roboto": "^0.4.3",
+    "@expo-google-fonts/inter": "^0.4.2",
     "@expo/vector-icons": "^15.1.1",
     "@gorhom/bottom-sheet": "^5.2.14",
     "@legendapp/list": "^3.3.3",
@@ -34,6 +34,7 @@
     "expo-haptics": "~56.0.3",
     "expo-linear-gradient": "~56.0.4",
     "expo-linking": "~56.0.15",
+    "expo-splash-screen": "~56.0.13",
     "expo-status-bar": "~56.0.4",
     "expo-symbols": "~56.0.6",
     "expo-web-browser": "~56.0.5",

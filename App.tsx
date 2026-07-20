@@ -3,58 +3,52 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
-  useFonts as useRoboto,
-  Roboto_400Regular,
-  Roboto_500Medium,
-  Roboto_600SemiBold,
-  Roboto_700Bold,
-} from '@expo-google-fonts/roboto';
+  useFonts as useInter,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect } from 'react';
 import { AuthProvider } from './src/context/AuthContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { RoleGuard } from './src/navigation/RoleGuard';
 import { CoachmarkProvider } from './src/components/coachmarks/CoachmarkProvider';
 
-const FontLoader = () => {
-  const { theme } = useTheme();
-  return (
-    <View
-      style={{
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: theme.colors.surface.base,
-      }}
-    >
-      <ActivityIndicator size="large" color={theme.colors.brand.primary} />
-    </View>
-  );
-};
+SplashScreen.preventAutoHideAsync();
 
 const AppShell = () => {
   const { scheme } = useTheme();
 
-  const [fontsReady] = useRoboto({
-    Roboto_400Regular,
-    Roboto_500Medium,
-    Roboto_600SemiBold,
-    Roboto_700Bold,
+  const [fontsReady, error] = useInter({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
   });
+
+  useEffect(() => {
+    if (fontsReady || error) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsReady, error]);
+
+  if (!fontsReady && !error) {
+    return null;
+  }
 
   return (
     <>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-      {fontsReady ? (
-        <AuthProvider>
-          <RoleGuard>
-            <CoachmarkProvider>
-              <AppNavigator />
-            </CoachmarkProvider>
-          </RoleGuard>
-        </AuthProvider>
-      ) : (
-        <FontLoader />
-      )}
+      <AuthProvider>
+        <RoleGuard>
+          <CoachmarkProvider>
+            <AppNavigator />
+          </CoachmarkProvider>
+        </RoleGuard>
+      </AuthProvider>
     </>
   );
 };
