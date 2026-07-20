@@ -32,6 +32,7 @@ import {
   SheetPresenter,
 } from '../../components/ui';
 import { PdfViewer } from '../../components/PdfViewer';
+import { AnnotationPanel } from '../../components/AnnotationPanel';
 import {
   formatDate,
   getPrimaryAuthorName,
@@ -62,6 +63,8 @@ export const ResearchDetailScreen = () => {
   const { paperId } = route.params;
 
   const [paper, setPaper] = useState<ResearchPaper | null>(null);
+  const [annotations, setAnnotations] = useState<any[]>([]);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [workflow, setWorkflow] = useState<WorkflowEntry[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [related, setRelated] = useState<ResearchPaper[]>([]);
@@ -99,10 +102,11 @@ export const ResearchDetailScreen = () => {
       try {
         const detail = await researchApi.getResearchById(paperId);
         
-        const [categoryRows, relatedRows, savedIds] = await Promise.all([
+        const [categoryRows, relatedRows, savedIds, fetchedAnns] = await Promise.all([
           researchApi.getCategories(),
           researchApi.getRelatedPapers(detail.paper, MAX_RELATED).catch(() => []),
           getSavedPaperIds().catch(() => [] as string[]),
+          researchApi.fetchAnnotations(paperId).catch(() => []),
         ]);
 
         setPaper(detail.paper);
@@ -110,6 +114,7 @@ export const ResearchDetailScreen = () => {
         setCategories(categoryRows);
         setRelated(relatedRows);
         setSaved(savedIds.includes(paperId));
+        setAnnotations(fetchedAnns);
       } catch (_error) {
         setError('Unable to load paper details.');
       } finally {
@@ -243,6 +248,17 @@ export const ResearchDetailScreen = () => {
 
         {/* Download is intentionally hidden pending backend allow_download support (Issue #8). */}
         <View style={styles.readRow}>
+          {annotations.length > 0 ? (
+            <PressableScale
+              style={styles.feedbackBtn}
+              onPress={() => setPanelOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="View feedback"
+            >
+              <Ionicons name="chatbubbles-outline" size={20} color={theme.colors.text.secondary} />
+              <Text style={styles.feedbackBtnText}>Feedback ({annotations.length})</Text>
+            </PressableScale>
+          ) : null}
           <PressableScale
             style={styles.bookmarkBtn}
             onPress={handleToggleSave}
@@ -385,6 +401,11 @@ export const ResearchDetailScreen = () => {
         ) : null}
       </ScrollView>
       </Screen>
+      <AnnotationPanel
+        annotations={annotations}
+        visible={panelOpen}
+        onClose={() => setPanelOpen(false)}
+      />
     </SheetPresenter>
   );
 };
@@ -456,6 +477,21 @@ const makeStyles = (theme: Theme) =>
     alignItems: 'center',
     justifyContent: 'flex-end',
     marginTop: theme.spacing.lg,
+    gap: theme.spacing.sm,
+  },
+  feedbackBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    height: 44,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border.subtle,
+    borderRadius: theme.radii.md,
+  },
+  feedbackBtnText: {
+    ...theme.typography.bodyStrong,
+    color: theme.colors.text.secondary,
   },
   bookmarkBtn: {
     width: 44,
