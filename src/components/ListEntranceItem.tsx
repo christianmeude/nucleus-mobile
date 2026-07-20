@@ -36,7 +36,7 @@ export const ListEntranceItem = ({ index, children }: ListEntranceItemProps) => 
     setEntering(true);
 
     const animation = Animated.sequence([
-      Animated.delay(index * motion.listStaggerDelay),
+      Animated.delay(index < 12 ? index * motion.listStaggerDelay : 0),
       Animated.parallel([
         Animated.timing(opacity, {
           toValue: 1,

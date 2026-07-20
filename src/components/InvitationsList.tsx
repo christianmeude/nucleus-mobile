@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -49,11 +49,9 @@ export const InvitationsList = () => {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData])
-  );
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const runAction = async (token: string, action: 'accept' | 'decline') => {
     setActingToken(token);
@@ -86,8 +84,13 @@ export const InvitationsList = () => {
           colors={[theme.colors.brand.primary]}
         />
       }
-      ListHeaderComponent={
+      ListHeaderComponent={() => (
         <View style={styles.header}>
+          <Text style={styles.title}>Invitations</Text>
+          <Text style={styles.subtitle}>
+            You have been invited to participate in the following research projects.
+          </Text>
+
           {error ? <InlineNotice tone="danger" message={error} /> : null}
 
           {loading ? (
@@ -104,7 +107,7 @@ export const InvitationsList = () => {
             />
           ) : null}
         </View>
-      }
+      )}
       data={loading || invitations.length === 0 ? [] : invitations}
       keyExtractor={(item) => item.id}
       estimatedItemSize={132}
@@ -136,10 +139,9 @@ const makeStyles = (t: Theme) =>
       flex: 1,
     },
     content: {
-      paddingHorizontal: t.spacing.lg,
       paddingTop: t.spacing.md,
-      paddingBottom: t.spacing['3xl'],
-      gap: t.spacing.sm,
+      paddingBottom: t.spacing['3xl'] + 120,
+      gap: t.spacing.md,
     },
     header: {
       gap: t.spacing.sm,

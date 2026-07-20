@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -66,11 +66,9 @@ export const FacultyDashboardScreen = () => {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load])
-  );
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -173,7 +171,7 @@ const makeStyles = (theme: Theme) =>
       flex: 1,
     },
     content: {
-      paddingBottom: theme.spacing['3xl'],
+      paddingBottom: theme.spacing['3xl'] + 120,
     },
     body: {
       paddingHorizontal: theme.spacing.lg,

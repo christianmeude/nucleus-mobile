@@ -230,12 +230,10 @@ export const BrowseScreen = () => {
   // Load in the background on focus so results are instant when the first search
   // fires; only rendering is gated on `searched`, never fetching. A fresh
   // greeting per focus gives the landing its varies-each-time feel.
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-      setGreeting(pickGreeting());
-    }, [loadData]),
-  );
+  useEffect(() => {
+    loadData();
+    setGreeting(pickGreeting());
+  }, [loadData]);
 
   // Once the student has ever committed a search or explore gesture, Browse
   // never collapses back to the idle greeting again — it stays in results
@@ -896,7 +894,7 @@ const makeStyles = (theme: Theme) =>
   resultsContent: {
     gap: theme.spacing.md,
     paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.xl,
+    paddingBottom: theme.spacing.xl + 120,
   },
   // Matches My Papers' search field exactly (one shared look): sunken fill,
   // hairline border, continuous-curve md radius, icon-to-input gap.

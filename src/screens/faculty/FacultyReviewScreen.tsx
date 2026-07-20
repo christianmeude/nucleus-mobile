@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useEffect, useState } from 'react';
 import {
   RefreshControl,
   ScrollView,
@@ -50,11 +50,9 @@ export const FacultyReviewScreen = () => {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load])
-  );
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -125,7 +123,7 @@ export const FacultyReviewScreen = () => {
             colors={[theme.colors.brand.primary]}
           />
         }
-        ListHeaderComponent={
+        ListHeaderComponent={() => (
           <View style={styles.listHeader}>
             {error ? <InlineNotice tone="danger" message={error} /> : null}
 
@@ -146,7 +144,7 @@ export const FacultyReviewScreen = () => {
               />
             ) : null}
           </View>
-        }
+        )}
         data={papers === null || visible.length === 0 ? [] : visible}
         keyExtractor={(item) => item.id}
         estimatedItemSize={84}
@@ -190,7 +188,7 @@ const makeStyles = (theme: Theme) =>
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.lg,
     gap: theme.spacing.md,
-    paddingBottom: theme.spacing['3xl'],
+    paddingBottom: theme.spacing['3xl'] + 120,
     flexGrow: 1,
   },
   listHeader: {

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useEffect, useState } from 'react';
 import {
   RefreshControl,
   ScrollView,
@@ -71,11 +71,9 @@ export const MyPapersScreen = () => {
     setRefreshing(false);
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData])
-  );
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const categoryNameById = useMemo(() => buildCategoryNameById(categories), [categories]);
 
@@ -119,7 +117,7 @@ export const MyPapersScreen = () => {
             colors={[theme.colors.brand.primary]}
           />
         }
-        ListHeaderComponent={
+        ListHeaderComponent={() => (
           <View style={styles.header}>
             <TopBar>
               <Text style={styles.title}>My Papers</Text>
@@ -192,7 +190,7 @@ export const MyPapersScreen = () => {
               />
             ) : null}
           </View>
-        }
+        )}
         data={loading || filtered.length === 0 ? [] : filtered}
         keyExtractor={(item) => item.id}
         estimatedItemSize={104}
@@ -221,7 +219,7 @@ const makeStyles = (t: Theme) =>
     },
     content: {
       paddingTop: t.spacing.md,
-      paddingBottom: t.spacing['3xl'] + 56,
+      paddingBottom: t.spacing['3xl'] + 120,
       gap: t.spacing.md,
     },
     header: {

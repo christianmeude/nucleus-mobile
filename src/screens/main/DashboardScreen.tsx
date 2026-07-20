@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useEffect, useState } from 'react';
 import {
   RefreshControl,
   ScrollView,
@@ -133,11 +133,9 @@ export const DashboardScreen = () => {
     setRefreshing(false);
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData])
-  );
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const firstName = useMemo(() => {
     const fullName = user?.fullName?.trim();
@@ -461,7 +459,7 @@ const makeStyles = (t: Theme) =>
       flex: 1,
     },
     content: {
-      paddingBottom: t.spacing['3xl'],
+      paddingBottom: t.spacing['3xl'] + 100,
     },
     body: {
       paddingHorizontal: t.spacing.lg,

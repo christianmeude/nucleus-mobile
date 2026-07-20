@@ -59,7 +59,6 @@ const BAR_BLUR_INTENSITY = 50;
 // Android has no real blur without an explicit method (default renders a flat
 // semi-transparent view per expo-blur's own docs); this is the SDK31+ native
 // implementation with automatic fallback to 'none' on older devices.
-const BAR_BLUR_METHOD = 'dimezisBlurViewSdk31Plus' as const;
 // Near-opaque tint over the blur, matching the mockup's `--nav` alpha (~0.93)
 // so the bar reads as frosted-but-legible rather than a see-through pane.
 const BAR_TINT_OPACITY = 0.9;
@@ -240,7 +239,6 @@ export const FloatingTabBar = ({ state, navigation, tabMeta, fab }: FloatingTabB
           <BlurView
             intensity={BAR_BLUR_INTENSITY}
             tint={scheme === 'dark' ? 'dark' : 'light'}
-            blurMethod={BAR_BLUR_METHOD}
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.barTint} pointerEvents="none" />
@@ -286,6 +284,10 @@ export const FloatingTabBar = ({ state, navigation, tabMeta, fab }: FloatingTabB
 const makeStyles = (t: Theme) =>
   StyleSheet.create({
     wrap: {
+      position: 'absolute',
+      bottom: t.spacing.md,
+      left: 0,
+      right: 0,
       paddingHorizontal: t.spacing.lg,
       paddingTop: t.spacing.sm,
       backgroundColor: 'transparent',

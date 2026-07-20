@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useEffect, useState } from 'react';
 import { Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SectionList as LegendSectionList } from '@legendapp/list/section-list';
 import { Ionicons } from '@expo/vector-icons';
@@ -76,11 +76,9 @@ export const NotificationsList = () => {
     }
   }, [source]);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData])
-  );
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const unreadCount = useMemo(
     () => notifications.filter((item) => !item.is_read).length,
@@ -207,7 +205,7 @@ const makeStyles = (t: Theme) =>
     content: {
       paddingHorizontal: t.spacing.lg,
       paddingTop: t.spacing.md,
-      paddingBottom: t.spacing['3xl'],
+      paddingBottom: t.spacing['3xl'] + 120,
       gap: t.spacing.md,
     },
     header: {

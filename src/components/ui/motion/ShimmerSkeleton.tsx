@@ -81,4 +81,5 @@ const makeStyles = (t: Theme) =>
     },
     overflowHidden: {
       overflow: 'hidden',
+    },
   });

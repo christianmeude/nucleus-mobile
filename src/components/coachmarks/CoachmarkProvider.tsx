@@ -27,7 +27,6 @@ const GAP = 10; // gap between the target control and the pointer tip
 const BUBBLE_MAX = 300;
 // Backdrop blur (Android needs an explicit method; matches FloatingTabBar).
 const BACKDROP_BLUR_INTENSITY = 16;
-const BACKDROP_BLUR_METHOD = 'dimezisBlurViewSdk31Plus' as const;
 
 interface TargetRect {
   x: number;
@@ -113,7 +112,6 @@ const CoachmarkOverlay = ({ step, rect, onAdvance }: OverlayProps) => {
           <BlurView
             intensity={BACKDROP_BLUR_INTENSITY}
             tint="dark"
-            blurMethod={BACKDROP_BLUR_METHOD}
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.dim} />
