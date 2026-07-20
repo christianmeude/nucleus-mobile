@@ -3,11 +3,11 @@ import { FloatingTabBar, type TabMeta } from './FloatingTabBar';
 import { StudentTabsParamList } from './types';
 
 const TAB_META: Record<keyof StudentTabsParamList, TabMeta[string]> = {
-  Dashboard: { label: 'Home', icon: ['home-outline', 'home'] },
-  MyPapers: { label: 'Papers', icon: ['folder-open-outline', 'folder-open'] },
+  Dashboard: { label: 'Home', icon: ['house', 'house.fill'] },
+  MyPapers: { label: 'Papers', icon: ['folder', 'folder.fill'] },
   // `coachmarkId` marks Browse as the third first-run coachmark target (#69).
-  Browse: { label: 'Browse', icon: ['search-outline', 'search'], coachmarkId: 'browseTab' },
-  Profile: { label: 'Profile', icon: ['person-outline', 'person'] },
+  Browse: { label: 'Browse', icon: ['magnifyingglass', 'magnifyingglass'], coachmarkId: 'browseTab' },
+  Profile: { label: 'Profile', icon: ['person', 'person.fill'] },
 };
 
 /**
@@ -23,7 +23,7 @@ export const StudentTabBar = (props: BottomTabBarProps) => (
     fab={{
       // Bold rounded plus — the "create a new submission" affordance. The prior
       // `create-outline` read as thin/weak on the gold button.
-      icon: 'add',
+      icon: 'plus',
       accessibilityLabel: 'Submit research',
       onPress: () => props.navigation.getParent()?.navigate('SubmitResearch' as never),
     }}

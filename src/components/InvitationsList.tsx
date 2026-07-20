@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { RefreshControl, StyleSheet, View } from 'react-native';
+import { RefreshControl, StyleSheet, View, Text } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -145,6 +145,15 @@ const makeStyles = (t: Theme) =>
     },
     header: {
       gap: t.spacing.sm,
+    },
+    title: {
+      ...t.typography.h3,
+      color: t.colors.text.primary,
+    },
+    subtitle: {
+      ...t.typography.bodySmall,
+      color: t.colors.text.muted,
+      marginBottom: t.spacing.sm,
     },
     skeletonList: {
       gap: t.spacing.sm,

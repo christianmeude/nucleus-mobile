@@ -1,7 +1,7 @@
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { SymbolView, SFSymbol } from 'expo-symbols';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,7 +20,7 @@ import { useCoachmarkTarget } from '../components/coachmarks/CoachmarkProvider';
 import { type CoachmarkId } from '../components/coachmarks/sequence';
 import { isFirstEntranceArmed } from '../lib/firstEntrance';
 
-export type IconPair = [outline: keyof typeof Ionicons.glyphMap, filled: keyof typeof Ionicons.glyphMap];
+export type IconPair = [outline: SFSymbol, filled: SFSymbol];
 
 /**
  * Per-tab label + outline/filled icon pair, keyed by route name. An optional
@@ -32,7 +32,7 @@ export type TabMeta = Record<string, { label: string; icon: IconPair; coachmarkI
 
 /** Optional raised center action (student Submit FAB). When absent, tabs fill the bar evenly. */
 export interface FabConfig {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: SFSymbol;
   accessibilityLabel: string;
   onPress: () => void;
 }
@@ -104,7 +104,7 @@ const TabItem = ({
       accessibilityState={{ selected: focused }}
       accessibilityLabel={meta.label}
     >
-      <Ionicons name={focused ? meta.icon[1] : meta.icon[0]} size={22} color={color} />
+      <SymbolView name={focused ? meta.icon[1] : meta.icon[0]} size={22} tintColor={color} />
       <Text style={[styles.tabLabel, { color }]} numberOfLines={1}>
         {meta.label}
       </Text>
@@ -272,7 +272,7 @@ export const FloatingTabBar = ({ state, navigation, tabMeta, fab }: FloatingTabB
                 style={styles.fabGloss}
                 pointerEvents="none"
               />
-              <Ionicons name={fab.icon} size={30} color={FAB_INK} />
+              <SymbolView name={fab.icon} size={30} tintColor={FAB_INK} />
             </PressableScale>
           </View>
         ) : null}

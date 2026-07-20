@@ -2,6 +2,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { BlurView } from 'expo-blur';
 import { useAuth } from '../context/AuthContext';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
@@ -55,7 +56,7 @@ const FullScreenLoader = () => {
 
 export const AppNavigator = () => {
   const { user, loading } = useAuth();
-  const { theme } = useTheme();
+  const { theme, scheme } = useTheme();
   const { hasOnboarded, loaded: onboardingLoaded, markOnboarded } = useHasOnboarded();
 
   // Wait for auth and — for students — the persisted onboarding flag before
@@ -75,7 +76,14 @@ export const AppNavigator = () => {
     <NavigationContainer>
       <Stack.Navigator
         screenOptions={{
-          headerStyle: { backgroundColor: theme.colors.surface.base },
+          headerTransparent: true,
+          headerBackground: () => (
+            <BlurView
+              intensity={80}
+              tint={scheme === 'dark' ? 'dark' : 'light'}
+              style={StyleSheet.absoluteFill}
+            />
+          ),
           headerShadowVisible: false,
           headerTintColor: theme.colors.brand.primary,
           headerTitleStyle: {

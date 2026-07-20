@@ -2,12 +2,13 @@ import { NativeStackHeaderProps } from '@react-navigation/native-stack';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
 
 export const ResearchDetailHeader = ({ navigation, options }: NativeStackHeaderProps) => {
   const insets = useSafeAreaInsets();
-  const { theme } = useTheme();
+  const { theme, scheme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const title =
     typeof options.title === 'string' && options.title.length > 0
@@ -20,10 +21,15 @@ export const ResearchDetailHeader = ({ navigation, options }: NativeStackHeaderP
         styles.wrap,
         {
           paddingTop: insets.top,
-          backgroundColor: theme.colors.surface.base,
+          backgroundColor: 'transparent',
         },
       ]}
     >
+      <BlurView
+        intensity={80}
+        tint={scheme === 'dark' ? 'dark' : 'light'}
+        style={StyleSheet.absoluteFill}
+      />
       <View style={styles.row}>
         <Pressable
           onPress={() => navigation.goBack()}
