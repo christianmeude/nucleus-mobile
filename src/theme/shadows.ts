@@ -25,17 +25,17 @@ const level0: ViewStyle = {
 };
 
 const level1: ViewStyle = {
-  shadowColor: black,
+  shadowColor: '#0B1B47',
   shadowOffset: { width: 0, height: 1 },
-  shadowOpacity: 0.06,
+  shadowOpacity: 0.08,
   shadowRadius: 3,
   elevation: 1,
 };
 
 const level2: ViewStyle = {
-  shadowColor: black,
+  shadowColor: '#0B1B47',
   shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.1,
+  shadowOpacity: 0.13,
   shadowRadius: 12,
   elevation: 4,
 };

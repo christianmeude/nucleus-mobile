@@ -149,8 +149,8 @@ export const light: ColorScheme = {
     link: palette.navy[500],
   },
   surface: {
-    base: palette.slate[50],
-    raised: palette.slate[0],
+    base: '#F1F4FA',
+    raised: '#F9FBFF',
     sunken: palette.slate[100],
     overlay: 'rgba(15, 23, 42, 0.45)',
   },
