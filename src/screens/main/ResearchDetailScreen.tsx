@@ -64,7 +64,7 @@ export const ResearchDetailScreen = () => {
   const [paper, setPaper] = useState<ResearchPaper | null>(null);
   const [workflow, setWorkflow] = useState<WorkflowEntry[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [published, setPublished] = useState<ResearchPaper[]>([]);
+  const [related, setRelated] = useState<ResearchPaper[]>([]);
   const [loading, setLoading] = useState(true);
   const [fileUri, setFileUri] = useState<string | null>(null);
   const [fileError, setFileError] = useState('');
@@ -97,18 +97,18 @@ export const ResearchDetailScreen = () => {
       setError('');
 
       try {
-        // Related papers are a client-side heuristic for now (same category + shared
-        // keywords); semantic relatedness is deferred to the Hybrid Search merge.
-        const [detail, categoryRows, publishedRows, savedIds] = await Promise.all([
-          researchApi.getResearchById(paperId),
+        const detail = await researchApi.getResearchById(paperId);
+        
+        const [categoryRows, relatedRows, savedIds] = await Promise.all([
           researchApi.getCategories(),
-          researchApi.getPublishedPapers(),
+          researchApi.getRelatedPapers(paperId, detail.paper.title, detail.paper.abstract, MAX_RELATED).catch(() => []),
           getSavedPaperIds().catch(() => [] as string[]),
         ]);
+
         setPaper(detail.paper);
         setWorkflow(detail.workflowHistory || []);
         setCategories(categoryRows);
-        setPublished(publishedRows);
+        setRelated(relatedRows);
         setSaved(savedIds.includes(paperId));
       } catch (_error) {
         setError('Unable to load paper details.');
@@ -139,29 +139,6 @@ export const ResearchDetailScreen = () => {
   }, [paperId]);
 
   const categoryNameById = useMemo(() => buildCategoryNameById(categories), [categories]);
-
-  /** Same category (weighted) + shared keywords; excludes the current paper. */
-  const related = useMemo(() => {
-    if (!paper) return [];
-    const currentKeywords = new Set(
-      (Array.isArray(paper.keywords) ? paper.keywords : []).map((k) => k.toLowerCase())
-    );
-
-    return published
-      .filter((candidate) => candidate.id !== paper.id)
-      .map((candidate) => {
-        const sameCategory =
-          candidate.category && paper.category && candidate.category === paper.category ? 2 : 0;
-        const sharedKeywords = (Array.isArray(candidate.keywords) ? candidate.keywords : []).filter(
-          (k) => currentKeywords.has(k.toLowerCase())
-        ).length;
-        return { paper: candidate, score: sameCategory + sharedKeywords };
-      })
-      .filter((entry) => entry.score > 0)
-      .sort((left, right) => right.score - left.score || timeOf(right.paper) - timeOf(left.paper))
-      .slice(0, MAX_RELATED)
-      .map((entry) => entry.paper);
-  }, [paper, published]);
 
   const handleToggleSave = async () => {
     if (savePending) return;
