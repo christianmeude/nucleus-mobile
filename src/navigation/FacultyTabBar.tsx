@@ -1,4 +1,5 @@
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { Home, ClipboardList, Search, CircleUser } from 'lucide-react-native';
 import { FloatingTabBar, type TabMeta } from './FloatingTabBar';
 import { FacultyTabsParamList } from './types';
 
@@ -7,10 +8,10 @@ import { FacultyTabsParamList } from './types';
 // follow the student outline/filled convention: Review uses a check-review pair
 // to read distinctly from Browse's search glyph.
 const TAB_META: Partial<Record<keyof FacultyTabsParamList, TabMeta[string]>> = {
-  FacultyDashboard: { label: 'Home', icon: ['house', 'house.fill', 'home-outline', 'home'] },
-  FacultyReview: { label: 'Review', icon: ['list.clipboard', 'list.clipboard.fill', 'clipboard-outline', 'clipboard'] },
-  FacultyRepository: { label: 'Browse', icon: ['sparkle.magnifyingglass', 'sparkle.magnifyingglass', 'search-outline', 'search'] },
-  FacultyProfile: { label: 'Profile', icon: ['person.crop.circle', 'person.crop.circle.fill', 'person-circle-outline', 'person-circle'] },
+  FacultyDashboard: { label: 'Home', icon: ['house', 'house.fill', Home] },
+  FacultyReview: { label: 'Review', icon: ['list.clipboard', 'list.clipboard.fill', ClipboardList] },
+  FacultyRepository: { label: 'Browse', icon: ['sparkle.magnifyingglass', 'sparkle.magnifyingglass', Search] },
+  FacultyProfile: { label: 'Profile', icon: ['person.crop.circle', 'person.crop.circle.fill', CircleUser] },
 };
 
 /**

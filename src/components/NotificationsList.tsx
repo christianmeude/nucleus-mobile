@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useEffect, useState } from 'react';
 import { Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SectionList as LegendSectionList } from '@legendapp/list/section-list';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './ui/Icon';
+import { Bell } from 'lucide-react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { notificationsApi } from '../api/notifications';
 import { facultyApi } from '../api/faculty';
@@ -176,7 +177,7 @@ export const NotificationsList = () => {
             </View>
           ) : notifications.length === 0 ? (
             <EmptyState
-              icon={<Ionicons name="notifications-outline" size={24} color={theme.colors.text.muted} />}
+              icon={<Icon icon={Bell} size={24} color={theme.colors.text.muted} />}
               title="No notifications yet"
               message="Updates on your papers and activity will appear here."
             />

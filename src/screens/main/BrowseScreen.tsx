@@ -18,7 +18,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../components/ui/Icon';
+import { CloudOff, Library, Check } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { LegendList } from '@legendapp/list/react-native';
 
@@ -393,13 +394,13 @@ export const BrowseScreen = () => {
     </View>
   ) : searchError ? (
     <EmptyState
-      icon={<Ionicons name="cloud-offline-outline" size={24} color={theme.colors.text.muted} />}
+      icon={<Icon icon={CloudOff} size={24} color={theme.colors.text.muted} />}
       title="Search unavailable"
       message={searchError}
     />
   ) : sorted.length === 0 ? (
     <EmptyState
-      icon={<Ionicons name="library-outline" size={24} color={theme.colors.text.muted} />}
+      icon={<Icon icon={Library} size={24} color={theme.colors.text.muted} />}
       title="No papers found"
       message={
         query.trim() ? `No results for "${query.trim()}"` : 'No papers found in this category'
@@ -481,7 +482,7 @@ export const BrowseScreen = () => {
                 {option.label}
               </Text>
               {active ? (
-                <Ionicons name="checkmark" size={18} color={theme.colors.brand.primary} />
+                <Icon icon={Check} size={18} color={theme.colors.brand.primary} />
               ) : null}
             </PressableScale>
           );
@@ -502,7 +503,7 @@ export const BrowseScreen = () => {
               All fields
             </Text>
             {!categoryFilter ? (
-              <Ionicons name="checkmark" size={18} color={theme.colors.brand.primary} />
+              <Icon icon={Check} size={18} color={theme.colors.brand.primary} />
             ) : null}
           </PressableScale>
           {categories.map((category) => {
@@ -523,7 +524,7 @@ export const BrowseScreen = () => {
                   {category.name}
                 </Text>
                 {active ? (
-                  <Ionicons name="checkmark" size={18} color={theme.colors.brand.primary} />
+                  <Icon icon={Check} size={18} color={theme.colors.brand.primary} />
                 ) : null}
               </PressableScale>
             );

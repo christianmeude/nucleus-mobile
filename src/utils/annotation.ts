@@ -1,3 +1,5 @@
+import { FileText, Pencil, MessageCircle } from 'lucide-react-native';
+
 export const ANNOTATION_META_OPEN = '[[meta]]';
 export const ANNOTATION_META_CLOSE = '[[/meta]]';
 
@@ -74,7 +76,7 @@ export function normalizeAnnotationType(value: unknown): AnnotationType {
 }
 
 export const ANNOTATION_ICONS = {
-  note: 'document-text-outline',
-  draw: 'brush-outline',
-  comment: 'chatbubble-outline',
+  note: FileText,
+  draw: Pencil,
+  comment: MessageCircle,
 } as const;

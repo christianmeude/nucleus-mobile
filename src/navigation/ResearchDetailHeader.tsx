@@ -1,6 +1,7 @@
 import { NativeStackHeaderProps } from '@react-navigation/native-stack';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../components/ui/Icon';
+import { ChevronLeft } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
@@ -32,7 +33,7 @@ export const ResearchDetailHeader = ({ navigation, options }: NativeStackHeaderP
           hitSlop={12}
           style={({ pressed }) => [styles.back, pressed && styles.backPressed]}
         >
-          <Ionicons name="chevron-back" size={24} color={theme.colors.brand.primary} />
+          <Icon icon={ChevronLeft} size={24} color={theme.colors.brand.primary} />
         </Pressable>
         <Text style={styles.title} numberOfLines={1}>
           {title}

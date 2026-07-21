@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './ui/Icon';
+import { Expand, X, Eye, Pencil } from 'lucide-react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { forwardRef, useImperativeHandle } from 'react';
@@ -495,8 +496,8 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(({
           accessibilityLabel={annotating ? 'Cancel adding a note' : 'Add a note'}
           style={[styles.controlButton, annotating ? styles.controlButtonActive : null]}
         >
-          <Ionicons
-            name={annotating ? 'close' : 'create-outline'}
+          <Icon
+            icon={annotating ? X : Pencil}
             size={18}
             color={theme.colors.text.onBrand}
           />
@@ -509,8 +510,8 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(({
           accessibilityLabel={showAnnotations ? 'Hide annotations' : 'Show annotations'}
           style={styles.controlButton}
         >
-          <Ionicons
-            name={showAnnotations ? 'eye' : 'eye-outline'}
+          <Icon
+            icon={Eye}
             size={18}
             color={theme.colors.text.onBrand}
           />
@@ -523,7 +524,7 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(({
           accessibilityLabel="View PDF fullscreen"
           style={styles.controlButton}
         >
-          <Ionicons name="expand-outline" size={18} color={theme.colors.text.onBrand} />
+          <Icon icon={Expand} size={18} color={theme.colors.text.onBrand} />
         </Pressable>
       )}
     </View>
@@ -578,7 +579,7 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(({
                 accessibilityLabel="Close fullscreen PDF"
                 style={styles.closeButton}
               >
-                <Ionicons name="close" size={24} color={theme.colors.text.primary} />
+                <Icon icon={X} size={24} color={theme.colors.text.primary} />
               </Pressable>
             </View>
             <View style={styles.modalBody}>

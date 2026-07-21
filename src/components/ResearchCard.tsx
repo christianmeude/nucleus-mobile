@@ -1,5 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './ui/Icon';
+import { Eye, Download } from 'lucide-react-native';
 import { PressableCard } from './ui/Card';
 import { ResearchPaper } from '../types/domain';
 import { formatDate, getPrimaryAuthorName, paperDate, statusToLabel } from '../utils/format';
@@ -79,11 +80,11 @@ export const ResearchCard = ({
           ]}
         >
           <View style={styles.engagementItem}>
-            <Ionicons name="eye-outline" size={14} color={theme.colors.text.muted} />
+            <Icon icon={Eye} size={14} color={theme.colors.text.muted} />
             <Text style={styles.meta}>{paper.view_count || 0}</Text>
           </View>
           <View style={styles.engagementItem}>
-            <Ionicons name="download-outline" size={14} color={theme.colors.text.muted} />
+            <Icon icon={Download} size={14} color={theme.colors.text.muted} />
             <Text style={styles.meta}>{paper.download_count || 0}</Text>
           </View>
         </View>

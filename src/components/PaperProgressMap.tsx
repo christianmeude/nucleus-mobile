@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './ui/Icon';
+import { Check, TriangleAlert, X } from 'lucide-react-native';
 import { PaperStatus } from '../types/domain';
 import { statusToLabel } from '../utils/format';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
@@ -138,13 +139,13 @@ export const PaperProgressMap = ({ status }: PaperProgressMapProps) => {
                       ]}
                     >
                       {state === 'done' || state === 'complete' ? (
-                        <Ionicons name="checkmark" size={10} color={theme.colors.text.onBrand} />
+                        <Icon icon={Check} size={10} color={theme.colors.text.onBrand} />
                       ) : null}
                       {state === 'warning' ? (
-                        <Ionicons name="alert" size={9} color={theme.colors.text.onBrand} />
+                        <Icon icon={TriangleAlert} size={9} color={theme.colors.text.onBrand} />
                       ) : null}
                       {state === 'danger' ? (
-                        <Ionicons name="close" size={9} color={theme.colors.text.onBrand} />
+                        <Icon icon={X} size={9} color={theme.colors.text.onBrand} />
                       ) : null}
                     </View>
                   </View>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../components/ui/Icon';
+import { ChevronLeft } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
@@ -38,7 +39,7 @@ export const ActivityScreen = () => {
             hitSlop={12}
             style={styles.back}
           >
-            <Ionicons name="chevron-back" size={24} color={theme.colors.brand.primary} />
+            <Icon icon={ChevronLeft} size={24} color={theme.colors.brand.primary} />
           </PressableScale>
           <Text style={styles.title}>Activity</Text>
           <View style={styles.backSpacer} />

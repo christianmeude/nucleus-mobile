@@ -6,8 +6,9 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Icon } from '../../components/ui/Icon';
+import { Sparkles, Eye, ArrowRight, Bookmark, ChevronRight } from 'lucide-react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
@@ -303,7 +304,7 @@ export const DashboardScreen = () => {
               </View>
             ) : recommended.length === 0 ? (
               <EmptyState
-                icon={<Ionicons name="sparkles-outline" size={24} color={theme.colors.text.muted} />}
+                icon={<Icon icon={Sparkles} size={24} color={theme.colors.text.muted} />}
                 title="Nothing to recommend yet"
                 message="Published papers in your field will appear here."
               />
@@ -341,8 +342,8 @@ export const DashboardScreen = () => {
                         {paper.title || 'Untitled'}
                       </Text>
                       <View style={styles.railMeta}>
-                        <Ionicons
-                          name="eye-outline"
+                        <Icon
+                          icon={Eye}
                           size={12}
                           color={theme.colors.text.muted}
                         />
@@ -395,8 +396,8 @@ export const DashboardScreen = () => {
                     <Text style={styles.fieldTileText} numberOfLines={2}>
                       {category.name}
                     </Text>
-                    <Ionicons
-                      name="arrow-forward"
+                    <Icon
+                      icon={ArrowRight}
                       size={15}
                       color={theme.colors.text.muted}
                     />
@@ -432,12 +433,12 @@ export const DashboardScreen = () => {
                     accessibilityRole="button"
                     accessibilityLabel={paper.title || 'Saved paper'}
                   >
-                    <Ionicons name="bookmark" size={15} color={theme.colors.brand.accent} />
+                    <Icon icon={Bookmark} size={15} color={theme.colors.brand.accent} />
                     <Text style={styles.savedTitle} numberOfLines={2}>
                       {paper.title || 'Untitled'}
                     </Text>
-                    <Ionicons
-                      name="chevron-forward"
+                    <Icon
+                      icon={ChevronRight}
                       size={14}
                       color={theme.colors.text.muted}
                     />

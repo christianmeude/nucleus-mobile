@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, StyleSheet, View, Text } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './ui/Icon';
+import { MailOpen } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { invitationsApi } from '../api/invitations';
 import { CoAuthorInvitation } from '../types/domain';
@@ -102,7 +103,7 @@ export const InvitationsList = () => {
             </View>
           ) : invitations.length === 0 ? (
             <EmptyState
-              icon={<Ionicons name="mail-open-outline" size={24} color={theme.colors.text.muted} />}
+              icon={<Icon icon={MailOpen} size={24} color={theme.colors.text.muted} />}
               title="No invitations available"
               message="Co-author invitations you receive will appear here."
             />

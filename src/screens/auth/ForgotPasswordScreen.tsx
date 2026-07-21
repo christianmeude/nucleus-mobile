@@ -9,7 +9,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../components/ui/Icon';
+import { Mail, Grid3x3, Lock, CircleAlert, CircleCheck } from 'lucide-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
@@ -126,8 +127,8 @@ export const ForgotPasswordScreen = () => {
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Email</Text>
                 <View style={[styles.inputWrap, focused === 'email' && styles.inputWrapFocused]}>
-                  <Ionicons
-                    name="mail-outline"
+                  <Icon
+                    icon={Mail}
                     size={18}
                     color={iconColor('email')}
                     style={styles.inputIcon}
@@ -150,8 +151,8 @@ export const ForgotPasswordScreen = () => {
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Verification Code</Text>
                   <View style={[styles.inputWrap, focused === 'code' && styles.inputWrapFocused]}>
-                    <Ionicons
-                      name="keypad-outline"
+                    <Icon
+                      icon={Grid3x3}
                       size={18}
                       color={iconColor('code')}
                       style={styles.inputIcon}
@@ -173,8 +174,8 @@ export const ForgotPasswordScreen = () => {
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>New Password</Text>
                   <View style={[styles.inputWrap, focused === 'password' && styles.inputWrapFocused]}>
-                    <Ionicons
-                      name="lock-closed-outline"
+                    <Icon
+                      icon={Lock}
                       size={18}
                       color={iconColor('password')}
                       style={styles.inputIcon}
@@ -196,14 +197,14 @@ export const ForgotPasswordScreen = () => {
 
             {error ? (
               <View style={styles.errorBox}>
-                <Ionicons name="alert-circle-outline" size={16} color={theme.colors.state.danger} />
+                <Icon icon={CircleAlert} size={16} color={theme.colors.state.danger} />
                 <Text style={styles.error}>{error}</Text>
               </View>
             ) : null}
 
             {successMsg && !error ? (
               <View style={[styles.errorBox, { backgroundColor: theme.colors.state.successSurface }]}>
-                <Ionicons name="checkmark-circle-outline" size={16} color={theme.colors.state.success} />
+                <Icon icon={CircleCheck} size={16} color={theme.colors.state.success} />
                 <Text style={[styles.error, { color: theme.colors.state.success }]}>{successMsg}</Text>
               </View>
             ) : null}

@@ -1,12 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './ui/Icon';
+import { UserPlus, MessageSquareMore, CircleCheck, Bell } from 'lucide-react-native';
 import { NotificationItem } from '../types/domain';
 import { formatRelativeTime } from '../utils/format';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
 
 type IconVisual = {
-  name: keyof typeof Ionicons.glyphMap;
+  icon: any;
   color: string;
   bg: string;
 };
@@ -16,7 +17,7 @@ const visualForType = (type: string | undefined, c: Theme['colors']): IconVisual
   const t = (type || '').toLowerCase();
   if (t.includes('invit') || t.includes('co_author') || t.includes('coauthor')) {
     return {
-      name: 'person-add-outline',
+      icon: UserPlus,
       color: c.brand.primary,
       bg: c.brand.primarySurface,
     };
@@ -29,7 +30,7 @@ const visualForType = (type: string | undefined, c: Theme['colors']): IconVisual
     t.includes('feedback')
   ) {
     return {
-      name: 'chatbubble-ellipses-outline',
+      icon: MessageSquareMore,
       color: c.state.warning,
       bg: c.state.warningSurface,
     };
@@ -41,13 +42,13 @@ const visualForType = (type: string | undefined, c: Theme['colors']): IconVisual
     t.includes('status')
   ) {
     return {
-      name: 'checkmark-circle-outline',
+      icon: CircleCheck,
       color: c.state.success,
       bg: c.state.successSurface,
     };
   }
   return {
-    name: 'notifications-outline',
+    icon: Bell,
     color: c.text.muted,
     bg: c.surface.sunken,
   };
@@ -76,7 +77,7 @@ export const NotificationCard = ({ notification, onPress }: NotificationCardProp
       style={({ pressed }) => [styles.row, unread && styles.rowUnread, pressed && styles.rowPressed]}
     >
       <View style={[styles.icon, { backgroundColor: visual.bg }]}>
-        <Ionicons name={visual.name} size={18} color={visual.color} />
+        <Icon icon={visual.icon} size={18} color={visual.color} />
       </View>
       <View style={styles.body}>
         <Text style={[styles.text, unread && styles.textUnread]} numberOfLines={3}>

@@ -1,6 +1,6 @@
 import React, { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './ui/Icon';
 import { BottomSheet } from './ui';
 import { PaperAnnotation } from '../api/research';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
@@ -94,7 +94,7 @@ export const AnnotationPanel = ({
   });
 
   const renderAnnotationItem = (annotation: PaperAnnotation, isReply: boolean = false) => {
-    const iconName = ANNOTATION_ICONS[annotation.annotationType] || 'chatbubble-outline';
+    const IconComponent = ANNOTATION_ICONS[annotation.annotationType] || ANNOTATION_ICONS['comment'];
 
     return (
       <View
@@ -109,7 +109,7 @@ export const AnnotationPanel = ({
           onPress={() => onAnnotationPress?.(annotation)}
         >
           <View style={styles.itemMeta}>
-            <Ionicons name={iconName} size={20} color={theme.colors.text.muted} />
+            <Icon icon={IconComponent} size={20} color={theme.colors.text.muted} />
             <Text style={styles.reviewerName}>{annotation.reviewerName}</Text>
             {annotation.reviewerRole ? (
               <Text style={styles.reviewerRole}>({annotation.reviewerRole})</Text>
