@@ -1,24 +1,17 @@
 import { useCallback, useMemo, useEffect, useState } from 'react';
-import {
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
-import Animated, { useSharedValue } from 'react-native-reanimated';
+import { Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  interpolate,
+  Extrapolation,
+} from 'react-native-reanimated';
 import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import {
-  Chip,
-  EmptyState,
-  InlineNotice,
-  Screen,
-  Skeleton,
-  TopBar,
-} from '../../components/ui';
+import { Search, X } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
+import { EmptyState, InlineNotice, Screen, Skeleton, TopBar } from '../../components/ui';
 import { FacultyPaperCard } from '../../components/FacultyPaperCard';
 import { facultyApi, type FacultyAssignedPaper } from '../../api/faculty';
 import {
@@ -32,7 +25,6 @@ import { type Theme } from '../../theme';
 
 type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
 
-
 export const FacultyReviewScreen = () => {
   const navigation = useNavigation<FacultyNavigation>();
   const { theme } = useTheme();
@@ -44,9 +36,24 @@ export const FacultyReviewScreen = () => {
   const [search, setSearch] = useState('');
 
   const scrollOffset = useSharedValue(0);
-  const onScroll = useCallback((event: any) => {
-    scrollOffset.value = event.nativeEvent.contentOffset.y;
-  }, [scrollOffset]);
+  const onScroll = useCallback(
+    (event: any) => {
+      scrollOffset.value = event.nativeEvent.contentOffset.y;
+    },
+    [scrollOffset],
+  );
+
+  const headerAnimatedStyle = useAnimatedStyle(() => {
+    const shadowOpacity = interpolate(scrollOffset.value, [0, 10], [0, 0.08], Extrapolation.CLAMP);
+    const elevation = interpolate(scrollOffset.value, [0, 10], [0, 4], Extrapolation.CLAMP);
+
+    return {
+      shadowOpacity,
+      shadowOffset: { width: 0, height: 2 },
+      shadowRadius: 4,
+      elevation,
+    };
+  });
 
   const load = useCallback(async () => {
     try {
@@ -74,7 +81,7 @@ export const FacultyReviewScreen = () => {
         acc[entry.key] = list.filter((paper) => matchesQueueFilter(paper.status, entry.key)).length;
         return acc;
       },
-      {} as Record<FacultyQueueFilter, number>
+      {} as Record<FacultyQueueFilter, number>,
     );
   }, [papers]);
 
@@ -84,40 +91,68 @@ export const FacultyReviewScreen = () => {
     return list.filter((paper) => {
       if (!matchesQueueFilter(paper.status, filter)) return false;
       if (!query) return true;
-      const corpus = `${paper.title} ${paper.authorName} ${(paper.keywords ?? []).join(' ')}`.toLowerCase();
+      const corpus =
+        `${paper.title} ${paper.authorName} ${(paper.keywords ?? []).join(' ')}`.toLowerCase();
       return corpus.includes(query);
     });
   }, [papers, filter, search]);
 
   return (
     <Screen gutter={0} edges={{ bottom: false }}>
-      <View style={styles.header}>
+      <Animated.View style={[styles.header, headerAnimatedStyle]}>
         <TopBar title="Review" variant="large" scrollOffset={scrollOffset} />
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Search by title, author, or keyword"
-          placeholderTextColor={theme.colors.text.muted}
-          style={styles.search}
-          returnKeyType="search"
-          autoCapitalize="none"
-        />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filters}
-        >
-          {FACULTY_QUEUE_FILTERS.map((entry) => (
-            <Chip
-              key={entry.key}
-              label={`${entry.label} (${counts[entry.key] ?? 0})`}
-              variant="filter"
-              active={filter === entry.key}
-              onPress={() => setFilter(entry.key)}
-            />
-          ))}
-        </ScrollView>
-      </View>
+
+        <View style={styles.searchContainer}>
+          <Search size={20} color={theme.colors.text.muted} style={styles.searchIcon} />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Search by title, author, or keyword"
+            placeholderTextColor={theme.colors.text.muted}
+            style={styles.search}
+            returnKeyType="search"
+            autoCapitalize="none"
+          />
+          {search.length > 0 && (
+            <Pressable onPress={() => setSearch('')} hitSlop={8} style={styles.clearButton}>
+              <X size={16} color={theme.colors.text.muted} />
+            </Pressable>
+          )}
+        </View>
+
+        <View style={styles.pillContainer}>
+          {FACULTY_QUEUE_FILTERS.map((entry) => {
+            const isActive = filter === entry.key;
+            return (
+              <Pressable
+                key={entry.key}
+                style={[
+                  styles.pillSegment,
+                  isActive && { backgroundColor: theme.colors.brand.primary },
+                ]}
+                onPress={() => {
+                  if (!isActive) {
+                    Haptics.selectionAsync();
+                    setFilter(entry.key);
+                  }
+                }}
+              >
+                <Text
+                  style={[
+                    styles.pillSegmentLabel,
+                    isActive && { color: theme.colors.text.onBrand },
+                  ]}
+                >
+                  {entry.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Text style={styles.papersCount}>
+          {visible.length} {visible.length === 1 ? 'paper' : 'papers'}
+        </Text>
+      </Animated.View>
 
       <LegendList
         onScroll={onScroll}
@@ -175,46 +210,76 @@ export const FacultyReviewScreen = () => {
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-  header: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.sm,
-    gap: theme.spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.border.subtle,
-  },
-  search: {
-    ...theme.typography.body,
-    color: theme.colors.text.primary,
-    backgroundColor: theme.colors.surface.raised,
-    borderWidth: 1,
-    borderColor: theme.colors.border.subtle,
-    borderRadius: theme.radii.md,
-    paddingHorizontal: theme.spacing.md,
-    height: 44,
-  },
-  filters: {
-    gap: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    paddingRight: theme.spacing.lg,
-  },
-  content: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
-    gap: theme.spacing.md,
-    paddingBottom: theme.spacing['3xl'] + 120,
-    flexGrow: 1,
-  },
-  listHeader: {
-    gap: theme.spacing.md,
-  },
-  list: {
-    gap: theme.spacing.md,
-  },
-  hint: {
-    ...theme.typography.bodySmall,
-    color: theme.colors.text.muted,
-    textAlign: 'center',
-    paddingVertical: theme.spacing.xl,
-  },
-});
+    header: {
+      paddingHorizontal: theme.spacing.lg,
+      paddingTop: theme.spacing.md,
+      paddingBottom: theme.spacing.sm,
+      gap: theme.spacing.md,
+      backgroundColor: theme.colors.surface.raised,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.border.subtle,
+      zIndex: 10,
+    },
+    searchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.surface.sunken,
+      borderCurve: 'continuous',
+      borderRadius: theme.radii.md,
+      paddingHorizontal: theme.spacing.md,
+      height: 44,
+    },
+    searchIcon: {
+      marginRight: theme.spacing.sm,
+    },
+    search: {
+      ...theme.typography.body,
+      flex: 1,
+      color: theme.colors.text.primary,
+      height: '100%',
+    },
+    clearButton: {
+      marginLeft: theme.spacing.sm,
+      padding: theme.spacing.xs,
+    },
+    pillContainer: {
+      flexDirection: 'row',
+      backgroundColor: theme.colors.surface.sunken,
+      borderRadius: 9999,
+      padding: 4,
+    },
+    pillSegment: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 8,
+      borderRadius: 9999,
+    },
+    pillSegmentLabel: {
+      ...theme.typography.label,
+      color: theme.colors.text.secondary,
+    },
+    papersCount: {
+      ...theme.typography.label,
+      color: theme.colors.text.muted,
+    },
+    content: {
+      paddingHorizontal: theme.spacing.lg,
+      paddingTop: theme.spacing.lg,
+      gap: theme.spacing.md,
+      paddingBottom: theme.spacing['3xl'] + 120,
+      flexGrow: 1,
+    },
+    listHeader: {
+      gap: theme.spacing.md,
+    },
+    list: {
+      gap: theme.spacing.md,
+    },
+    hint: {
+      ...theme.typography.bodySmall,
+      color: theme.colors.text.muted,
+      textAlign: 'center',
+      paddingVertical: theme.spacing.xl,
+    },
+  });

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from './ui/Icon';
 import { UserPlus, MessageSquareMore, CircleCheck, Bell } from 'lucide-react-native';
@@ -5,6 +6,8 @@ import { NotificationItem } from '../types/domain';
 import { formatRelativeTime } from '../utils/format';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
+import { Button } from './ui';
+import { invitationsApi } from '../api/invitations';
 
 type IconVisual = {
   icon: any;
@@ -18,8 +21,8 @@ const visualForType = (type: string | undefined, c: Theme['colors']): IconVisual
   if (t.includes('invit') || t.includes('co_author') || t.includes('coauthor')) {
     return {
       icon: UserPlus,
-      color: c.brand.primary,
-      bg: c.brand.primarySurface,
+      color: c.brand.accent,
+      bg: c.brand.accentSurface,
     };
   }
   if (
@@ -62,19 +65,47 @@ interface NotificationCardProps {
 export const NotificationCard = ({ notification, onPress }: NotificationCardProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const unread = !notification.is_read;
+  const [resolved, setResolved] = useState(false);
+  const unread = !notification.is_read && !resolved;
   const visual = visualForType(notification.type, theme.colors);
   const title = notification.title?.trim();
   const message = notification.message?.trim();
   const primaryText = title || message || 'Notification';
   const secondaryText = title && message && message !== title ? message : null;
 
+  const isInvitation = notification.type === 'invitation' && notification.status === 'pending';
+  const isRevision = notification.type?.toLowerCase().includes('revision');
+
+  const handleAccept = async () => {
+    if (!notification.token) return;
+    setResolved(true); // optimistic
+    try {
+      await invitationsApi.accept(notification.token);
+    } catch {
+      setResolved(false); // revert on failure
+    }
+  };
+
+  const handleDecline = async () => {
+    if (!notification.token) return;
+    setResolved(true); // optimistic
+    try {
+      await invitationsApi.decline(notification.token);
+    } catch {
+      setResolved(false); // revert on failure
+    }
+  };
+
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${title || message || 'Notification'}, ${unread ? 'unread' : 'read'}`}
-      style={({ pressed }) => [styles.row, unread && styles.rowUnread, pressed && styles.rowPressed]}
+      style={({ pressed }) => [
+        styles.row,
+        unread && styles.rowUnread,
+        pressed && styles.rowPressed,
+      ]}
     >
       <View style={[styles.icon, { backgroundColor: visual.bg }]}>
         <Icon icon={visual.icon} size={18} color={visual.color} />
@@ -88,6 +119,20 @@ export const NotificationCard = ({ notification, onPress }: NotificationCardProp
             {secondaryText}
           </Text>
         ) : null}
+
+        {isInvitation && !resolved && (
+          <View style={styles.chipsRow}>
+            <Button label="Accept" variant="primary" size="sm" onPress={handleAccept} />
+            <Button label="Decline" variant="subtle" size="sm" onPress={handleDecline} />
+          </View>
+        )}
+
+        {isRevision && (
+          <View style={styles.chipsRow}>
+            <Button label="View Paper" variant="primary" size="sm" onPress={onPress} />
+          </View>
+        )}
+
         <Text style={styles.time}>{formatRelativeTime(notification.created_at)}</Text>
       </View>
       {unread ? <View style={styles.dot} /> : null}
@@ -152,5 +197,13 @@ const makeStyles = (t: Theme) =>
       borderRadius: t.radii.pill,
       backgroundColor: t.colors.brand.primary,
       marginTop: 6,
+    },
+    chipsRow: {
+      flexDirection: 'row',
+      gap: t.spacing.sm,
+      marginTop: t.spacing.sm,
+    },
+    buttonWrapper: {
+      alignSelf: 'flex-start',
     },
   });
