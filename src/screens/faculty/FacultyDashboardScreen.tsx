@@ -2,19 +2,10 @@ import { useCallback, useMemo, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import {
-  DashboardHero,
-  EmptyState,
-  InlineNotice,
-  Screen,
-  Skeleton,
-} from '../../components/ui';
+import { DashboardHero, EmptyState, InlineNotice, Screen, Skeleton, CollapsibleSection } from '../../components/ui';
 import { FacultyPaperCard } from '../../components/FacultyPaperCard';
-import {
-  facultyApi,
-  summarizeFacultyWorkload,
-  type FacultyAssignedPaper,
-} from '../../api/faculty';
+import { WorkloadStrip, WorkloadFilter } from '../../components/WorkloadStrip';
+import { facultyApi, summarizeFacultyWorkload, type FacultyAssignedPaper, FACULTY_ADVANCED_STATUSES } from '../../api/faculty';
 import { RootStackParamList } from '../../navigation/types';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
@@ -55,6 +46,7 @@ export const FacultyDashboardScreen = () => {
   const [papers, setPapers] = useState<FacultyAssignedPaper[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<WorkloadFilter>(null);
 
   const load = useCallback(async () => {
     try {
@@ -78,19 +70,41 @@ export const FacultyDashboardScreen = () => {
 
   const summary = papers ? summarizeFacultyWorkload(papers) : null;
 
-  // Prioritize papers awaiting review, then revisions, then the rest by recency.
-  const queue = useMemo(() => {
+  const needsActionList = useMemo(() => {
     if (!papers) return [];
-    return [...papers]
+    let list = papers.filter((p) => p.status === 'pending_faculty' || p.status === 'revision_required');
+    if (activeFilter === 'needs_review') {
+      list = list.filter((p) => p.status === 'pending_faculty');
+    } else if (activeFilter === 'revision_sent') {
+      list = list.filter((p) => p.status === 'revision_required');
+    } else if (activeFilter === 'completed') {
+      return [];
+    }
+    return list.sort((a, b) => {
+      const byStatus = statusPriority(a.status) - statusPriority(b.status);
+      if (byStatus !== 0) return byStatus;
+      const aDate = new Date(a.submissionDate || a.createdAt || 0).getTime();
+      const bDate = new Date(b.submissionDate || b.createdAt || 0).getTime();
+      return bDate - aDate;
+    });
+  }, [papers, activeFilter]);
+
+  const completedList = useMemo(() => {
+    if (!papers) return [];
+    if (activeFilter === 'needs_review' || activeFilter === 'revision_sent') {
+      return [];
+    }
+    return papers
+      .filter((p) => FACULTY_ADVANCED_STATUSES.has(p.status))
       .sort((a, b) => {
-        const byStatus = statusPriority(a.status) - statusPriority(b.status);
-        if (byStatus !== 0) return byStatus;
         const aDate = new Date(a.submissionDate || a.createdAt || 0).getTime();
         const bDate = new Date(b.submissionDate || b.createdAt || 0).getTime();
         return bDate - aDate;
-      })
-      .slice(0, RECENT_LIMIT);
-  }, [papers]);
+      });
+  }, [papers, activeFilter]);
+
+  const showNeedsAction = activeFilter !== 'completed';
+  const showCompleted = activeFilter === null || activeFilter === 'completed';
 
   // Faculty analogue of the student hero's status line: a one-glance read of the
   // review queue, mapped from the same workload summary.
@@ -133,30 +147,71 @@ export const FacultyDashboardScreen = () => {
         <View style={styles.body}>
           {error ? <InlineNotice tone="danger" message={error} /> : null}
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Papers to review</Text>
+          {summary && (
+            <WorkloadStrip
+              summary={summary}
+              activeFilter={activeFilter}
+              onFilterChange={setActiveFilter}
+            />
+          )}
 
-            {papers === null ? (
-              error ? (
-                <Text style={styles.hint}>Pull down to retry.</Text>
-              ) : (
-                <DashboardSkeleton />
-              )
-            ) : queue.length === 0 ? (
-              <EmptyState context="all-caught-up" />
+          {papers === null ? (
+            error ? (
+              <Text style={styles.hint}>Pull down to retry.</Text>
             ) : (
-              <View style={styles.list}>
-                {queue.map((paper, index) => (
-                  <FacultyPaperCard
-                    key={paper.id}
-                    paper={paper}
-                    index={index}
-                    onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: paper.id })}
-                  />
-                ))}
-              </View>
-            )}
-          </View>
+              <DashboardSkeleton />
+            )
+          ) : papers.length === 0 ? (
+            <EmptyState context="all-caught-up" />
+          ) : (
+            <View style={styles.sections}>
+              {showNeedsAction && (
+                <CollapsibleSection title="Needs action" count={needsActionList.length} initiallyExpanded={true}>
+                  {needsActionList.length === 0 ? (
+                    <EmptyState
+                      context="no-papers"
+                      title="No papers"
+                      message="There are no pending papers in this section."
+                    />
+                  ) : (
+                    <View style={styles.list}>
+                      {needsActionList.map((paper, index) => (
+                        <FacultyPaperCard
+                          key={paper.id}
+                          paper={paper}
+                          index={activeFilter ? undefined : index}
+                          onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: paper.id })}
+                        />
+                      ))}
+                    </View>
+                  )}
+                </CollapsibleSection>
+              )}
+
+              {showCompleted && (
+                <CollapsibleSection title="Completed" count={completedList.length} initiallyExpanded={activeFilter === 'completed'}>
+                  {completedList.length === 0 ? (
+                    <EmptyState
+                      context="no-papers"
+                      title="No papers"
+                      message="You haven't completed any reviews yet."
+                    />
+                  ) : (
+                    <View style={styles.list}>
+                      {completedList.map((paper, index) => (
+                        <FacultyPaperCard
+                          key={paper.id}
+                          paper={paper}
+                          index={activeFilter ? undefined : index}
+                          onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: paper.id })}
+                        />
+                      ))}
+                    </View>
+                  )}
+                </CollapsibleSection>
+              )}
+            </View>
+          )}
         </View>
       </ScrollView>
     </Screen>
@@ -179,12 +234,14 @@ const makeStyles = (theme: Theme) =>
     section: {
       gap: theme.spacing.sm,
     },
-    sectionTitle: {
-      ...theme.typography.h3,
-      color: theme.colors.text.primary,
+    sections: {
+      gap: theme.spacing['2xl'],
+      paddingHorizontal: theme.spacing.lg,
+      marginTop: theme.spacing.md,
     },
     list: {
       gap: theme.spacing.md,
+      paddingTop: theme.spacing.sm,
     },
     hint: {
       ...theme.typography.bodySmall,

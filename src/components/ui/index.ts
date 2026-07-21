@@ -25,4 +25,6 @@ export { AnimatedListItem } from './motion/AnimatedListItem';
 export { ParallaxHeader } from './motion/ParallaxHeader';
 export { ShimmerSkeleton } from './motion/ShimmerSkeleton';
 export { SwipeAction } from './motion/SwipeAction';
+export { AnimatedNumber } from './motion/AnimatedNumber';
+export { CollapsibleSection } from './CollapsibleSection';
 export { Icon } from './Icon';

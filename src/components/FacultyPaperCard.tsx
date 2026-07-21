@@ -3,9 +3,8 @@ import { PressableCard } from './ui';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
 import { formatDate } from '../utils/format';
-import { type FacultyAssignedPaper } from '../api/faculty';
-import { ListEntranceItem } from './ListEntranceItem';
-import { FACULTY_ADVANCED_STATUSES } from '../api/faculty';
+import { type FacultyAssignedPaper, FACULTY_ADVANCED_STATUSES } from '../api/faculty';
+import Animated, { FadeInDown, SlideOutLeft, LinearTransition } from 'react-native-reanimated';
 
 interface FacultyPaperCardProps {
   paper: FacultyAssignedPaper;
@@ -15,16 +14,32 @@ interface FacultyPaperCardProps {
 
 const getStatusConfig = (status: string, t: Theme) => {
   if (status === 'pending_faculty') {
-    return { color: t.colors.brand.accent, bg: t.colors.brand.accentSurface, label: 'Needs Review' };
+    return {
+      color: t.colors.brand.accent,
+      bg: t.colors.brand.accentSurface,
+      label: 'Needs Review',
+    };
   }
   if (status === 'revision_required') {
-    return { color: t.colors.state.warning, bg: t.colors.state.warningSurface, label: 'Revision Sent' };
+    return {
+      color: t.colors.state.warning,
+      bg: t.colors.state.warningSurface,
+      label: 'Revision Sent',
+    };
   }
   if (FACULTY_ADVANCED_STATUSES.has(status)) {
     const isFinal = status === 'approved' || status === 'published';
-    return { color: t.colors.state.success, bg: t.colors.state.successSurface, label: isFinal ? 'Approved' : 'Forwarded' };
+    return {
+      color: t.colors.state.success,
+      bg: t.colors.state.successSurface,
+      label: isFinal ? 'Approved' : 'Forwarded',
+    };
   }
-  return { color: t.colors.border.subtle, bg: t.colors.surface.sunken, label: status.replace(/_/g, ' ') };
+  return {
+    color: t.colors.border.subtle,
+    bg: t.colors.surface.sunken,
+    label: status.replace(/_/g, ' '),
+  };
 };
 
 const getDaysWaiting = (dateStr?: string | null) => {
@@ -40,37 +55,37 @@ export const FacultyPaperCard = ({ paper, onPress, index }: FacultyPaperCardProp
   const daysWaiting = getDaysWaiting(paper.submissionDate || paper.createdAt);
 
   const cardContent = (
-    <PressableCard 
-      accessibilityLabel={`Review ${paper.title}`} 
-      onPress={onPress}
-      style={[styles.cardContainer, theme.shadows.level1]}
+    <Animated.View
+      layout={LinearTransition.springify().damping(16)}
+      entering={index !== undefined ? FadeInDown.delay(index * 50).springify().damping(14) : undefined}
+      exiting={SlideOutLeft.duration(300)}
     >
-      <View style={[styles.leftBar, { backgroundColor: config.color }]} />
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title} numberOfLines={2}>
-            {paper.title}
-          </Text>
-          <View style={[styles.pill, { backgroundColor: config.bg }]}>
-            <Text style={[styles.pillText, { color: config.color }]}>{config.label}</Text>
+      <PressableCard
+        accessibilityLabel={`Review ${paper.title}`}
+        onPress={onPress}
+        style={[styles.cardContainer, theme.shadows.level1]}
+      >
+        <View style={[styles.leftBar, { backgroundColor: config.color }]} />
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Text style={styles.title} numberOfLines={2}>
+              {paper.title}
+            </Text>
+            <View style={[styles.pill, { backgroundColor: config.bg }]}>
+              <Text style={[styles.pillText, { color: config.color }]}>{config.label}</Text>
+            </View>
+          </View>
+
+          <View style={styles.footer}>
+            <Text style={styles.meta} numberOfLines={1}>
+              {paper.authorName} · {formatDate(paper.submissionDate || paper.createdAt)}
+            </Text>
+            <Text style={styles.daysText}>{daysWaiting === 1 ? '1 day' : `${daysWaiting} days`}</Text>
           </View>
         </View>
-        
-        <View style={styles.footer}>
-          <Text style={styles.meta} numberOfLines={1}>
-            {paper.authorName} · {formatDate(paper.submissionDate || paper.createdAt)}
-          </Text>
-          <Text style={styles.daysText}>
-            {daysWaiting === 1 ? '1 day' : `${daysWaiting} days`}
-          </Text>
-        </View>
-      </View>
-    </PressableCard>
+      </PressableCard>
+    </Animated.View>
   );
-
-  if (index !== undefined) {
-    return <ListEntranceItem index={index}>{cardContent}</ListEntranceItem>;
-  }
 
   return cardContent;
 };
