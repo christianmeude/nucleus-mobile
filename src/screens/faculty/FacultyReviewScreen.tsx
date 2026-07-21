@@ -7,6 +7,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import Animated, { useSharedValue, useAnimatedScrollHandler } from 'react-native-reanimated';
 import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -31,6 +32,8 @@ import { type Theme } from '../../theme';
 
 type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
 
+const AnimatedLegendList = Animated.createAnimatedComponent(LegendList);
+
 export const FacultyReviewScreen = () => {
   const navigation = useNavigation<FacultyNavigation>();
   const { theme } = useTheme();
@@ -40,6 +43,13 @@ export const FacultyReviewScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<FacultyQueueFilter>('needs_review');
   const [search, setSearch] = useState('');
+
+  const scrollOffset = useSharedValue(0);
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollOffset.value = event.contentOffset.y;
+    },
+  });
 
   const load = useCallback(async () => {
     try {
@@ -85,7 +95,7 @@ export const FacultyReviewScreen = () => {
   return (
     <Screen gutter={0} edges={{ bottom: false }}>
       <View style={styles.header}>
-        <TopBar title="Review" />
+        <TopBar title="Review" variant="large" scrollOffset={scrollOffset} />
         <TextInput
           value={search}
           onChangeText={setSearch}
@@ -112,7 +122,9 @@ export const FacultyReviewScreen = () => {
         </ScrollView>
       </View>
 
-      <LegendList
+      <AnimatedLegendList
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
         recycleItems={false}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
@@ -140,21 +152,24 @@ export const FacultyReviewScreen = () => {
               )
             ) : visible.length === 0 ? (
               <EmptyState
-                title="No papers"
-                message={search.trim() ? 'No papers match your search.' : 'Nothing in this view yet.'}
+                context={search.trim() ? 'no-results' : 'no-papers'}
+                message={search.trim() ? undefined : 'Nothing in this view yet.'}
               />
             ) : null}
           </View>
         )}
-        data={papers === null || visible.length === 0 ? [] : visible}
-        keyExtractor={(item) => item.id}
+        data={papers === null || visible.length === 0 ? ([] as FacultyAssignedPaper[]) : visible}
+        keyExtractor={(item: any) => item.id}
         estimatedItemSize={84}
-        renderItem={({ item }) => (
-          <FacultyPaperCard
-            paper={item}
-            onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: item.id })}
-          />
-        )}
+        renderItem={({ item: rawItem }) => {
+          const item = rawItem as FacultyAssignedPaper;
+          return (
+            <FacultyPaperCard
+              paper={item}
+              onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: item.id })}
+            />
+          );
+        }}
       />
     </Screen>
   );

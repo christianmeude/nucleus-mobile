@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useEffect, useState } from 'react';
 import { Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SectionList as LegendSectionList } from '@legendapp/list/section-list';
+import Animated from 'react-native-reanimated';
 import { Icon } from './ui/Icon';
 import { Bell } from 'lucide-react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -25,7 +26,9 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * folding in the retired FacultyNotificationsScreen. Owns its own fetch,
  * grouping, and read-state actions.
  */
-export const NotificationsList = () => {
+const AnimatedLegendSectionList = Animated.createAnimatedComponent(LegendSectionList);
+
+export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
   const navigation = useNavigation<any>();
   const { user } = useAuth();
   const { theme } = useTheme();
@@ -136,7 +139,9 @@ export const NotificationsList = () => {
   };
 
   return (
-    <LegendSectionList
+    <AnimatedLegendSectionList
+      onScroll={onScroll}
+      scrollEventThrottle={16}
       recycleItems={false}
       style={styles.container}
       contentContainerStyle={styles.content}
@@ -177,24 +182,25 @@ export const NotificationsList = () => {
             </View>
           ) : notifications.length === 0 ? (
             <EmptyState
-              icon={<Icon icon={Bell} size={24} color={theme.colors.text.muted} />}
-              title="No notifications yet"
-              message="Updates on your papers and activity will appear here."
+              context="no-notifications"
             />
           ) : null}
         </View>
       }
-      sections={loading || notifications.length === 0 ? [] : groups}
+      sections={loading || notifications.length === 0 ? ([] as typeof groups) : groups}
       keyExtractor={(item) => item.id}
       estimatedItemSize={72}
       renderSectionHeader={({ section }) => (
-        <Text style={styles.groupTitle}>{section.title}</Text>
+        <Text style={styles.groupTitle}>{(section as any).title}</Text>
       )}
-      renderItem={({ item, index }) => (
-        <ListEntranceItem key={item.id} index={index}>
-          <NotificationCard notification={item} onPress={() => openNotification(item)} />
-        </ListEntranceItem>
-      )}
+      renderItem={({ item: rawItem, index }) => {
+        const item = rawItem as NotificationItem;
+        return (
+          <ListEntranceItem key={item.id} index={index}>
+            <NotificationCard notification={item} onPress={() => openNotification(item)} />
+          </ListEntranceItem>
+        );
+      }}
     />
   );
 };

@@ -3,10 +3,11 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Icon } from '../../components/ui/Icon';
 import { ChevronLeft } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import Animated, { useSharedValue, useAnimatedScrollHandler } from 'react-native-reanimated';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
-import { Chip, PressableScale, Screen } from '../../components/ui';
+import { Chip, PressableScale, Screen, TopBar } from '../../components/ui';
 import { NotificationsList } from '../../components/NotificationsList';
 import { InvitationsList } from '../../components/InvitationsList';
 
@@ -28,22 +29,33 @@ export const ActivityScreen = () => {
 
   const isFaculty = user?.role === 'faculty';
 
+  const scrollOffset = useSharedValue(0);
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollOffset.value = event.contentOffset.y;
+    },
+  });
+
   return (
     <Screen gutter={0}>
       <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <PressableScale
-            onPress={() => navigation.goBack()}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            hitSlop={12}
-            style={styles.back}
-          >
-            <Icon icon={ChevronLeft} size={24} color={theme.colors.brand.primary} />
-          </PressableScale>
-          <Text style={styles.title}>Activity</Text>
-          <View style={styles.backSpacer} />
-        </View>
+        <TopBar
+          title="Activity"
+          variant="large"
+          scrollOffset={scrollOffset}
+          hideBell
+          leftAccessory={
+            <PressableScale
+              onPress={() => navigation.goBack()}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+              hitSlop={12}
+              style={styles.back}
+            >
+              <Icon icon={ChevronLeft} size={24} color={theme.colors.text.primary} />
+            </PressableScale>
+          }
+        />
 
         {isFaculty ? null : (
           <View style={styles.segmented}>
@@ -63,7 +75,11 @@ export const ActivityScreen = () => {
         )}
       </View>
 
-      {isFaculty || tab === 'notifications' ? <NotificationsList /> : <InvitationsList />}
+      {isFaculty || tab === 'notifications' ? (
+        <NotificationsList onScroll={scrollHandler} />
+      ) : (
+        <InvitationsList onScroll={scrollHandler} />
+      )}
     </Screen>
   );
 };
@@ -78,26 +94,12 @@ const makeStyles = (t: Theme) =>
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: t.colors.border.subtle,
     },
-    titleRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
     back: {
       width: 44,
       height: 44,
       alignItems: 'center',
       justifyContent: 'center',
       marginLeft: -t.spacing.sm,
-    },
-    backSpacer: {
-      width: 44,
-      height: 44,
-    },
-    title: {
-      fontFamily: t.fontFamilies.display.semibold,
-      fontSize: 20,
-      color: t.colors.text.primary,
     },
     segmented: {
       flexDirection: 'row',

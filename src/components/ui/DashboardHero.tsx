@@ -63,7 +63,7 @@ export const DashboardHero = ({
 
       <View style={[styles.heroContent, { paddingTop: insets.top + theme.spacing.xl }]}>
         <TopBar
-          variant="hero"
+          tone="hero"
           leading={
             <PressableScale
               onPress={onPressAvatar}

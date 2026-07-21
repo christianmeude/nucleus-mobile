@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, StyleSheet, View, Text } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
+import Animated from 'react-native-reanimated';
 import { Icon } from './ui/Icon';
 import { MailOpen } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -22,7 +23,9 @@ const isExpired = (invitation: CoAuthorInvitation) => {
  * InvitationsScreen, now hosted inside the merged Activity screen's "Invites"
  * segment. Owns its own fetch and accept/decline actions.
  */
-export const InvitationsList = () => {
+const AnimatedLegendList = Animated.createAnimatedComponent(LegendList);
+
+export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [invitations, setInvitations] = useState<CoAuthorInvitation[]>([]);
@@ -74,7 +77,9 @@ export const InvitationsList = () => {
   };
 
   return (
-    <LegendList
+    <AnimatedLegendList
+      onScroll={onScroll}
+      scrollEventThrottle={16}
       recycleItems={false}
       style={styles.container}
       contentContainerStyle={styles.content}
@@ -103,17 +108,18 @@ export const InvitationsList = () => {
             </View>
           ) : invitations.length === 0 ? (
             <EmptyState
-              icon={<Icon icon={MailOpen} size={24} color={theme.colors.text.muted} />}
+              context="default"
               title="No invitations available"
               message="Co-author invitations you receive will appear here."
             />
           ) : null}
         </View>
       )}
-      data={loading || invitations.length === 0 ? [] : invitations}
+      data={loading || invitations.length === 0 ? ([] as CoAuthorInvitation[]) : invitations}
       keyExtractor={(item) => item.id}
       estimatedItemSize={132}
-      renderItem={({ item, index }) => {
+      renderItem={({ item: rawItem, index }) => {
+        const item = rawItem as CoAuthorInvitation;
         const calendarExpired = item.status === 'pending' && isExpired(item);
         const cardInvitation: CoAuthorInvitation = calendarExpired
           ? { ...item, status: 'expired' }

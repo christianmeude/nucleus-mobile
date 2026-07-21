@@ -8,28 +8,39 @@ import { Icon } from './Icon';
 import { useActivityCount } from '../../hooks/useActivityCount';
 import { useCoachmarkTarget } from '../coachmarks/CoachmarkProvider';
 
+import Animated, {
+  useAnimatedStyle,
+  interpolate,
+  Extrapolation,
+  SharedValue,
+  useReducedMotion,
+} from 'react-native-reanimated';
+
 interface TopBarProps {
   /** Convenience left content. Ignored when `children` is provided. */
   title?: string;
   /** Custom left slot (greeting block, title + subtitle, etc.). */
   children?: ReactNode;
   /**
-   * Visual tone for the bell. `'default'` sits on a light surface (bare
-   * glyph, `text.secondary`). `'hero'` sits on the Dashboard's navy gradient
-   * band (DESIGN.md Dashboard A3): a translucent white circle behind the
-   * glyph, `text.onBrand` color. The bell and its unread badge keep
-   * identical size/position across both tones — only color/background
-   * changes — so the control never visually "nudges" between screens.
+   * Visual tone for the bell icon color and optional other elements.
+   * 'hero' is used on the Dashboard's navy gradient band.
    */
-  variant?: 'default' | 'hero';
+  tone?: 'default' | 'hero';
   /**
-   * Optional content rendered *before* the bell (e.g. Dashboard's profile
-   * avatar). The bell stays rightmost — it is the global element; the avatar is
-   * an account control that sits to its left (DESIGN.md bell placement).
+   * Title size behavior. 'large' uses h1 size (24px) and shrinks to h3 (17px)
+   * if `scrollOffset` is provided. 'compact' is a static h3.
    */
+  variant?: 'large' | 'compact';
+  /** Shared value from a scrollable component to drive the large title collapse. */
+  scrollOffset?: SharedValue<number>;
+  /** Optional accessory rendered to the left of the title (e.g., a back button). */
+  leftAccessory?: ReactNode;
+  /** Optional content rendered *before* the bell. */
   leading?: ReactNode;
   /** Optional content rendered after the bell. */
   trailing?: ReactNode;
+  /** If true, the default bell button is omitted. */
+  hideBell?: boolean;
 }
 
 /**
@@ -39,45 +50,81 @@ interface TopBarProps {
  * tab screen — including the Dashboard hero via `variant="hero"` — so the
  * bell lives in one consistent place with one consistent look.
  */
-export const TopBar = ({ title, children, variant = 'default', leading, trailing }: TopBarProps) => {
+export const TopBar = ({
+  title,
+  children,
+  tone = 'default',
+  variant = 'compact',
+  scrollOffset,
+  leftAccessory,
+  leading,
+  trailing,
+  hideBell,
+}: TopBarProps) => {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const count = useActivityCount();
-  const isHero = variant === 'hero';
-  // First-run coachmark target (#69): the bell is the sequence's first stop.
+  const isHero = tone === 'hero';
+  const isLarge = variant === 'large';
+  const reduceMotion = useReducedMotion();
+  
   const bellCoachmarkRef = useCoachmarkTarget('bell');
 
+  const titleAnimatedStyle = useAnimatedStyle(() => {
+    if (!isLarge || !scrollOffset || reduceMotion) return {};
+    return {
+      fontSize: interpolate(
+        scrollOffset.value,
+        [0, 60],
+        [theme.typography.h1.fontSize, theme.typography.h3.fontSize],
+        Extrapolation.CLAMP
+      ),
+      lineHeight: interpolate(
+        scrollOffset.value,
+        [0, 60],
+        [theme.typography.h1.lineHeight, theme.typography.h3.lineHeight],
+        Extrapolation.CLAMP
+      ),
+    };
+  });
+
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, isLarge && styles.rowLarge]}>
       <View style={styles.left}>
-        {children ?? <Text style={styles.title}>{title}</Text>}
+        {leftAccessory}
+        {children ?? (
+          <Animated.Text style={[isLarge ? styles.titleLarge : styles.title, titleAnimatedStyle]}>
+            {title}
+          </Animated.Text>
+        )}
       </View>
       <View style={styles.actions}>
         {leading}
-        <Pressable
-          ref={bellCoachmarkRef}
-          onPress={() => navigation.navigate('Activity')}
-          style={({ pressed }) => [
-            styles.bell,
-            isHero ? styles.bellHero : styles.bellDefault,
-            pressed && styles.bellPressed,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="Activity"
-          hitSlop={8}
-        >
-          <Icon
-            icon={Bell}
-            size={22}
-            color={isHero ? theme.colors.text.onBrand : theme.colors.text.secondary}
-          />
-          {count > 0 ? (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{count > 99 ? '99+' : count}</Text>
-            </View>
-          ) : null}
-        </Pressable>
+        {!hideBell && (
+          <Pressable
+            ref={bellCoachmarkRef}
+            onPress={() => navigation.navigate('Activity')}
+            style={({ pressed }) => [
+              styles.bell,
+              pressed && styles.bellPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Activity"
+            hitSlop={8}
+          >
+            <Icon
+              icon={Bell}
+              size={20}
+              color={isHero ? theme.colors.text.onBrand : theme.colors.text.secondary}
+            />
+            {count > 0 ? (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{count > 99 ? '99+' : count}</Text>
+              </View>
+            ) : null}
+          </Pressable>
+        )}
         {trailing}
       </View>
     </View>
@@ -88,19 +135,29 @@ const makeStyles = (t: Theme) =>
   StyleSheet.create({
     row: {
       flexDirection: 'row',
-      alignItems: 'flex-start',
+      alignItems: 'center',
       justifyContent: 'space-between',
       gap: t.spacing.md,
+      minHeight: 44,
+    },
+    rowLarge: {
+      alignItems: 'flex-start',
     },
     left: {
       flex: 1,
       minWidth: 0,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: t.spacing.sm,
+      justifyContent: 'flex-start',
+      minHeight: 44,
     },
     title: {
-      // Screen-title role: the single "display" heading token, so every screen
-      // header (and ResearchDetail's own title) reads at one size instead of an
-      // off-scale 26.
-      ...t.typography.display,
+      ...t.typography.h3,
+      color: t.colors.text.primary,
+    },
+    titleLarge: {
+      ...t.typography.h1,
       color: t.colors.text.primary,
     },
     actions: {
@@ -109,20 +166,12 @@ const makeStyles = (t: Theme) =>
       gap: t.spacing.sm,
     },
     bell: {
-      width: 44,
-      height: 44,
+      width: 36,
+      height: 36,
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: t.radii.pill,
       borderCurve: 'continuous',
-    },
-    bellHero: {
-      backgroundColor: 'rgba(255, 255, 255, 0.14)',
-    },
-    // Light-surface twin of bellHero: a subtle sunken circle so the bell reads
-    // as the same control on every screen, not a bare glyph on some and a
-    // circle on others (consistent notification placement — DESIGN.md).
-    bellDefault: {
       backgroundColor: t.colors.surface.sunken,
     },
     bellPressed: {
