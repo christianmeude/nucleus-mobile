@@ -13,7 +13,18 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DocumentPicker from 'expo-document-picker';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  CircleAlert,
+  CircleCheck,
+  CloudUpload,
+  FileText,
+  Plus,
+  Search,
+  X,
+} from 'lucide-react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
@@ -34,6 +45,7 @@ import {
   Card,
   Chip,
   EmptyState,
+  Icon,
   InlineNotice,
   Skeleton,
 } from '../../components/ui';
@@ -556,7 +568,7 @@ export const SubmitResearchScreen = () => {
               accessibilityRole="button"
               style={styles.backButton}
             >
-              <Ionicons name="chevron-back" size={22} color={theme.colors.brand.primary} />
+              <Icon icon={ChevronLeft} size={22} color={theme.colors.brand.primary} />
               <Text style={styles.backLabel}>Back</Text>
             </Pressable>
             {draftSyncMessage ? (
@@ -595,8 +607,8 @@ export const SubmitResearchScreen = () => {
             <FormSection number={1} title="Attachment">
               {file ? (
                 <View style={styles.fileRow}>
-                  <Ionicons
-                    name="document-text-outline"
+                  <Icon
+                    icon={FileText}
                     size={28}
                     color={theme.colors.brand.primary}
                   />
@@ -613,7 +625,7 @@ export const SubmitResearchScreen = () => {
                     accessibilityLabel="Remove file"
                     accessibilityRole="button"
                   >
-                    <Ionicons name="close" size={20} color={theme.colors.text.muted} />
+                    <Icon icon={X} size={20} color={theme.colors.text.muted} />
                   </Pressable>
                 </View>
               ) : (
@@ -627,7 +639,7 @@ export const SubmitResearchScreen = () => {
                   style={({ pressed }) => [styles.upload, pressed && styles.uploadPressed]}
                 >
                   <View style={styles.uploadIcon}>
-                    <Ionicons name="cloud-upload-outline" size={22} color={theme.colors.brand.primary} />
+                    <Icon icon={CloudUpload} size={22} color={theme.colors.brand.primary} />
                   </View>
                   <Text style={styles.uploadPrompt}>
                     {isResubmit && resubmitPaper?.file_url ? 'Replace file' : 'Upload your paper'}
@@ -714,7 +726,7 @@ export const SubmitResearchScreen = () => {
                 >
                   {categoryLabel}
                 </Text>
-                <Ionicons name="chevron-down" size={18} color={theme.colors.text.muted} />
+                <Icon icon={ChevronDown} size={18} color={theme.colors.text.muted} />
               </Pressable>
             </View>
 
@@ -737,7 +749,7 @@ export const SubmitResearchScreen = () => {
                 >
                   {departmentLabel}
                 </Text>
-                <Ionicons name="chevron-down" size={18} color={theme.colors.text.muted} />
+                <Icon icon={ChevronDown} size={18} color={theme.colors.text.muted} />
               </Pressable>
               <Text style={styles.helperText}>
                 Helps route your submission to the right reviewer.
@@ -763,7 +775,7 @@ export const SubmitResearchScreen = () => {
                 >
                   {facultyLabel}
                 </Text>
-                <Ionicons name="chevron-down" size={18} color={theme.colors.text.muted} />
+                <Icon icon={ChevronDown} size={18} color={theme.colors.text.muted} />
               </Pressable>
               <Text style={styles.helperText}>
                 Required: your adviser is the first reviewer of your submission.
@@ -790,14 +802,14 @@ export const SubmitResearchScreen = () => {
                       <Text style={styles.coAuthorChipText} numberOfLines={1}>
                         {entry.fullName}
                       </Text>
-                      <Ionicons name="close" size={14} color={theme.colors.brand.primary} />
+                      <Icon icon={X} size={14} color={theme.colors.brand.primary} />
                     </Pressable>
                   ))}
                 </View>
               ) : null}
 
               <View style={styles.searchWrap}>
-                <Ionicons name="search-outline" size={18} color={theme.colors.text.muted} />
+                <Icon icon={Search} size={18} color={theme.colors.text.muted} />
                 <TextInput
                   value={studentSearchQuery}
                   onChangeText={setStudentSearchQuery}
@@ -832,13 +844,13 @@ export const SubmitResearchScreen = () => {
                           ) : null}
                         </View>
                         {alreadySelected ? (
-                          <Ionicons
-                            name="checkmark"
+                          <Icon
+                            icon={Check}
                             size={18}
                             color={theme.colors.state.success}
                           />
                         ) : (
-                          <Ionicons name="add" size={18} color={theme.colors.brand.primary} />
+                          <Icon icon={Plus} size={18} color={theme.colors.brand.primary} />
                         )}
                       </Pressable>
                     );
@@ -925,7 +937,7 @@ export const SubmitResearchScreen = () => {
               >
                 <Text style={styles.sheetRowLabel}>{entry.name}</Text>
                 {formData.category === entry.id ? (
-                  <Ionicons name="checkmark" size={18} color={theme.colors.brand.primary} />
+                  <Icon icon={Check} size={18} color={theme.colors.brand.primary} />
                 ) : null}
               </Pressable>
             ))
@@ -946,7 +958,7 @@ export const SubmitResearchScreen = () => {
           >
             <Text style={styles.sheetRowLabel}>None</Text>
             {!formData.departmentId ? (
-              <Ionicons name="checkmark" size={18} color={theme.colors.brand.primary} />
+              <Icon icon={Check} size={18} color={theme.colors.brand.primary} />
             ) : null}
           </Pressable>
           {departments.length === 0 ? (
@@ -971,7 +983,7 @@ export const SubmitResearchScreen = () => {
                   {entry.name}
                 </Text>
                 {formData.departmentId === entry.id ? (
-                  <Ionicons name="checkmark" size={18} color={theme.colors.brand.primary} />
+                  <Icon icon={Check} size={18} color={theme.colors.brand.primary} />
                 ) : null}
               </Pressable>
             ))
@@ -1004,7 +1016,7 @@ export const SubmitResearchScreen = () => {
                   ) : null}
                 </View>
                 {formData.facultyId === entry.id ? (
-                  <Ionicons name="checkmark" size={18} color={theme.colors.brand.primary} />
+                  <Icon icon={Check} size={18} color={theme.colors.brand.primary} />
                 ) : null}
               </Pressable>
             ))
@@ -1023,8 +1035,8 @@ export const SubmitResearchScreen = () => {
               style={[styles.checklistRow, item.done ? styles.checklistRowDone : styles.checklistRowPending]}
             >
               <Text style={styles.checklistLabel}>{item.label}</Text>
-              <Ionicons
-                name={item.done ? 'checkmark-circle' : 'alert-circle'}
+              <Icon
+                icon={item.done ? CircleCheck : CircleAlert}
                 size={18}
                 color={item.done ? theme.colors.state.success : theme.colors.state.warning}
               />

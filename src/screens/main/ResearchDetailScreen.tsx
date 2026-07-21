@@ -6,7 +6,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Bookmark, File, FileText, MessageCircle } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import Animated, {
   useAnimatedStyle,
@@ -26,6 +26,7 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { motion, type Theme } from '../../theme';
 import {
   EmptyState,
+  Icon,
   InlineNotice,
   PressableScale,
   Screen,
@@ -184,7 +185,7 @@ export const ResearchDetailScreen = () => {
     return (
       <Screen edges={{ top: false }} style={styles.loaderContainer}>
         <EmptyState
-          icon={<Ionicons name="document-outline" size={24} color={theme.colors.text.muted} />}
+          icon={<Icon icon={File} size={24} color={theme.colors.text.muted} />}
           title="Paper not found"
           message={error || 'Unable to load paper details.'}
         />
@@ -265,7 +266,7 @@ export const ResearchDetailScreen = () => {
               accessibilityRole="button"
               accessibilityLabel="View feedback"
             >
-              <Ionicons name="chatbubbles-outline" size={20} color={theme.colors.text.secondary} />
+              <Icon icon={MessageCircle} size={20} color={theme.colors.text.secondary} />
               <Text style={styles.feedbackBtnText}>Feedback ({annotations.length})</Text>
             </PressableScale>
           ) : null}
@@ -277,10 +278,11 @@ export const ResearchDetailScreen = () => {
             accessibilityLabel={saved ? 'Remove from saved' : 'Save paper'}
           >
             <Animated.View style={savePopStyle}>
-              <Ionicons
-                name={saved ? 'bookmark' : 'bookmark-outline'}
+              <Icon
+                icon={Bookmark}
                 size={22}
                 color={saved ? theme.colors.brand.accent : theme.colors.text.muted}
+                fill={saved ? theme.colors.brand.accent : 'none'}
               />
             </Animated.View>
           </PressableScale>
@@ -314,7 +316,7 @@ export const ResearchDetailScreen = () => {
               />
               <View style={styles.previewScrim} pointerEvents="none" />
               <View style={styles.previewButton} pointerEvents="none">
-                <Ionicons name="document-text" size={18} color={theme.colors.text.onBrand} />
+                <Icon icon={FileText} size={18} color={theme.colors.text.onBrand} />
                 <Text style={styles.previewButtonText}>View Full Paper</Text>
               </View>
             </PressableScale>

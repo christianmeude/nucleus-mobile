@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { FolderOpen, Search } from 'lucide-react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
 import { Category, PaperStatus, ResearchPaper } from '../../types/domain';
@@ -22,7 +22,7 @@ import {
   ACTIVE_STATUSES,
   PUBLISHED_STATUSES,
 } from '../../components/PaperStatusChip';
-import { Chip, EmptyState, InlineNotice, Screen, Skeleton, TopBar } from '../../components/ui';
+import { Chip, EmptyState, Icon, InlineNotice, Screen, Skeleton, TopBar } from '../../components/ui';
 
 type FilterKey = 'all' | 'active' | 'published' | 'action';
 
@@ -126,7 +126,7 @@ export const MyPapersScreen = () => {
             </TopBar>
 
             <View style={styles.searchWrap}>
-              <Ionicons name="search-outline" size={18} color={theme.colors.text.muted} />
+              <Icon icon={Search} size={18} color={theme.colors.text.muted} />
               <TextInput
                 value={query}
                 onChangeText={setQuery}
@@ -181,7 +181,7 @@ export const MyPapersScreen = () => {
               </View>
             ) : filtered.length === 0 ? (
               <EmptyState
-                icon={<Ionicons name="folder-open-outline" size={24} color={theme.colors.text.muted} />}
+                icon={<Icon icon={FolderOpen} size={24} color={theme.colors.text.muted} />}
                 title="No papers found"
                 message={
                   papers.length === 0

@@ -9,8 +9,8 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
-import { Chip, PressableScale } from '../../../components/ui';
+import { ArrowUp, Clock, Search, TrendingUp } from 'lucide-react-native';
+import { Chip, Icon, PressableScale } from '../../../components/ui';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import { type Theme } from '../../../theme';
 
@@ -104,7 +104,7 @@ export const BrowseHeader = ({
       </Animated.Text>
 
       <View style={styles.searchWrap}>
-        <Ionicons name="search-outline" size={18} color={theme.colors.text.muted} />
+        <Icon icon={Search} size={18} color={theme.colors.text.muted} />
         <TextInput
           value={query}
           onChangeText={setQuery}
@@ -141,8 +141,8 @@ export const BrowseHeader = ({
                 accessibilityLabel={`Search recent: ${term}`}
               >
                 {index === 0 ? (
-                  <Ionicons
-                    name="time-outline"
+                  <Icon
+                    icon={Clock}
                     size={14}
                     color={theme.colors.brand.primary}
                     style={styles.recentChipIcon}
@@ -172,8 +172,8 @@ export const BrowseHeader = ({
                 accessibilityRole="button"
                 accessibilityLabel={`Search suggested: ${term}`}
               >
-                <Ionicons
-                  name="trending-up-outline"
+                <Icon
+                  icon={TrendingUp}
                   size={13}
                   color={theme.colors.text.secondary}
                   style={styles.suggestedChipIcon}
@@ -189,13 +189,13 @@ export const BrowseHeader = ({
         <GestureDetector gesture={exploreGesture}>
           <Animated.View style={[styles.exploreHint, greetingStyle]}>
             <Animated.View style={[styles.exploreArrowTile, explorePopStyle]}>
-              <Ionicons name="arrow-up" size={18} color={theme.colors.brand.primary} />
+              <Icon icon={ArrowUp} size={18} color={theme.colors.brand.primary} />
               <Animated.View
                 style={[styles.exploreArrowFillMask, exploreFillStyle]}
                 pointerEvents="none"
               >
                 <View style={styles.exploreArrowFillInner}>
-                  <Ionicons name="arrow-up" size={18} color={theme.colors.text.onBrand} />
+                  <Icon icon={ArrowUp} size={18} color={theme.colors.text.onBrand} />
                 </View>
               </Animated.View>
             </Animated.View>

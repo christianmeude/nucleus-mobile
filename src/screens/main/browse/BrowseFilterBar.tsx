@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { PressableScale } from '../../../components/ui';
+import { ChevronDown, Grid, Menu } from 'lucide-react-native';
+import { Icon, PressableScale } from '../../../components/ui';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import { type Theme } from '../../../theme';
 
@@ -44,7 +44,7 @@ export const BrowseFilterBar = ({
           <Text style={styles.fieldLinkText} numberOfLines={1}>
             {fieldLabel}
           </Text>
-          <Ionicons name="chevron-down" size={13} color={theme.colors.brand.primary} />
+          <Icon icon={ChevronDown} size={13} color={theme.colors.brand.primary} />
         </PressableScale>
         <PressableScale
           style={styles.sortLink}
@@ -54,7 +54,7 @@ export const BrowseFilterBar = ({
           hitSlop={8}
         >
           <Text style={styles.sortLinkText}>{sortLabel}</Text>
-          <Ionicons name="chevron-down" size={13} color={theme.colors.brand.primary} />
+          <Icon icon={ChevronDown} size={13} color={theme.colors.brand.primary} />
         </PressableScale>
         <View style={styles.viewToggle}>
           <PressableScale
@@ -63,8 +63,8 @@ export const BrowseFilterBar = ({
             accessibilityRole="button"
             accessibilityLabel="List view"
           >
-            <Ionicons
-              name="reorder-three-outline"
+            <Icon
+              icon={Menu}
               size={17}
               color={viewMode === 'list' ? theme.colors.brand.primary : theme.colors.text.muted}
             />
@@ -75,8 +75,8 @@ export const BrowseFilterBar = ({
             accessibilityRole="button"
             accessibilityLabel="Grid view"
           >
-            <Ionicons
-              name="grid-outline"
+            <Icon
+              icon={Grid}
               size={15}
               color={viewMode === 'grid' ? theme.colors.brand.primary : theme.colors.text.muted}
             />
