@@ -4,7 +4,7 @@ import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
 import { formatDate } from '../utils/format';
 import { type FacultyAssignedPaper, FACULTY_ADVANCED_STATUSES } from '../api/faculty';
-import Animated, { FadeInDown, SlideOutLeft, LinearTransition } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeOutLeft, LinearTransition } from 'react-native-reanimated';
 
 interface FacultyPaperCardProps {
   paper: FacultyAssignedPaper;
@@ -56,9 +56,9 @@ export const FacultyPaperCard = ({ paper, onPress, index }: FacultyPaperCardProp
 
   const cardContent = (
     <Animated.View
-      layout={LinearTransition.springify().damping(16)}
-      entering={index !== undefined ? FadeInDown.delay(index * 50).springify().damping(14) : undefined}
-      exiting={SlideOutLeft.duration(300)}
+      layout={LinearTransition.duration(300)}
+      entering={index !== undefined ? FadeInDown.delay(index * 50).duration(300) : undefined}
+      exiting={FadeOutLeft.duration(300)}
     >
       <PressableCard
         accessibilityLabel={`Review ${paper.title}`}

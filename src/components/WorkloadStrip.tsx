@@ -46,7 +46,7 @@ export const WorkloadStrip = ({ summary, activeFilter, onFilterChange }: Workloa
         return (
           <Animated.View
             key={tile.id}
-            entering={FadeInDown.delay(index * 30).springify().damping(14)}
+            entering={FadeInDown.delay(index * 30).duration(300)}
             style={styles.tileWrapper}
           >
             <Pressable
@@ -103,8 +103,7 @@ const makeStyles = (t: Theme) =>
       color: t.colors.brand.primary,
     },
     label: {
-      fontFamily: t.fontFamilies.ui.medium,
-      fontSize: 12,
+      ...t.typography.caption,
       color: t.colors.text.secondary,
     },
     labelActive: {

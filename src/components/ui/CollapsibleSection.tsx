@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import Animated, {
   useAnimatedStyle,
-  withSpring,
+  withTiming,
   LinearTransition,
   FadeInUp,
   FadeOutUp,
@@ -31,12 +31,12 @@ export const CollapsibleSection = ({
 
   const iconStyle = useAnimatedStyle(() => {
     return {
-      transform: [{ rotate: withSpring(isExpanded ? '180deg' : '0deg', { damping: 14 }) }],
+      transform: [{ rotate: withTiming(isExpanded ? '180deg' : '0deg', { duration: 300 }) }],
     };
   });
 
   return (
-    <Animated.View layout={LinearTransition.springify().damping(16)} style={styles.container}>
+    <Animated.View layout={LinearTransition.duration(300)} style={styles.container}>
       <Pressable
         style={styles.header}
         onPress={() => setIsExpanded(!isExpanded)}
@@ -56,8 +56,8 @@ export const CollapsibleSection = ({
 
       {isExpanded ? (
         <Animated.View
-          entering={FadeInUp.springify().damping(16)}
-          exiting={FadeOutUp.springify().damping(16)}
+          entering={FadeInUp.duration(300)}
+          exiting={FadeOutUp.duration(300)}
         >
           {children}
         </Animated.View>
@@ -89,16 +89,14 @@ const makeStyles = (t: Theme) =>
     },
     badge: {
       backgroundColor: t.colors.brand.primarySurface,
-      paddingHorizontal: 8,
-      paddingVertical: 2,
+      paddingHorizontal: t.spacing.sm,
       borderRadius: t.radii.pill,
-      minWidth: 24,
       alignItems: 'center',
       justifyContent: 'center',
     },
     badgeText: {
+      ...t.typography.caption,
       fontFamily: t.fontFamilies.ui.bold,
-      fontSize: 12,
       color: t.colors.brand.primary,
     },
   });

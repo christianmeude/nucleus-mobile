@@ -106,6 +106,19 @@ export const FacultyDashboardScreen = () => {
   const showNeedsAction = activeFilter !== 'completed';
   const showCompleted = activeFilter === null || activeFilter === 'completed';
 
+  const renderList = (list: FacultyAssignedPaper[]) => (
+    <View style={styles.list}>
+      {list.map((paper, index) => (
+        <FacultyPaperCard
+          key={paper.id}
+          paper={paper}
+          index={activeFilter ? undefined : index}
+          onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: paper.id })}
+        />
+      ))}
+    </View>
+  );
+
   // Faculty analogue of the student hero's status line: a one-glance read of the
   // review queue, mapped from the same workload summary.
   const statusLine = summary
@@ -168,22 +181,9 @@ export const FacultyDashboardScreen = () => {
               {showNeedsAction && (
                 <CollapsibleSection title="Needs action" count={needsActionList.length} initiallyExpanded={true}>
                   {needsActionList.length === 0 ? (
-                    <EmptyState
-                      context="no-papers"
-                      title="No papers"
-                      message="There are no pending papers in this section."
-                    />
+                    <EmptyState context="no-papers" />
                   ) : (
-                    <View style={styles.list}>
-                      {needsActionList.map((paper, index) => (
-                        <FacultyPaperCard
-                          key={paper.id}
-                          paper={paper}
-                          index={activeFilter ? undefined : index}
-                          onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: paper.id })}
-                        />
-                      ))}
-                    </View>
+                    renderList(needsActionList)
                   )}
                 </CollapsibleSection>
               )}
@@ -191,22 +191,9 @@ export const FacultyDashboardScreen = () => {
               {showCompleted && (
                 <CollapsibleSection title="Completed" count={completedList.length} initiallyExpanded={activeFilter === 'completed'}>
                   {completedList.length === 0 ? (
-                    <EmptyState
-                      context="no-papers"
-                      title="No papers"
-                      message="You haven't completed any reviews yet."
-                    />
+                    <EmptyState context="no-papers" />
                   ) : (
-                    <View style={styles.list}>
-                      {completedList.map((paper, index) => (
-                        <FacultyPaperCard
-                          key={paper.id}
-                          paper={paper}
-                          index={activeFilter ? undefined : index}
-                          onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: paper.id })}
-                        />
-                      ))}
-                    </View>
+                    renderList(completedList)
                   )}
                 </CollapsibleSection>
               )}

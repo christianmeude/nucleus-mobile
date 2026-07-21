@@ -64,6 +64,7 @@ export const DashboardHero = ({
       <View style={[styles.heroContent, { paddingTop: insets.top + theme.spacing.xl }]}>
         <TopBar
           tone="hero"
+          variant="compact"
           leading={
             <PressableScale
               onPress={onPressAvatar}
@@ -81,15 +82,17 @@ export const DashboardHero = ({
             </PressableScale>
           }
         >
-          <Text style={styles.heroGreeting}>{greeting}</Text>
-          <Text style={styles.heroName} numberOfLines={1}>
-            {name}
-          </Text>
-          {statusLine ? (
-            <Text style={[styles.heroSubLine, statusLine.urgent && styles.heroSubLineUrgent]}>
-              {statusLine.text}
+          <View style={styles.heroTextContent}>
+            <Text style={styles.heroGreeting}>{greeting}</Text>
+            <Text style={styles.heroName} numberOfLines={1}>
+              {name}
             </Text>
-          ) : null}
+            {statusLine ? (
+              <Text style={[styles.heroSubLine, statusLine.urgent && styles.heroSubLineUrgent]}>
+                {statusLine.text}
+              </Text>
+            ) : null}
+          </View>
         </TopBar>
       </View>
     </View>
@@ -131,6 +134,11 @@ const makeStyles = (t: Theme) =>
       fontSize: 14,
       color: t.colors.text.onBrand,
       opacity: 0.75,
+    },
+    heroTextContent: {
+      flex: 1,
+      minWidth: 0,
+      justifyContent: 'center',
     },
     heroName: {
       ...t.typography.h1,
