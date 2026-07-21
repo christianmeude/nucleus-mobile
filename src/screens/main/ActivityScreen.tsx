@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Icon } from '../../components/ui/Icon';
 import { ChevronLeft } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
-import Animated, { useSharedValue, useAnimatedScrollHandler } from 'react-native-reanimated';
+import Animated, { useSharedValue } from 'react-native-reanimated';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
@@ -30,11 +30,9 @@ export const ActivityScreen = () => {
   const isFaculty = user?.role === 'faculty';
 
   const scrollOffset = useSharedValue(0);
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollOffset.value = event.contentOffset.y;
-    },
-  });
+  const scrollHandler = useCallback((event: any) => {
+    scrollOffset.value = event.nativeEvent.contentOffset.y;
+  }, [scrollOffset]);
 
   return (
     <Screen gutter={0}>

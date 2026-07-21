@@ -26,7 +26,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * folding in the retired FacultyNotificationsScreen. Owns its own fetch,
  * grouping, and read-state actions.
  */
-const AnimatedLegendSectionList = Animated.createAnimatedComponent(LegendSectionList);
+
 
 export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
   const navigation = useNavigation<any>();
@@ -139,7 +139,7 @@ export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
   };
 
   return (
-    <AnimatedLegendSectionList
+    <LegendSectionList
       onScroll={onScroll}
       scrollEventThrottle={16}
       recycleItems={false}

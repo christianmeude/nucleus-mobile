@@ -23,7 +23,7 @@ const isExpired = (invitation: CoAuthorInvitation) => {
  * InvitationsScreen, now hosted inside the merged Activity screen's "Invites"
  * segment. Owns its own fetch and accept/decline actions.
  */
-const AnimatedLegendList = Animated.createAnimatedComponent(LegendList);
+
 
 export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
   const { theme } = useTheme();
@@ -77,7 +77,7 @@ export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
   };
 
   return (
-    <AnimatedLegendList
+    <LegendList
       onScroll={onScroll}
       scrollEventThrottle={16}
       recycleItems={false}

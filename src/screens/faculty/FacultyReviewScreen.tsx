@@ -7,7 +7,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import Animated, { useSharedValue, useAnimatedScrollHandler } from 'react-native-reanimated';
+import Animated, { useSharedValue } from 'react-native-reanimated';
 import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -32,7 +32,6 @@ import { type Theme } from '../../theme';
 
 type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
 
-const AnimatedLegendList = Animated.createAnimatedComponent(LegendList);
 
 export const FacultyReviewScreen = () => {
   const navigation = useNavigation<FacultyNavigation>();
@@ -45,11 +44,9 @@ export const FacultyReviewScreen = () => {
   const [search, setSearch] = useState('');
 
   const scrollOffset = useSharedValue(0);
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollOffset.value = event.contentOffset.y;
-    },
-  });
+  const onScroll = useCallback((event: any) => {
+    scrollOffset.value = event.nativeEvent.contentOffset.y;
+  }, [scrollOffset]);
 
   const load = useCallback(async () => {
     try {
@@ -122,8 +119,8 @@ export const FacultyReviewScreen = () => {
         </ScrollView>
       </View>
 
-      <AnimatedLegendList
-        onScroll={scrollHandler}
+      <LegendList
+        onScroll={onScroll}
         scrollEventThrottle={16}
         recycleItems={false}
         contentContainerStyle={styles.content}
