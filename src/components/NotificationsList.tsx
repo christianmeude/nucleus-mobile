@@ -8,12 +8,13 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { notificationsApi } from '../api/notifications';
 import { facultyApi } from '../api/faculty';
 import { useAuth } from '../context/AuthContext';
-import { NotificationItem } from '../types/domain';
+import { NotificationItem, CoAuthorInvitation } from '../types/domain';
 import { NotificationCard } from './NotificationCard';
 import { ListEntranceItem } from './ListEntranceItem';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
 import { EmptyState, InlineNotice, Skeleton } from './ui';
+import { invitationsApi } from '../api/invitations';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -26,7 +27,6 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * folding in the retired FacultyNotificationsScreen. Owns its own fetch,
  * grouping, and read-state actions.
  */
-
 
 export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
   const navigation = useNavigation<any>();
@@ -58,27 +58,56 @@ export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
             markAllRead: () => notificationsApi.markAllRead(),
             detailRoute: 'ResearchDetail' as const,
           },
-    [isFaculty]
+    [isFaculty],
   );
 
-  const loadData = useCallback(async (silent = false) => {
-    if (!silent) {
-      setLoading(true);
-    } else {
-      setRefreshing(true);
-    }
+  const loadData = useCallback(
+    async (silent = false) => {
+      if (!silent) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
 
-    try {
-      const rows = await source.getMine(100);
-      setNotifications(rows);
-      setError('');
-    } catch (_error) {
-      setError('Failed to load notifications.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [source]);
+      try {
+        const [rows, invitesPayload] = await Promise.all([
+          source.getMine(100),
+          !isFaculty
+            ? invitationsApi.getMine()
+            : Promise.resolve({ invitations: [], pendingCount: 0 }),
+        ]);
+
+        const invitesAsNotifications: NotificationItem[] = invitesPayload.invitations.map(
+          (inv: CoAuthorInvitation) => ({
+            id: inv.id,
+            user_id: inv.invitee_id,
+            research_id: inv.research_id,
+            type: 'invitation',
+            title: 'Co-author Invitation',
+            message: `${inv.inviter?.fullName || 'Someone'} invited you to collaborate on "${inv.research?.title || 'a paper'}".`,
+            is_read: inv.status !== 'pending',
+            created_at: inv.created_at || new Date().toISOString(),
+            token: inv.token,
+            status: inv.status,
+          }),
+        );
+
+        // Combine and sort descending by created_at
+        const combined = [...rows, ...invitesAsNotifications].sort((a, b) => {
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+
+        setNotifications(combined);
+        setError('');
+      } catch (_error) {
+        setError('Failed to load notifications.');
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [source, isFaculty],
+  );
 
   useEffect(() => {
     loadData();
@@ -86,27 +115,23 @@ export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
 
   const unreadCount = useMemo(
     () => notifications.filter((item) => !item.is_read).length,
-    [notifications]
+    [notifications],
   );
 
   const groups = useMemo(() => {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const weekStart = todayStart - 6 * DAY_MS;
     const today: NotificationItem[] = [];
-    const week: NotificationItem[] = [];
     const earlier: NotificationItem[] = [];
 
     notifications.forEach((item) => {
       const time = new Date(item.created_at).getTime();
-      if (Number.isNaN(time) || time < weekStart) earlier.push(item);
-      else if (time >= todayStart) today.push(item);
-      else week.push(item);
+      if (Number.isNaN(time) || time < todayStart) earlier.push(item);
+      else today.push(item);
     });
 
     return [
       { key: 'today', title: 'Today', data: today },
-      { key: 'week', title: 'This week', data: week },
       { key: 'earlier', title: 'Earlier', data: earlier },
     ].filter((group) => group.data.length > 0);
   }, [notifications]);
@@ -120,7 +145,7 @@ export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
       }
 
       setNotifications((prev) =>
-        prev.map((entry) => (entry.id === item.id ? { ...entry, is_read: true } : entry))
+        prev.map((entry) => (entry.id === item.id ? { ...entry, is_read: true } : entry)),
       );
     }
 
@@ -181,9 +206,7 @@ export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
               <Skeleton height={72} />
             </View>
           ) : notifications.length === 0 ? (
-            <EmptyState
-              context="no-notifications"
-            />
+            <EmptyState context="no-notifications" />
           ) : null}
         </View>
       }
@@ -245,11 +268,8 @@ const makeStyles = (t: Theme) =>
       gap: t.spacing.xs,
     },
     groupTitle: {
-      fontFamily: t.fontFamilies.ui.semibold,
-      fontSize: 12,
-      letterSpacing: 0.9,
-      textTransform: 'uppercase',
-      color: t.colors.text.disabled,
+      ...t.typography.label,
+      color: t.colors.text.muted,
       marginTop: t.spacing.sm,
       marginBottom: t.spacing.xs,
       paddingHorizontal: t.spacing.sm,

@@ -122,14 +122,20 @@ export const NotificationCard = ({ notification, onPress }: NotificationCardProp
 
         {isInvitation && !resolved && (
           <View style={styles.chipsRow}>
-            <Button label="Accept" variant="primary" size="sm" onPress={handleAccept} />
-            <Button label="Decline" variant="subtle" size="sm" onPress={handleDecline} />
+            <View style={styles.buttonWrapper}>
+              <Button label="Accept" variant="secondary" size="sm" onPress={handleAccept} />
+            </View>
+            <View style={styles.buttonWrapper}>
+              <Button label="Decline" variant="subtle" size="sm" onPress={handleDecline} />
+            </View>
           </View>
         )}
 
         {isRevision && (
           <View style={styles.chipsRow}>
-            <Button label="View Paper" variant="primary" size="sm" onPress={onPress} />
+            <View style={styles.buttonWrapper}>
+              <Button label="View Paper" variant="secondary" size="sm" onPress={onPress} />
+            </View>
           </View>
         )}
 

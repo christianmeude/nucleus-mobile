@@ -25,14 +25,14 @@ export const ActivityScreen = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const [tab, setTab] = useState<ActivityTab>('notifications');
-
-  const isFaculty = user?.role === 'faculty';
 
   const scrollOffset = useSharedValue(0);
-  const scrollHandler = useCallback((event: any) => {
-    scrollOffset.value = event.nativeEvent.contentOffset.y;
-  }, [scrollOffset]);
+  const scrollHandler = useCallback(
+    (event: any) => {
+      scrollOffset.value = event.nativeEvent.contentOffset.y;
+    },
+    [scrollOffset],
+  );
 
   return (
     <Screen gutter={0}>
@@ -54,30 +54,9 @@ export const ActivityScreen = () => {
             </PressableScale>
           }
         />
-
-        {isFaculty ? null : (
-          <View style={styles.segmented}>
-            <Chip
-              label="Notifications"
-              variant="filter"
-              active={tab === 'notifications'}
-              onPress={() => setTab('notifications')}
-            />
-            <Chip
-              label="Invites"
-              variant="filter"
-              active={tab === 'invites'}
-              onPress={() => setTab('invites')}
-            />
-          </View>
-        )}
       </View>
 
-      {isFaculty || tab === 'notifications' ? (
-        <NotificationsList onScroll={scrollHandler} />
-      ) : (
-        <InvitationsList onScroll={scrollHandler} />
-      )}
+      <NotificationsList onScroll={scrollHandler} />
     </Screen>
   );
 };

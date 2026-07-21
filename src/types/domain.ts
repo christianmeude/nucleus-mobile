@@ -101,6 +101,8 @@ export interface NotificationItem {
   message?: string;
   is_read: boolean;
   created_at: string;
+  token?: string;
+  status?: string;
 }
 
 export interface CoAuthorInvitation {

@@ -12,31 +12,39 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  Search,
+  CloudUpload,
+  Bell,
+  ChevronLeft,
+  ChevronRight,
+  ArrowRight,
+  Trophy,
+  Check,
+  LucideIcon,
+} from 'lucide-react-native';
 import { PressableScale } from '../../components/ui';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { armFirstEntrance } from '../../lib/firstEntrance';
 
-type IoniconName = keyof typeof Ionicons.glyphMap;
-
 type Slide =
-  | { key: string; kind: 'icon'; icon: IoniconName; title: string; body: string }
-  | { key: string; kind: 'badge'; icon: IoniconName; title: string; body: string }
+  | { key: string; kind: 'icon'; icon: LucideIcon; title: string; body: string }
+  | { key: string; kind: 'badge'; icon: LucideIcon; title: string; body: string }
   | { key: string; kind: 'stages'; title: string; body: string };
 
 const SLIDES: Slide[] = [
   {
     key: 'discover',
     kind: 'icon',
-    icon: 'search-outline',
+    icon: Search,
     title: 'Discover NU Research',
     body: 'Browse research across every department — search, filter, and read what National University is publishing.',
   },
   {
     key: 'submit',
     kind: 'icon',
-    icon: 'cloud-upload-outline',
+    icon: CloudUpload,
     title: 'Submit in Minutes',
     body: 'Upload your paper and send it straight into faculty review, right from your phone.',
   },
@@ -49,7 +57,7 @@ const SLIDES: Slide[] = [
   {
     key: 'loop',
     kind: 'badge',
-    icon: 'notifications-outline',
+    icon: Bell,
     title: 'Stay in the Loop',
     body: 'Get notified the moment your status changes or a co-author invites you in.',
   },
@@ -142,7 +150,7 @@ export const OnboardingScreen = ({ onDone }: OnboardingScreenProps) => {
               accessibilityRole="button"
               accessibilityLabel="Previous"
             >
-              <Ionicons name="chevron-back" size={18} color={ON_NAVY_MUTED} />
+              <ChevronLeft size={18} color={ON_NAVY_MUTED} />
               <Text style={styles.navBtnText}>Back</Text>
             </PressableScale>
           ) : (
@@ -165,7 +173,9 @@ export const OnboardingScreen = ({ onDone }: OnboardingScreenProps) => {
           showsHorizontalScrollIndicator={false}
           onScroll={onScroll}
           scrollEventThrottle={16}
-          onMomentumScrollEnd={(event) => setIndex(Math.round(event.nativeEvent.contentOffset.x / width))}
+          onMomentumScrollEnd={(event) =>
+            setIndex(Math.round(event.nativeEvent.contentOffset.x / width))
+          }
         >
           {SLIDES.map((slide, i) => (
             <SlideView
@@ -200,11 +210,11 @@ export const OnboardingScreen = ({ onDone }: OnboardingScreenProps) => {
             accessibilityLabel={isLast ? 'Get started' : 'Next slide'}
           >
             <Text style={styles.ctaLabel}>{isLast ? 'Get Started' : 'Next'}</Text>
-            <Ionicons
-              name={isLast ? 'arrow-forward' : 'chevron-forward'}
-              size={18}
-              color={theme.colors.brand.primary}
-            />
+            {isLast ? (
+              <ArrowRight size={18} color={theme.colors.brand.primary} />
+            ) : (
+              <ChevronRight size={18} color={theme.colors.brand.primary} />
+            )}
           </PressableScale>
         </View>
       </SafeAreaView>
@@ -230,7 +240,14 @@ const SlideView = ({ slide, index, scrollX, width, reducedMotion }: SlideViewPro
       opacity: interpolate(scrollX.value, inputRange, [0, 1, 0], Extrapolation.CLAMP),
       transform: [
         { scale: interpolate(scrollX.value, inputRange, [0.6, 1, 0.6], Extrapolation.CLAMP) },
-        { translateX: interpolate(scrollX.value, inputRange, [width * 0.22, 0, -width * 0.22], Extrapolation.CLAMP) },
+        {
+          translateX: interpolate(
+            scrollX.value,
+            inputRange,
+            [width * 0.22, 0, -width * 0.22],
+            Extrapolation.CLAMP,
+          ),
+        },
       ],
     };
   });
@@ -248,7 +265,11 @@ const SlideView = ({ slide, index, scrollX, width, reducedMotion }: SlideViewPro
   return (
     <View style={[styles.slide, { width }]}>
       <Animated.View style={[styles.artArea, artStyle]}>
-        {slide.kind === 'stages' ? <StageStrip /> : <SlideIcon icon={slide.icon} badge={slide.kind === 'badge'} />}
+        {slide.kind === 'stages' ? (
+          <StageStrip />
+        ) : (
+          <SlideIcon icon={slide.icon} badge={slide.kind === 'badge'} />
+        )}
       </Animated.View>
       <Animated.View style={[styles.copy, copyStyle]}>
         <Text style={styles.title}>{slide.title}</Text>
@@ -258,12 +279,15 @@ const SlideView = ({ slide, index, scrollX, width, reducedMotion }: SlideViewPro
   );
 };
 
-const SlideIcon = ({ icon, badge }: { icon: IoniconName; badge: boolean }) => {
+const SlideIcon = ({ icon: Icon, badge }: { icon: LucideIcon; badge: boolean }) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.iconTile}>
-      <Ionicons name={icon} size={60} color={badge ? theme.colors.brand.accent : theme.colors.text.onBrand} />
+      <Icon
+        size={60}
+        color={badge ? theme.colors.brand.accent : theme.colors.text.onBrand}
+      />
       {badge ? <View style={styles.badgeDot} /> : null}
     </View>
   );
@@ -327,7 +351,7 @@ const StageStrip = () => {
               {goal ? <View style={[styles.stageGlow, styles.stageGlowGoal]} /> : null}
               {goal ? (
                 <View style={styles.stageGoal}>
-                  <Ionicons name="trophy" size={18} color={theme.colors.brand.primary} />
+                  <Trophy size={18} color={theme.colors.brand.primary} />
                 </View>
               ) : current ? (
                 <View style={styles.stageCurrent}>
@@ -335,7 +359,7 @@ const StageStrip = () => {
                 </View>
               ) : done ? (
                 <View style={styles.stageDone}>
-                  <Ionicons name="checkmark" size={13} color={theme.colors.brand.primary} />
+                  <Check size={13} color={theme.colors.brand.primary} />
                 </View>
               ) : (
                 <View style={styles.stageUpcoming} />
