@@ -258,6 +258,7 @@ const makeStyles = (theme: Theme) =>
     pillSegmentLabel: {
       ...theme.typography.label,
       color: theme.colors.text.secondary,
+      textAlign: 'center',
     },
     papersCount: {
       ...theme.typography.label,

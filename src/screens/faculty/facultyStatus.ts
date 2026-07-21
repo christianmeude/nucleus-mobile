@@ -11,8 +11,8 @@ export type FacultyQueueFilter = 'needs_review' | 'revisions' | 'approved' | 'al
 export const FACULTY_QUEUE_FILTERS: { key: FacultyQueueFilter; label: string }[] = [
   { key: 'needs_review', label: 'Needs Review' },
   { key: 'revisions', label: 'Revisions' },
-  { key: 'approved', label: 'Approved by You' },
-  { key: 'all', label: 'All Assigned' },
+  { key: 'approved', label: 'Approved' },
+  { key: 'all', label: 'All' },
 ];
 
 export function matchesQueueFilter(status: string, filter: FacultyQueueFilter): boolean {
