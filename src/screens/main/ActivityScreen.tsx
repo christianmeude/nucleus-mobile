@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { Icon } from '../../components/ui/Icon';
 import { ChevronLeft } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -7,11 +7,8 @@ import Animated, { useSharedValue } from 'react-native-reanimated';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
-import { Chip, PressableScale, Screen, TopBar } from '../../components/ui';
+import { PressableScale, Screen, TopBar } from '../../components/ui';
 import { NotificationsList } from '../../components/NotificationsList';
-import { InvitationsList } from '../../components/InvitationsList';
-
-type ActivityTab = 'notifications' | 'invites';
 
 /**
  * Merged inbox reached from the TopBar bell. For students a segmented control

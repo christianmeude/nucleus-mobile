@@ -168,6 +168,7 @@ export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
       onScroll={onScroll}
       scrollEventThrottle={16}
       recycleItems={false}
+      stickySectionHeadersEnabled={true}
       style={styles.container}
       contentContainerStyle={styles.content}
       refreshControl={
