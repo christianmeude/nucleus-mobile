@@ -143,16 +143,14 @@ export const FacultyDashboardScreen = () => {
                 <DashboardSkeleton />
               )
             ) : queue.length === 0 ? (
-              <EmptyState
-                title="No assigned papers"
-                message="Papers assigned to you for review will appear here."
-              />
+              <EmptyState context="all-caught-up" />
             ) : (
               <View style={styles.list}>
-                {queue.map((paper) => (
+                {queue.map((paper, index) => (
                   <FacultyPaperCard
                     key={paper.id}
                     paper={paper}
+                    index={index}
                     onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: paper.id })}
                   />
                 ))}

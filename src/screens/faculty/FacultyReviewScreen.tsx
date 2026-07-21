@@ -161,11 +161,12 @@ export const FacultyReviewScreen = () => {
         data={papers === null || visible.length === 0 ? ([] as FacultyAssignedPaper[]) : visible}
         keyExtractor={(item: any) => item.id}
         estimatedItemSize={84}
-        renderItem={({ item: rawItem }) => {
+        renderItem={({ item: rawItem, index }) => {
           const item = rawItem as FacultyAssignedPaper;
           return (
             <FacultyPaperCard
               paper={item}
+              index={index}
               onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: item.id })}
             />
           );

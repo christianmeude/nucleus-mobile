@@ -188,7 +188,7 @@ export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
         </View>
       }
       sections={loading || notifications.length === 0 ? ([] as typeof groups) : groups}
-      keyExtractor={(item) => item.id}
+      keyExtractor={(item: any) => item.id}
       estimatedItemSize={72}
       renderSectionHeader={({ section }) => (
         <Text style={styles.groupTitle}>{(section as any).title}</Text>

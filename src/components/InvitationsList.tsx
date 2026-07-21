@@ -116,7 +116,7 @@ export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
         </View>
       )}
       data={loading || invitations.length === 0 ? ([] as CoAuthorInvitation[]) : invitations}
-      keyExtractor={(item) => item.id}
+      keyExtractor={(item: any) => item.id}
       estimatedItemSize={132}
       renderItem={({ item: rawItem, index }) => {
         const item = rawItem as CoAuthorInvitation;
