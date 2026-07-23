@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Icon } from '../../components/ui/Icon';
 import { ChevronLeft } from 'lucide-react-native';
@@ -7,8 +7,11 @@ import Animated, { useSharedValue } from 'react-native-reanimated';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
-import { PressableScale, Screen, TopBar } from '../../components/ui';
+import { Chip, PressableScale, Screen, TopBar } from '../../components/ui';
 import { NotificationsList } from '../../components/NotificationsList';
+import { InvitationsList } from '../../components/InvitationsList';
+
+type ActivityTab = 'notifications' | 'invites';
 
 /**
  * Merged inbox reached from the TopBar bell. For students a segmented control
@@ -22,6 +25,10 @@ export const ActivityScreen = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
+
+  const [tab, setTab] = useState<ActivityTab>('notifications');
+
+  const isFaculty = user?.role === 'faculty';
 
   const scrollOffset = useSharedValue(0);
   const scrollHandler = useCallback(
@@ -51,9 +58,30 @@ export const ActivityScreen = () => {
             </PressableScale>
           }
         />
+
+        {isFaculty ? null : (
+          <View style={styles.segmented}>
+            <Chip
+              label="Notifications"
+              variant="filter"
+              active={tab === 'notifications'}
+              onPress={() => setTab('notifications')}
+            />
+            <Chip
+              label="Invites"
+              variant="filter"
+              active={tab === 'invites'}
+              onPress={() => setTab('invites')}
+            />
+          </View>
+        )}
       </View>
 
-      <NotificationsList onScroll={scrollHandler} />
+      {isFaculty || tab === 'notifications' ? (
+        <NotificationsList onScroll={scrollHandler} />
+      ) : (
+        <InvitationsList onScroll={scrollHandler} />
+      )}
     </Screen>
   );
 };
