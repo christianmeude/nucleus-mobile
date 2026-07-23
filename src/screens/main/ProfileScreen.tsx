@@ -18,8 +18,9 @@ export const ProfileScreen = () => {
   // Identity lines under the name: program first, department beneath it. The
   // email-prefix "handle" was dropped — it read as a random username.
   const identityLines = useMemo(
-    () => [user?.program?.trim(), user?.department?.trim()].filter((part): part is string => !!part),
-    [user?.program, user?.department]
+    () =>
+      [user?.program?.trim(), user?.department?.trim()].filter((part): part is string => !!part),
+    [user?.program, user?.department],
   );
 
   return (
@@ -89,6 +90,11 @@ const makeStyles = (t: Theme) =>
     },
     rowsSection: {
       marginTop: t.spacing.xl,
+      marginHorizontal: t.spacing.lg,
+      backgroundColor: t.colors.surface.raised,
+      borderRadius: t.radii.lg,
+      borderCurve: 'continuous',
       paddingHorizontal: t.spacing.lg,
+      ...t.shadows.level1,
     },
   });

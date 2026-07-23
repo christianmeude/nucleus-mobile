@@ -21,8 +21,9 @@ export const FacultyProfileScreen = () => {
   // Program first, department beneath — same identity block as the student
   // Profile. The email-prefix "handle" was dropped (read as a random username).
   const identityLines = useMemo(
-    () => [user?.program?.trim(), user?.department?.trim()].filter((part): part is string => !!part),
-    [user?.program, user?.department]
+    () =>
+      [user?.program?.trim(), user?.department?.trim()].filter((part): part is string => !!part),
+    [user?.program, user?.department],
   );
 
   return (
@@ -38,9 +39,7 @@ export const FacultyProfileScreen = () => {
         />
 
         <View style={styles.rowsSection}>
-          {roleLabel ? (
-            <SettingsRow icon={Award} label="Role" subtitle={roleLabel} />
-          ) : null}
+          {roleLabel ? <SettingsRow icon={Award} label="Role" subtitle={roleLabel} /> : null}
           <SettingsRow
             icon={Mail}
             label="Email"
@@ -88,6 +87,11 @@ const makeStyles = (t: Theme) =>
     },
     rowsSection: {
       marginTop: t.spacing.xl,
+      marginHorizontal: t.spacing.lg,
+      backgroundColor: t.colors.surface.raised,
+      borderRadius: t.radii.lg,
+      borderCurve: 'continuous',
       paddingHorizontal: t.spacing.lg,
+      ...t.shadows.level1,
     },
   });

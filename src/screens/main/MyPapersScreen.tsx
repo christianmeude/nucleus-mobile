@@ -1,14 +1,7 @@
 import { useCallback, useMemo, useEffect, useState } from 'react';
-import {
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
-import { FolderOpen, Search } from 'lucide-react-native';
+import { Search } from 'lucide-react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
 import { Category, PaperStatus, ResearchPaper } from '../../types/domain';
@@ -22,7 +15,15 @@ import {
   ACTIVE_STATUSES,
   PUBLISHED_STATUSES,
 } from '../../components/PaperStatusChip';
-import { Chip, EmptyState, Icon, InlineNotice, Screen, Skeleton, TopBar } from '../../components/ui';
+import {
+  Chip,
+  EmptyState,
+  Icon,
+  InlineNotice,
+  Screen,
+  Skeleton,
+  TopBar,
+} from '../../components/ui';
 
 type FilterKey = 'all' | 'active' | 'published' | 'action';
 
@@ -120,9 +121,11 @@ export const MyPapersScreen = () => {
         }
         ListHeaderComponent={() => (
           <View style={styles.header}>
-            <TopBar>
-              <Text style={styles.title}>My Papers</Text>
-              <Text style={styles.subtitle}>{subtitle}</Text>
+            <TopBar variant="compact">
+              <View style={styles.titleWrap}>
+                <Text style={styles.title}>My Papers</Text>
+                <Text style={styles.subtitle}>{subtitle}</Text>
+              </View>
             </TopBar>
 
             <View style={styles.searchWrap}>
@@ -180,15 +183,7 @@ export const MyPapersScreen = () => {
                 <Skeleton height={104} />
               </View>
             ) : filtered.length === 0 ? (
-              <EmptyState
-                icon={<Icon icon={FolderOpen} size={24} color={theme.colors.text.muted} />}
-                title="No papers found"
-                message={
-                  papers.length === 0
-                    ? 'Submit your first research paper to see it here.'
-                    : 'No papers match your current filter.'
-                }
-              />
+              <EmptyState context={papers.length === 0 ? 'no-papers' : 'no-results'} />
             ) : null}
           </View>
         )}
@@ -225,6 +220,11 @@ const makeStyles = (t: Theme) =>
     },
     header: {
       gap: t.spacing.md,
+    },
+    titleWrap: {
+      flex: 1,
+      minWidth: 0,
+      justifyContent: 'center',
     },
     title: {
       fontFamily: t.fontFamilies.display.semibold,

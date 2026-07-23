@@ -56,6 +56,7 @@ const makeStyles = (t: Theme) =>
       paddingBottom: 14,
       paddingHorizontal: t.spacing.lg,
       gap: 6,
+      ...t.shadows.level1,
     },
     cardPressed: {
       opacity: 0.7,

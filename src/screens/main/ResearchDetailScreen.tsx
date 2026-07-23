@@ -1,11 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Bookmark, File, FileText, MessageCircle } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import Animated, {
@@ -84,7 +78,7 @@ export const ResearchDetailScreen = () => {
   }));
   const [error, setError] = useState('');
   const [pdfOpen, setPdfOpen] = useState(false);
-  
+
   const pdfRef = useRef<PdfViewerRef>(null);
 
   // Track a view the first time the reader actually opens the PDF, once per screen
@@ -106,7 +100,7 @@ export const ResearchDetailScreen = () => {
 
       try {
         const detail = await researchApi.getResearchById(paperId);
-        
+
         const [categoryRows, relatedRows, savedIds, fetchedAnns] = await Promise.all([
           researchApi.getCategories(),
           researchApi.getRelatedPapers(detail.paper, MAX_RELATED).catch(() => []),
@@ -159,7 +153,7 @@ export const ResearchDetailScreen = () => {
     if (next && !reducedMotion) {
       savePop.value = withSequence(
         withTiming(1.32, { duration: 120 }),
-        withSpring(1, motion.spring.pop)
+        withSpring(1, motion.spring.pop),
       );
     }
     try {
@@ -198,8 +192,7 @@ export const ResearchDetailScreen = () => {
   // Workflow history carries reviewer↔author comments — show it only to the owner while the
   // paper is still in review. Once approved/published it is a public artifact (this is the
   // only status Browse surfaces), so the workflow stays hidden for everyone.
-  const showWorkflow =
-    isOwner && paper.status !== 'approved' && paper.status !== 'published';
+  const showWorkflow = isOwner && paper.status !== 'approved' && paper.status !== 'published';
   // Related papers only make sense once a paper is a public repository entry — for a
   // paper still in review (only reachable from Dashboard/My Papers), there's nothing
   // published yet to meaningfully relate it to.
@@ -210,7 +203,10 @@ export const ResearchDetailScreen = () => {
   const coAuthorNames = listCoAuthorNames(paper);
   const coAuthorList =
     coAuthorNames !== 'None'
-      ? coAuthorNames.split(',').map((name) => name.trim()).filter(Boolean)
+      ? coAuthorNames
+          .split(',')
+          .map((name) => name.trim())
+          .filter(Boolean)
       : [];
   const authorsLine = [authorName, ...coAuthorList].join('  ·  ');
   const displayDate = paper.published_date || paper.created_at;
@@ -241,177 +237,179 @@ export const ResearchDetailScreen = () => {
       }
     >
       <Screen edges={{ top: false }}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        {categoryName ? <Text style={styles.eyebrow}>{categoryName}</Text> : null}
+        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+          {categoryName ? <Text style={styles.eyebrow}>{categoryName}</Text> : null}
 
-        <Text style={styles.title}>{paper.title}</Text>
+          <Text style={styles.title}>{paper.title}</Text>
 
-        <Text style={styles.authors}>{authorsLine}</Text>
-        {paper.department ? <Text style={styles.affiliation}>{paper.department}</Text> : null}
+          <Text style={styles.authors}>{authorsLine}</Text>
+          {paper.department ? <Text style={styles.affiliation}>{paper.department}</Text> : null}
 
-        <View style={styles.metaRow}>
-          <Text style={styles.metaText}>{formatDate(displayDate)}</Text>
-          <Text style={styles.metaSep}>/</Text>
-          <Text style={styles.metaText}>{paper.view_count || 0} views</Text>
-          <Text style={styles.metaSep}>/</Text>
-          <Text style={styles.metaText}>{paper.download_count || 0} downloads</Text>
-        </View>
-
-        {/* Download is intentionally hidden pending backend allow_download support (Issue #8). */}
-        <View style={styles.readRow}>
-          {annotations.length > 0 ? (
-            <PressableScale
-              style={styles.feedbackBtn}
-              onPress={() => setPanelOpen(true)}
-              accessibilityRole="button"
-              accessibilityLabel="View feedback"
-            >
-              <Icon icon={MessageCircle} size={20} color={theme.colors.text.secondary} />
-              <Text style={styles.feedbackBtnText}>Feedback ({annotations.length})</Text>
-            </PressableScale>
-          ) : null}
-          <PressableScale
-            style={styles.bookmarkBtn}
-            onPress={handleToggleSave}
-            disabled={savePending}
-            accessibilityRole="button"
-            accessibilityLabel={saved ? 'Remove from saved' : 'Save paper'}
-          >
-            <Animated.View style={savePopStyle}>
-              <Icon
-                icon={Bookmark}
-                size={22}
-                color={saved ? theme.colors.brand.accent : theme.colors.text.muted}
-                fill={saved ? theme.colors.brand.accent : 'none'}
-              />
-            </Animated.View>
-          </PressableScale>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Paper</Text>
-          {fileError ? (
-            <InlineNotice tone="danger" message={fileError} />
-          ) : (
-            <PressableScale
-              style={styles.previewCard}
-              onPress={() => setPdfOpen(true)}
-              disabled={!fileUri}
-              accessibilityRole="button"
-              accessibilityLabel="View full paper"
-              accessibilityState={{ disabled: !fileUri }}
-            >
-              {fileUri ? (
-                <View style={StyleSheet.absoluteFill} pointerEvents="none">
-                  <PdfViewer uri={fileUri} variant="preview" />
-                </View>
-              ) : null}
-              {/* Frost the page behind the button; a soft scrim guarantees the
-                  button reads even where a platform's blur is weak. */}
-              <BlurView
-                intensity={28}
-                tint={scheme === 'dark' ? 'dark' : 'light'}
-                style={StyleSheet.absoluteFill}
-                pointerEvents="none"
-              />
-              <View style={styles.previewScrim} pointerEvents="none" />
-              <View style={styles.previewButton} pointerEvents="none">
-                <Icon icon={FileText} size={18} color={theme.colors.text.onBrand} />
-                <Text style={styles.previewButtonText}>View Full Paper</Text>
-              </View>
-            </PressableScale>
-          )}
-        </View>
-
-        {error ? <InlineNotice tone="danger" message={error} /> : null}
-
-        {keywords.length > 0 ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Keywords</Text>
-            <View style={styles.keywordsWrap}>
-              {keywords.map((keyword) => (
-                <View key={keyword} style={styles.keywordTag}>
-                  <Text style={styles.keywordText}>{keyword}</Text>
-                </View>
-              ))}
-            </View>
+          <View style={styles.metaRow}>
+            <Text style={styles.metaText}>{formatDate(displayDate)}</Text>
+            <Text style={styles.metaSep}>/</Text>
+            <Text style={styles.metaText}>{paper.view_count || 0} views</Text>
+            <Text style={styles.metaSep}>/</Text>
+            <Text style={styles.metaText}>{paper.download_count || 0} downloads</Text>
           </View>
-        ) : null}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Abstract</Text>
-          <Text style={styles.abstract}>{paper.abstract || 'No abstract available.'}</Text>
-        </View>
-
-        {isRepositoryPaper && related.length > 0 ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Related papers</Text>
-            <View style={styles.relatedList}>
-              {related.map((item) => {
-                const relatedCategory = resolveCategoryName(item.category, categoryNameById);
-                const relatedYear = yearOf(item);
-                return (
-                  <PressableScale
-                    key={item.id}
-                    style={styles.relatedRow}
-                    onPress={() => navigation.push(route.name, { paperId: item.id })}
-                    accessibilityRole="button"
-                    accessibilityLabel={item.title || 'Untitled paper'}
-                  >
-                    <View style={styles.relatedMark} />
-                    <View style={styles.relatedBody}>
-                      {relatedCategory ? (
-                        <Text style={styles.relatedCat}>{relatedCategory}</Text>
-                      ) : null}
-                      <Text style={styles.relatedTitle} numberOfLines={2}>
-                        {item.title}
-                      </Text>
-                      <Text style={styles.relatedAuthor} numberOfLines={1}>
-                        {getPrimaryAuthorName(item)}
-                        {relatedYear ? `  ·  ${relatedYear}` : ''}
-                      </Text>
-                    </View>
-                  </PressableScale>
-                );
-              })}
-            </View>
+          {/* Download is intentionally hidden pending backend allow_download support (Issue #8). */}
+          <View style={styles.readRow}>
+            {annotations.length > 0 ? (
+              <PressableScale
+                style={styles.feedbackBtn}
+                onPress={() => setPanelOpen(true)}
+                accessibilityRole="button"
+                accessibilityLabel="View feedback"
+              >
+                <Icon icon={MessageCircle} size={20} color={theme.colors.text.secondary} />
+                <Text style={styles.feedbackBtnText}>Feedback ({annotations.length})</Text>
+              </PressableScale>
+            ) : null}
+            <PressableScale
+              style={styles.bookmarkBtn}
+              onPress={handleToggleSave}
+              disabled={savePending}
+              accessibilityRole="button"
+              accessibilityLabel={saved ? 'Remove from saved' : 'Save paper'}
+            >
+              <Animated.View style={savePopStyle}>
+                <Icon
+                  icon={Bookmark}
+                  size={22}
+                  color={saved ? theme.colors.brand.accent : theme.colors.text.muted}
+                  fill={saved ? theme.colors.brand.accent : 'none'}
+                />
+              </Animated.View>
+            </PressableScale>
           </View>
-        ) : null}
 
-        {showWorkflow ? (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Workflow history</Text>
-            {workflow.length === 0 ? (
-              <Text style={styles.workflowEmpty}>No workflow history available.</Text>
+            <Text style={styles.sectionLabel}>Paper</Text>
+            {fileError ? (
+              <InlineNotice tone="danger" message={fileError} />
             ) : (
-              <View style={styles.workflowList}>
-                {workflow.map((entry, index) => (
-                  <View
-                    key={entry.id}
-                    style={[styles.workflowRow, index === 0 ? styles.workflowRowCurrent : null]}
-                  >
-                    {index === 0 ? <View style={styles.workflowBar} /> : null}
-                    <View style={styles.workflowBody}>
-                      <Text style={styles.workflowName}>
-                        {statusToLabel(entry.status) || entry.action_type || 'Updated'}
-                      </Text>
-                      {entry.reviewer_role ? (
-                        <Text style={styles.workflowMeta}>Reviewer: {entry.reviewer_role}</Text>
-                      ) : null}
-                      {entry.comments ? (
-                        <Text style={styles.workflowComment}>{entry.comments}</Text>
-                      ) : null}
+              <PressableScale
+                style={styles.previewCard}
+                onPress={() => setPdfOpen(true)}
+                disabled={!fileUri}
+                accessibilityRole="button"
+                accessibilityLabel="View full paper"
+                accessibilityState={{ disabled: !fileUri }}
+              >
+                <View style={styles.previewCardInner}>
+                  {fileUri ? (
+                    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                      <PdfViewer uri={fileUri} variant="preview" />
                     </View>
-                    <Text style={styles.workflowDate}>
-                      {formatDate(entry.reviewed_at || entry.created_at)}
-                    </Text>
+                  ) : null}
+                  {/* Frost the page behind the button; a soft scrim guarantees the
+                    button reads even where a platform's blur is weak. */}
+                  <BlurView
+                    intensity={28}
+                    tint={scheme === 'dark' ? 'dark' : 'light'}
+                    style={StyleSheet.absoluteFill}
+                    pointerEvents="none"
+                  />
+                  <View style={styles.previewScrim} pointerEvents="none" />
+                  <View style={styles.previewButton} pointerEvents="none">
+                    <Icon icon={FileText} size={18} color={theme.colors.text.onBrand} />
+                    <Text style={styles.previewButtonText}>View Full Paper</Text>
+                  </View>
+                </View>
+              </PressableScale>
+            )}
+          </View>
+
+          {error ? <InlineNotice tone="danger" message={error} /> : null}
+
+          {keywords.length > 0 ? (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>Keywords</Text>
+              <View style={styles.keywordsWrap}>
+                {keywords.map((keyword) => (
+                  <View key={keyword} style={styles.keywordTag}>
+                    <Text style={styles.keywordText}>{keyword}</Text>
                   </View>
                 ))}
               </View>
-            )}
+            </View>
+          ) : null}
+
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Abstract</Text>
+            <Text style={styles.abstract}>{paper.abstract || 'No abstract available.'}</Text>
           </View>
-        ) : null}
-      </ScrollView>
+
+          {isRepositoryPaper && related.length > 0 ? (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>Related papers</Text>
+              <View style={styles.relatedList}>
+                {related.map((item) => {
+                  const relatedCategory = resolveCategoryName(item.category, categoryNameById);
+                  const relatedYear = yearOf(item);
+                  return (
+                    <PressableScale
+                      key={item.id}
+                      style={styles.relatedRow}
+                      onPress={() => navigation.push(route.name, { paperId: item.id })}
+                      accessibilityRole="button"
+                      accessibilityLabel={item.title || 'Untitled paper'}
+                    >
+                      <View style={styles.relatedMark} />
+                      <View style={styles.relatedBody}>
+                        {relatedCategory ? (
+                          <Text style={styles.relatedCat}>{relatedCategory}</Text>
+                        ) : null}
+                        <Text style={styles.relatedTitle} numberOfLines={2}>
+                          {item.title}
+                        </Text>
+                        <Text style={styles.relatedAuthor} numberOfLines={1}>
+                          {getPrimaryAuthorName(item)}
+                          {relatedYear ? `  ·  ${relatedYear}` : ''}
+                        </Text>
+                      </View>
+                    </PressableScale>
+                  );
+                })}
+              </View>
+            </View>
+          ) : null}
+
+          {showWorkflow ? (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>Workflow history</Text>
+              {workflow.length === 0 ? (
+                <Text style={styles.workflowEmpty}>No workflow history available.</Text>
+              ) : (
+                <View style={styles.workflowList}>
+                  {workflow.map((entry, index) => (
+                    <View
+                      key={entry.id}
+                      style={[styles.workflowRow, index === 0 ? styles.workflowRowCurrent : null]}
+                    >
+                      {index === 0 ? <View style={styles.workflowBar} /> : null}
+                      <View style={styles.workflowBody}>
+                        <Text style={styles.workflowName}>
+                          {statusToLabel(entry.status) || entry.action_type || 'Updated'}
+                        </Text>
+                        {entry.reviewer_role ? (
+                          <Text style={styles.workflowMeta}>Reviewer: {entry.reviewer_role}</Text>
+                        ) : null}
+                        {entry.comments ? (
+                          <Text style={styles.workflowComment}>{entry.comments}</Text>
+                        ) : null}
+                      </View>
+                      <Text style={styles.workflowDate}>
+                        {formatDate(entry.reviewed_at || entry.created_at)}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          ) : null}
+        </ScrollView>
       </Screen>
       {annotations.length > 0 && (
         <AnnotationPanel
@@ -439,247 +437,257 @@ export const ResearchDetailScreen = () => {
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    paddingTop: theme.spacing.xl,
-    paddingBottom: theme.spacing['3xl'],
-  },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  loaderText: {
-    ...theme.typography.bodySmall,
-    color: theme.colors.text.secondary,
-  },
-  eyebrow: {
-    fontFamily: theme.fontFamilies.ui.semibold,
-    fontSize: 11,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    color: theme.colors.brand.primary,
-    marginBottom: theme.spacing.sm,
-  },
-  title: {
-    ...theme.typography.display,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
-  },
-  authors: {
-    fontFamily: theme.fontFamilies.display.regular,
-    fontStyle: 'italic',
-    fontSize: 15,
-    lineHeight: 22,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xs,
-  },
-  affiliation: {
-    ...theme.typography.bodySmall,
-    color: theme.colors.text.muted,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: theme.spacing.sm,
-    marginTop: theme.spacing.md,
-    paddingBottom: theme.spacing.lg,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.border.subtle,
-  },
-  metaText: {
-    ...theme.typography.metadata,
-    color: theme.colors.text.secondary,
-  },
-  metaSep: {
-    ...theme.typography.metadata,
-    color: theme.colors.border.strong,
-  },
-  readRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    marginTop: theme.spacing.lg,
-    gap: theme.spacing.sm,
-  },
-  feedbackBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    height: 44,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.border.subtle,
-    borderRadius: theme.radii.md,
-  },
-  feedbackBtnText: {
-    ...theme.typography.bodyStrong,
-    color: theme.colors.text.secondary,
-  },
-  bookmarkBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.border.subtle,
-    borderRadius: theme.radii.md,
-  },
-  section: {
-    marginTop: theme.spacing.xl,
-    gap: theme.spacing.sm,
-  },
-  previewCard: {
-    height: 260,
-    borderRadius: theme.radii.lg,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-    backgroundColor: theme.colors.surface.sunken,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.border.subtle,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  previewScrim: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.28)',
-  },
-  previewButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.radii.pill,
-    backgroundColor: theme.colors.brand.primary,
-    ...theme.shadows.level2,
-  },
-  previewButtonText: {
-    ...theme.typography.bodyStrong,
-    color: theme.colors.text.onBrand,
-  },
-  sectionLabel: {
-    ...theme.typography.label,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    color: theme.colors.text.muted,
-  },
-  keywordsWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.sm,
-  },
-  keywordTag: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.border.subtle,
-    borderRadius: theme.radii.sm,
-    backgroundColor: theme.colors.surface.raised,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 6,
-  },
-  keywordText: {
-    ...theme.typography.bodySmall,
-    color: theme.colors.text.secondary,
-  },
-  abstract: {
-    fontFamily: theme.fontFamilies.display.regular,
-    fontSize: 16,
-    lineHeight: 26,
-    color: theme.colors.text.primary,
-  },
-  relatedList: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.border.subtle,
-  },
-  relatedRow: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.border.subtle,
-  },
-  relatedMark: {
-    width: 4,
-    alignSelf: 'stretch',
-    borderRadius: theme.radii.pill,
-    backgroundColor: theme.palette.navy[300],
-  },
-  relatedBody: {
-    flex: 1,
-    gap: theme.spacing.xs,
-  },
-  relatedCat: {
-    fontFamily: theme.fontFamilies.ui.semibold,
-    fontSize: 9,
-    letterSpacing: 0.7,
-    textTransform: 'uppercase',
-    color: theme.colors.text.muted,
-  },
-  relatedTitle: {
-    fontFamily: theme.fontFamilies.display.semibold,
-    fontSize: 14,
-    lineHeight: 19,
-    color: theme.colors.text.primary,
-  },
-  relatedAuthor: {
-    ...theme.typography.caption,
-    color: theme.colors.text.muted,
-  },
-  workflowList: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.border.subtle,
-  },
-  workflowRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.border.subtle,
-  },
-  workflowRowCurrent: {
-    paddingLeft: theme.spacing.md,
-  },
-  workflowBar: {
-    position: 'absolute',
-    left: 0,
-    top: theme.spacing.md,
-    bottom: theme.spacing.md,
-    width: 3,
-    borderRadius: theme.radii.pill,
-    backgroundColor: theme.colors.brand.accent,
-  },
-  workflowBody: {
-    flex: 1,
-    gap: 2,
-  },
-  workflowName: {
-    ...theme.typography.bodyStrong,
-    color: theme.colors.text.primary,
-  },
-  workflowMeta: {
-    ...theme.typography.metadata,
-    color: theme.colors.text.muted,
-  },
-  workflowComment: {
-    ...theme.typography.bodySmall,
-    color: theme.colors.text.secondary,
-  },
-  workflowDate: {
-    fontFamily: theme.fontFamilies.display.regular,
-    fontSize: 13,
-    color: theme.colors.text.muted,
-  },
-  workflowEmpty: {
-    ...theme.typography.bodySmall,
-    color: theme.colors.text.muted,
-  },
-});
+    container: {
+      flex: 1,
+    },
+    content: {
+      paddingTop: theme.spacing.xl,
+      paddingBottom: theme.spacing['3xl'],
+    },
+    loaderContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+    },
+    loaderText: {
+      ...theme.typography.bodySmall,
+      color: theme.colors.text.secondary,
+    },
+    eyebrow: {
+      fontFamily: theme.fontFamilies.ui.semibold,
+      fontSize: 11,
+      letterSpacing: 0.8,
+      textTransform: 'uppercase',
+      color: theme.colors.brand.primary,
+      marginBottom: theme.spacing.sm,
+    },
+    title: {
+      ...theme.typography.display,
+      color: theme.colors.text.primary,
+      marginBottom: theme.spacing.md,
+    },
+    authors: {
+      fontFamily: theme.fontFamilies.display.regular,
+      fontStyle: 'italic',
+      fontSize: 15,
+      lineHeight: 22,
+      color: theme.colors.text.secondary,
+      marginBottom: theme.spacing.xs,
+    },
+    affiliation: {
+      ...theme.typography.bodySmall,
+      color: theme.colors.text.muted,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: theme.spacing.sm,
+      marginTop: theme.spacing.md,
+      paddingBottom: theme.spacing.lg,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.border.subtle,
+    },
+    metaText: {
+      ...theme.typography.metadata,
+      color: theme.colors.text.secondary,
+    },
+    metaSep: {
+      ...theme.typography.metadata,
+      color: theme.colors.border.strong,
+    },
+    readRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      marginTop: theme.spacing.lg,
+      gap: theme.spacing.sm,
+    },
+    feedbackBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      height: 44,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.border.subtle,
+      borderRadius: theme.radii.md,
+    },
+    feedbackBtnText: {
+      ...theme.typography.bodyStrong,
+      color: theme.colors.text.secondary,
+    },
+    bookmarkBtn: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.border.subtle,
+      borderRadius: theme.radii.md,
+    },
+    section: {
+      marginTop: theme.spacing.xl,
+      gap: theme.spacing.sm,
+    },
+    previewCard: {
+      height: 260,
+      borderRadius: theme.radii.lg,
+      borderCurve: 'continuous',
+      backgroundColor: theme.colors.surface.sunken,
+      ...theme.shadows.level1,
+    },
+    previewCardInner: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      borderRadius: theme.radii.lg,
+      borderCurve: 'continuous',
+      overflow: 'hidden',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.border.subtle,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    previewScrim: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(15, 23, 42, 0.28)',
+    },
+    previewButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.md,
+      borderRadius: theme.radii.pill,
+      backgroundColor: theme.colors.brand.primary,
+      ...theme.shadows.level2,
+    },
+    previewButtonText: {
+      ...theme.typography.bodyStrong,
+      color: theme.colors.text.onBrand,
+    },
+    sectionLabel: {
+      ...theme.typography.label,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      color: theme.colors.text.muted,
+    },
+    keywordsWrap: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: theme.spacing.sm,
+    },
+    keywordTag: {
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.border.subtle,
+      borderRadius: theme.radii.sm,
+      backgroundColor: theme.colors.surface.raised,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 6,
+    },
+    keywordText: {
+      ...theme.typography.bodySmall,
+      color: theme.colors.text.secondary,
+    },
+    abstract: {
+      fontFamily: theme.fontFamilies.display.regular,
+      fontSize: 16,
+      lineHeight: 26,
+      color: theme.colors.text.primary,
+    },
+    relatedList: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.border.subtle,
+    },
+    relatedRow: {
+      flexDirection: 'row',
+      gap: theme.spacing.md,
+      paddingVertical: theme.spacing.md,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.border.subtle,
+    },
+    relatedMark: {
+      width: 4,
+      alignSelf: 'stretch',
+      borderRadius: theme.radii.pill,
+      backgroundColor: theme.palette.navy[300],
+    },
+    relatedBody: {
+      flex: 1,
+      gap: theme.spacing.xs,
+    },
+    relatedCat: {
+      fontFamily: theme.fontFamilies.ui.semibold,
+      fontSize: 9,
+      letterSpacing: 0.7,
+      textTransform: 'uppercase',
+      color: theme.colors.text.muted,
+    },
+    relatedTitle: {
+      fontFamily: theme.fontFamilies.display.semibold,
+      fontSize: 14,
+      lineHeight: 19,
+      color: theme.colors.text.primary,
+    },
+    relatedAuthor: {
+      ...theme.typography.caption,
+      color: theme.colors.text.muted,
+    },
+    workflowList: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.colors.border.subtle,
+    },
+    workflowRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: theme.spacing.md,
+      paddingVertical: theme.spacing.md,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.border.subtle,
+    },
+    workflowRowCurrent: {
+      paddingLeft: theme.spacing.md,
+    },
+    workflowBar: {
+      position: 'absolute',
+      left: 0,
+      top: theme.spacing.md,
+      bottom: theme.spacing.md,
+      width: 3,
+      borderRadius: theme.radii.pill,
+      backgroundColor: theme.colors.brand.accent,
+    },
+    workflowBody: {
+      flex: 1,
+      gap: 2,
+    },
+    workflowName: {
+      ...theme.typography.bodyStrong,
+      color: theme.colors.text.primary,
+    },
+    workflowMeta: {
+      ...theme.typography.metadata,
+      color: theme.colors.text.muted,
+    },
+    workflowComment: {
+      ...theme.typography.bodySmall,
+      color: theme.colors.text.secondary,
+    },
+    workflowDate: {
+      fontFamily: theme.fontFamilies.display.regular,
+      fontSize: 13,
+      color: theme.colors.text.muted,
+    },
+    workflowEmpty: {
+      ...theme.typography.bodySmall,
+      color: theme.colors.text.muted,
+    },
+  });
