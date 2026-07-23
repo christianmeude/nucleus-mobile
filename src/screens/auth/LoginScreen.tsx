@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
-  KeyboardAvoidingView,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -22,10 +20,16 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withRepeat,
-  withSequence,
   Easing,
+  useAnimatedKeyboard,
+  interpolate,
+  interpolateColor,
+  Extrapolation,
 } from 'react-native-reanimated';
+
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetTextInput, BottomSheetScrollView } from '@gorhom/bottom-sheet';
@@ -47,6 +51,7 @@ export const LoginScreen = () => {
   // Bottom Sheet State
   const bottomSheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ['70%', '90%'], []);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [sheetStep, setSheetStep] = useState<1 | 2>(1);
   const [forgotEmail, setForgotEmail] = useState('');
   const [code, setCode] = useState('');
@@ -55,78 +60,40 @@ export const LoginScreen = () => {
   const [sheetError, setSheetError] = useState('');
   const [sheetSuccessMsg, setSheetSuccessMsg] = useState('');
 
-  // Background Blob Animations
-  const blob1Y = useSharedValue(0);
-  const blob1X = useSharedValue(0);
-  const blob2Y = useSharedValue(0);
-  const blob2X = useSharedValue(0);
-  const blob3Y = useSharedValue(0);
-  const blob3X = useSharedValue(0);
-
+  // Keyboard state for non-animatable props like placeholder
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   useEffect(() => {
-    blob1Y.value = withRepeat(
-      withSequence(
-        withTiming(-30, { duration: 4000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 4000, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
-    );
-    blob1X.value = withRepeat(
-      withSequence(
-        withTiming(30, { duration: 5000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 5000, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
-    );
-    
-    blob2Y.value = withRepeat(
-      withSequence(
-        withTiming(40, { duration: 4500, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 4500, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
-    );
-    blob2X.value = withRepeat(
-      withSequence(
-        withTiming(-40, { duration: 5500, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 5500, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
-    );
-
-    blob3Y.value = withRepeat(
-      withSequence(
-        withTiming(-20, { duration: 6000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(20, { duration: 6000, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
-    );
-    blob3X.value = withRepeat(
-      withSequence(
-        withTiming(-30, { duration: 7000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(30, { duration: 7000, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
-    );
+    const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setIsKeyboardOpen(true));
+    const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setIsKeyboardOpen(false));
+    return () => { showSub.remove(); hideSub.remove(); };
   }, []);
 
-  const animatedBlob1Style = useAnimatedStyle(() => ({
-    transform: [{ translateY: blob1Y.value }, { translateX: blob1X.value }, { scale: 1.3 }],
-  }));
+  // Universal Animation Language: Keyboard handling
+  const keyboard = useAnimatedKeyboard();
 
-  const animatedBlob2Style = useAnimatedStyle(() => ({
-    transform: [{ translateY: blob2Y.value }, { translateX: blob2X.value }, { scale: 1.4 }],
-  }));
+  const animatedContainerStyle = useAnimatedStyle(() => {
+    // Decrease the distance the form travels upwards by subtracting 24px from the keyboard height
+    // This brings the form closer to the keyboard by about half of its previous gap
+    const bottomPadding = keyboard.height.value > 0 ? keyboard.height.value - 24 : 0;
+    return {
+      paddingBottom: bottomPadding,
+    };
+  });
 
-  const animatedBlob3Style = useAnimatedStyle(() => ({
-    transform: [{ translateY: blob3Y.value }, { translateX: blob3X.value }, { scale: 1.2 }],
-  }));
+  const animatedLogoStyle = useAnimatedStyle(() => {
+    // Logo scales down and translates down substantially to sit above form
+    const scale = interpolate(keyboard.height.value, [0, 250], [1, 0.75], Extrapolation.CLAMP);
+    const translateY = interpolate(keyboard.height.value, [0, 250], [0, 80], Extrapolation.CLAMP);
+    return {
+      transform: [{ scale }, { translateY }],
+    };
+  });
+
+  const animatedWordmarkStyle = useAnimatedStyle(() => {
+    // Wordmark fades out when keyboard opens
+    const opacity = interpolate(keyboard.height.value, [0, 150], [1, 0], Extrapolation.CLAMP);
+    return { opacity };
+  });
 
   // Error Animation
   const errorOpacity = useSharedValue(0);
@@ -148,14 +115,15 @@ export const LoginScreen = () => {
     transform: [{ translateY: errorTranslateY.value }],
   }));
 
-  const animatedInputWrapperStyle = useAnimatedStyle(() => {
+  const animatedInputWrapperStyle = (field: FocusField) => useAnimatedStyle(() => {
+    const isFocused = focused === field;
     return {
       borderColor: withTiming(
-        error ? theme.colors.state.danger : focused === 'email' || focused === 'password' ? theme.colors.brand.primary : 'rgba(255, 255, 255, 0.3)',
+        error ? theme.colors.state.danger : isFocused ? theme.colors.brand.accent : 'rgba(255, 255, 255, 0.2)',
         { duration: 200 }
       ),
       backgroundColor: withTiming(
-        error ? theme.colors.state.dangerSurface : focused === 'email' || focused === 'password' ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.7)',
+        error ? theme.colors.state.dangerSurface : isFocused ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.08)',
         { duration: 200 }
       )
     };
@@ -164,9 +132,17 @@ export const LoginScreen = () => {
   // Button Animation
   const buttonScale = useSharedValue(1);
 
-  const animatedButtonStyle = useAnimatedStyle(() => ({
+  const animatedBtnStyle = useAnimatedStyle(() => ({
     transform: [{ scale: buttonScale.value }],
   }));
+
+  const animatedBlurStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(keyboard.height.value, [0, 250], [0, 1], Extrapolation.CLAMP)
+  }));
+
+  const emailWrapStyle = animatedInputWrapperStyle('email');
+  const passwordWrapStyle = animatedInputWrapperStyle('password');
+
 
   const handleButtonPressIn = () => {
     buttonScale.value = withTiming(0.96, { duration: 150 });
@@ -236,6 +212,7 @@ export const LoginScreen = () => {
       setSheetError(data.error);
     } else {
       bottomSheetRef.current?.close();
+      setShowForgotPassword(false);
       setSheetSuccessMsg('');
       setSheetStep(1);
     }
@@ -246,7 +223,7 @@ export const LoginScreen = () => {
     setSheetStep(1);
     setSheetError('');
     setSheetSuccessMsg('');
-    bottomSheetRef.current?.expand();
+    setShowForgotPassword(true);
   };
 
   const renderBackdrop = useCallback(
@@ -254,49 +231,51 @@ export const LoginScreen = () => {
     []
   );
 
-  const iconColor = (field: FocusField) =>
-    error && (field === 'email' || field === 'password') ? theme.colors.state.danger : focused === field ? theme.colors.brand.primary : theme.colors.text.muted;
-
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <Animated.View style={[styles.blobTop, animatedBlob1Style]} />
-      <Animated.View style={[styles.blobBottom, animatedBlob2Style]} />
-      <Animated.View style={[styles.blobMiddle, animatedBlob3Style]} />
-      
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.select({ ios: 'padding', android: 'height' })}
-        keyboardVerticalOffset={Platform.select({ ios: 0, android: 24 })}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.header}>
-            <Logo size="lg" showWordmark />
-            <View style={styles.headingBlock}>
-              <Text style={styles.title}>Welcome back</Text>
-              <View style={styles.accentUnderline} />
-            </View>
-          </View>
-
-          <View style={styles.glassContainer}>
-            <BlurView intensity={60} style={StyleSheet.absoluteFill} tint="light" />
+    <View style={styles.root}>
+      <LinearGradient
+        colors={[theme.colors.brand.primarySurface, theme.colors.brand.primarySurface, theme.colors.brand.primaryHover]}
+        locations={[0, 0.25, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+      <SafeAreaView style={styles.safeArea}>
+        <Pressable style={styles.flex} onPress={() => { Keyboard.dismiss(); setFocused(null); }}>
+          <Animated.View style={[styles.flex, animatedContainerStyle]}>
             
+            <View style={styles.spacer} />
+
+            <View style={styles.header}>
+              <Animated.View style={animatedLogoStyle}>
+                <Logo size="xl" showWordmark wordmarkStyle={animatedWordmarkStyle} />
+              </Animated.View>
+            </View>
+
+            <View style={styles.spacer} />
+
             <View style={styles.formContainer}>
-              <View style={styles.formGroup}>
+              <Animated.View style={[StyleSheet.absoluteFill, animatedBlurStyle, { top: -150 }]} pointerEvents="none">
+                <LinearGradient
+                  colors={['rgba(22, 54, 115, 0)', 'rgba(22, 54, 115, 0.75)', 'rgba(22, 54, 115, 0.95)']}
+                  locations={[0, 0.6, 1]}
+                  style={StyleSheet.absoluteFill}
+                />
+              </Animated.View>
+              
+              <View style={styles.inputsWrapper}>
+                <View style={styles.formGroup}>
                 <Text style={styles.label}>Email</Text>
-                <Animated.View style={[styles.inputWrap, animatedInputWrapperStyle]}>
-                  <Icon icon={Mail} size={20} color={iconColor('email')} style={styles.inputIcon} />
+                <Animated.View style={[styles.inputWrap, emailWrapStyle]}>
+                  <View style={styles.inputIcon}>
+                    <Mail size={20} color={error ? theme.colors.state.danger : focused === 'email' ? theme.colors.brand.accent : 'rgba(255, 255, 255, 0.6)'} />
+                  </View>
                   <TextInput
                     autoCapitalize="none"
                     keyboardType="email-address"
                     placeholder="you@example.com"
-                    placeholderTextColor={theme.colors.text.disabled}
+                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
                     style={styles.input}
                     value={email}
-                    onChangeText={(text) => {
+                    onChangeText={(text: string) => {
                       setEmail(text);
                       if (error) setError('');
                     }}
@@ -313,20 +292,17 @@ export const LoginScreen = () => {
                     <Text style={styles.forgotPasswordText}>Forgot?</Text>
                   </Pressable>
                 </View>
-                <Animated.View style={[styles.inputWrap, animatedInputWrapperStyle]}>
-                  <Icon
-                    icon={Lock}
-                    size={20}
-                    color={iconColor('password')}
-                    style={styles.inputIcon}
-                  />
+                <Animated.View style={[styles.inputWrap, passwordWrapStyle]}>
+                  <View style={styles.inputIcon}>
+                    <Lock size={20} color={error ? theme.colors.state.danger : focused === 'password' ? theme.colors.brand.accent : 'rgba(255, 255, 255, 0.6)'} />
+                  </View>
                   <TextInput
                     secureTextEntry
                     placeholder="Enter your password"
-                    placeholderTextColor={theme.colors.text.disabled}
+                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
                     style={styles.input}
                     value={password}
-                    onChangeText={(text) => {
+                    onChangeText={(text: string) => {
                       setPassword(text);
                       if (error) setError('');
                     }}
@@ -335,6 +311,7 @@ export const LoginScreen = () => {
                   />
                 </Animated.View>
               </View>
+              </View>
 
               <Animated.View style={[styles.errorBox, animatedErrorStyle]}>
                 <Icon icon={CircleAlert} size={16} color={theme.colors.state.danger} />
@@ -342,211 +319,165 @@ export const LoginScreen = () => {
               </Animated.View>
 
               <View style={styles.actions}>
-                <Animated.View style={animatedButtonStyle}>
-                  <Pressable
-                    style={[styles.primaryButton, isSubmitting && styles.primaryButtonDisabled]}
-                    onPress={onSubmit}
-                    onPressIn={handleButtonPressIn}
-                    onPressOut={handleButtonPressOut}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <ActivityIndicator color={theme.colors.text.onBrand} />
-                    ) : (
-                      <Text style={styles.primaryButtonText}>Sign In</Text>
-                    )}
-                  </Pressable>
-                </Animated.View>
+                <AnimatedPressable
+                  style={[styles.primaryButton, animatedBtnStyle, { backgroundColor: theme.colors.brand.accent }, isSubmitting && styles.primaryButtonDisabled]}
+                  onPress={onSubmit}
+                  onPressIn={handleButtonPressIn}
+                  onPressOut={handleButtonPressOut}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <ActivityIndicator color={theme.colors.brand.primary} />
+                  ) : (
+                    <Text style={styles.primaryButtonText}>Sign In</Text>
+                  )}
+                </AnimatedPressable>
               </View>
             </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          </Animated.View>
+        </Pressable>
+      </SafeAreaView>
 
-      <BottomSheet
-        ref={bottomSheetRef}
-        index={-1}
-        snapPoints={snapPoints}
-        enablePanDownToClose
-        backdropComponent={renderBackdrop}
-        backgroundStyle={styles.bottomSheetBackground}
-        handleIndicatorStyle={styles.bottomSheetIndicator}
-        keyboardBehavior="extend"
-        keyboardBlurBehavior="restore"
-      >
-        <BottomSheetScrollView contentContainerStyle={styles.sheetContent}>
-          <View style={styles.sheetHeader}>
-            <Text style={styles.sheetTitle}>{sheetStep === 1 ? 'Forgot Password' : 'Reset Password'}</Text>
-            <Text style={styles.sheetSubtitle}>
-              {sheetStep === 1
-                ? "Enter your email address and we'll send you a verification code."
-                : 'Enter the code sent to your email and your new password.'}
-            </Text>
-          </View>
-
-          {sheetStep === 1 ? (
-            <View style={styles.formGroup}>
-              <Text style={styles.sheetLabel}>Email</Text>
-              <View style={[styles.sheetInputWrap, focused === 'forgotEmail' && styles.sheetInputWrapFocused]}>
-                <Icon icon={Mail} size={18} color={iconColor('forgotEmail')} style={styles.sheetInputIcon} />
-                <BottomSheetTextInput
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  placeholder="you@example.com"
-                  placeholderTextColor={theme.colors.text.disabled}
-                  style={styles.sheetInput}
-                  value={forgotEmail}
-                  onChangeText={setForgotEmail}
-                  onFocus={() => setFocused('forgotEmail')}
-                  onBlur={() => setFocused(null)}
-                />
-              </View>
-            </View>
-          ) : (
-            <>
-              <View style={styles.formGroup}>
-                <Text style={styles.sheetLabel}>Verification Code</Text>
-                <View style={[styles.sheetInputWrap, focused === 'code' && styles.sheetInputWrapFocused]}>
-                  <Icon icon={Grid3x3} size={18} color={iconColor('code')} style={styles.sheetInputIcon} />
-                  <BottomSheetTextInput
-                    autoCapitalize="none"
-                    keyboardType="number-pad"
-                    placeholder="Enter 6-digit code"
-                    placeholderTextColor={theme.colors.text.disabled}
-                    style={styles.sheetInput}
-                    value={code}
-                    onChangeText={setCode}
-                    onFocus={() => setFocused('code')}
-                    onBlur={() => setFocused(null)}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.sheetLabel}>New Password</Text>
-                <View style={[styles.sheetInputWrap, focused === 'newPassword' && styles.sheetInputWrapFocused]}>
-                  <Icon icon={Lock} size={18} color={iconColor('newPassword')} style={styles.sheetInputIcon} />
-                  <BottomSheetTextInput
-                    secureTextEntry
-                    placeholder="Enter new password"
-                    placeholderTextColor={theme.colors.text.disabled}
-                    style={styles.sheetInput}
-                    value={newPassword}
-                    onChangeText={setNewPassword}
-                    onFocus={() => setFocused('newPassword')}
-                    onBlur={() => setFocused(null)}
-                  />
-                </View>
-              </View>
-            </>
-          )}
-
-          {sheetError ? (
-            <View style={styles.sheetErrorBox}>
-              <Icon icon={CircleAlert} size={16} color={theme.colors.state.danger} />
-              <Text style={styles.sheetError}>{sheetError}</Text>
-            </View>
-          ) : null}
-
-          {sheetSuccessMsg && !sheetError ? (
-            <View style={[styles.sheetErrorBox, { backgroundColor: theme.colors.state.successSurface }]}>
-              <Icon icon={CircleCheck} size={16} color={theme.colors.state.success} />
-              <Text style={[styles.sheetError, { color: theme.colors.state.success }]}>
-                {sheetSuccessMsg}
+      {showForgotPassword && (
+        <BottomSheet
+          ref={bottomSheetRef}
+          index={0}
+          snapPoints={snapPoints}
+          enablePanDownToClose
+          onClose={() => setShowForgotPassword(false)}
+          backdropComponent={renderBackdrop}
+          backgroundStyle={styles.bottomSheetBackground}
+          handleIndicatorStyle={styles.bottomSheetIndicator}
+          keyboardBehavior="extend"
+          keyboardBlurBehavior="restore"
+        >
+          <BottomSheetScrollView contentContainerStyle={styles.sheetContent}>
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>{sheetStep === 1 ? 'Forgot Password' : 'Reset Password'}</Text>
+              <Text style={styles.sheetSubtitle}>
+                {sheetStep === 1
+                  ? "Enter your email address and we'll send you a verification code."
+                  : 'Enter the code sent to your email and your new password.'}
               </Text>
             </View>
-          ) : null}
 
-          <View style={styles.sheetActions}>
             {sheetStep === 1 ? (
-              <Button label="Send Reset Code" onPress={handleSendCode} loading={sheetLoading} disabled={sheetLoading} />
+              <View style={styles.sheetFormGroup}>
+                <Text style={styles.sheetLabel}>Email</Text>
+                <View style={[styles.sheetInputWrap, focused === 'forgotEmail' && styles.sheetInputWrapFocused]}>
+                  <Icon icon={Mail} size={18} color={iconColor('forgotEmail')} style={styles.sheetInputIcon} />
+                  <BottomSheetTextInput
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    placeholder="you@example.com"
+                    placeholderTextColor={theme.colors.text.disabled}
+                    style={styles.sheetInput}
+                    value={forgotEmail}
+                    onChangeText={setForgotEmail}
+                    onFocus={() => setFocused('forgotEmail')}
+                    onBlur={() => setFocused(null)}
+                  />
+                </View>
+              </View>
             ) : (
-              <Button label="Reset Password" onPress={handleResetPassword} loading={sheetLoading} disabled={sheetLoading} />
+              <>
+                <View style={styles.sheetFormGroup}>
+                  <Text style={styles.sheetLabel}>Verification Code</Text>
+                  <View style={[styles.sheetInputWrap, focused === 'code' && styles.sheetInputWrapFocused]}>
+                    <Icon icon={Grid3x3} size={18} color={iconColor('code')} style={styles.sheetInputIcon} />
+                    <BottomSheetTextInput
+                      autoCapitalize="none"
+                      keyboardType="number-pad"
+                      placeholder="Enter 6-digit code"
+                      placeholderTextColor={theme.colors.text.disabled}
+                      style={styles.sheetInput}
+                      value={code}
+                      onChangeText={setCode}
+                      onFocus={() => setFocused('code')}
+                      onBlur={() => setFocused(null)}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.sheetFormGroup}>
+                  <Text style={styles.sheetLabel}>New Password</Text>
+                  <View style={[styles.sheetInputWrap, focused === 'newPassword' && styles.sheetInputWrapFocused]}>
+                    <Icon icon={Lock} size={18} color={iconColor('newPassword')} style={styles.sheetInputIcon} />
+                    <BottomSheetTextInput
+                      secureTextEntry
+                      placeholder="Enter new password"
+                      placeholderTextColor={theme.colors.text.disabled}
+                      style={styles.sheetInput}
+                      value={newPassword}
+                      onChangeText={setNewPassword}
+                      onFocus={() => setFocused('newPassword')}
+                      onBlur={() => setFocused(null)}
+                    />
+                  </View>
+                </View>
+              </>
             )}
-            <Button label="Cancel" variant="subtle" onPress={() => bottomSheetRef.current?.close()} disabled={sheetLoading} />
-          </View>
-        </BottomSheetScrollView>
-      </BottomSheet>
-    </SafeAreaView>
+
+            {sheetError ? (
+              <View style={styles.sheetErrorBox}>
+                <Icon icon={CircleAlert} size={16} color={theme.colors.state.danger} />
+                <Text style={styles.sheetError}>{sheetError}</Text>
+              </View>
+            ) : null}
+
+            {sheetSuccessMsg && !sheetError ? (
+              <View style={[styles.sheetErrorBox, { backgroundColor: theme.colors.state.successSurface }]}>
+                <Icon icon={CircleCheck} size={16} color={theme.colors.state.success} />
+                <Text style={[styles.sheetError, { color: theme.colors.state.success }]}>
+                  {sheetSuccessMsg}
+                </Text>
+              </View>
+            ) : null}
+
+            <View style={styles.sheetActions}>
+              {sheetStep === 1 ? (
+                <Button label="Send Reset Code" onPress={handleSendCode} loading={sheetLoading} disabled={sheetLoading} />
+              ) : (
+                <Button label="Reset Password" onPress={handleResetPassword} loading={sheetLoading} disabled={sheetLoading} />
+              )}
+              <Button label="Cancel" variant="subtle" onPress={() => setShowForgotPassword(false)} disabled={sheetLoading} />
+            </View>
+          </BottomSheetScrollView>
+        </BottomSheet>
+      )}
+    </View>
   );
 };
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: theme.colors.brand.primarySurface,
+    },
     safeArea: {
       flex: 1,
-      backgroundColor: theme.colors.surface.base,
-      overflow: 'hidden',
     },
     flex: {
       flex: 1,
+      justifyContent: 'flex-end', // Anchors form to bottom
     },
-    blobTop: {
-      position: 'absolute',
-      top: -120,
-      right: -100,
-      width: 450,
-      height: 450,
-      borderRadius: 225,
-      backgroundColor: theme.colors.brand.primarySoft,
-      opacity: 0.8,
-    },
-    blobBottom: {
-      position: 'absolute',
-      bottom: -150,
-      left: -120,
-      width: 480,
-      height: 480,
-      borderRadius: 240,
-      backgroundColor: theme.colors.brand.primarySurface,
-      opacity: 0.85,
-    },
-    blobMiddle: {
-      position: 'absolute',
-      top: '30%',
-      left: '10%',
-      width: 300,
-      height: 300,
-      borderRadius: 150,
-      backgroundColor: theme.colors.brand.accent,
-      opacity: 0.35,
-    },
-    scrollContent: {
-      flexGrow: 1,
-      justifyContent: 'center',
-      padding: theme.spacing.xl,
-      gap: theme.spacing['2xl'],
+    spacer: {
+      flex: 1,
     },
     header: {
       alignItems: 'center',
-      gap: theme.spacing.md,
-      marginTop: theme.spacing.xl,
-    },
-    headingBlock: {
-      alignItems: 'center',
-      gap: theme.spacing.sm,
-    },
-    title: {
-      ...theme.typography.h1,
-      color: theme.colors.text.primary,
-      textAlign: 'center',
-    },
-    accentUnderline: {
-      width: 44,
-      height: 4,
-      borderRadius: theme.radii.pill,
-      backgroundColor: theme.colors.brand.accent,
-    },
-    glassContainer: {
-      borderRadius: theme.radii.xl,
-      overflow: 'hidden',
-      borderWidth: 1,
-      borderColor: 'rgba(255, 255, 255, 0.4)',
+      marginBottom: theme.spacing.xl,
     },
     formContainer: {
-      padding: theme.spacing['2xl'],
-      gap: theme.spacing.xl,
+      paddingHorizontal: theme.spacing['2xl'],
+      paddingBottom: theme.spacing['2xl'] * 1.5,
+      paddingTop: theme.spacing.md,
+      gap: theme.spacing.md, // reduced gap between groups
       zIndex: 1,
+    },
+    inputsWrapper: {
+      gap: theme.spacing.xl, // original gap for inputs
     },
     formGroup: {
       gap: theme.spacing.sm,
@@ -558,15 +489,15 @@ const makeStyles = (theme: Theme) =>
     },
     label: {
       ...theme.typography.label,
-      color: theme.colors.text.primary,
-      fontWeight: '700',
+      color: 'rgba(255, 255, 255, 0.8)',
+      fontWeight: '600',
       fontSize: 13,
       letterSpacing: 0.5,
       textTransform: 'uppercase',
     },
     forgotPasswordText: {
       ...theme.typography.bodySmall,
-      color: theme.colors.brand.primary,
+      color: theme.colors.brand.accent,
       fontWeight: '700',
     },
     inputWrap: {
@@ -586,7 +517,7 @@ const makeStyles = (theme: Theme) =>
       flex: 1,
       paddingVertical: theme.spacing.md,
       ...theme.typography.body,
-      color: theme.colors.text.primary,
+      color: theme.colors.text.onBrand,
       zIndex: 2,
     },
     errorBox: {
@@ -603,10 +534,9 @@ const makeStyles = (theme: Theme) =>
       fontWeight: '600',
     },
     actions: {
-      marginTop: theme.spacing.sm,
+      marginTop: 0,
     },
     primaryButton: {
-      backgroundColor: theme.colors.brand.primary,
       paddingVertical: theme.spacing.md,
       borderRadius: theme.radii.lg,
       borderCurve: 'continuous',
@@ -620,7 +550,7 @@ const makeStyles = (theme: Theme) =>
     },
     primaryButtonText: {
       ...theme.typography.button,
-      color: theme.colors.text.onBrand,
+      color: theme.colors.brand.primary,
       fontSize: 16,
       letterSpacing: 0.5,
     },
@@ -653,6 +583,9 @@ const makeStyles = (theme: Theme) =>
     sheetLabel: {
       ...theme.typography.label,
       color: theme.colors.text.secondary,
+    },
+    sheetFormGroup: {
+      gap: theme.spacing.sm,
     },
     sheetInputWrap: {
       flexDirection: 'row',
