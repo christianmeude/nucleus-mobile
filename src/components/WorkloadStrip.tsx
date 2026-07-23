@@ -1,5 +1,4 @@
 import { StyleSheet, View, Text, Pressable } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
 import { AnimatedNumber } from './ui/motion/AnimatedNumber';
@@ -44,9 +43,8 @@ export const WorkloadStrip = ({ summary, activeFilter, onFilterChange }: Workloa
       {tiles.map((tile, index) => {
         const isActive = activeFilter === tile.id;
         return (
-          <Animated.View
+          <View
             key={tile.id}
-            entering={FadeInDown.delay(index * 30).duration(300)}
             style={styles.tileWrapper}
           >
             <Pressable
@@ -64,7 +62,7 @@ export const WorkloadStrip = ({ summary, activeFilter, onFilterChange }: Workloa
                 {tile.label}
               </Text>
             </Pressable>
-          </Animated.View>
+          </View>
         );
       })}
     </View>

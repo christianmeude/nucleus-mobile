@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  withTiming,
-  LinearTransition,
-} from 'react-native-reanimated';
 import { ChevronDown } from 'lucide-react-native';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
@@ -27,14 +22,12 @@ export const CollapsibleSection = ({
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
-  const iconStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ rotate: withTiming(isExpanded ? '180deg' : '0deg', { duration: 300 }) }],
-    };
-  });
+  const iconStyle = {
+    transform: [{ rotate: isExpanded ? '180deg' : '0deg' }],
+  };
 
   return (
-    <Animated.View layout={LinearTransition.duration(300)} style={styles.container}>
+    <View style={styles.container}>
       <Pressable
         style={styles.header}
         onPress={() => setIsExpanded(!isExpanded)}
@@ -47,15 +40,15 @@ export const CollapsibleSection = ({
             <Text style={styles.badgeText}>{count}</Text>
           </View>
         </View>
-        <Animated.View style={iconStyle}>
+        <View style={iconStyle}>
           <Icon icon={ChevronDown} size={20} color={theme.colors.text.secondary} />
-        </Animated.View>
+        </View>
       </Pressable>
 
       <View style={!isExpanded ? { height: 0, opacity: 0, overflow: 'hidden' } : undefined}>
         {children}
       </View>
-    </Animated.View>
+    </View>
   );
 };
 

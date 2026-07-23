@@ -2,7 +2,6 @@ import { useCallback, useMemo, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import Animated, { FadeInDown, FadeOutLeft, LinearTransition } from 'react-native-reanimated';
 import { DashboardHero, EmptyState, InlineNotice, Screen, Skeleton, CollapsibleSection } from '../../components/ui';
 import { FacultyPaperCard } from '../../components/FacultyPaperCard';
 import { WorkloadStrip, WorkloadFilter } from '../../components/WorkloadStrip';
@@ -110,17 +109,12 @@ export const FacultyDashboardScreen = () => {
   const renderList = (list: FacultyAssignedPaper[]) => (
     <View style={styles.list}>
       {list.map((paper, index) => (
-        <Animated.View
-          key={paper.id}
-          layout={LinearTransition.duration(300)}
-          entering={!activeFilter ? FadeInDown.delay(index * 50).duration(300) : undefined}
-          exiting={FadeOutLeft.duration(300)}
-        >
+        <View key={paper.id}>
           <FacultyPaperCard
             paper={paper}
             onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: paper.id })}
           />
-        </Animated.View>
+        </View>
       ))}
     </View>
   );

@@ -2,9 +2,6 @@ import { useCallback, useMemo, useEffect, useState } from 'react';
 import { Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, {
   useSharedValue,
-  useAnimatedStyle,
-  interpolate,
-  Extrapolation,
 } from 'react-native-reanimated';
 import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -43,17 +40,7 @@ export const FacultyReviewScreen = () => {
     [scrollOffset],
   );
 
-  const headerAnimatedStyle = useAnimatedStyle(() => {
-    const shadowOpacity = interpolate(scrollOffset.value, [0, 10], [0, 0.08], Extrapolation.CLAMP);
-    const elevation = interpolate(scrollOffset.value, [0, 10], [0, 4], Extrapolation.CLAMP);
-
-    return {
-      shadowOpacity,
-      shadowOffset: { width: 0, height: 2 },
-      shadowRadius: 4,
-      elevation,
-    };
-  });
+  const headerAnimatedStyle = {};
 
   const load = useCallback(async () => {
     try {
@@ -99,7 +86,7 @@ export const FacultyReviewScreen = () => {
 
   return (
     <Screen gutter={0} edges={{ bottom: false }}>
-      <Animated.View style={[styles.header, headerAnimatedStyle]}>
+      <View style={[styles.header, headerAnimatedStyle]}>
         <TopBar title="Review" variant="large" scrollOffset={scrollOffset} />
 
         <View style={styles.searchContainer}>
@@ -152,7 +139,7 @@ export const FacultyReviewScreen = () => {
         <Text style={styles.papersCount}>
           {visible.length} {visible.length === 1 ? 'paper' : 'papers'}
         </Text>
-      </Animated.View>
+      </View>
 
       <LegendList
         onScroll={onScroll}
