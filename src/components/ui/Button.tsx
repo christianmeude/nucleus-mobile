@@ -2,7 +2,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 
-type ButtonVariant = 'primary' | 'secondary' | 'subtle';
+type ButtonVariant = 'primary' | 'secondary' | 'subtle' | 'accent' | 'danger';
 type ButtonSize = 'md' | 'sm';
 
 interface ButtonProps {
@@ -46,7 +46,15 @@ export const Button = ({
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={variant === 'primary' ? theme.colors.text.onBrand : theme.colors.brand.primary}
+          color={
+            variant === 'primary'
+              ? theme.colors.text.onBrand
+              : variant === 'accent'
+                ? theme.colors.brand.accent
+                : variant === 'danger'
+                  ? theme.colors.state.danger
+                  : theme.colors.brand.primary
+          }
         />
       ) : (
         <Text style={[styles.label, styles[`${variant}Label`]]}>{label}</Text>
@@ -102,6 +110,28 @@ const makeStyles = (t: Theme) =>
     },
     subtleLabel: {
       color: t.colors.brand.primary,
+    },
+    accentBase: {
+      backgroundColor: t.colors.brand.accentSurface,
+      borderWidth: 1,
+      borderColor: t.colors.brand.accent,
+    },
+    accentPressed: {
+      backgroundColor: t.colors.brand.accentSoft,
+    },
+    accentLabel: {
+      color: t.colors.brand.accent,
+    },
+    dangerBase: {
+      backgroundColor: t.colors.state.dangerSurface,
+      borderWidth: 1,
+      borderColor: t.colors.state.danger,
+    },
+    dangerPressed: {
+      backgroundColor: t.colors.state.dangerSurface, // Rely on scale for feedback
+    },
+    dangerLabel: {
+      color: t.colors.state.danger,
     },
     blocked: {
       opacity: 0.6,

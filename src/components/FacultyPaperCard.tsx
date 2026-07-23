@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import Animated, { SlideOutLeft } from 'react-native-reanimated';
 import { PressableCard } from './ui';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
@@ -54,10 +55,11 @@ export const FacultyPaperCard = ({ paper, onPress, index }: FacultyPaperCardProp
   const daysWaiting = getDaysWaiting(paper.submissionDate || paper.createdAt);
 
   const cardContent = (
-    <PressableCard
+    <Animated.View exiting={SlideOutLeft}>
+      <PressableCard
         accessibilityLabel={`Review ${paper.title}`}
         onPress={onPress}
-        style={[styles.cardContainer, theme.shadows.level1]}
+        style={styles.cardContainer}
       >
         <View style={[styles.leftBar, { backgroundColor: config.color }]} />
         <View style={styles.content}>
@@ -78,6 +80,7 @@ export const FacultyPaperCard = ({ paper, onPress, index }: FacultyPaperCardProp
           </View>
         </View>
       </PressableCard>
+    </Animated.View>
   );
 
   return cardContent;
@@ -87,12 +90,12 @@ const makeStyles = (t: Theme) =>
   StyleSheet.create({
     cardContainer: {
       flexDirection: 'row',
-      overflow: 'hidden',
       padding: 0,
     },
     leftBar: {
       width: 4,
-      // The corner radius matches card's left edge naturally via overflow: 'hidden' on PressableCard
+      borderTopLeftRadius: t.radii.lg,
+      borderBottomLeftRadius: t.radii.lg,
     },
     content: {
       flex: 1,
