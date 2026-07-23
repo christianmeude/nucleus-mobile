@@ -628,6 +628,97 @@ export const facultyApi = {
     return rows.map(toFacultyAssignedPaper).sort((left, right) => paperSortTime(right) - paperSortTime(left));
   },
 
+  getUpNextPaper: async (): Promise<FacultyAssignedPaper | null> => {
+    const profile = await resolveCurrentFacultyProfile();
+    
+    const { data, error } = await supabase
+      .from('research_papers')
+      .select(FACULTY_PAPER_SELECT)
+      .eq('faculty_id', profile.id)
+      .in('status', ['pending_faculty', 'revision_required'])
+      .order('submission_date', { ascending: true })
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(error.message || 'Unable to load up-next paper.');
+    }
+
+    return data ? toFacultyAssignedPaper(data as unknown as FacultyPaperRow) : null;
+  },
+
+  getDashboardSummary: async (): Promise<FacultyWorkloadSummary> => {
+    const profile = await resolveCurrentFacultyProfile();
+    
+    const { data, error } = await supabase
+      .from('research_papers')
+      .select('status')
+      .eq('faculty_id', profile.id);
+
+    if (error) {
+      throw new Error(error.message || 'Unable to load dashboard summary.');
+    }
+
+    const rows = Array.isArray(data) ? data : [];
+    let pendingReview = 0;
+    let revisionRequired = 0;
+    let approvedByYou = 0;
+
+    rows.forEach(row => {
+      if (row.status === 'pending_faculty') pendingReview++;
+      else if (row.status === 'revision_required') revisionRequired++;
+      else if (FACULTY_ADVANCED_STATUSES.has(row.status)) approvedByYou++;
+    });
+
+    return {
+      pendingReview,
+      revisionRequired,
+      approvedByYou,
+      totalAssigned: rows.length,
+    };
+  },
+
+  getReviewQueue: async (
+    page: number = 0,
+    limit: number = 20,
+    filter: 'needs_review' | 'revisions' | 'approved' | 'all' = 'needs_review',
+    search?: string
+  ): Promise<FacultyAssignedPaper[]> => {
+    const profile = await resolveCurrentFacultyProfile();
+    
+    let query = supabase.from('research_papers').select(FACULTY_PAPER_SELECT).eq('faculty_id', profile.id);
+    
+    if (filter === 'needs_review') {
+      query = query.in('status', ['pending_faculty', 'revision_required']);
+    } else if (filter === 'revisions') {
+      query = query.eq('status', 'revision_required');
+    } else if (filter === 'approved') {
+      query = query.in('status', Array.from(FACULTY_ADVANCED_STATUSES));
+    }
+    
+    if (search && search.trim()) {
+      const q = search.trim();
+      query = query.or(`title.ilike.%${q}%,abstract.ilike.%${q}%`);
+    }
+
+    // Performance fix: remove nullsFirst: false to allow b-tree index usage
+    query = query.order('submission_date', { ascending: false })
+                 .order('created_at', { ascending: false });
+
+    const from = page * limit;
+    query = query.range(from, from + limit - 1);
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new Error(error.message || 'Unable to load the review queue.');
+    }
+
+    const rows = Array.isArray(data) ? (data as unknown as FacultyPaperRow[]) : [];
+    return rows.map(toFacultyAssignedPaper);
+  },
+
   /** Full review detail for one assigned paper (metadata + workflow history). RLS-scoped. */
   getReviewDetail: async (paperId: string): Promise<FacultyReviewDetail> => {
     await resolveCurrentFacultyProfile();

@@ -1,38 +1,21 @@
 import { useCallback, useMemo, useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import {
-  DashboardHero,
-  EmptyState,
-  InlineNotice,
-  Screen,
-  Skeleton,
-  CollapsibleSection,
-} from '../../components/ui';
+import { ArrowRight } from 'lucide-react-native';
+import { DashboardHero, EmptyState, InlineNotice, Screen, Skeleton, WorkloadChart } from '../../components/ui';
 import { FacultyPaperCard } from '../../components/FacultyPaperCard';
-import { WorkloadStrip, WorkloadFilter } from '../../components/WorkloadStrip';
-import {
-  facultyApi,
-  summarizeFacultyWorkload,
-  type FacultyAssignedPaper,
-  FACULTY_ADVANCED_STATUSES,
-} from '../../api/faculty';
+import { facultyApi, type FacultyAssignedPaper, type FacultyWorkloadSummary } from '../../api/faculty';
+import { NotificationItem } from '../../types/domain';
+import { NotificationCard } from '../../components/NotificationCard';
+import { resolveCurrentFacultyProfile } from '../../api/faculty';
 import { RootStackParamList } from '../../navigation/types';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import { greetingForHour, initialsFor } from '../../utils/format';
-
-const RECENT_LIMIT = 5;
-
-/** Review-queue sort weight: papers awaiting this faculty's review lead, then
- * revisions, then everything else — so the dashboard surfaces what needs action. */
-const statusPriority = (status: string): number => {
-  if (status === 'pending_faculty') return 0;
-  if (status === 'revision_required') return 1;
-  return 2;
-};
+import { supabase } from '../../api/supabase';
 
 type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -55,24 +38,40 @@ export const FacultyDashboardScreen = () => {
   const firstName = useMemo(() => user?.fullName?.trim().split(/\s+/)[0] ?? '', [user?.fullName]);
   const greeting = useMemo(() => greetingForHour(new Date().getHours()), []);
   const initials = useMemo(() => initialsFor(user?.fullName), [user?.fullName]);
-  const [papers, setPapers] = useState<FacultyAssignedPaper[] | null>(null);
+
+  const [summary, setSummary] = useState<FacultyWorkloadSummary | null>(null);
+  const [upNextPaper, setUpNextPaper] = useState<FacultyAssignedPaper | null>(null);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<WorkloadFilter>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   const load = useCallback(async () => {
     try {
       setError(null);
-      const data = await facultyApi.getAssignedPapers();
-      setPapers(data);
+      
+      const [summaryData, paperData, notifData] = await Promise.all([
+        facultyApi.getDashboardSummary(),
+        facultyApi.getUpNextPaper(),
+        facultyApi.getNotifications(3)
+      ]);
+
+      setSummary(summaryData);
+      setUpNextPaper(paperData);
+      setNotifications(notifData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load your dashboard.');
+    } finally {
+      setInitialLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -80,61 +79,6 @@ export const FacultyDashboardScreen = () => {
     setRefreshing(false);
   }, [load]);
 
-  const summary = papers ? summarizeFacultyWorkload(papers) : null;
-
-  const needsActionList = useMemo(() => {
-    if (!papers) return [];
-    let list = papers.filter(
-      (p) => p.status === 'pending_faculty' || p.status === 'revision_required',
-    );
-    if (activeFilter === 'needs_review') {
-      list = list.filter((p) => p.status === 'pending_faculty');
-    } else if (activeFilter === 'revision_sent') {
-      list = list.filter((p) => p.status === 'revision_required');
-    } else if (activeFilter === 'completed') {
-      return [];
-    }
-    return list.sort((a, b) => {
-      const byStatus = statusPriority(a.status) - statusPriority(b.status);
-      if (byStatus !== 0) return byStatus;
-      const aDate = new Date(a.submissionDate || a.createdAt || 0).getTime();
-      const bDate = new Date(b.submissionDate || b.createdAt || 0).getTime();
-      return bDate - aDate;
-    });
-  }, [papers, activeFilter]);
-
-  const completedList = useMemo(() => {
-    if (!papers) return [];
-    if (activeFilter === 'needs_review' || activeFilter === 'revision_sent') {
-      return [];
-    }
-    return papers
-      .filter((p) => FACULTY_ADVANCED_STATUSES.has(p.status))
-      .sort((a, b) => {
-        const aDate = new Date(a.submissionDate || a.createdAt || 0).getTime();
-        const bDate = new Date(b.submissionDate || b.createdAt || 0).getTime();
-        return bDate - aDate;
-      });
-  }, [papers, activeFilter]);
-
-  const showNeedsAction = activeFilter !== 'completed';
-  const showCompleted = activeFilter === null || activeFilter === 'completed';
-
-  const renderList = (list: FacultyAssignedPaper[]) => (
-    <View style={styles.list}>
-      {list.map((paper, index) => (
-        <View key={paper.id}>
-          <FacultyPaperCard
-            paper={paper}
-            onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: paper.id })}
-          />
-        </View>
-      ))}
-    </View>
-  );
-
-  // Faculty analogue of the student hero's status line: a one-glance read of the
-  // review queue, mapped from the same workload summary.
   const statusLine = summary
     ? summary.pendingReview > 0
       ? {
@@ -147,9 +91,6 @@ export const FacultyDashboardScreen = () => {
     : null;
 
   return (
-    // Top edge opted out of Screen's own inset padding: the navy hero band bleeds
-    // under the status bar, so its safe-area clearance is applied to the hero
-    // itself. Bottom edge is opted out too — the floating tab bar owns it.
     <Screen gutter={0} edges={{ top: false, bottom: false }}>
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -177,49 +118,64 @@ export const FacultyDashboardScreen = () => {
           {error ? <InlineNotice tone="danger" message={error} /> : null}
 
           {summary && (
-            <WorkloadStrip
+            <WorkloadChart
               summary={summary}
-              activeFilter={activeFilter}
-              onFilterChange={setActiveFilter}
+              onSelectFilter={(filter) => {
+                let initialFilter: 'needs_review' | 'revisions' | 'approved' | 'all' = 'all';
+                if (filter === 'needs_review') initialFilter = 'needs_review';
+                if (filter === 'revisions') initialFilter = 'revisions';
+                if (filter === 'approved') initialFilter = 'approved';
+                navigation.navigate('FacultyReview', { initialFilter });
+              }}
             />
           )}
 
-          {papers === null ? (
-            error ? (
-              <Text style={styles.hint}>Pull down to retry.</Text>
-            ) : (
-              <DashboardSkeleton />
-            )
-          ) : papers.length === 0 ? (
-            <EmptyState context="all-caught-up" />
+          {initialLoading ? (
+            <DashboardSkeleton />
           ) : (
             <View style={styles.sections}>
-              {showNeedsAction && (
-                <CollapsibleSection
-                  title="Needs action"
-                  count={needsActionList.length}
-                  initiallyExpanded={true}
-                >
-                  {needsActionList.length === 0 ? (
-                    <EmptyState context="no-papers" />
-                  ) : (
-                    renderList(needsActionList)
+              {upNextPaper && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Up Next</Text>
+                  <FacultyPaperCard
+                    paper={upNextPaper}
+                    onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: upNextPaper.id })}
+                  />
+                  {summary && summary.pendingReview > 1 && (
+                    <View style={styles.seeAllWrapper}>
+                      <Pressable 
+                        style={({ pressed }) => [styles.seeAllButton, pressed && { opacity: 0.6 }]}
+                        onPress={() => navigation.navigate('FacultyReview', { initialFilter: 'needs_review' })}
+                      >
+                        <Text style={styles.seeAllText}>See all {summary.pendingReview} pending papers</Text>
+                        <ArrowRight size={16} color={theme.colors.brand.primary} />
+                      </Pressable>
+                    </View>
                   )}
-                </CollapsibleSection>
+                </View>
               )}
 
-              {showCompleted && (
-                <CollapsibleSection
-                  title="Completed"
-                  count={completedList.length}
-                  initiallyExpanded={activeFilter === 'completed'}
-                >
-                  {completedList.length === 0 ? (
-                    <EmptyState context="no-papers" />
-                  ) : (
-                    renderList(completedList)
-                  )}
-                </CollapsibleSection>
+              {!upNextPaper && summary && summary.pendingReview === 0 && (
+                 <EmptyState context="all-caught-up" />
+              )}
+
+              {notifications && notifications.length > 0 && (
+                <View style={[styles.section, styles.activitySection]}>
+                  <Text style={styles.sectionTitle}>Recent Activity</Text>
+                  <View style={styles.activityList}>
+                    {notifications.map((item) => (
+                      <NotificationCard
+                         key={item.id}
+                         notification={item}
+                         onPress={() => {
+                           if (item.research_id) {
+                             navigation.navigate('FacultyReviewDetail', { paperId: item.research_id });
+                           }
+                         }}
+                      />
+                    ))}
+                  </View>
+                </View>
               )}
             </View>
           )}
@@ -242,22 +198,43 @@ const makeStyles = (theme: Theme) =>
       paddingTop: theme.spacing.xl,
       gap: theme.spacing.xl,
     },
+    seeAllWrapper: {
+      alignItems: 'center',
+      paddingTop: theme.spacing.sm,
+    },
+    seeAllButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.xs,
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+    },
+    seeAllText: {
+      fontFamily: theme.fontFamilies.ui.medium,
+      fontSize: 14,
+      color: theme.colors.brand.primary,
+    },
     section: {
       gap: theme.spacing.sm,
     },
+    sectionTitle: {
+      fontFamily: theme.fontFamilies.ui.semibold,
+      fontSize: 18,
+      color: theme.colors.text.primary,
+    },
+    activitySection: {
+      marginTop: theme.spacing.md,
+    },
+    activityList: {
+      gap: theme.spacing.md,
+      paddingTop: theme.spacing.xs,
+    },
     sections: {
       gap: theme.spacing['2xl'],
-      paddingHorizontal: theme.spacing.lg,
       marginTop: theme.spacing.md,
     },
     list: {
       gap: theme.spacing.md,
       paddingTop: theme.spacing.sm,
-    },
-    hint: {
-      ...theme.typography.bodySmall,
-      color: theme.colors.text.muted,
-      textAlign: 'center',
-      paddingVertical: theme.spacing.xl,
     },
   });

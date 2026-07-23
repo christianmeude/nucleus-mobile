@@ -1,8 +1,7 @@
 import { useCallback, useMemo, useEffect, useState } from 'react';
-import { Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, RefreshControl, StyleSheet, Text, TextInput, View, FlatList } from 'react-native';
 import Animated, { useSharedValue } from 'react-native-reanimated';
-import { LegendList } from '@legendapp/list/react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Search, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -11,7 +10,6 @@ import { FacultyPaperCard } from '../../components/FacultyPaperCard';
 import { facultyApi, type FacultyAssignedPaper } from '../../api/faculty';
 import {
   FACULTY_QUEUE_FILTERS,
-  matchesQueueFilter,
   type FacultyQueueFilter,
 } from './facultyStatus';
 import { RootStackParamList } from '../../navigation/types';
@@ -24,10 +22,13 @@ export const FacultyReviewScreen = () => {
   const navigation = useNavigation<FacultyNavigation>();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  
   const [papers, setPapers] = useState<FacultyAssignedPaper[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [filter, setFilter] = useState<FacultyQueueFilter>('needs_review');
+  
+  const route = useRoute<RouteProp<RootStackParamList, 'FacultyReview'>>();
+  const [filter, setFilter] = useState<FacultyQueueFilter>(route.params?.initialFilter ?? 'needs_review');
   const [search, setSearch] = useState('');
 
   const scrollOffset = useSharedValue(0);
@@ -38,49 +39,67 @@ export const FacultyReviewScreen = () => {
     [scrollOffset],
   );
 
+  useEffect(() => {
+    if (route.params?.initialFilter) {
+      setFilter(route.params.initialFilter);
+    }
+  }, [route.params?.initialFilter]);
+
   const headerAnimatedStyle = {};
 
-  const load = useCallback(async () => {
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const load = useCallback(async (pageNum = 0, currentFilter = filter, currentSearch = debouncedSearch) => {
     try {
-      setError(null);
-      setPapers(await facultyApi.getAssignedPapers());
+      if (pageNum === 0) {
+        setError(null);
+        if (!refreshing && pageNum === 0) setPapers(null); // Show skeleton on fresh load
+      } else {
+        setLoadingMore(true);
+      }
+
+      const limit = 20;
+      const data = await facultyApi.getReviewQueue(pageNum, limit, currentFilter, currentSearch);
+      
+      if (pageNum === 0) {
+        setPapers(data);
+      } else {
+        setPapers((prev) => (prev ? [...prev, ...data] : data));
+      }
+
+      setHasMore(data.length === limit);
+      setPage(pageNum);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load assigned papers.');
+    } finally {
+      setLoadingMore(false);
     }
-  }, []);
+  }, [refreshing, filter, debouncedSearch]);
 
+  // Load when filter or debounced search changes
   useEffect(() => {
-    load();
-  }, [load]);
+    load(0, filter, debouncedSearch);
+  }, [filter, debouncedSearch, load]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await load();
+    await load(0, filter, debouncedSearch);
     setRefreshing(false);
-  }, [load]);
+  }, [load, filter, debouncedSearch]);
 
-  const counts = useMemo(() => {
-    const list = papers ?? [];
-    return FACULTY_QUEUE_FILTERS.reduce(
-      (acc, entry) => {
-        acc[entry.key] = list.filter((paper) => matchesQueueFilter(paper.status, entry.key)).length;
-        return acc;
-      },
-      {} as Record<FacultyQueueFilter, number>,
-    );
-  }, [papers]);
-
-  const visible = useMemo(() => {
-    const list = papers ?? [];
-    const query = search.trim().toLowerCase();
-    return list.filter((paper) => {
-      if (!matchesQueueFilter(paper.status, filter)) return false;
-      if (!query) return true;
-      const corpus =
-        `${paper.title} ${paper.authorName} ${(paper.keywords ?? []).join(' ')}`.toLowerCase();
-      return corpus.includes(query);
-    });
-  }, [papers, filter, search]);
+  const loadMore = useCallback(() => {
+    if (!hasMore || loadingMore || !papers) return;
+    load(page + 1, filter, debouncedSearch);
+  }, [hasMore, loadingMore, papers, load, page, filter, debouncedSearch]);
 
   return (
     <Screen gutter={0} edges={{ bottom: false }}>
@@ -134,15 +153,11 @@ export const FacultyReviewScreen = () => {
             );
           })}
         </View>
-        <Text style={styles.papersCount}>
-          {visible.length} {visible.length === 1 ? 'paper' : 'papers'}
-        </Text>
       </View>
 
-      <LegendList
+      <FlatList
         onScroll={onScroll}
         scrollEventThrottle={16}
-        recycleItems={false}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         refreshControl={
@@ -167,7 +182,7 @@ export const FacultyReviewScreen = () => {
                   ))}
                 </View>
               )
-            ) : visible.length === 0 ? (
+            ) : papers.length === 0 ? (
               <EmptyState
                 context={search.trim() ? 'no-results' : 'no-papers'}
                 message={search.trim() ? undefined : 'Nothing in this view yet.'}
@@ -175,9 +190,13 @@ export const FacultyReviewScreen = () => {
             ) : null}
           </View>
         )}
-        data={papers === null || visible.length === 0 ? ([] as FacultyAssignedPaper[]) : visible}
+        data={papers ?? []}
         keyExtractor={(item: any) => item.id}
-        estimatedItemSize={84}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={() => 
+          loadingMore ? <View style={{ padding: 16 }}><Skeleton height={84} radius="lg" /></View> : null
+        }
         renderItem={({ item: rawItem, index }) => {
           const item = rawItem as FacultyAssignedPaper;
           return (
@@ -244,10 +263,6 @@ const makeStyles = (theme: Theme) =>
       ...theme.typography.label,
       color: theme.colors.text.secondary,
       textAlign: 'center',
-    },
-    papersCount: {
-      ...theme.typography.label,
-      color: theme.colors.text.muted,
     },
     content: {
       paddingHorizontal: theme.spacing.lg,

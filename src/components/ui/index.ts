@@ -7,6 +7,7 @@ export { Badge } from './Badge';
 export { Stat } from './Stat';
 export { IconButton } from './IconButton';
 export { EmptyState } from './EmptyState';
+export * from './WorkloadChart';
 export { ShimmerSkeleton as Skeleton } from './motion/ShimmerSkeleton';
 export { InlineNotice } from './InlineNotice';
 export { Input } from './Input';
