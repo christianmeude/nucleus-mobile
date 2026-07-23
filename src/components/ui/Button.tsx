@@ -2,7 +2,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 
-type ButtonVariant = 'primary' | 'secondary' | 'subtle' | 'accent' | 'danger';
+type ButtonVariant = 'primary' | 'secondary' | 'subtle' | 'accent' | 'danger' | 'success';
 type ButtonSize = 'md' | 'sm';
 
 interface ButtonProps {
@@ -13,6 +13,7 @@ interface ButtonProps {
   variant?: ButtonVariant;
   size?: ButtonSize;
   accessibilityLabel?: string;
+  icon?: React.ReactNode;
 }
 
 export const Button = ({
@@ -23,6 +24,7 @@ export const Button = ({
   variant = 'primary',
   size = 'md',
   accessibilityLabel,
+  icon,
 }: ButtonProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -53,11 +55,16 @@ export const Button = ({
                 ? theme.colors.brand.accent
                 : variant === 'danger'
                   ? theme.colors.state.danger
-                  : theme.colors.brand.primary
+                  : variant === 'success'
+                    ? theme.colors.state.success
+                    : theme.colors.brand.primary
           }
         />
       ) : (
-        <Text style={[styles.label, styles[`${variant}Label`]]}>{label}</Text>
+        <>
+          {icon}
+          <Text style={[styles.label, styles[`${variant}Label`]]}>{label}</Text>
+        </>
       )}
     </Pressable>
   );
@@ -132,6 +139,15 @@ const makeStyles = (t: Theme) =>
     },
     dangerLabel: {
       color: t.colors.state.danger,
+    },
+    successBase: {
+      backgroundColor: t.colors.state.success,
+    },
+    successPressed: {
+      backgroundColor: t.colors.state.success,
+    },
+    successLabel: {
+      color: t.colors.text.onBrand,
     },
     blocked: {
       opacity: 0.6,

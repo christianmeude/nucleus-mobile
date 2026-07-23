@@ -385,13 +385,22 @@ export const FacultyReviewDetailScreen = () => {
           {canReview ? (
             <View style={styles.actions}>
               <Text style={styles.sectionTitle}>Your decision</Text>
-              <Button label="Approve" variant="primary" onPress={openApprove} />
-              <Button
-                label="Request Revision"
-                variant="accent"
-                onPress={() => openSheet('revision')}
-              />
-              <Button label="Reject" variant="danger" onPress={() => openSheet('reject')} />
+              <View style={styles.decisionRow}>
+                <View style={styles.decisionButtonWrapper}>
+                  <Button label="Approve" variant="success" icon={<CheckCircle2 size={18} color={theme.colors.text.onBrand} />} onPress={openApprove} />
+                </View>
+                <View style={styles.decisionButtonWrapper}>
+                  <Button
+                    label="Revision"
+                    variant="accent"
+                    icon={<PenTool size={18} color={theme.colors.brand.accent} />}
+                    onPress={() => openSheet('revision')}
+                  />
+                </View>
+                <View style={styles.decisionButtonWrapper}>
+                  <Button label="Reject" variant="danger" icon={<XCircle size={18} color={theme.colors.state.danger} />} onPress={() => openSheet('reject')} />
+                </View>
+              </View>
             </View>
           ) : null}
         </Animated.ScrollView>
@@ -400,8 +409,8 @@ export const FacultyReviewDetailScreen = () => {
       <BottomSheet visible={sheet !== null} onClose={closeSheet}>
         {sheet === 'approve' ? (
           <>
-            <View style={[styles.sheetHeader, { backgroundColor: theme.colors.brand.primarySurface }]}>
-              <CheckCircle2 size={24} color={theme.colors.brand.primary} />
+            <View style={[styles.sheetHeader, { backgroundColor: theme.colors.state.successSurface }]}>
+              <CheckCircle2 size={24} color={theme.colors.state.success} />
               <Text style={[styles.sheetTitle, { color: theme.colors.brand.primary }]}>Approve &amp; forward</Text>
             </View>
 
@@ -464,6 +473,8 @@ export const FacultyReviewDetailScreen = () => {
                     editable={!acting}
                     component={BottomSheetTextInput}
                     maxLength={500}
+                    focusColor={theme.colors.state.success}
+                    focusBackgroundColor={theme.colors.state.successSurface}
                   />
                   <Text style={styles.charCount}>{comments.length} / 500</Text>
                 </View>
@@ -520,6 +531,8 @@ export const FacultyReviewDetailScreen = () => {
                     editable={!acting}
                     component={BottomSheetTextInput}
                     maxLength={1000}
+                    focusColor={theme.colors.brand.accent}
+                    focusBackgroundColor={theme.colors.brand.accentSurface}
                   />
                   <Text style={styles.charCount}>{notes.length} / 1000</Text>
                 </View>
@@ -574,6 +587,8 @@ export const FacultyReviewDetailScreen = () => {
                     editable={!acting}
                     component={BottomSheetTextInput}
                     maxLength={1000}
+                    focusColor={theme.colors.state.danger}
+                    focusBackgroundColor={theme.colors.state.dangerSurface}
                   />
                   <Text style={styles.charCount}>{reason.length} / 1000</Text>
                 </View>
@@ -681,6 +696,13 @@ const makeStyles = (theme: Theme) =>
     actions: {
       gap: theme.spacing.sm,
     },
+    decisionRow: {
+      flexDirection: 'row',
+      gap: theme.spacing.sm,
+    },
+    decisionButtonWrapper: {
+      flex: 1,
+    },
     sheetTitle: {
       ...theme.typography.h3,
       color: theme.colors.text.primary,
@@ -727,9 +749,9 @@ const makeStyles = (theme: Theme) =>
       alignItems: 'center',
       gap: theme.spacing.sm,
       marginHorizontal: -theme.spacing.lg,
-      marginTop: -theme.spacing.lg,
+      marginTop: 0,
       paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.md,
+      paddingVertical: theme.spacing.lg,
       borderTopLeftRadius: theme.radii.lg,
       borderTopRightRadius: theme.radii.lg,
       marginBottom: theme.spacing.sm,
