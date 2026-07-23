@@ -474,7 +474,6 @@ export const FacultyReviewDetailScreen = () => {
                     component={BottomSheetTextInput}
                     maxLength={500}
                     focusColor={theme.colors.state.success}
-                    focusBackgroundColor={theme.colors.state.successSurface}
                   />
                   <Text style={styles.charCount}>{comments.length} / 500</Text>
                 </View>
@@ -532,7 +531,6 @@ export const FacultyReviewDetailScreen = () => {
                     component={BottomSheetTextInput}
                     maxLength={1000}
                     focusColor={theme.colors.brand.accent}
-                    focusBackgroundColor={theme.colors.brand.accentSurface}
                   />
                   <Text style={styles.charCount}>{notes.length} / 1000</Text>
                 </View>
@@ -588,7 +586,6 @@ export const FacultyReviewDetailScreen = () => {
                     component={BottomSheetTextInput}
                     maxLength={1000}
                     focusColor={theme.colors.state.danger}
-                    focusBackgroundColor={theme.colors.state.dangerSurface}
                   />
                   <Text style={styles.charCount}>{reason.length} / 1000</Text>
                 </View>

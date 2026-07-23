@@ -33,7 +33,6 @@ export interface InputProps extends Omit<TextInputProps, 'style'> {
    */
   variant?: 'light' | 'dark';
   focusColor?: string;
-  focusBackgroundColor?: string;
 }
 
 /**
@@ -50,7 +49,6 @@ export const Input = forwardRef<any, InputProps>(
       component: Component = TextInput,
       variant,
       focusColor,
-      focusBackgroundColor,
       onFocus,
       onBlur,
       ...rest
@@ -94,7 +92,7 @@ export const Input = forwardRef<any, InputProps>(
       const backgroundColor = error 
         ? activeTheme.colors.state.dangerSurface 
         : focused 
-          ? variant === 'dark' ? 'rgba(255, 255, 255, 0.12)' : (focusBackgroundColor || activeTheme.colors.surface.raised)
+          ? variant === 'dark' ? 'rgba(255, 255, 255, 0.12)' : activeTheme.colors.surface.raised
           : variant === 'dark' ? 'rgba(255, 255, 255, 0.08)' : activeTheme.colors.surface.base;
 
       return {
