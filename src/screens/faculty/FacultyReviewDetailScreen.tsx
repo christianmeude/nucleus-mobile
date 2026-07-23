@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, ZoomIn, SlideOutLeft, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn, ZoomIn, ZoomOut, SlideOutLeft, FadeOut } from 'react-native-reanimated';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
@@ -274,6 +274,69 @@ export const FacultyReviewDetailScreen = () => {
 
   const canReview = detail.status === 'pending_faculty';
 
+  const getSheetConfig = () => {
+    switch (sheet) {
+      case 'approve':
+        return {
+          title: 'Approve & forward',
+          color: theme.colors.state.success,
+          surface: theme.colors.state.successSurface,
+          Icon: CheckCircle2,
+          confirmActionText: `Approve & forward to ${approvers?.find(a => a.id === selectedApproverId)?.name}`,
+          confirmVariant: 'success' as const,
+          runAction: runApprove,
+          hint: 'Choose a dean or program chair to receive this paper next.',
+          inputPlaceholder: 'Optional note to the next reviewer',
+          inputValue: comments,
+          setInputValue: setComments,
+          inputMaxLength: 500,
+          isActionDisabled: acting || !selectedApproverId,
+          showApprovers: true,
+          actionLabel: 'Approve',
+        };
+      case 'revision':
+        return {
+          title: 'Request revision',
+          color: theme.colors.brand.accent,
+          surface: theme.colors.brand.accentSurface,
+          Icon: PenTool,
+          confirmActionText: 'Request Revision',
+          confirmVariant: 'accent' as const,
+          runAction: runRevision,
+          hint: 'Tell the student what needs to change. They will see these notes.',
+          inputPlaceholder: 'Revision notes (required)',
+          inputValue: notes,
+          setInputValue: setNotes,
+          inputMaxLength: 1000,
+          isActionDisabled: acting || !notes.trim(),
+          showApprovers: false,
+          actionLabel: 'Send back',
+        };
+      case 'reject':
+        return {
+          title: 'Reject paper',
+          color: theme.colors.state.danger,
+          surface: theme.colors.state.dangerSurface,
+          Icon: XCircle,
+          confirmActionText: 'Reject Paper',
+          confirmVariant: 'danger' as const,
+          runAction: runReject,
+          hint: 'Provide a reason. The author will see it.',
+          inputPlaceholder: 'Rejection reason (required)',
+          inputValue: reason,
+          setInputValue: setReason,
+          inputMaxLength: 1000,
+          isActionDisabled: acting || !reason.trim(),
+          showApprovers: false,
+          actionLabel: 'Reject',
+        };
+      default:
+        return null;
+    }
+  };
+
+  const sheetConfig = getSheetConfig();
+
   return (
     <>
       <Screen edges={{ top: false }}>
@@ -406,76 +469,78 @@ export const FacultyReviewDetailScreen = () => {
         </Animated.ScrollView>
       </Screen>
 
-      <BottomSheet visible={sheet !== null} onClose={closeSheet}>
-        {sheet === 'approve' ? (
+            <BottomSheet visible={sheet !== null} onClose={closeSheet}>
+        {sheetConfig ? (
           <>
-            <View style={[styles.sheetHeader, { backgroundColor: theme.colors.state.successSurface }]}>
-              <CheckCircle2 size={24} color={theme.colors.state.success} />
-              <Text style={[styles.sheetTitle, { color: theme.colors.brand.primary }]}>Approve &amp; forward</Text>
+            <View style={[styles.sheetHeader, { backgroundColor: sheetConfig.surface }]}>
+              <sheetConfig.Icon size={24} color={sheetConfig.color} />
+              <Text style={[styles.sheetTitle, { color: sheetConfig.color }]}>{sheetConfig.title}</Text>
             </View>
 
             {confirmStep ? (
               <Card padding="md" style={styles.confirmCard}>
-                <Text style={styles.confirmAction}>Approve &amp; forward to {approvers?.find(a => a.id === selectedApproverId)?.name}</Text>
+                <Text style={[styles.confirmAction, { color: sheetConfig.color }]}>{sheetConfig.confirmActionText}</Text>
                 <Text style={styles.confirmPaper}>{detail?.title}</Text>
                 <Text style={styles.confirmAuthor}>by {detail?.authorName}</Text>
                 <View style={styles.sheetButtons}>
                   <Button label="Cancel" variant="subtle" onPress={() => setConfirmStep(false)} disabled={acting} />
-                  <Button label="Confirm" variant="primary" onPress={() => {
+                  <Button label="Confirm" variant={sheetConfig.confirmVariant} onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    runApprove();
+                    sheetConfig.runAction();
                   }} loading={acting} disabled={acting} />
                 </View>
               </Card>
             ) : (
               <>
-                <Text style={styles.sheetHint}>
-                  Choose a dean or program chair to receive this paper next.
-                </Text>
+                <Text style={styles.sheetHint}>{sheetConfig.hint}</Text>
 
-                {approversError ? <InlineNotice tone="danger" message={approversError} /> : null}
+                {sheetConfig.showApprovers && (
+                  <>
+                    {approversError ? <InlineNotice tone="danger" message={approversError} /> : null}
 
-                {approvers === null && !approversError ? (
-                  <Skeleton height={56} radius="md" />
-                ) : (approvers ?? []).length === 0 ? (
-                  <Text style={styles.muted}>No deans or program chairs are available.</Text>
-                ) : (
-                  <View style={styles.approverList}>
-                    {(approvers ?? []).map((approver) => {
-                      const selected = approver.id === selectedApproverId;
-                      return (
-                        <PressableScale
-                          key={approver.id}
-                          onPress={() => setSelectedApproverId(approver.id)}
-                          disabled={acting}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected }}
-                          style={[styles.approver, selected ? styles.approverSelected : null]}
-                        >
-                          <Text style={styles.approverName}>{approver.name}</Text>
-                          <Text style={styles.approverRole}>
-                            {approver.role === 'dean' ? 'Dean' : 'Program Chair'}
-                            {approver.department ? ` · ${approver.department}` : ''}
-                          </Text>
-                        </PressableScale>
-                      );
-                    })}
-                  </View>
+                    {approvers === null && !approversError ? (
+                      <Skeleton height={56} radius="md" />
+                    ) : (approvers ?? []).length === 0 ? (
+                      <Text style={styles.muted}>No deans or program chairs are available.</Text>
+                    ) : (
+                      <View style={styles.approverList}>
+                        {(approvers ?? []).map((approver) => {
+                          const selected = approver.id === selectedApproverId;
+                          return (
+                            <PressableScale
+                              key={approver.id}
+                              onPress={() => setSelectedApproverId(approver.id)}
+                              disabled={acting}
+                              accessibilityRole="button"
+                              accessibilityState={{ selected }}
+                              style={[styles.approver, selected ? styles.approverSelected : null]}
+                            >
+                              <Text style={styles.approverName}>{approver.name}</Text>
+                              <Text style={styles.approverRole}>
+                                {approver.role === 'dean' ? 'Dean' : 'Program Chair'}
+                                {approver.department ? ` · ${approver.department}` : ''}
+                              </Text>
+                            </PressableScale>
+                          );
+                        })}
+                      </View>
+                    )}
+                  </>
                 )}
 
                 <View>
                   <Input
-                    value={comments}
-                    onChangeText={setComments}
-                    placeholder="Optional note to the next reviewer"
+                    value={sheetConfig.inputValue}
+                    onChangeText={sheetConfig.setInputValue}
+                    placeholder={sheetConfig.inputPlaceholder}
                     inputStyle={styles.textarea}
                     multiline
                     editable={!acting}
                     component={BottomSheetTextInput}
-                    maxLength={500}
-                    focusColor={theme.colors.state.success}
+                    maxLength={sheetConfig.inputMaxLength}
+                    focusColor={sheetConfig.color}
                   />
-                  <Text style={styles.charCount}>{comments.length} / 500</Text>
+                  <Text style={styles.charCount}>{sheetConfig.inputValue.length} / {sheetConfig.inputMaxLength}</Text>
                 </View>
 
                 {actionError ? <InlineNotice tone="danger" message={actionError} /> : null}
@@ -483,122 +548,10 @@ export const FacultyReviewDetailScreen = () => {
                 <View style={styles.sheetButtons}>
                   <Button label="Cancel" variant="subtle" onPress={closeSheet} disabled={acting} />
                   <Button
-                    label="Approve"
-                    variant="success"
+                    label={sheetConfig.actionLabel}
+                    variant={sheetConfig.confirmVariant}
                     onPress={() => setConfirmStep(true)}
-                    disabled={acting || !selectedApproverId}
-                  />
-                </View>
-              </>
-            )}
-          </>
-        ) : null}
-
-        {sheet === 'revision' ? (
-          <>
-            <View style={[styles.sheetHeader, { backgroundColor: theme.colors.brand.accentSurface }]}>
-              <PenTool size={24} color={theme.colors.brand.accent} />
-              <Text style={[styles.sheetTitle, { color: theme.colors.brand.accent }]}>Request revision</Text>
-            </View>
-
-            {confirmStep ? (
-              <Card padding="md" style={styles.confirmCard}>
-                <Text style={[styles.confirmAction, { color: theme.colors.brand.accent }]}>Request Revision</Text>
-                <Text style={styles.confirmPaper}>{detail?.title}</Text>
-                <Text style={styles.confirmAuthor}>by {detail?.authorName}</Text>
-                <View style={styles.sheetButtons}>
-                  <Button label="Cancel" variant="subtle" onPress={() => setConfirmStep(false)} disabled={acting} />
-                  <Button label="Confirm" variant="accent" onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    runRevision();
-                  }} loading={acting} disabled={acting} />
-                </View>
-              </Card>
-            ) : (
-              <>
-                <Text style={styles.sheetHint}>
-                  Tell the student what needs to change. They will see these notes.
-                </Text>
-
-                <View>
-                  <Input
-                    value={notes}
-                    onChangeText={setNotes}
-                    placeholder="Revision notes (required)"
-                    inputStyle={styles.textarea}
-                    multiline
-                    editable={!acting}
-                    component={BottomSheetTextInput}
-                    maxLength={1000}
-                    focusColor={theme.colors.brand.accent}
-                  />
-                  <Text style={styles.charCount}>{notes.length} / 1000</Text>
-                </View>
-
-                {actionError ? <InlineNotice tone="danger" message={actionError} /> : null}
-
-                <View style={styles.sheetButtons}>
-                  <Button label="Cancel" variant="subtle" onPress={closeSheet} disabled={acting} />
-                  <Button
-                    label="Send back"
-                    variant="accent"
-                    onPress={() => setConfirmStep(true)}
-                    disabled={acting || !notes.trim()}
-                  />
-                </View>
-              </>
-            )}
-          </>
-        ) : null}
-
-        {sheet === 'reject' ? (
-          <>
-            <View style={[styles.sheetHeader, { backgroundColor: theme.colors.state.dangerSurface }]}>
-              <XCircle size={24} color={theme.colors.state.danger} />
-              <Text style={[styles.sheetTitle, { color: theme.colors.state.danger }]}>Reject paper</Text>
-            </View>
-
-            {confirmStep ? (
-              <Card padding="md" style={styles.confirmCard}>
-                <Text style={[styles.confirmAction, { color: theme.colors.state.danger }]}>Reject Paper</Text>
-                <Text style={styles.confirmPaper}>{detail?.title}</Text>
-                <Text style={styles.confirmAuthor}>by {detail?.authorName}</Text>
-                <View style={styles.sheetButtons}>
-                  <Button label="Cancel" variant="subtle" onPress={() => setConfirmStep(false)} disabled={acting} />
-                  <Button label="Confirm" variant="danger" onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    runReject();
-                  }} loading={acting} disabled={acting} />
-                </View>
-              </Card>
-            ) : (
-              <>
-                <Text style={styles.sheetHint}>Provide a reason. The author will see it.</Text>
-
-                <View>
-                  <Input
-                    value={reason}
-                    onChangeText={setReason}
-                    placeholder="Rejection reason (required)"
-                    inputStyle={styles.textarea}
-                    multiline
-                    editable={!acting}
-                    component={BottomSheetTextInput}
-                    maxLength={1000}
-                    focusColor={theme.colors.state.danger}
-                  />
-                  <Text style={styles.charCount}>{reason.length} / 1000</Text>
-                </View>
-
-                {actionError ? <InlineNotice tone="danger" message={actionError} /> : null}
-
-                <View style={styles.sheetButtons}>
-                  <Button label="Cancel" variant="subtle" onPress={closeSheet} disabled={acting} />
-                  <Button
-                    label="Reject"
-                    variant="danger"
-                    onPress={() => setConfirmStep(true)}
-                    disabled={acting || !reason.trim()}
+                    disabled={sheetConfig.isActionDisabled}
                   />
                 </View>
               </>
@@ -626,12 +579,20 @@ export const FacultyReviewDetailScreen = () => {
       )}
 
       {showSuccess && (
-        <View style={styles.successOverlay}>
-          <Animated.View entering={ZoomIn.springify().damping(12).stiffness(200)} style={styles.successIcon}>
+        <Animated.View 
+          entering={FadeIn.duration(theme.motion.duration.sheet)} 
+          exiting={FadeOut.duration(theme.motion.duration.sheet)}
+          style={styles.successOverlay}
+        >
+          <Animated.View 
+            entering={ZoomIn.springify().damping(9).stiffness(340).mass(0.6)}
+            exiting={ZoomOut.springify().damping(20).stiffness(180)}
+            style={styles.successIcon}
+          >
             <CheckCircle2 size={64} color={theme.colors.state.success} />
             <Text style={styles.successText}>Decision Submitted</Text>
           </Animated.View>
-        </View>
+        </Animated.View>
       )}
     </>
   );
@@ -789,7 +750,8 @@ const makeStyles = (theme: Theme) =>
     successIcon: {
       backgroundColor: theme.colors.surface.raised,
       padding: theme.spacing.xl,
-      borderRadius: 24,
+      borderRadius: theme.radii.pill,
+      borderCurve: 'continuous',
       alignItems: 'center',
       gap: theme.spacing.md,
       shadowColor: '#000',
