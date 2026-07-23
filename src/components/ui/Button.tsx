@@ -119,26 +119,22 @@ const makeStyles = (t: Theme) =>
       color: t.colors.brand.primary,
     },
     accentBase: {
-      backgroundColor: t.colors.brand.accentSurface,
-      borderWidth: 1,
-      borderColor: t.colors.brand.accent,
+      backgroundColor: t.colors.brand.accent,
     },
     accentPressed: {
-      backgroundColor: t.colors.brand.accentSoft,
+      backgroundColor: t.colors.brand.accent,
     },
     accentLabel: {
-      color: t.colors.brand.accent,
+      color: t.colors.text.onBrand,
     },
     dangerBase: {
-      backgroundColor: t.colors.state.dangerSurface,
-      borderWidth: 1,
-      borderColor: t.colors.state.danger,
+      backgroundColor: t.colors.state.danger,
     },
     dangerPressed: {
-      backgroundColor: t.colors.state.dangerSurface, // Rely on scale for feedback
+      backgroundColor: t.colors.state.danger,
     },
     dangerLabel: {
-      color: t.colors.state.danger,
+      color: t.colors.text.onBrand,
     },
     successBase: {
       backgroundColor: t.colors.state.success,

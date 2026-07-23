@@ -387,18 +387,18 @@ export const FacultyReviewDetailScreen = () => {
               <Text style={styles.sectionTitle}>Your decision</Text>
               <View style={styles.decisionRow}>
                 <View style={styles.decisionButtonWrapper}>
-                  <Button label="Approve" variant="success" icon={<CheckCircle2 size={18} color={theme.colors.text.onBrand} />} onPress={openApprove} />
+                  <Button label="Reject" variant="danger" icon={<XCircle size={18} color={theme.colors.text.onBrand} />} onPress={() => openSheet('reject')} />
                 </View>
                 <View style={styles.decisionButtonWrapper}>
                   <Button
                     label="Revision"
                     variant="accent"
-                    icon={<PenTool size={18} color={theme.colors.brand.accent} />}
+                    icon={<PenTool size={18} color={theme.colors.text.onBrand} />}
                     onPress={() => openSheet('revision')}
                   />
                 </View>
                 <View style={styles.decisionButtonWrapper}>
-                  <Button label="Reject" variant="danger" icon={<XCircle size={18} color={theme.colors.state.danger} />} onPress={() => openSheet('reject')} />
+                  <Button label="Approve" variant="success" icon={<CheckCircle2 size={18} color={theme.colors.text.onBrand} />} onPress={openApprove} />
                 </View>
               </View>
             </View>
@@ -485,7 +485,7 @@ export const FacultyReviewDetailScreen = () => {
                   <Button label="Cancel" variant="subtle" onPress={closeSheet} disabled={acting} />
                   <Button
                     label="Approve"
-                    variant="primary"
+                    variant="success"
                     onPress={() => setConfirmStep(true)}
                     disabled={acting || !selectedApproverId}
                   />
@@ -647,7 +647,7 @@ const makeStyles = (theme: Theme) =>
     },
     content: {
       paddingTop: theme.spacing.lg,
-      gap: theme.spacing.md,
+      gap: theme.spacing.xl,
       paddingBottom: theme.spacing['3xl'],
     },
     centered: {
