@@ -4,8 +4,6 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   LinearTransition,
-  FadeInUp,
-  FadeOutUp,
 } from 'react-native-reanimated';
 import { ChevronDown } from 'lucide-react-native';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
@@ -54,14 +52,7 @@ export const CollapsibleSection = ({
         </Animated.View>
       </Pressable>
 
-      {isExpanded ? (
-        <Animated.View
-          entering={FadeInUp.duration(300)}
-          exiting={FadeOutUp.duration(300)}
-        >
-          {children}
-        </Animated.View>
-      ) : null}
+      {isExpanded ? children : null}
     </Animated.View>
   );
 };

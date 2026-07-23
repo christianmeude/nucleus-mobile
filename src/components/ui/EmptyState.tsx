@@ -5,7 +5,8 @@ import { useThemedStyles, useTheme } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { CheckCircle, SearchX, FileX, BellOff, Info } from 'lucide-react-native';
 
-export type EmptyStateContext = 'all-caught-up' | 'no-results' | 'no-papers' | 'no-notifications' | 'default';
+export type EmptyStateContext =
+  'all-caught-up' | 'no-results' | 'no-papers' | 'no-notifications' | 'default';
 
 interface EmptyStateProps {
   title?: string;
@@ -35,7 +36,7 @@ const CONTEXT_DEFAULTS = {
     message: "You'll hear from us when something happens.",
     IconComponent: BellOff,
   },
-  'default': {
+  default: {
     title: 'Nothing here',
     message: 'There is nothing to show at this time.',
     IconComponent: Info,
@@ -51,7 +52,7 @@ export const EmptyState = ({ title, message, icon, context }: EmptyStateProps) =
 
   const displayTitle = title ?? ctx?.title ?? defaultCtx.title;
   const displayMessage = message ?? ctx?.message;
-  
+
   let displayIcon = icon;
   if (!displayIcon && context) {
     const IconComp = ctx?.IconComponent ?? defaultCtx.IconComponent;
@@ -59,11 +60,9 @@ export const EmptyState = ({ title, message, icon, context }: EmptyStateProps) =
   }
 
   return (
-    <Animated.View entering={FadeInDown.duration(400).springify()} style={styles.container}>
+    <Animated.View entering={FadeInDown.duration(400)} style={styles.container}>
       {displayIcon ? (
-        <View style={context ? styles.iconCircle : styles.icon}>
-          {displayIcon}
-        </View>
+        <View style={context ? styles.iconCircle : styles.icon}>{displayIcon}</View>
       ) : null}
       <Text style={styles.title}>{displayTitle}</Text>
       {displayMessage ? <Text style={styles.message}>{displayMessage}</Text> : null}

@@ -20,12 +20,12 @@ export const AnimatedNumber = ({ value, style }: AnimatedNumberProps) => {
       <Animated.Text
         key={value}
         entering={
-          isIncreasing ? FadeInDown.springify().damping(14) : FadeInUp.springify().damping(14)
+          isIncreasing ? FadeInDown.duration(300) : FadeInUp.duration(300)
         }
         exiting={
           isIncreasing
-            ? FadeOutUp.springify().damping(14).withInitialValues({ position: 'absolute' })
-            : FadeOutDown.springify().damping(14).withInitialValues({ position: 'absolute' })
+            ? FadeOutUp.duration(300).withInitialValues({ position: 'absolute' })
+            : FadeOutDown.duration(300).withInitialValues({ position: 'absolute' })
         }
         style={style}
       >
