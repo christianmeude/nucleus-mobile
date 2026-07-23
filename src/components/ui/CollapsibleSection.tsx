@@ -52,7 +52,9 @@ export const CollapsibleSection = ({
         </Animated.View>
       </Pressable>
 
-      {isExpanded ? children : null}
+      <View style={!isExpanded ? { height: 0, opacity: 0, overflow: 'hidden' } : undefined}>
+        {children}
+      </View>
     </Animated.View>
   );
 };
