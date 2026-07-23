@@ -144,6 +144,8 @@ export const LoginScreen = () => {
   const passwordWrapStyle = animatedInputWrapperStyle('password');
 
 
+  const iconColor = (field: FocusField) => focused === field ? theme.colors.brand.accent : 'rgba(255, 255, 255, 0.6)';
+
   const handleButtonPressIn = () => {
     buttonScale.value = withTiming(0.96, { duration: 150 });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -436,11 +438,17 @@ export const LoginScreen = () => {
 
             <View style={styles.sheetActions}>
               {sheetStep === 1 ? (
-                <Button label="Send Reset Code" onPress={handleSendCode} loading={sheetLoading} disabled={sheetLoading} />
+                <Pressable style={styles.sheetPrimaryBtn} onPress={handleSendCode} disabled={sheetLoading}>
+                  {sheetLoading ? <ActivityIndicator color={theme.colors.brand.primary} /> : <Text style={styles.sheetPrimaryBtnText}>Send Reset Code</Text>}
+                </Pressable>
               ) : (
-                <Button label="Reset Password" onPress={handleResetPassword} loading={sheetLoading} disabled={sheetLoading} />
+                <Pressable style={styles.sheetPrimaryBtn} onPress={handleResetPassword} disabled={sheetLoading}>
+                  {sheetLoading ? <ActivityIndicator color={theme.colors.brand.primary} /> : <Text style={styles.sheetPrimaryBtnText}>Reset Password</Text>}
+                </Pressable>
               )}
-              <Button label="Cancel" variant="subtle" onPress={() => setShowForgotPassword(false)} disabled={sheetLoading} />
+              <Pressable style={styles.sheetCancelBtn} onPress={() => setShowForgotPassword(false)} disabled={sheetLoading}>
+                <Text style={styles.sheetCancelBtnText}>Cancel</Text>
+              </Pressable>
             </View>
           </BottomSheetScrollView>
         </BottomSheet>
@@ -498,7 +506,6 @@ const makeStyles = (theme: Theme) =>
     forgotPasswordText: {
       ...theme.typography.bodySmall,
       color: theme.colors.brand.accent,
-      fontWeight: '700',
     },
     inputWrap: {
       flexDirection: 'row',
@@ -556,12 +563,12 @@ const makeStyles = (theme: Theme) =>
     },
     // Bottom Sheet Styles
     bottomSheetBackground: {
-      backgroundColor: theme.colors.surface.base,
+      backgroundColor: theme.colors.brand.primaryHover,
       borderTopLeftRadius: theme.radii.xl,
       borderTopRightRadius: theme.radii.xl,
     },
     bottomSheetIndicator: {
-      backgroundColor: theme.colors.border.subtle,
+      backgroundColor: 'rgba(255, 255, 255, 0.4)',
       width: 48,
     },
     sheetContent: {
@@ -574,15 +581,15 @@ const makeStyles = (theme: Theme) =>
     },
     sheetTitle: {
       ...theme.typography.h2,
-      color: theme.colors.text.primary,
+      color: theme.colors.text.onBrand,
     },
     sheetSubtitle: {
       ...theme.typography.body,
-      color: theme.colors.text.secondary,
+      color: 'rgba(255, 255, 255, 0.8)',
     },
     sheetLabel: {
       ...theme.typography.label,
-      color: theme.colors.text.secondary,
+      color: 'rgba(255, 255, 255, 0.8)',
     },
     sheetFormGroup: {
       gap: theme.spacing.sm,
@@ -591,15 +598,15 @@ const makeStyles = (theme: Theme) =>
       flexDirection: 'row',
       alignItems: 'center',
       borderWidth: 1.5,
-      borderColor: theme.colors.border.subtle,
+      borderColor: 'rgba(255, 255, 255, 0.2)',
       borderRadius: theme.radii.md,
       borderCurve: 'continuous',
       paddingHorizontal: theme.spacing.md,
-      backgroundColor: theme.colors.surface.sunken,
+      backgroundColor: 'rgba(255, 255, 255, 0.08)',
     },
     sheetInputWrapFocused: {
-      borderColor: theme.colors.brand.primary,
-      backgroundColor: theme.colors.brand.primarySurface,
+      borderColor: theme.colors.brand.accent,
+      backgroundColor: 'rgba(255, 255, 255, 0.12)',
     },
     sheetInputIcon: {
       marginRight: theme.spacing.sm,
@@ -608,7 +615,7 @@ const makeStyles = (theme: Theme) =>
       flex: 1,
       paddingVertical: theme.spacing.sm + 2,
       ...theme.typography.body,
-      color: theme.colors.text.primary,
+      color: theme.colors.text.onBrand,
     },
     sheetErrorBox: {
       flexDirection: 'row',
@@ -626,5 +633,27 @@ const makeStyles = (theme: Theme) =>
     sheetActions: {
       gap: theme.spacing.sm,
       marginTop: theme.spacing.md,
+    },
+    sheetPrimaryBtn: {
+      backgroundColor: theme.colors.brand.accent,
+      paddingVertical: theme.spacing.md,
+      borderRadius: theme.radii.lg,
+      borderCurve: 'continuous',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: 48,
+    },
+    sheetPrimaryBtnText: {
+      ...theme.typography.button,
+      color: theme.colors.brand.primary,
+    },
+    sheetCancelBtn: {
+      paddingVertical: theme.spacing.sm,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    sheetCancelBtnText: {
+      ...theme.typography.button,
+      color: 'rgba(255, 255, 255, 0.6)',
     },
   });
