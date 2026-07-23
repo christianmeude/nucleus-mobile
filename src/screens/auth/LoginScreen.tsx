@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -7,6 +7,8 @@ import {
   Text,
   TextInput,
   View,
+  Pressable,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '../../components/ui/Icon';
@@ -14,11 +16,20 @@ import { Mail, Lock, CircleAlert } from 'lucide-react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
-import { Button, Logo } from '../../components/ui';
-import { consumeLoginRejection, LoginIntent, setLoginIntent } from '../../state/loginIntent';
+import { Logo } from '../../components/ui';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withRepeat,
+  withSequence,
+  Easing,
+} from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
 
 type LoginNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -29,40 +40,136 @@ export const LoginScreen = () => {
   const { signIn } = useAuth();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [focused, setFocused] = useState<FocusField>(null);
-  const [submittingIntent, setSubmittingIntent] = useState<LoginIntent | null>(null);
-  const [error, setError] = useState(() => consumeLoginRejection() || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
-  const onSubmit = async (intent: LoginIntent) => {
+  // Background Blob Animations
+  const blob1Y = useSharedValue(0);
+  const blob1X = useSharedValue(0);
+  const blob2Y = useSharedValue(0);
+  const blob2X = useSharedValue(0);
+
+  useEffect(() => {
+    blob1Y.value = withRepeat(
+      withSequence(
+        withTiming(-20, { duration: 4000, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 4000, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+    blob1X.value = withRepeat(
+      withSequence(
+        withTiming(20, { duration: 5000, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 5000, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+    blob2Y.value = withRepeat(
+      withSequence(
+        withTiming(25, { duration: 4500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 4500, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+    blob2X.value = withRepeat(
+      withSequence(
+        withTiming(-25, { duration: 5500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 5500, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+  }, []);
+
+  const animatedBlob1Style = useAnimatedStyle(() => ({
+    transform: [{ translateY: blob1Y.value }, { translateX: blob1X.value }],
+  }));
+
+  const animatedBlob2Style = useAnimatedStyle(() => ({
+    transform: [{ translateY: blob2Y.value }, { translateX: blob2X.value }],
+  }));
+
+  // Error Animation
+  const errorOpacity = useSharedValue(0);
+  const errorTranslateY = useSharedValue(-10);
+
+  useEffect(() => {
+    if (error) {
+      errorOpacity.value = withTiming(1, { duration: 300 });
+      errorTranslateY.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.back(1.5)) });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } else {
+      errorOpacity.value = withTiming(0, { duration: 200 });
+      errorTranslateY.value = withTiming(-10, { duration: 200 });
+    }
+  }, [error]);
+
+  const animatedErrorStyle = useAnimatedStyle(() => ({
+    opacity: errorOpacity.value,
+    transform: [{ translateY: errorTranslateY.value }],
+  }));
+
+  const animatedInputWrapperStyle = useAnimatedStyle(() => {
+    return {
+      borderColor: withTiming(
+        error ? theme.colors.state.danger : focused ? theme.colors.brand.primary : 'rgba(150, 150, 150, 0.2)',
+        { duration: 200 }
+      ),
+      backgroundColor: withTiming(
+        error ? theme.colors.state.dangerSurface : focused ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.6)',
+        { duration: 200 }
+      )
+    };
+  });
+
+  // Button Animation
+  const buttonScale = useSharedValue(1);
+
+  const animatedButtonStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: buttonScale.value }],
+  }));
+
+  const handleButtonPressIn = () => {
+    buttonScale.value = withTiming(0.96, { duration: 150 });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const handleButtonPressOut = () => {
+    buttonScale.value = withTiming(1, { duration: 150 });
+  };
+
+  const onSubmit = async () => {
     if (!email.trim() || !password.trim()) {
       setError('Email and password are required.');
       return;
     }
 
-    setSubmittingIntent(intent);
+    setIsSubmitting(true);
     setError('');
-    setLoginIntent(intent);
 
     const result = await signIn(email.trim(), password);
-    setSubmittingIntent(null);
+    setIsSubmitting(false);
 
     if (!result.success) {
-      setLoginIntent(null);
       setError(result.error || 'Unable to sign in.');
     }
   };
 
   const iconColor = (field: FocusField) =>
-    focused === field ? theme.colors.brand.primary : theme.colors.text.muted;
+    error ? theme.colors.state.danger : focused === field ? theme.colors.brand.primary : theme.colors.text.muted;
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Blue-dominant background accents (both navy-family; gold is reserved for
-          the single emphasis underline below, never decoration). */}
-      <View style={styles.blobTop} />
-      <View style={styles.blobBottom} />
+      <Animated.View style={[styles.blobTop, animatedBlob1Style]} />
+      <Animated.View style={[styles.blobBottom, animatedBlob2Style]} />
+      
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.select({ ios: 'padding', android: 'height' })}
@@ -79,21 +186,14 @@ export const LoginScreen = () => {
               <Text style={styles.title}>Welcome back</Text>
               <View style={styles.accentUnderline} />
             </View>
-            <Text style={styles.subtitle}>
-              Sign in to browse, track, and submit National University Dasmariñas research.
-            </Text>
           </View>
 
-          <View style={styles.card}>
+          <View style={styles.formContainer}>
             <View style={styles.formGroup}>
               <Text style={styles.label}>Email</Text>
-              <View style={[styles.inputWrap, focused === 'email' && styles.inputWrapFocused]}>
-                <Icon
-                  icon={Mail}
-                  size={18}
-                  color={iconColor('email')}
-                  style={styles.inputIcon}
-                />
+              <Animated.View style={[styles.inputWrap, animatedInputWrapperStyle]}>
+                <BlurView intensity={20} style={StyleSheet.absoluteFill} tint="light" />
+                <Icon icon={Mail} size={20} color={iconColor('email')} style={styles.inputIcon} />
                 <TextInput
                   autoCapitalize="none"
                   keyboardType="email-address"
@@ -101,19 +201,28 @@ export const LoginScreen = () => {
                   placeholderTextColor={theme.colors.text.disabled}
                   style={styles.input}
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    if (error) setError('');
+                  }}
                   onFocus={() => setFocused('email')}
                   onBlur={() => setFocused(null)}
                 />
-              </View>
+              </Animated.View>
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Password</Text>
-              <View style={[styles.inputWrap, focused === 'password' && styles.inputWrapFocused]}>
+              <View style={styles.labelRow}>
+                <Text style={styles.label}>Password</Text>
+                <Pressable onPress={() => navigation.navigate('ForgotPassword', { email: email.trim() })}>
+                  <Text style={styles.forgotPasswordText}>Forgot?</Text>
+                </Pressable>
+              </View>
+              <Animated.View style={[styles.inputWrap, animatedInputWrapperStyle]}>
+                <BlurView intensity={20} style={StyleSheet.absoluteFill} tint="light" />
                 <Icon
                   icon={Lock}
-                  size={18}
+                  size={20}
                   color={iconColor('password')}
                   style={styles.inputIcon}
                 />
@@ -123,47 +232,39 @@ export const LoginScreen = () => {
                   placeholderTextColor={theme.colors.text.disabled}
                   style={styles.input}
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    if (error) setError('');
+                  }}
                   onFocus={() => setFocused('password')}
                   onBlur={() => setFocused(null)}
                 />
-              </View>
+              </Animated.View>
             </View>
 
-            {error ? (
-              <View style={styles.errorBox}>
-                <Icon icon={CircleAlert} size={16} color={theme.colors.state.danger} />
-                <Text style={styles.error}>{error}</Text>
-              </View>
-            ) : null}
+            <Animated.View style={[styles.errorBox, animatedErrorStyle]}>
+              <Icon icon={CircleAlert} size={16} color={theme.colors.state.danger} />
+              <Text style={styles.error}>{error}</Text>
+            </Animated.View>
 
             <View style={styles.actions}>
-              <Button
-                label="Sign in as Student"
-                onPress={() => onSubmit('student')}
-                loading={submittingIntent === 'student'}
-                disabled={submittingIntent !== null}
-              />
-              <Button
-                label="Sign in as Faculty"
-                variant="secondary"
-                onPress={() => onSubmit('faculty')}
-                loading={submittingIntent === 'faculty'}
-                disabled={submittingIntent !== null}
-              />
-              <Button
-                label="Forgot password?"
-                variant="subtle"
-                onPress={() => navigation.navigate('ForgotPassword', { email: email.trim() })}
-                disabled={submittingIntent !== null}
-              />
+              <Animated.View style={animatedButtonStyle}>
+                <Pressable
+                  style={[styles.primaryButton, isSubmitting && styles.primaryButtonDisabled]}
+                  onPress={onSubmit}
+                  onPressIn={handleButtonPressIn}
+                  onPressOut={handleButtonPressOut}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <ActivityIndicator color={theme.colors.text.onBrand} />
+                  ) : (
+                    <Text style={styles.primaryButtonText}>Sign In</Text>
+                  )}
+                </Pressable>
+              </Animated.View>
             </View>
           </View>
-
-          <Text style={styles.note}>
-            Choose the option that matches your account — a student account can only sign in as
-            Student, and a faculty account only as Faculty.
-          </Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -182,31 +283,36 @@ const makeStyles = (theme: Theme) =>
     },
     blobTop: {
       position: 'absolute',
-      top: -130,
-      right: -90,
-      width: 300,
-      height: 300,
-      borderRadius: theme.radii.pill,
+      top: -100,
+      right: -80,
+      width: 350,
+      height: 350,
+      borderRadius: 175,
       backgroundColor: theme.colors.brand.primarySoft,
+      opacity: 0.7,
+      transform: [{ scale: 1.1 }],
     },
     blobBottom: {
       position: 'absolute',
-      bottom: -150,
-      left: -120,
-      width: 320,
-      height: 320,
-      borderRadius: theme.radii.pill,
+      bottom: -120,
+      left: -100,
+      width: 380,
+      height: 380,
+      borderRadius: 190,
       backgroundColor: theme.colors.brand.primarySurface,
+      opacity: 0.8,
+      transform: [{ scale: 1.2 }],
     },
     scrollContent: {
       flexGrow: 1,
       justifyContent: 'center',
       padding: theme.spacing.xl,
-      gap: theme.spacing.xl,
+      gap: theme.spacing['2xl'],
     },
     header: {
       alignItems: 'center',
       gap: theme.spacing.md,
+      marginTop: theme.spacing['2xl'],
     },
     headingBlock: {
       alignItems: 'center',
@@ -217,81 +323,85 @@ const makeStyles = (theme: Theme) =>
       color: theme.colors.text.primary,
       textAlign: 'center',
     },
-    // The single gold emphasis on the screen — a short underline under the
-    // heading, per the "gold for emphasis only, never decoration" rule.
     accentUnderline: {
       width: 44,
       height: 3,
       borderRadius: theme.radii.pill,
       backgroundColor: theme.colors.brand.accent,
     },
-    subtitle: {
-      ...theme.typography.body,
-      color: theme.colors.text.secondary,
-      textAlign: 'center',
-    },
-    card: {
-      backgroundColor: theme.colors.surface.raised,
-      borderRadius: theme.radii.xl,
-      borderCurve: 'continuous',
-      padding: theme.spacing.xl,
-      gap: theme.spacing.md,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.border.subtle,
-      ...theme.shadows.level2,
+    formContainer: {
+      gap: theme.spacing.lg,
+      zIndex: 1,
     },
     formGroup: {
-      gap: theme.spacing.xs,
+      gap: theme.spacing.sm,
+    },
+    labelRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
     },
     label: {
       ...theme.typography.label,
-      color: theme.colors.text.secondary,
+      color: theme.colors.text.primary,
+      fontWeight: '600',
+    },
+    forgotPasswordText: {
+      ...theme.typography.bodySmall,
+      color: theme.colors.brand.primary,
+      fontWeight: '600',
     },
     inputWrap: {
       flexDirection: 'row',
       alignItems: 'center',
       borderWidth: 1.5,
-      borderColor: theme.colors.border.subtle,
-      borderRadius: theme.radii.md,
+      borderRadius: theme.radii.lg,
       borderCurve: 'continuous',
       paddingHorizontal: theme.spacing.md,
-      backgroundColor: theme.colors.surface.sunken,
-    },
-    // Navy focus ring + subtle navy fill — the main (blue) color leading the
-    // interaction state.
-    inputWrapFocused: {
-      borderColor: theme.colors.brand.primary,
-      backgroundColor: theme.colors.brand.primarySurface,
+      overflow: 'hidden',
     },
     inputIcon: {
       marginRight: theme.spacing.sm,
+      zIndex: 2,
     },
     input: {
       flex: 1,
-      paddingVertical: theme.spacing.sm + 2,
+      paddingVertical: theme.spacing.md,
       ...theme.typography.body,
       color: theme.colors.text.primary,
+      zIndex: 2,
     },
     errorBox: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing.xs,
-      backgroundColor: theme.colors.state.dangerSurface,
-      borderRadius: theme.radii.md,
-      padding: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.sm,
+      marginTop: -theme.spacing.sm,
     },
     error: {
       ...theme.typography.bodySmall,
       color: theme.colors.state.danger,
       flexShrink: 1,
+      fontWeight: '500',
     },
     actions: {
-      gap: theme.spacing.sm,
-      marginTop: theme.spacing.xs,
+      marginTop: theme.spacing.md,
     },
-    note: {
-      ...theme.typography.caption,
-      color: theme.colors.text.muted,
-      textAlign: 'center',
+    primaryButton: {
+      backgroundColor: theme.colors.brand.primary,
+      paddingVertical: theme.spacing.md,
+      borderRadius: theme.radii.lg,
+      borderCurve: 'continuous',
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...theme.shadows.level1,
+      height: 56,
+    },
+    primaryButtonDisabled: {
+      opacity: 0.8,
+    },
+    primaryButtonText: {
+      ...theme.typography.button,
+      color: theme.colors.text.onBrand,
     },
   });
