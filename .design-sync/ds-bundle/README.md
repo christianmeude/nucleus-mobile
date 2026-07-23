@@ -11,6 +11,7 @@ Accent: gold `var(--color-brand-accent)` (#F5A623) — one emphasis element per 
 Ink: `var(--color-text-primary)` (#0F172A).
 
 Warm paper surfaces:
+
 - Page: `var(--color-surface-paper)` (#F7F3EA)
 - Card: `var(--color-surface-paper-raised)` (#FFFDF8)
 - Sunken: `var(--color-surface-paper-sunken)` (#FCFAF4)

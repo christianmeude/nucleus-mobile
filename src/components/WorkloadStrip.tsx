@@ -43,24 +43,16 @@ export const WorkloadStrip = ({ summary, activeFilter, onFilterChange }: Workloa
       {tiles.map((tile, index) => {
         const isActive = activeFilter === tile.id;
         return (
-          <View
-            key={tile.id}
-            style={styles.tileWrapper}
-          >
+          <View key={tile.id} style={styles.tileWrapper}>
             <Pressable
               onPress={() => handlePress(tile.id)}
-              style={[
-                styles.tile,
-                isActive && styles.tileActive,
-              ]}
+              style={[styles.tile, isActive && styles.tileActive]}
             >
               <AnimatedNumber
                 value={tile.count}
                 style={[styles.count, isActive && styles.countActive]}
               />
-              <Text style={[styles.label, isActive && styles.labelActive]}>
-                {tile.label}
-              </Text>
+              <Text style={[styles.label, isActive && styles.labelActive]}>{tile.label}</Text>
             </Pressable>
           </View>
         );

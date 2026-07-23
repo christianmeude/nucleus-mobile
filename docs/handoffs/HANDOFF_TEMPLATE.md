@@ -1,7 +1,7 @@
 ---
 date: YYYY-MM-DD
-branch: "[current branch]"
-last_commit: "[type(scope): description]"
+branch: '[current branch]'
+last_commit: '[type(scope): description]'
 status: in-progress | blocked | complete
 ---
 

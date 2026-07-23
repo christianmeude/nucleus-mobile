@@ -20,9 +20,7 @@ export const Card = ({ children, style, padding = 'lg' }: CardProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
-    <Surface style={[styles.card, { padding: theme.spacing[padding] }, style]}>
-      {children}
-    </Surface>
+    <Surface style={[styles.card, { padding: theme.spacing[padding] }, style]}>{children}</Surface>
   );
 };
 

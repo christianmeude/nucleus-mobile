@@ -556,7 +556,7 @@ export const SubmitResearchScreen = () => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView
+      <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
@@ -922,7 +922,7 @@ export const SubmitResearchScreen = () => {
       {/* Pickers */}
       <BottomSheet visible={pickerOpen === 'category'} onClose={() => setPickerOpen(null)}>
         <Text style={styles.sheetTitle}>Select category</Text>
-        <ScrollView style={styles.sheetList}>
+        <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} style={styles.sheetList}>
           {categories.length === 0 ? (
             <EmptyState title="No categories available" />
           ) : (
@@ -947,7 +947,7 @@ export const SubmitResearchScreen = () => {
 
       <BottomSheet visible={pickerOpen === 'department'} onClose={() => setPickerOpen(null)}>
         <Text style={styles.sheetTitle}>Select department</Text>
-        <ScrollView style={styles.sheetList}>
+        <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} style={styles.sheetList}>
           <Pressable
             onPress={() => {
               setFormField('department', '');
@@ -993,7 +993,7 @@ export const SubmitResearchScreen = () => {
 
       <BottomSheet visible={pickerOpen === 'faculty'} onClose={() => setPickerOpen(null)}>
         <Text style={styles.sheetTitle}>Select faculty adviser</Text>
-        <ScrollView style={styles.sheetList}>
+        <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} style={styles.sheetList}>
           {facultyMembers.length === 0 ? (
             <EmptyState
               title="No faculty available"

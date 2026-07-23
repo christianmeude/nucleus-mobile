@@ -4,10 +4,10 @@ These two functions are **already deployed and ACTIVE** on the live project. The
 source here is a version-controlled mirror of what is running — commit it so the
 functions live in the repo, not just on the server.
 
-| Function | Auth | Purpose |
-|---|---|---|
-| `search-papers` | caller JWT (`verify_jwt` on) | Embeds the query with `gte-small`, calls the `search_research_papers` RPC as the caller, returns `{ results: [{ paper_id, score }] }`. No secret. |
-| `embed-papers` | **service-role key** as bearer | Maintenance backfill: (re)generates one `gte-small` embedding per approved/published paper into `research_paper_embeddings`, prunes stale rows. Not callable by app users. |
+| Function        | Auth                           | Purpose                                                                                                                                                                    |
+| --------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `search-papers` | caller JWT (`verify_jwt` on)   | Embeds the query with `gte-small`, calls the `search_research_papers` RPC as the caller, returns `{ results: [{ paper_id, score }] }`. No secret.                          |
+| `embed-papers`  | **service-role key** as bearer | Maintenance backfill: (re)generates one `gte-small` embedding per approved/published paper into `research_paper_embeddings`, prunes stale rows. Not callable by app users. |
 
 ## One-time / periodic: run the embedding backfill
 

@@ -167,10 +167,12 @@ export const OnboardingScreen = ({ onDone }: OnboardingScreenProps) => {
         </View>
 
         <Animated.ScrollView
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
           ref={scrollRef}
           horizontal
           pagingEnabled
-          showsHorizontalScrollIndicator={false}
+
           onScroll={onScroll}
           scrollEventThrottle={16}
           onMomentumScrollEnd={(event) =>
@@ -284,10 +286,7 @@ const SlideIcon = ({ icon: Icon, badge }: { icon: LucideIcon; badge: boolean }) 
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.iconTile}>
-      <Icon
-        size={60}
-        color={badge ? theme.colors.brand.accent : theme.colors.text.onBrand}
-      />
+      <Icon size={60} color={badge ? theme.colors.brand.accent : theme.colors.text.onBrand} />
       {badge ? <View style={styles.badgeDot} /> : null}
     </View>
   );

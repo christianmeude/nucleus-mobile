@@ -12,6 +12,8 @@ export const haptics = {
   medium: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(swallow),
   success: () =>
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(swallow),
+  error: () =>
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(swallow),
 };
 
 export type HapticName = keyof typeof haptics;

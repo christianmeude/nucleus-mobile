@@ -38,7 +38,7 @@ Every merge to `main` happens via a **GitHub PR**, not a direct local `git merge
 
 ### Where conventions and docs live
 
-Project-wide rules and docs (`CONVENTIONS.md`, `CLAUDE.md`, `PROJECT_CONTEXT.md`) are **canonical on `main`** and propagate to branches via `git merge main` — pull them in at branch start. Author project-wide changes on `main` (or a `chore/*` branch → `main`), never only on a feature branch, or they drift apart. **Branch-scoped** files stay on their branch: work-in-progress code and any `.claude/settings.json` frozen-file exceptions that reflect what *that* branch may touch.
+Project-wide rules and docs (`CONVENTIONS.md`, `CLAUDE.md`, `PROJECT_CONTEXT.md`) are **canonical on `main`** and propagate to branches via `git merge main` — pull them in at branch start. Author project-wide changes on `main` (or a `chore/*` branch → `main`), never only on a feature branch, or they drift apart. **Branch-scoped** files stay on their branch: work-in-progress code and any `.claude/settings.json` frozen-file exceptions that reflect what _that_ branch may touch.
 
 ### PR body format
 
@@ -52,6 +52,7 @@ Use a structured body for every `feat/* → main` PR. Chore and hotfix PRs do no
 ```
 
 **Rules:**
+
 - Outcome statement: past-tense summary of what the branch delivered
 - Bullets: the meaningful changes, not a file list
 
@@ -60,11 +61,13 @@ Use a structured body for every `feat/* → main` PR. Chore and hotfix PRs do no
 ## 2. Commit Format
 
 Subject line:
+
 ```
 type(scope): short description
 ```
 
 Body:
+
 ```
 Phase N: Label
 
@@ -76,21 +79,23 @@ Refs #issue-number
 
 **Allowed types:**
 
-| Type | When |
-|---|---|
-| `feat` | New feature or phase implementation |
-| `fix` | Bug fix or corrective change |
-| `docs` | Documentation-only changes |
-| `chore` | Maintenance, dependency, or config changes |
-| `refactor` | Code restructure with no behavior change |
+| Type       | When                                       |
+| ---------- | ------------------------------------------ |
+| `feat`     | New feature or phase implementation        |
+| `fix`      | Bug fix or corrective change               |
+| `docs`     | Documentation-only changes                 |
+| `chore`    | Maintenance, dependency, or config changes |
+| `refactor` | Code restructure with no behavior change   |
 
 **Rules:**
+
 - Subject line: max 72 characters, imperative mood ("add", "fix", "update"), no trailing period
 - Body required when a commit spans multiple files or logical areas
 - `Refs #N` when the commit relates to a known GitHub issue
 - Claude Code stages specific files (never `git add .`) and drafts the message. Christian approves the message; Claude Code then executes the commit itself.
 
 **Example:**
+
 ```
 feat(notifications): overhaul Notifications screen to design system
 
@@ -159,29 +164,29 @@ Issue numbers are canonical and fixed. **Claude Code is authorized to create and
 
 ### Canonical issues (latest first)
 
-| # | Title | Status |
-|---|---|---|
-| 38 | `browse: results list uses ScrollView+map instead of FlatList` | 🔴 Open |
-| 37 | `browse: idle search landing feels bare — needs richer layout` | 🔴 Open |
-| 36 | `browse: redesign swipe-up explore gesture to pull-to-refresh style` | 🔴 Open |
-| 32 | `A0 follow-up: adopt Screen wrapper + motion primitives (deferred from #31)` | 🔴 Open |
-| 29 | `search: complete hybrid semantic search (Edge Functions, mobile facade, Browse wiring)` | 🔴 Open |
-| 21 | `test: unit coverage for API facades (research, invitations, notifications, faculty, collections)` | 🔴 Open |
-| 15 | `faculty: verify annotation overlays on papers returned from dean or program chair` | 🔴 Open |
-| 14 | `faculty: annotation creation — write path for review comments` | 🔴 Open |
-| 13 | `research detail: related papers via semantic search (replace client-side heuristic)` | 🔴 Open |
-| 12 | `faculty: additional tabs (Notifications, Repository, Profile)` | 🔴 Open |
-| 11 | `faculty review: annotation threads on papers` | 🔴 Open |
-| 10 | `research detail: in-app embedded PDF viewer (student + faculty)` | ✅ Closed |
-| 9 | `faculty review actions: email and push notifications not sent on mobile` | 🔴 Open |
-| 8 | `ResearchDetail: Download button always visible — no allow_download column` | 🔴 Open |
-| 7 | `ResearchDetail / Browse: author name shows "Unknown" for non-uploaders` | ✅ Closed |
-| 6 | `Browse: add toggleable list and tile view` | 🔴 Open |
-| 5 | `Browse: category filter shows unresolved UUIDs — categories not loading` | 🔴 Open |
-| 4 | `ResearchCard: published papers do not show view and download counts` | ✅ Closed |
-| 3 | `co_author_invitations: PostgREST joins fail silently for research title and inviter name` | ✅ Closed |
-| 2 | `Mobile auth: UUID mismatch between auth.users and public.users breaks RLS` | ✅ Closed |
-| 1 | `ResearchDetail: view and download counts not persisting after navigation` | ✅ Closed |
+| #   | Title                                                                                              | Status    |
+| --- | -------------------------------------------------------------------------------------------------- | --------- |
+| 38  | `browse: results list uses ScrollView+map instead of FlatList`                                     | 🔴 Open   |
+| 37  | `browse: idle search landing feels bare — needs richer layout`                                     | 🔴 Open   |
+| 36  | `browse: redesign swipe-up explore gesture to pull-to-refresh style`                               | 🔴 Open   |
+| 32  | `A0 follow-up: adopt Screen wrapper + motion primitives (deferred from #31)`                       | 🔴 Open   |
+| 29  | `search: complete hybrid semantic search (Edge Functions, mobile facade, Browse wiring)`           | 🔴 Open   |
+| 21  | `test: unit coverage for API facades (research, invitations, notifications, faculty, collections)` | 🔴 Open   |
+| 15  | `faculty: verify annotation overlays on papers returned from dean or program chair`                | 🔴 Open   |
+| 14  | `faculty: annotation creation — write path for review comments`                                    | 🔴 Open   |
+| 13  | `research detail: related papers via semantic search (replace client-side heuristic)`              | 🔴 Open   |
+| 12  | `faculty: additional tabs (Notifications, Repository, Profile)`                                    | 🔴 Open   |
+| 11  | `faculty review: annotation threads on papers`                                                     | 🔴 Open   |
+| 10  | `research detail: in-app embedded PDF viewer (student + faculty)`                                  | ✅ Closed |
+| 9   | `faculty review actions: email and push notifications not sent on mobile`                          | 🔴 Open   |
+| 8   | `ResearchDetail: Download button always visible — no allow_download column`                        | 🔴 Open   |
+| 7   | `ResearchDetail / Browse: author name shows "Unknown" for non-uploaders`                           | ✅ Closed |
+| 6   | `Browse: add toggleable list and tile view`                                                        | 🔴 Open   |
+| 5   | `Browse: category filter shows unresolved UUIDs — categories not loading`                          | 🔴 Open   |
+| 4   | `ResearchCard: published papers do not show view and download counts`                              | ✅ Closed |
+| 3   | `co_author_invitations: PostgREST joins fail silently for research title and inviter name`         | ✅ Closed |
+| 2   | `Mobile auth: UUID mismatch between auth.users and public.users breaks RLS`                        | ✅ Closed |
+| 1   | `ResearchDetail: view and download counts not persisting after navigation`                         | ✅ Closed |
 
 **Current cap: #38.**
 
@@ -198,28 +203,36 @@ Issue numbers are canonical and fixed. **Claude Code is authorized to create and
 
 ```markdown
 ## Summary
+
 <Short problem statement and impact.>
 
 ## What's working
+
 <What still behaves correctly.>
 
 ## What's not working
+
 <Exact broken behavior and where it appears.>
 
 ## Suspected cause
+
 <Likely technical cause or hypothesis.>
 
 ## Workaround
+
 <Temporary workaround, or "None known".>
 
 ## Acceptance criteria
+
 - [ ] Criterion 1
 - [ ] Criterion 2
 
 ## Status / Resolution
+
 <Open / in progress / fixed details.>
 
 ## References
+
 <Related PRs, commits, screenshots, logs, docs.>
 ```
 
@@ -227,22 +240,28 @@ Issue numbers are canonical and fixed. **Claude Code is authorized to create and
 
 ```markdown
 ## Summary
+
 <Capability request and user value.>
 
 ## Proposed behavior
+
 <What should happen after implementation.>
 
 ## Current state
+
 <How it works today and constraints.>
 
 ## Acceptance criteria
+
 - [ ] Criterion 1
 - [ ] Criterion 2
 
 ## Status / Resolution
+
 <Open / in progress / delivered details.>
 
 ## References
+
 <Related issues, docs, mockups, links.>
 ```
 
@@ -263,6 +282,7 @@ Issue numbers are canonical and fixed. **Claude Code is authorized to create and
 One paragraph: scope summary in one sentence, total phase count, which issues were resolved or mitigated, notable technical outcomes (architecture decisions, validation results, preserved constraints).
 
 **Example:**
+
 > 10-phase UI overhaul completed across design tokens, shared components, main screens, accessibility polish, and validation; Issue #4 was resolved and Issue #8 was mitigated in UI pending backend `allow_download` support. Notable outcomes include a frozen-layer clean diff against `origin/dev`, Android-safe `ResearchDetail` header handling under edge-to-edge, and a fully passing smoke-test checklist before merge.
 
 ### Milestone policy
@@ -280,6 +300,7 @@ Tags are named pointers to commits on `main`. They are not the same as GitHub mi
 **Naming:** Semantic prefix pattern — `v1.0-ui-overhaul`, `v0.9-submit-research`. Pick one scheme and stay consistent.
 
 **Workflow:**
+
 ```
 git checkout main
 git pull
@@ -302,6 +323,7 @@ SQL snapshots in `docs/sql/` record deployed Supabase definitions exactly as the
 `docs/sql/[table-or-feature]_[type].sql`
 
 Examples:
+
 - `docs/sql/submit_research_rls_policies.sql`
 - `docs/sql/submit_research_rpcs.sql`
 - `docs/sql/research_authors_rls_policies.sql`

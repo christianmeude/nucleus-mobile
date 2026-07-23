@@ -8,29 +8,29 @@ NUcleus is a research-reading app for enrolled students at National University D
 
 ### Color palette (university brand identity, locked)
 
-| Role | Semantic token | Value |
-|---|---|---|
-| Primary — nav, buttons, links | `var(--color-brand-primary)` | `#1B3A8C` navy |
-| Accent — one emphasis element per screen | `var(--color-brand-accent)` | `#F5A623` gold |
-| Page background | `var(--color-surface-paper)` | `#F7F3EA` warm paper |
-| Card surface | `var(--color-surface-paper-raised)` | `#FFFDF8` |
-| Sunken / inset | `var(--color-surface-paper-sunken)` | `#FCFAF4` |
-| Warm rule / divider | `var(--color-border-warm)` | `#E9E2D3` |
-| Primary text | `var(--color-text-primary)` | `#0F172A` ink |
+| Role                                     | Semantic token                      | Value                |
+| ---------------------------------------- | ----------------------------------- | -------------------- |
+| Primary — nav, buttons, links            | `var(--color-brand-primary)`        | `#1B3A8C` navy       |
+| Accent — one emphasis element per screen | `var(--color-brand-accent)`         | `#F5A623` gold       |
+| Page background                          | `var(--color-surface-paper)`        | `#F7F3EA` warm paper |
+| Card surface                             | `var(--color-surface-paper-raised)` | `#FFFDF8`            |
+| Sunken / inset                           | `var(--color-surface-paper-sunken)` | `#FCFAF4`            |
+| Warm rule / divider                      | `var(--color-border-warm)`          | `#E9E2D3`            |
+| Primary text                             | `var(--color-text-primary)`         | `#0F172A` ink        |
 
 Never introduce new colors. Never use Anthropic orange, Anthropic blue, or Anthropic green. The full palette vocabulary (including cool-slate surfaces for reference) is in `tokens/colors.css`.
 
 ### Spacing scale
 
-| Token | Value | CSS variable |
-|---|---|---|
-| xs | 4px | `var(--space-xs)` |
-| sm | 8px | `var(--space-sm)` |
-| md | 12px | `var(--space-md)` |
-| lg | 16px | `var(--space-lg)` |
-| xl | 24px | `var(--space-xl)` |
-| 2xl | 32px | `var(--space-2xl)` |
-| 3xl | 40px | `var(--space-3xl)` |
+| Token | Value | CSS variable       |
+| ----- | ----- | ------------------ |
+| xs    | 4px   | `var(--space-xs)`  |
+| sm    | 8px   | `var(--space-sm)`  |
+| md    | 12px  | `var(--space-md)`  |
+| lg    | 16px  | `var(--space-lg)`  |
+| xl    | 24px  | `var(--space-xl)`  |
+| 2xl   | 32px  | `var(--space-2xl)` |
+| 3xl   | 40px  | `var(--space-3xl)` |
 
 ### Corner radii
 
@@ -81,6 +81,7 @@ Each design direction should have a distinct personality: a clear character stat
 ## Token file index
 
 `styles.css` is the entry point. It imports:
+
 - `tokens/colors.css` — full color vocabulary
 - `tokens/typography.css` — current type scale baseline (Lora + Outfit)
 - `tokens/spacing.css` — spacing scale and radii

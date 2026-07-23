@@ -106,16 +106,14 @@ const TabItem = ({
       accessibilityState={{ selected: focused }}
       accessibilityLabel={meta.label}
     >
-      <SymbolView 
-        name={focused ? meta.icon[1] : meta.icon[0]} 
-        size={22} 
-        tintColor={color} 
-        fallback={
-          (() => {
-            const FallbackIcon = meta.icon[2];
-            return <FallbackIcon size={22} color={color} />;
-          })()
-        } 
+      <SymbolView
+        name={focused ? meta.icon[1] : meta.icon[0]}
+        size={22}
+        tintColor={color}
+        fallback={(() => {
+          const FallbackIcon = meta.icon[2];
+          return <FallbackIcon size={22} color={color} />;
+        })()}
       />
       <Text style={[styles.tabLabel, { color }]} numberOfLines={1}>
         {meta.label}
@@ -175,7 +173,7 @@ export const FloatingTabBar = ({ state, navigation, tabMeta, fab }: FloatingTabB
         indW.value = width;
       }
     },
-    [indX, indW]
+    [indX, indW],
   );
 
   useEffect(() => {
@@ -284,16 +282,14 @@ export const FloatingTabBar = ({ state, navigation, tabMeta, fab }: FloatingTabB
                 style={styles.fabGloss}
                 pointerEvents="none"
               />
-              <SymbolView 
-                name={fab.icon} 
-                size={30} 
-                tintColor={FAB_INK} 
-                fallback={
-                  (() => {
-                    const FabIcon = fab.lucideIcon;
-                    return <FabIcon size={30} color={FAB_INK} />;
-                  })()
-                } 
+              <SymbolView
+                name={fab.icon}
+                size={30}
+                tintColor={FAB_INK}
+                fallback={(() => {
+                  const FabIcon = fab.lucideIcon;
+                  return <FabIcon size={30} color={FAB_INK} />;
+                })()}
               />
             </PressableScale>
           </View>

@@ -7,6 +7,7 @@ This document is the canonical product and system overview for the NUcleus Mobil
 NUcleus Mobile is a focused research reader and student workspace for enrolled students at National University — Dasmariñas. The app helps students discover, read, monitor, and submit research outputs relevant to their studies.
 
 Core user value:
+
 - Fast, reliable access to published research and personal paper status.
 - A simple reading experience for PDFs and paper metadata.
 - A personal view of the student's papers, invitations, and notifications.
@@ -41,19 +42,19 @@ These exclusions keep the mobile product focused and safe.
 ## High-level user flows
 
 - Login → Dashboard
-    - Student signs in or restores a session and lands on a personal Dashboard summarizing recent activity.
+  - Student signs in or restores a session and lands on a personal Dashboard summarizing recent activity.
 
 - Browse → Research Detail → Open PDF
-    - Student discovers papers, opens a detail view for metadata and workflow context, then opens the PDF in-app or via an external viewer where permitted.
+  - Student discovers papers, opens a detail view for metadata and workflow context, then opens the PDF in-app or via an external viewer where permitted.
 
 - My Papers / Dashboard
-    - Student inspects their own papers, views workflow status and recent changes; Dashboard provides quick counts and recents for fast insight.
+  - Student inspects their own papers, views workflow status and recent changes; Dashboard provides quick counts and recents for fast insight.
 
 - Notifications / Invitations
-    - Notifications present recent updates; students can mark items read or open related content. Invitations list shows co-author invitations with accept/decline actions and updated state.
+  - Notifications present recent updates; students can mark items read or open related content. Invitations list shows co-author invitations with accept/decline actions and updated state.
 
 - My Papers → Submit Research → Confirmation → My Papers
-    - Student initiates a new submission or resubmission from My Papers, completes the form (title, abstract, keywords, category, faculty adviser, department, co-authors, file), and is returned to My Papers on successful submit.
+  - Student initiates a new submission or resubmission from My Papers, completes the form (title, abstract, keywords, category, faculty adviser, department, co-authors, file), and is returned to My Papers on successful submit.
 
 These flows define the UX contract and are intentionally implementation-agnostic.
 
@@ -63,24 +64,25 @@ These flows define the UX contract and are intentionally implementation-agnostic
 - Web Backend → Admin / provisioning (separate from mobile runtime data flow)
 
 Notes:
+
 - The mobile client relies on a hosted platform (Supabase) for authentication, data, and file storage. The web backend is responsible for administrative and provisioning workflows and is not part of the mobile runtime data path. This section remains conceptual and does not prescribe implementation details.
 
 ## Navigation model
 
 - Root stack:
-    - `Login` — authentication screen
-    - `UnsupportedRole` — shown to roles other than student/faculty
-    - `StudentTabs` — bottom tabs for authenticated students
-    - `FacultyTabs` — bottom tabs for authenticated faculty
+  - `Login` — authentication screen
+  - `UnsupportedRole` — shown to roles other than student/faculty
+  - `StudentTabs` — bottom tabs for authenticated students
+  - `FacultyTabs` — bottom tabs for authenticated faculty
 - Student tabs: `Dashboard`, `MyPapers`, `Browse`, `Profile` — a floating, detached tab bar with a raised gold Submit FAB at center.
 - Faculty tabs: `FacultyDashboard` (Home), `FacultyReview` (Review), `FacultyRepository` (Browse — literally the same shared `BrowseScreen`), `FacultyProfile` (Profile) — the same floating tab bar, minus the Submit FAB.
 - Both roles reach notifications through the header (`TopBar`) bell, which opens the shared `Activity` screen. Students see a Notifications + Invites inbox; faculty see notifications only (no co-author invitations concept).
 - Additional stack screens:
-    - `ResearchDetail` — student paper details and file access; params `{ paperId: string }`
-    - `FacultyPaperDetail` — faculty repository paper details; params `{ paperId: string }`
-    - `FacultyReviewDetail` — faculty review view for an assigned paper; params `{ paperId: string }`
-    - `SubmitResearch` — student submission/resubmission form; params `{ resubmitPaperId?: string } | undefined`
-    - `Activity` — shared notifications (+ invites, students only) inbox reached from the bell
+  - `ResearchDetail` — student paper details and file access; params `{ paperId: string }`
+  - `FacultyPaperDetail` — faculty repository paper details; params `{ paperId: string }`
+  - `FacultyReviewDetail` — faculty review view for an assigned paper; params `{ paperId: string }`
+  - `SubmitResearch` — student submission/resubmission form; params `{ resubmitPaperId?: string } | undefined`
+  - `Activity` — shared notifications (+ invites, students only) inbox reached from the bell
 
 Consult routing and gating in `src/navigation/AppNavigator.tsx` and `src/navigation/types.ts` when implementing behavior. The tab bar is shared: `src/navigation/FloatingTabBar.tsx` is the primitive; `StudentTabBar` and `FacultyTabBar` are thin configs over it.
 
@@ -89,11 +91,11 @@ Consult routing and gating in `src/navigation/AppNavigator.tsx` and `src/navigat
 - Core domain types are defined in `src/types/domain.ts` and should be treated as the canonical shapes for the app's UI and facades.
 - Submit Research-specific types (`SubmitInput`, `SubmitDraftFormState`, `DepartmentRow`, `FacultyMember`, `StudentSearchResult`) live in `src/api/research.ts`, not in `domain.ts`.
 - Typical entities:
-    - Research paper: title, abstract, authors, status, file reference
-    - User profile: identity fields, display name, role
-    - Notification: id, title, body, timestamp, read state
-    - Invitation: id, paper reference, inviter, status
-    - Submission draft: form state persisted locally and best-effort to `submission_drafts` table
+  - Research paper: title, abstract, authors, status, file reference
+  - User profile: identity fields, display name, role
+  - Notification: id, title, body, timestamp, read state
+  - Invitation: id, paper reference, inviter, status
+  - Submission draft: form state persisted locally and best-effort to `submission_drafts` table
 
 Design guidance: map backend rows to these shapes without renaming fields unnecessarily.
 

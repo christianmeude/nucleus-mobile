@@ -8,13 +8,13 @@ interface SwipeActionProps {
   rightActions?: (
     progressAnimatedValue: Animated.AnimatedInterpolation<number>,
     dragAnimatedValue: Animated.AnimatedInterpolation<number>,
-    swipeable: Swipeable
+    swipeable: Swipeable,
   ) => React.ReactNode;
   /** Component to render on the left when swiped */
   leftActions?: (
     progressAnimatedValue: Animated.AnimatedInterpolation<number>,
     dragAnimatedValue: Animated.AnimatedInterpolation<number>,
-    swipeable: Swipeable
+    swipeable: Swipeable,
   ) => React.ReactNode;
   /** Callback when swiped open on the right */
   onSwipeRight?: () => void;

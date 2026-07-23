@@ -29,10 +29,7 @@ const statusLabelForStatus = (status: string) => {
   }
 };
 
-const pillToneForStatus = (
-  status: string,
-  c: Theme['colors'],
-): { bg: string; color: string } => {
+const pillToneForStatus = (status: string, c: Theme['colors']): { bg: string; color: string } => {
   switch (status) {
     case 'pending':
       return { bg: c.state.warningSurface, color: c.state.warning };
@@ -150,9 +147,7 @@ export const InvitationCard = ({
             accessibilityRole="button"
             accessibilityLabel="Accept invitation"
           >
-            {acting ? (
-              <ActivityIndicator size="small" color={theme.colors.text.onBrand} />
-            ) : null}
+            {acting ? <ActivityIndicator size="small" color={theme.colors.text.onBrand} /> : null}
             <Text style={[styles.acceptText, notActionable && styles.acceptTextDisabled]}>
               {acting ? 'Accepting' : 'Accept'}
             </Text>

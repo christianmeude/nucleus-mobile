@@ -76,7 +76,9 @@ export const FacultyPaperCard = ({ paper, onPress, index }: FacultyPaperCardProp
             <Text style={styles.meta} numberOfLines={1}>
               {paper.authorName} · {formatDate(paper.submissionDate || paper.createdAt)}
             </Text>
-            <Text style={styles.daysText}>{daysWaiting === 1 ? '1 day' : `${daysWaiting} days`}</Text>
+            <Text style={styles.daysText}>
+              {daysWaiting === 1 ? '1 day' : `${daysWaiting} days`}
+            </Text>
           </View>
         </View>
       </PressableCard>

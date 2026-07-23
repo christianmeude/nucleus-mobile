@@ -1,5 +1,14 @@
 import { useMemo } from 'react';
-import { Keyboard, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type TextStyle } from 'react-native';
+import {
+  Keyboard,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type StyleProp,
+  type TextStyle,
+} from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -127,8 +136,10 @@ export const BrowseHeader = ({
       {!searched && recent.length > 0 ? (
         <Animated.View style={[styles.recentRow, greetingStyle]} pointerEvents="box-none">
           <ScrollView
-            horizontal
+            showsVerticalScrollIndicator={false}
             showsHorizontalScrollIndicator={false}
+            horizontal
+
             contentContainerStyle={styles.recentRowContent}
             keyboardShouldPersistTaps="handled"
           >
@@ -159,8 +170,10 @@ export const BrowseHeader = ({
         <Animated.View style={[styles.suggestedRow, greetingStyle]} pointerEvents="box-none">
           <Text style={styles.suggestedLabel}>Popular searches</Text>
           <ScrollView
-            horizontal
+            showsVerticalScrollIndicator={false}
             showsHorizontalScrollIndicator={false}
+            horizontal
+
             contentContainerStyle={styles.suggestedRowContent}
             keyboardShouldPersistTaps="handled"
           >

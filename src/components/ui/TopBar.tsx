@@ -68,7 +68,7 @@ export const TopBar = ({
   const isHero = tone === 'hero';
   const isLarge = variant === 'large';
   const reduceMotion = useReducedMotion();
-  
+
   const bellCoachmarkRef = useCoachmarkTarget('bell');
 
   const titleAnimatedStyle = useAnimatedStyle(() => {
@@ -78,13 +78,13 @@ export const TopBar = ({
         scrollOffset.value,
         [0, 60],
         [theme.typography.h1.fontSize, theme.typography.h3.fontSize],
-        Extrapolation.CLAMP
+        Extrapolation.CLAMP,
       ),
       lineHeight: interpolate(
         scrollOffset.value,
         [0, 60],
         [theme.typography.h1.lineHeight, theme.typography.h3.lineHeight],
-        Extrapolation.CLAMP
+        Extrapolation.CLAMP,
       ),
     };
   });
@@ -105,10 +105,7 @@ export const TopBar = ({
           <Pressable
             ref={bellCoachmarkRef}
             onPress={() => navigation.navigate('Activity')}
-            style={({ pressed }) => [
-              styles.bell,
-              pressed && styles.bellPressed,
-            ]}
+            style={({ pressed }) => [styles.bell, pressed && styles.bellPressed]}
             accessibilityRole="button"
             accessibilityLabel="Activity"
             hitSlop={8}

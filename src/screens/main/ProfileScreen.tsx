@@ -28,7 +28,12 @@ export const ProfileScreen = () => {
     // ProfileHeader) bleeds under the status bar and owns its own clearance.
     // Bottom edge is opted out too — the floating tab bar owns it.
     <Screen gutter={0} edges={{ top: false, bottom: false }}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
         <ProfileHeader
           initials={initials}
           name={user?.fullName || 'Student'}

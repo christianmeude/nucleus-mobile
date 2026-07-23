@@ -5,47 +5,47 @@
 
 :root {
   /* --- Font families --- */
-  --font-ui:      'Outfit', sans-serif;
+  --font-ui: 'Outfit', sans-serif;
   --font-display: 'Lora', serif;
 
   /* --- Type scale: font sizes (px) --- */
-  --text-size-display:    30px;
-  --text-size-h1:         26px;
-  --text-size-h2:         20px;
-  --text-size-h3:         17px;
+  --text-size-display: 30px;
+  --text-size-h1: 26px;
+  --text-size-h2: 20px;
+  --text-size-h3: 17px;
   --text-size-body-strong: 15px;
-  --text-size-body:        15px;
-  --text-size-body-small:  13px;
-  --text-size-label:       13px;
-  --text-size-metadata:    12px;
-  --text-size-caption:     11px;
-  --text-size-button:      15px;
+  --text-size-body: 15px;
+  --text-size-body-small: 13px;
+  --text-size-label: 13px;
+  --text-size-metadata: 12px;
+  --text-size-caption: 11px;
+  --text-size-button: 15px;
 
   /* --- Type scale: line heights (px) --- */
-  --text-lh-display:    38px;
-  --text-lh-h1:         34px;
-  --text-lh-h2:         28px;
-  --text-lh-h3:         24px;
-  --text-lh-body:       22px;
+  --text-lh-display: 38px;
+  --text-lh-h1: 34px;
+  --text-lh-h2: 28px;
+  --text-lh-h3: 24px;
+  --text-lh-body: 22px;
   --text-lh-body-small: 20px;
-  --text-lh-label:      18px;
-  --text-lh-metadata:   18px;
-  --text-lh-caption:    16px;
-  --text-lh-button:     20px;
+  --text-lh-label: 18px;
+  --text-lh-metadata: 18px;
+  --text-lh-caption: 16px;
+  --text-lh-button: 20px;
 
   /* --- Type scale: font weights --- */
-  --text-weight-regular:  400;
-  --text-weight-medium:   500;
+  --text-weight-regular: 400;
+  --text-weight-medium: 500;
   --text-weight-semibold: 600;
-  --text-weight-bold:     700;
+  --text-weight-bold: 700;
 
   /* --- Type scale: letter spacing --- */
-  --text-ls-display:  0.2px;
-  --text-ls-label:    0.1px;
+  --text-ls-display: 0.2px;
+  --text-ls-label: 0.1px;
   --text-ls-metadata: 0.1px;
-  --text-ls-caption:  0.2px;
-  --text-ls-button:   0.2px;
-  --text-ls-none:     0px;
+  --text-ls-caption: 0.2px;
+  --text-ls-button: 0.2px;
+  --text-ls-none: 0px;
 }
 
 /* --- Semantic role shorthands --- */

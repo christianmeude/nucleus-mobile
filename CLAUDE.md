@@ -74,18 +74,18 @@ On opening a session, run these in order; do not act until all are done.
 
 Never edit or create files at these paths. Also enforced in `.claude/settings.json`.
 
-| Path | Reason |
-|---|---|
-| `src/context/AuthContext.tsx` | Auth surface — session-critical |
-| `src/lib/supabase.ts` | Supabase client — session-critical |
-| `src/auth/` | Auth helpers — session-critical |
-| `src/storage/authStorage.ts` | Token persistence — session-critical |
-| `src/types/domain.ts` | Canonical domain types |
-| `src/navigation/types.ts` | Navigation contract |
-| `src/navigation/AppNavigator.tsx` | Navigation contract |
+| Path                                        | Reason                               |
+| ------------------------------------------- | ------------------------------------ |
+| `src/context/AuthContext.tsx`               | Auth surface — session-critical      |
+| `src/lib/supabase.ts`                       | Supabase client — session-critical   |
+| `src/auth/`                                 | Auth helpers — session-critical      |
+| `src/storage/authStorage.ts`                | Token persistence — session-critical |
+| `src/types/domain.ts`                       | Canonical domain types               |
+| `src/navigation/types.ts`                   | Navigation contract                  |
+| `src/navigation/AppNavigator.tsx`           | Navigation contract                  |
 | `src/screens/main/SubmitResearchScreen.tsx` | Locked after Submit Research Phase 2 |
-| `docs/sql/submit_research_rpcs.sql` | Deployed SQL snapshot |
-| `docs/sql/submit_research_rls_policies.sql` | Deployed SQL snapshot |
+| `docs/sql/submit_research_rpcs.sql`         | Deployed SQL snapshot                |
+| `docs/sql/submit_research_rls_policies.sql` | Deployed SQL snapshot                |
 
 **Frozen is the project-wide default, enforced per branch.** A branch whose scope genuinely requires a listed file may unfreeze that one entry **in its own `.claude/settings.json`** — a deliberate, scoped exception for that work, not a project-wide unfreeze (e.g. a branch that owns navigation changes unfreezes the navigation files). The session-critical core — `AuthContext.tsx`, `supabase.ts`, `src/auth/`, `authStorage.ts`, `domain.ts` — stays frozen on every branch, no exceptions.
 
@@ -152,24 +152,24 @@ The `public.users` SELECT policy cannot reference itself — triggers `42P17`. C
 
 ## Key Files
 
-| File | Purpose |
-|---|---|
-| `docs/PROJECT_CONTEXT.md` | Product scope, navigation model, access control, principles |
-| `DESIGN.md` | **Single design source of truth** — tokens, motion, screen composition (absorbed `VISUAL_DIRECTION.md`); build redesign UI to it (Rule 9) |
-| `docs/design/mockup.html` | Literal visual reference for the redesign — open in a browser |
-| `.claude/skills/ui-ux-pro-max/` | Vendored UI/UX design-intelligence skill — RN rule set + audit for redesign PRs (Rule 9) |
-| `docs/CONVENTIONS.md` | All conventions: commits, execution protocol, issues, SQL, handoffs |
-| `docs/handoffs/HANDOFF_TEMPLATE.md` | Handoff structure template |
-| `docs/sql/` | Deployed SQL snapshots (RLS policies + RPC definitions) |
-| `src/types/domain.ts` | Canonical domain types (frozen) |
-| `src/api/research.ts` | Research and submission API facade |
-| `src/api/invitations.ts` | Invitations API facade |
-| `src/api/notifications.ts` | Notifications API facade |
-| `src/api/faculty.ts` | Faculty read paths + review write RPCs |
-| `src/theme/` | Design tokens — always use, never hardcode values |
-| `src/components/ui/` | Shared UI primitives |
-| `src/components/PdfViewer.tsx` | Shared in-app PDF reader (WebView + pdf.js); used by both roles |
-| `src/navigation/FacultyTabs.tsx` | Faculty tab navigator (headerless; per-screen safe-area insets) |
+| File                                | Purpose                                                                                                                                   |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/PROJECT_CONTEXT.md`           | Product scope, navigation model, access control, principles                                                                               |
+| `DESIGN.md`                         | **Single design source of truth** — tokens, motion, screen composition (absorbed `VISUAL_DIRECTION.md`); build redesign UI to it (Rule 9) |
+| `docs/design/mockup.html`           | Literal visual reference for the redesign — open in a browser                                                                             |
+| `.claude/skills/ui-ux-pro-max/`     | Vendored UI/UX design-intelligence skill — RN rule set + audit for redesign PRs (Rule 9)                                                  |
+| `docs/CONVENTIONS.md`               | All conventions: commits, execution protocol, issues, SQL, handoffs                                                                       |
+| `docs/handoffs/HANDOFF_TEMPLATE.md` | Handoff structure template                                                                                                                |
+| `docs/sql/`                         | Deployed SQL snapshots (RLS policies + RPC definitions)                                                                                   |
+| `src/types/domain.ts`               | Canonical domain types (frozen)                                                                                                           |
+| `src/api/research.ts`               | Research and submission API facade                                                                                                        |
+| `src/api/invitations.ts`            | Invitations API facade                                                                                                                    |
+| `src/api/notifications.ts`          | Notifications API facade                                                                                                                  |
+| `src/api/faculty.ts`                | Faculty read paths + review write RPCs                                                                                                    |
+| `src/theme/`                        | Design tokens — always use, never hardcode values                                                                                         |
+| `src/components/ui/`                | Shared UI primitives                                                                                                                      |
+| `src/components/PdfViewer.tsx`      | Shared in-app PDF reader (WebView + pdf.js); used by both roles                                                                           |
+| `src/navigation/FacultyTabs.tsx`    | Faculty tab navigator (headerless; per-screen safe-area insets)                                                                           |
 
 ## Agent skills
 

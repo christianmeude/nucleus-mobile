@@ -10,11 +10,7 @@ interface SkeletonProps {
   radius?: keyof Theme['radii'];
 }
 
-export const Skeleton = ({
-  height = 14,
-  width = '100%',
-  radius = 'sm',
-}: SkeletonProps) => {
+export const Skeleton = ({ height = 14, width = '100%', radius = 'sm' }: SkeletonProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const reduceMotion = useReduceMotion();
@@ -39,7 +35,7 @@ export const Skeleton = ({
           duration: half,
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
     anim.start();
     return () => anim.stop();

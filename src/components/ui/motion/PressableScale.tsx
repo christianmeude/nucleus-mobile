@@ -6,11 +6,7 @@ import {
   StyleProp,
   ViewStyle,
 } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { motion } from '../../../theme';
 import { haptics } from '../../../lib/haptics';
 
@@ -57,12 +53,7 @@ export const PressableScale = ({
   };
 
   return (
-    <Pressable
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      disabled={disabled}
-      {...rest}
-    >
+    <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut} disabled={disabled} {...rest}>
       <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>
     </Pressable>
   );

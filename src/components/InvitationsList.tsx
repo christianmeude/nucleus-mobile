@@ -24,7 +24,6 @@ const isExpired = (invitation: CoAuthorInvitation) => {
  * segment. Owns its own fetch and accept/decline actions.
  */
 
-
 export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);

@@ -1,12 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Keyboard,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Keyboard, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { ListRenderItem } from 'react-native';
 import Animated, {
   Easing,
@@ -99,7 +92,7 @@ export const BrowseScreen = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState('');
   const progress = useSharedValue(0);
-  
+
   const exploreReveal = useRef(false);
   const skipMorphAnim = useRef(false);
   const { recent, addRecent } = useRecentSearches();
@@ -158,7 +151,9 @@ export const BrowseScreen = () => {
     }
     if (searched && exploreReveal.current) {
       exploreReveal.current = false;
-      progress.value = reducedMotion ? 1 : withSpring(1, { damping: 16, stiffness: 190, velocity: 5 });
+      progress.value = reducedMotion
+        ? 1
+        : withSpring(1, { damping: 16, stiffness: 190, velocity: 5 });
       return;
     }
     exploreReveal.current = false;
@@ -317,10 +312,9 @@ export const BrowseScreen = () => {
 
   const openDetail = useCallback(
     (paperId: string) =>
-      navigation.navigate(
-        user?.role === 'faculty' ? 'FacultyPaperDetail' : 'ResearchDetail',
-        { paperId },
-      ),
+      navigation.navigate(user?.role === 'faculty' ? 'FacultyPaperDetail' : 'ResearchDetail', {
+        paperId,
+      }),
     [navigation, user?.role],
   );
 
@@ -355,7 +349,7 @@ export const BrowseScreen = () => {
 
   const sortLabel = SORT_OPTIONS.find((option) => option.value === sort)?.label ?? 'Newest';
   const fieldLabel = categoryFilter
-    ? resolveCategoryName(categoryFilter, categoryNameById) ?? 'Field'
+    ? (resolveCategoryName(categoryFilter, categoryNameById) ?? 'Field')
     : 'All fields';
   const showClear = searched || Boolean(query.trim());
 
@@ -375,38 +369,35 @@ export const BrowseScreen = () => {
         {error ? <InlineNotice tone="danger" message={error} /> : null}
 
         {!loading && featured ? (
-          <BrowseHero
-            featured={featured}
-            viewsOf={viewsOf}
-            onOpen={openDetail}
-          />
+          <BrowseHero featured={featured} viewsOf={viewsOf} onOpen={openDetail} />
         ) : null}
       </Animated.View>
     </>
   );
 
-  const listEmptyElement = loading || (useServerSearch && searchLoading) ? (
-    <View style={styles.loadingWrap}>
-      <Skeleton height={140} />
-      <Skeleton height={84} />
-      <Skeleton height={84} />
-      <Skeleton height={84} />
-    </View>
-  ) : searchError ? (
-    <EmptyState
-      icon={<Icon icon={CloudOff} size={24} color={theme.colors.text.muted} />}
-      title="Search unavailable"
-      message={searchError}
-    />
-  ) : sorted.length === 0 ? (
-    <EmptyState
-      icon={<Icon icon={Library} size={24} color={theme.colors.text.muted} />}
-      title="No papers found"
-      message={
-        query.trim() ? `No results for "${query.trim()}"` : 'No papers found in this category'
-      }
-    />
-  ) : null;
+  const listEmptyElement =
+    loading || (useServerSearch && searchLoading) ? (
+      <View style={styles.loadingWrap}>
+        <Skeleton height={140} />
+        <Skeleton height={84} />
+        <Skeleton height={84} />
+        <Skeleton height={84} />
+      </View>
+    ) : searchError ? (
+      <EmptyState
+        icon={<Icon icon={CloudOff} size={24} color={theme.colors.text.muted} />}
+        title="Search unavailable"
+        message={searchError}
+      />
+    ) : sorted.length === 0 ? (
+      <EmptyState
+        icon={<Icon icon={Library} size={24} color={theme.colors.text.muted} />}
+        title="No papers found"
+        message={
+          query.trim() ? `No results for "${query.trim()}"` : 'No papers found in this category'
+        }
+      />
+    ) : null;
 
   return (
     <>
@@ -481,9 +472,7 @@ export const BrowseScreen = () => {
               <Text style={[styles.sheetRowText, active ? styles.sheetRowActive : null]}>
                 {option.label}
               </Text>
-              {active ? (
-                <Icon icon={Check} size={18} color={theme.colors.brand.primary} />
-              ) : null}
+              {active ? <Icon icon={Check} size={18} color={theme.colors.brand.primary} /> : null}
             </PressableScale>
           );
         })}
@@ -491,7 +480,11 @@ export const BrowseScreen = () => {
 
       <BottomSheet visible={fieldSheetOpen} onClose={() => setFieldSheetOpen(false)}>
         <Text style={styles.sheetTitle}>Field</Text>
-        <ScrollView style={styles.sheetScroll} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          style={styles.sheetScroll}
+        >
           <PressableScale
             style={styles.sheetRow}
             onPress={() => {
@@ -523,9 +516,7 @@ export const BrowseScreen = () => {
                 >
                   {category.name}
                 </Text>
-                {active ? (
-                  <Icon icon={Check} size={18} color={theme.colors.brand.primary} />
-                ) : null}
+                {active ? <Icon icon={Check} size={18} color={theme.colors.brand.primary} /> : null}
               </PressableScale>
             );
           })}

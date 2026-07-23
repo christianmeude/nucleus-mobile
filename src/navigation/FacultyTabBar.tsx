@@ -9,9 +9,18 @@ import { FacultyTabsParamList } from './types';
 // to read distinctly from Browse's search glyph.
 const TAB_META: Partial<Record<keyof FacultyTabsParamList, TabMeta[string]>> = {
   FacultyDashboard: { label: 'Home', icon: ['house', 'house.fill', Home] },
-  FacultyReview: { label: 'Review', icon: ['list.clipboard', 'list.clipboard.fill', ClipboardList] },
-  FacultyRepository: { label: 'Browse', icon: ['sparkle.magnifyingglass', 'sparkle.magnifyingglass', Search] },
-  FacultyProfile: { label: 'Profile', icon: ['person.crop.circle', 'person.crop.circle.fill', CircleUser] },
+  FacultyReview: {
+    label: 'Review',
+    icon: ['list.clipboard', 'list.clipboard.fill', ClipboardList],
+  },
+  FacultyRepository: {
+    label: 'Browse',
+    icon: ['sparkle.magnifyingglass', 'sparkle.magnifyingglass', Search],
+  },
+  FacultyProfile: {
+    label: 'Profile',
+    icon: ['person.crop.circle', 'person.crop.circle.fill', CircleUser],
+  },
 };
 
 /**

@@ -19,9 +19,7 @@ export const AnimatedNumber = ({ value, style }: AnimatedNumberProps) => {
     <View style={{ overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
       <Animated.Text
         key={value}
-        entering={
-          isIncreasing ? FadeInDown.duration(300) : FadeInUp.duration(300)
-        }
+        entering={isIncreasing ? FadeInDown.duration(300) : FadeInUp.duration(300)}
         exiting={
           isIncreasing
             ? FadeOutUp.duration(300).withInitialValues({ position: 'absolute' })

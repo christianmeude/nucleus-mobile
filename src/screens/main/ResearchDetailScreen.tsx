@@ -237,7 +237,12 @@ export const ResearchDetailScreen = () => {
       }
     >
       <Screen edges={{ top: false }}>
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          style={styles.container}
+          contentContainerStyle={styles.content}
+        >
           {categoryName ? <Text style={styles.eyebrow}>{categoryName}</Text> : null}
 
           <Text style={styles.title}>{paper.title}</Text>

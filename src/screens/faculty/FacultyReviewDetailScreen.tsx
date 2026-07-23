@@ -282,7 +282,7 @@ export const FacultyReviewDetailScreen = () => {
           color: theme.colors.state.success,
           surface: theme.colors.state.successSurface,
           Icon: CheckCircle2,
-          confirmActionText: `Approve & forward to ${approvers?.find(a => a.id === selectedApproverId)?.name}`,
+          confirmActionText: `Approve & forward to ${approvers?.find((a) => a.id === selectedApproverId)?.name}`,
           confirmVariant: 'success' as const,
           runAction: runApprove,
           hint: 'Choose a dean or program chair to receive this paper next.',
@@ -340,7 +340,13 @@ export const FacultyReviewDetailScreen = () => {
   return (
     <>
       <Screen edges={{ top: false }}>
-        <Animated.ScrollView entering={FadeIn.duration(320)} style={styles.screen} contentContainerStyle={styles.content}>
+        <Animated.ScrollView
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          entering={FadeIn.duration(320)}
+          style={styles.screen}
+          contentContainerStyle={styles.content}
+        >
           <Text style={styles.title}>{detail.title}</Text>
           <Text style={styles.meta}>
             {detail.authorName}
@@ -450,7 +456,12 @@ export const FacultyReviewDetailScreen = () => {
               <Text style={styles.sectionTitle}>Your decision</Text>
               <View style={styles.decisionRow}>
                 <View style={styles.decisionButtonWrapper}>
-                  <Button label="Reject" variant="danger" icon={<XCircle size={18} color={theme.colors.text.onBrand} />} onPress={() => openSheet('reject')} />
+                  <Button
+                    label="Reject"
+                    variant="danger"
+                    icon={<XCircle size={18} color={theme.colors.text.onBrand} />}
+                    onPress={() => openSheet('reject')}
+                  />
                 </View>
                 <View style={styles.decisionButtonWrapper}>
                   <Button
@@ -461,7 +472,12 @@ export const FacultyReviewDetailScreen = () => {
                   />
                 </View>
                 <View style={styles.decisionButtonWrapper}>
-                  <Button label="Approve" variant="success" icon={<CheckCircle2 size={18} color={theme.colors.text.onBrand} />} onPress={openApprove} />
+                  <Button
+                    label="Approve"
+                    variant="success"
+                    icon={<CheckCircle2 size={18} color={theme.colors.text.onBrand} />}
+                    onPress={openApprove}
+                  />
                 </View>
               </View>
             </View>
@@ -469,25 +485,40 @@ export const FacultyReviewDetailScreen = () => {
         </Animated.ScrollView>
       </Screen>
 
-            <BottomSheet visible={sheet !== null} onClose={closeSheet}>
+      <BottomSheet visible={sheet !== null} onClose={closeSheet}>
         {sheetConfig ? (
           <>
             <View style={[styles.sheetHeader, { backgroundColor: sheetConfig.surface }]}>
               <sheetConfig.Icon size={24} color={sheetConfig.color} />
-              <Text style={[styles.sheetTitle, { color: sheetConfig.color }]}>{sheetConfig.title}</Text>
+              <Text style={[styles.sheetTitle, { color: sheetConfig.color }]}>
+                {sheetConfig.title}
+              </Text>
             </View>
 
             {confirmStep ? (
               <Card padding="md" style={styles.confirmCard}>
-                <Text style={[styles.confirmAction, { color: sheetConfig.color }]}>{sheetConfig.confirmActionText}</Text>
+                <Text style={[styles.confirmAction, { color: sheetConfig.color }]}>
+                  {sheetConfig.confirmActionText}
+                </Text>
                 <Text style={styles.confirmPaper}>{detail?.title}</Text>
                 <Text style={styles.confirmAuthor}>by {detail?.authorName}</Text>
                 <View style={styles.sheetButtons}>
-                  <Button label="Cancel" variant="subtle" onPress={() => setConfirmStep(false)} disabled={acting} />
-                  <Button label="Confirm" variant={sheetConfig.confirmVariant} onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    sheetConfig.runAction();
-                  }} loading={acting} disabled={acting} />
+                  <Button
+                    label="Cancel"
+                    variant="subtle"
+                    onPress={() => setConfirmStep(false)}
+                    disabled={acting}
+                  />
+                  <Button
+                    label="Confirm"
+                    variant={sheetConfig.confirmVariant}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      sheetConfig.runAction();
+                    }}
+                    loading={acting}
+                    disabled={acting}
+                  />
                 </View>
               </Card>
             ) : (
@@ -496,7 +527,9 @@ export const FacultyReviewDetailScreen = () => {
 
                 {sheetConfig.showApprovers && (
                   <>
-                    {approversError ? <InlineNotice tone="danger" message={approversError} /> : null}
+                    {approversError ? (
+                      <InlineNotice tone="danger" message={approversError} />
+                    ) : null}
 
                     {approvers === null && !approversError ? (
                       <Skeleton height={56} radius="md" />
@@ -540,7 +573,9 @@ export const FacultyReviewDetailScreen = () => {
                     maxLength={sheetConfig.inputMaxLength}
                     focusColor={sheetConfig.color}
                   />
-                  <Text style={styles.charCount}>{sheetConfig.inputValue.length} / {sheetConfig.inputMaxLength}</Text>
+                  <Text style={styles.charCount}>
+                    {sheetConfig.inputValue.length} / {sheetConfig.inputMaxLength}
+                  </Text>
                 </View>
 
                 {actionError ? <InlineNotice tone="danger" message={actionError} /> : null}
@@ -579,12 +614,12 @@ export const FacultyReviewDetailScreen = () => {
       )}
 
       {showSuccess && (
-        <Animated.View 
-          entering={FadeIn.duration(theme.motion.duration.sheet)} 
+        <Animated.View
+          entering={FadeIn.duration(theme.motion.duration.sheet)}
           exiting={FadeOut.duration(theme.motion.duration.sheet)}
           style={styles.successOverlay}
         >
-          <Animated.View 
+          <Animated.View
             entering={ZoomIn.springify().damping(9).stiffness(340).mass(0.6)}
             exiting={ZoomOut.springify().damping(20).stiffness(180)}
             style={styles.successIcon}

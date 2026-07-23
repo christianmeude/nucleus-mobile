@@ -7,12 +7,5 @@
   },
   "repository": "https://github.com/hamen/material-3-skill",
   "license": "MIT",
-  "keywords": [
-    "material-design",
-    "material3",
-    "jetpack-compose",
-    "flutter",
-    "android",
-    "ui"
-  ]
+  "keywords": ["material-design", "material3", "jetpack-compose", "flutter", "android", "ui"]
 }

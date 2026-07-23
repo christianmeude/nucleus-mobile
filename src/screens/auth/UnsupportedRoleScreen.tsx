@@ -31,34 +31,34 @@ export const UnsupportedRoleScreen = () => {
     blob1Y.value = withRepeat(
       withSequence(
         withTiming(-30, { duration: 4500, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 4500, easing: Easing.inOut(Easing.ease) })
+        withTiming(0, { duration: 4500, easing: Easing.inOut(Easing.ease) }),
       ),
       -1,
-      true
+      true,
     );
     blob1X.value = withRepeat(
       withSequence(
         withTiming(30, { duration: 5500, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 5500, easing: Easing.inOut(Easing.ease) })
+        withTiming(0, { duration: 5500, easing: Easing.inOut(Easing.ease) }),
       ),
       -1,
-      true
+      true,
     );
     blob2Y.value = withRepeat(
       withSequence(
         withTiming(40, { duration: 5000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 5000, easing: Easing.inOut(Easing.ease) })
+        withTiming(0, { duration: 5000, easing: Easing.inOut(Easing.ease) }),
       ),
       -1,
-      true
+      true,
     );
     blob2X.value = withRepeat(
       withSequence(
         withTiming(-40, { duration: 6000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 6000, easing: Easing.inOut(Easing.ease) })
+        withTiming(0, { duration: 6000, easing: Easing.inOut(Easing.ease) }),
       ),
       -1,
-      true
+      true,
     );
   }, []);
 
@@ -78,12 +78,12 @@ export const UnsupportedRoleScreen = () => {
       <View style={styles.container}>
         <View style={styles.glassContainer}>
           <BlurView intensity={60} style={StyleSheet.absoluteFill} tint="light" />
-          
+
           <View style={styles.content}>
             <View style={styles.iconCircle}>
               <TriangleAlert size={36} color={theme.colors.state.warning} />
             </View>
-            
+
             <View style={styles.textContainer}>
               <Text style={styles.title}>Unsupported Role</Text>
               <Text style={styles.description}>

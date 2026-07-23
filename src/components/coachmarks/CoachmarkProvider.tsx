@@ -58,8 +58,7 @@ export const useCoachmarkTarget = (id?: CoachmarkId) => {
   );
 };
 
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(Math.max(value, min), max);
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 interface OverlayProps {
   step: CoachmarkId;

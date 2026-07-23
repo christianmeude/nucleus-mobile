@@ -1,403 +1,520 @@
 <!-- @dsCard group="Browse Directions" -->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Direction B — The Bulletin Board</title>
-<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;600;700&family=Rubik:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Direction B — The Bulletin Board</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;600;700&family=Rubik:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-body {
-  background: #D4CCB8;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 32px 16px 48px;
-  font-family: 'Rubik', sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
+      body {
+        background: #d4ccb8;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 32px 16px 48px;
+        font-family: 'Rubik', sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
 
-.label {
-  font-family: 'Rubik', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  color: #6B6254;
-  margin-bottom: 16px;
-}
+      .label {
+        font-family: 'Rubik', sans-serif;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: #6b6254;
+        margin-bottom: 16px;
+      }
 
-/* ── Phone canvas ── */
-.phone {
-  width: 375px;
-  background: #F7F3EA;
-  border-radius: 40px;
-  overflow: hidden;
-  box-shadow: 0 32px 80px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.06);
-}
+      /* ── Phone canvas ── */
+      .phone {
+        width: 375px;
+        background: #f7f3ea;
+        border-radius: 40px;
+        overflow: hidden;
+        box-shadow:
+          0 32px 80px rgba(0, 0, 0, 0.22),
+          0 0 0 1px rgba(0, 0, 0, 0.06);
+      }
 
-.status {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 24px 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #0F172A;
-}
+      .status {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #0f172a;
+      }
 
-.nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 24px 16px;
-}
+      .nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 4px 24px 16px;
+      }
 
-.nav-title {
-  font-family: 'Rubik', sans-serif;
-  font-size: 26px;
-  font-weight: 600;
-  color: #0F172A;
-}
+      .nav-title {
+        font-family: 'Rubik', sans-serif;
+        font-size: 26px;
+        font-weight: 600;
+        color: #0f172a;
+      }
 
-/* Search — rounded pill with gold send button */
-.search-wrap { padding: 0 16px 14px; }
+      /* Search — rounded pill with gold send button */
+      .search-wrap {
+        padding: 0 16px 14px;
+      }
 
-.search-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #FFFDF8;
-  border: 1px solid #E9E2D3;
-  border-radius: 9999px;
-  padding: 9px 9px 9px 16px;
-}
+      .search-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #fffdf8;
+        border: 1px solid #e9e2d3;
+        border-radius: 9999px;
+        padding: 9px 9px 9px 16px;
+      }
 
-.search-placeholder {
-  font-family: 'Rubik', sans-serif;
-  font-size: 14px;
-  color: #94A3B8;
-  flex: 1;
-}
+      .search-placeholder {
+        font-family: 'Rubik', sans-serif;
+        font-size: 14px;
+        color: #94a3b8;
+        flex: 1;
+      }
 
-.search-go {
-  width: 34px;
-  height: 34px;
-  background: #F5A623;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
+      .search-go {
+        width: 34px;
+        height: 34px;
+        background: #f5a623;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
 
-/* Category pills */
-.chips {
-  display: flex;
-  gap: 8px;
-  padding: 0 16px 16px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.chips::-webkit-scrollbar { display: none; }
+      /* Category pills */
+      .chips {
+        display: flex;
+        gap: 8px;
+        padding: 0 16px 16px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .chips::-webkit-scrollbar {
+        display: none;
+      }
 
-.chip {
-  font-family: 'Rubik', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  padding: 6px 14px;
-  border-radius: 9999px;
-  white-space: nowrap;
-  border: 1.5px solid #E9E2D3;
-  color: #64748B;
-  background: #FFFDF8;
-}
-.chip.active {
-  background: #1B3A8C;
-  border-color: #1B3A8C;
-  color: #FFFFFF;
-}
+      .chip {
+        font-family: 'Rubik', sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        padding: 6px 14px;
+        border-radius: 9999px;
+        white-space: nowrap;
+        border: 1.5px solid #e9e2d3;
+        color: #64748b;
+        background: #fffdf8;
+      }
+      .chip.active {
+        background: #1b3a8c;
+        border-color: #1b3a8c;
+        color: #ffffff;
+      }
 
-/* Content area */
-.content { padding: 0 16px; }
+      /* Content area */
+      .content {
+        padding: 0 16px;
+      }
 
-/* Featured hero card — navy */
-.hero {
-  background: #1B3A8C;
-  border-radius: 18px;
-  padding: 20px;
-  margin-bottom: 12px;
-  position: relative;
-  overflow: hidden;
-}
+      /* Featured hero card — navy */
+      .hero {
+        background: #1b3a8c;
+        border-radius: 18px;
+        padding: 20px;
+        margin-bottom: 12px;
+        position: relative;
+        overflow: hidden;
+      }
 
-/* Subtle texture suggestion — two faint arcs */
-.hero::after {
-  content: '';
-  position: absolute;
-  right: -30px;
-  bottom: -30px;
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.08);
-}
-.hero::before {
-  content: '';
-  position: absolute;
-  right: -10px;
-  bottom: -10px;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.06);
-}
+      /* Subtle texture suggestion — two faint arcs */
+      .hero::after {
+        content: '';
+        position: absolute;
+        right: -30px;
+        bottom: -30px;
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .hero::before {
+        content: '';
+        position: absolute;
+        right: -10px;
+        bottom: -10px;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+      }
 
-.hero-badge {
-  font-family: 'Rubik', sans-serif;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  color: #F5A623;
-  margin-bottom: 10px;
-}
+      .hero-badge {
+        font-family: 'Rubik', sans-serif;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: #f5a623;
+        margin-bottom: 10px;
+      }
 
-.hero-title {
-  font-family: 'Bitter', serif;
-  font-size: 19px;
-  font-weight: 700;
-  line-height: 1.32;
-  color: #FFFFFF;
-  margin-bottom: 16px;
-  position: relative;
-  z-index: 1;
-}
+      .hero-title {
+        font-family: 'Bitter', serif;
+        font-size: 19px;
+        font-weight: 700;
+        line-height: 1.32;
+        color: #ffffff;
+        margin-bottom: 16px;
+        position: relative;
+        z-index: 1;
+      }
 
-.hero-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-family: 'Rubik', sans-serif;
-  font-size: 11px;
-  color: rgba(255,255,255,0.5);
-  position: relative;
-  z-index: 1;
-}
-.hero-sep { color: rgba(255,255,255,0.25); }
+      .hero-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Rubik', sans-serif;
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.5);
+        position: relative;
+        z-index: 1;
+      }
+      .hero-sep {
+        color: rgba(255, 255, 255, 0.25);
+      }
 
-/* 2-column grid */
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
+      /* 2-column grid */
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
 
-.card {
-  background: #FFFDF8;
-  border: 1px solid #E9E2D3;
-  border-radius: 14px;
-  padding: 14px;
-  position: relative;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-}
+      .card {
+        background: #fffdf8;
+        border: 1px solid #e9e2d3;
+        border-radius: 14px;
+        padding: 14px;
+        position: relative;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+      }
 
-/* Category dot — top right */
-.dot {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-.dot-cs  { background: #1B3A8C; }
-.dot-edu { background: #5F7EC9; }
-.dot-psy { background: #A3BBE9; }
-.dot-eng { background: #16307A; }
+      /* Category dot — top right */
+      .dot {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+      .dot-cs {
+        background: #1b3a8c;
+      }
+      .dot-edu {
+        background: #5f7ec9;
+      }
+      .dot-psy {
+        background: #a3bbe9;
+      }
+      .dot-eng {
+        background: #16307a;
+      }
 
-.card-cat {
-  font-family: 'Rubik', sans-serif;
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  color: #94A3B8;
-  margin-bottom: 6px;
-  padding-right: 18px;
-}
+      .card-cat {
+        font-family: 'Rubik', sans-serif;
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        color: #94a3b8;
+        margin-bottom: 6px;
+        padding-right: 18px;
+      }
 
-.card-title {
-  font-family: 'Bitter', serif;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.38;
-  color: #0F172A;
-  margin-bottom: 8px;
-}
+      .card-title {
+        font-family: 'Bitter', serif;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.38;
+        color: #0f172a;
+        margin-bottom: 8px;
+      }
 
-.card-author {
-  font-family: 'Rubik', sans-serif;
-  font-size: 11px;
-  color: #94A3B8;
-  margin-bottom: 6px;
-}
+      .card-author {
+        font-family: 'Rubik', sans-serif;
+        font-size: 11px;
+        color: #94a3b8;
+        margin-bottom: 6px;
+      }
 
-.card-stats {
-  display: flex;
-  gap: 6px;
-  font-family: 'Rubik', sans-serif;
-  font-size: 10px;
-  color: #CBD5E1;
-}
+      .card-stats {
+        display: flex;
+        gap: 6px;
+        font-family: 'Rubik', sans-serif;
+        font-size: 10px;
+        color: #cbd5e1;
+      }
 
-/* Bottom tab bar */
-.tab-bar {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  padding: 12px 0 28px;
-  border-top: 1px solid #E9E2D3;
-  background: #FFFDF8;
-  margin-top: 16px;
-}
+      /* Bottom tab bar */
+      .tab-bar {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        padding: 12px 0 28px;
+        border-top: 1px solid #e9e2d3;
+        background: #fffdf8;
+        margin-top: 16px;
+      }
 
-.tab-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  font-size: 10px;
-  font-weight: 500;
-  color: #94A3B8;
-}
-.tab-item.active { color: #1B3A8C; }
-</style>
-</head>
-<body>
+      .tab-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font-size: 10px;
+        font-weight: 500;
+        color: #94a3b8;
+      }
+      .tab-item.active {
+        color: #1b3a8c;
+      }
+    </style>
+  </head>
+  <body>
+    <p class="label">Direction B — The Bulletin Board</p>
 
-<p class="label">Direction B — The Bulletin Board</p>
-
-<div class="phone">
-
-  <div class="status">
-    <span>9:41</span>
-    <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
-      <rect x="0" y="4" width="3" height="8" rx="0.5" fill="#0F172A"/>
-      <rect x="4.5" y="2.5" width="3" height="9.5" rx="0.5" fill="#0F172A"/>
-      <rect x="9" y="0" width="3" height="12" rx="0.5" fill="#0F172A"/>
-    </svg>
-  </div>
-
-  <div class="nav">
-    <div class="nav-title">Browse</div>
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F172A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-      <circle cx="18" cy="5" r="3.5" fill="#F5A623" stroke="none"/>
-    </svg>
-  </div>
-
-  <div class="search-wrap">
-    <div class="search-bar">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      <span class="search-placeholder">Search papers…</span>
-      <div class="search-go">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+    <div class="phone">
+      <div class="status">
+        <span>9:41</span>
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+          <rect x="0" y="4" width="3" height="8" rx="0.5" fill="#0F172A" />
+          <rect x="4.5" y="2.5" width="3" height="9.5" rx="0.5" fill="#0F172A" />
+          <rect x="9" y="0" width="3" height="12" rx="0.5" fill="#0F172A" />
         </svg>
       </div>
-    </div>
-  </div>
 
-  <div class="chips">
-    <div class="chip active">All</div>
-    <div class="chip">Comp. Sci.</div>
-    <div class="chip">Education</div>
-    <div class="chip">Psychology</div>
-    <div class="chip">Engineering</div>
-  </div>
-
-  <div class="content">
-
-    <div class="hero">
-      <div class="hero-badge">Featured Paper</div>
-      <div class="hero-title">Filipino Youth Perceptions of Climate Change: Agency and Collective Action</div>
-      <div class="hero-meta">
-        <span>Mendoza, C. · Bautista, L.</span>
-        <span class="hero-sep">·</span>
-        <span>201 views</span>
-        <span class="hero-sep">·</span>
-        <span>Feb 2026</span>
-      </div>
-    </div>
-
-    <div class="grid">
-
-      <div class="card">
-        <div class="dot dot-cs"></div>
-        <div class="card-cat">Comp. Sci.</div>
-        <div class="card-title">Impact of Social Media on Gen Z Academic Performance in Metro Manila</div>
-        <div class="card-author">Dela Cruz, M. et al.</div>
-        <div class="card-stats"><span>142 views</span><span>·</span><span>Jan '26</span></div>
+      <div class="nav">
+        <div class="nav-title">Browse</div>
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#0F172A"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          <circle cx="18" cy="5" r="3.5" fill="#F5A623" stroke="none" />
+        </svg>
       </div>
 
-      <div class="card">
-        <div class="dot dot-edu"></div>
-        <div class="card-cat">Education</div>
-        <div class="card-title">Adaptive Learning Systems in Philippine Higher Education</div>
-        <div class="card-author">Garcia, A. · Villanueva, K.</div>
-        <div class="card-stats"><span>89 views</span><span>·</span><span>Mar '26</span></div>
+      <div class="search-wrap">
+        <div class="search-bar">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#94A3B8"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <span class="search-placeholder">Search papers…</span>
+          <div class="search-go">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#0F172A"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </div>
+        </div>
       </div>
 
-      <div class="card">
-        <div class="dot dot-psy"></div>
-        <div class="card-cat">Psychology</div>
-        <div class="card-title">Stress and Coping Among NUd Students During Remote Learning</div>
-        <div class="card-author">Santos, R.</div>
-        <div class="card-stats"><span>67 views</span><span>·</span><span>Feb '26</span></div>
+      <div class="chips">
+        <div class="chip active">All</div>
+        <div class="chip">Comp. Sci.</div>
+        <div class="chip">Education</div>
+        <div class="chip">Psychology</div>
+        <div class="chip">Engineering</div>
       </div>
 
-      <div class="card">
-        <div class="dot dot-eng"></div>
-        <div class="card-cat">Engineering</div>
-        <div class="card-title">IoT-Based Air Quality Monitoring for Urban Philippine Settings</div>
-        <div class="card-author">Villanueva, K.</div>
-        <div class="card-stats"><span>55 views</span><span>·</span><span>Apr '26</span></div>
+      <div class="content">
+        <div class="hero">
+          <div class="hero-badge">Featured Paper</div>
+          <div class="hero-title">
+            Filipino Youth Perceptions of Climate Change: Agency and Collective Action
+          </div>
+          <div class="hero-meta">
+            <span>Mendoza, C. · Bautista, L.</span>
+            <span class="hero-sep">·</span>
+            <span>201 views</span>
+            <span class="hero-sep">·</span>
+            <span>Feb 2026</span>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <div class="dot dot-cs"></div>
+            <div class="card-cat">Comp. Sci.</div>
+            <div class="card-title">
+              Impact of Social Media on Gen Z Academic Performance in Metro Manila
+            </div>
+            <div class="card-author">Dela Cruz, M. et al.</div>
+            <div class="card-stats"><span>142 views</span><span>·</span><span>Jan '26</span></div>
+          </div>
+
+          <div class="card">
+            <div class="dot dot-edu"></div>
+            <div class="card-cat">Education</div>
+            <div class="card-title">Adaptive Learning Systems in Philippine Higher Education</div>
+            <div class="card-author">Garcia, A. · Villanueva, K.</div>
+            <div class="card-stats"><span>89 views</span><span>·</span><span>Mar '26</span></div>
+          </div>
+
+          <div class="card">
+            <div class="dot dot-psy"></div>
+            <div class="card-cat">Psychology</div>
+            <div class="card-title">
+              Stress and Coping Among NUd Students During Remote Learning
+            </div>
+            <div class="card-author">Santos, R.</div>
+            <div class="card-stats"><span>67 views</span><span>·</span><span>Feb '26</span></div>
+          </div>
+
+          <div class="card">
+            <div class="dot dot-eng"></div>
+            <div class="card-cat">Engineering</div>
+            <div class="card-title">
+              IoT-Based Air Quality Monitoring for Urban Philippine Settings
+            </div>
+            <div class="card-author">Villanueva, K.</div>
+            <div class="card-stats"><span>55 views</span><span>·</span><span>Apr '26</span></div>
+          </div>
+        </div>
       </div>
 
+      <div class="tab-bar">
+        <div class="tab-item">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          >
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>
+          Dashboard
+        </div>
+        <div class="tab-item">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          >
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>
+          My Papers
+        </div>
+        <div class="tab-item active">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#1B3A8C"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          Browse
+        </div>
+        <div class="tab-item">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          >
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+          Alerts
+        </div>
+        <div class="tab-item">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          >
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+          Invites
+        </div>
+      </div>
     </div>
-
-  </div>
-
-  <div class="tab-bar">
-    <div class="tab-item">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-      Dashboard
-    </div>
-    <div class="tab-item">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      My Papers
-    </div>
-    <div class="tab-item active">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B3A8C" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      Browse
-    </div>
-    <div class="tab-item">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      Alerts
-    </div>
-    <div class="tab-item">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Invites
-    </div>
-  </div>
-
-</div>
-</body>
+  </body>
 </html>

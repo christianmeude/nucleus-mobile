@@ -10,7 +10,9 @@
 @import url('./tokens/shadows.css');
 
 /* --- Base resets for NUcleus designs --- */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 

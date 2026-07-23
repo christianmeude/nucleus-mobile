@@ -7,8 +7,15 @@ const TAB_META: Record<keyof StudentTabsParamList, TabMeta[string]> = {
   Dashboard: { label: 'Home', icon: ['house', 'house.fill', Home] },
   MyPapers: { label: 'Papers', icon: ['tray.full', 'tray.full.fill', Inbox] },
   // `coachmarkId` marks Browse as the third first-run coachmark target (#69).
-  Browse: { label: 'Browse', icon: ['sparkle.magnifyingglass', 'sparkle.magnifyingglass', Search], coachmarkId: 'browseTab' },
-  Profile: { label: 'Profile', icon: ['person.crop.circle', 'person.crop.circle.fill', CircleUser] },
+  Browse: {
+    label: 'Browse',
+    icon: ['sparkle.magnifyingglass', 'sparkle.magnifyingglass', Search],
+    coachmarkId: 'browseTab',
+  },
+  Profile: {
+    label: 'Profile',
+    icon: ['person.crop.circle', 'person.crop.circle.fill', CircleUser],
+  },
 };
 
 /**

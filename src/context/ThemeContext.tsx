@@ -1,11 +1,4 @@
-import {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { Appearance, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { themes, type SchemeName, type Theme } from '../theme';
@@ -39,10 +32,7 @@ const normalizeScheme = (value: string | null | undefined): SchemeName =>
  * off the app is always light, regardless of OS appearance or stored
  * preference — this is what guarantees no half-dark UI ships mid-migration.
  */
-const resolveScheme = (
-  preference: ThemePreference,
-  systemScheme: SchemeName,
-): SchemeName => {
+const resolveScheme = (preference: ThemePreference, systemScheme: SchemeName): SchemeName => {
   if (!flags.darkMode) return 'light';
   if (preference === 'system') return systemScheme;
   return preference;

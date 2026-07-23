@@ -63,13 +63,13 @@ How many primary destinations?
 
 ### Quick Reference
 
-| Component | Destinations | Screen Size | Persistence | Position |
-|-----------|-------------|-------------|-------------|----------|
-| Navigation Bar | 3–5 | Compact | Persistent | Bottom |
-| Navigation Rail | 3–7 | Medium | Persistent | Side (start) |
-| Navigation Drawer | Unlimited | Expanded+ | Standard or Modal | Side (start) |
-| Tabs | 2+ related views | Any | Persistent | Top (below app bar) |
-| Bottom App Bar | — (contextual actions) | Compact | Persistent | Bottom |
+| Component         | Destinations           | Screen Size | Persistence       | Position            |
+| ----------------- | ---------------------- | ----------- | ----------------- | ------------------- |
+| Navigation Bar    | 3–5                    | Compact     | Persistent        | Bottom              |
+| Navigation Rail   | 3–7                    | Medium      | Persistent        | Side (start)        |
+| Navigation Drawer | Unlimited              | Expanded+   | Standard or Modal | Side (start)        |
+| Tabs              | 2+ related views       | Any         | Persistent        | Top (below app bar) |
+| Bottom App Bar    | — (contextual actions) | Compact     | Persistent        | Bottom              |
 
 ## Navigation Bar
 
@@ -77,6 +77,7 @@ How many primary destinations?
 **Position**: Bottom of screen, always visible.
 
 ### Anatomy
+
 - Fixed at bottom, full width
 - 3–5 navigation items with icon + label
 - Active item shows filled icon + indicator pill
@@ -114,6 +115,7 @@ md-navigation-bar {
 ```
 
 ### Guidelines
+
 - Always show labels (don't use icon-only)
 - Use filled icons for active state, outlined for inactive
 - Don't use for fewer than 3 or more than 5 destinations
@@ -126,6 +128,7 @@ md-navigation-bar {
 **Position**: Start edge (left in LTR), always visible.
 
 ### Anatomy
+
 - Width: 80dp
 - Optional FAB at top
 - Navigation items vertically stacked
@@ -203,17 +206,18 @@ md-navigation-bar {
   border-radius: var(--md-sys-shape-corner-full);
 }
 
-.md3-nav-rail__item[aria-selected="true"] .md3-nav-rail__indicator {
+.md3-nav-rail__item[aria-selected='true'] .md3-nav-rail__indicator {
   background: var(--md-sys-color-secondary-container);
   color: var(--md-sys-color-on-secondary-container);
 }
 
-.md3-nav-rail__item[aria-selected="true"] {
+.md3-nav-rail__item[aria-selected='true'] {
   color: var(--md-sys-color-on-surface);
 }
 ```
 
 ### Guidelines
+
 - Align items to top (below optional FAB)
 - Show labels always (optional to hide, but recommended to show)
 - FAB at top is optional but common
@@ -274,6 +278,7 @@ Overlays content with a scrim. Used on smaller screens or when content space is 
 ```
 
 ### Guidelines
+
 - Standard drawer uses `surface-container` background
 - Modal drawer has elevation level 1 and scrim overlay
 - Group destinations with dividers and section headers
@@ -288,12 +293,12 @@ Overlays content with a scrim. Used on smaller screens or when content space is 
 
 ### Variants
 
-| Variant | Title | Height | Scroll Behavior |
-|---------|-------|--------|----------------|
-| Center-aligned | Center | 64dp | Elevates to level 2 on scroll |
-| Small | Start-aligned | 64dp | Elevates to level 2 on scroll |
-| Medium | Bottom, start-aligned | 112dp | Collapses to 64dp on scroll |
-| Large | Bottom, start-aligned | 152dp | Collapses to 64dp on scroll |
+| Variant        | Title                 | Height | Scroll Behavior               |
+| -------------- | --------------------- | ------ | ----------------------------- |
+| Center-aligned | Center                | 64dp   | Elevates to level 2 on scroll |
+| Small          | Start-aligned         | 64dp   | Elevates to level 2 on scroll |
+| Medium         | Bottom, start-aligned | 112dp  | Collapses to 64dp on scroll   |
+| Large          | Bottom, start-aligned | 152dp  | Collapses to 64dp on scroll   |
 
 ### Implementation
 
@@ -394,17 +399,13 @@ window.addEventListener('scroll', () => {
   <md-primary-tab id="tab-2" aria-controls="panel-2">Tab 2</md-primary-tab>
 </md-tabs>
 
-<div id="panel-1" role="tabpanel" aria-labelledby="tab-1">
-  Panel 1 content
-</div>
-<div id="panel-2" role="tabpanel" aria-labelledby="tab-2" hidden>
-  Panel 2 content
-</div>
+<div id="panel-1" role="tabpanel" aria-labelledby="tab-1">Panel 1 content</div>
+<div id="panel-2" role="tabpanel" aria-labelledby="tab-2" hidden>Panel 2 content</div>
 
 <script>
   document.getElementById('my-tabs').addEventListener('change', (e) => {
     // Hide all panels
-    document.querySelectorAll('[role="tabpanel"]').forEach(p => p.hidden = true);
+    document.querySelectorAll('[role="tabpanel"]').forEach((p) => (p.hidden = true));
     // Show selected panel
     const activeTab = e.target.querySelector('[active]');
     const panelId = activeTab.getAttribute('aria-controls');
@@ -431,24 +432,38 @@ Expanded (840dp+):  Navigation Drawer (side, standard)
 /* Hide all nav variants by default */
 .md3-nav-bar,
 .md3-nav-rail,
-.md3-nav-drawer { display: none; }
+.md3-nav-drawer {
+  display: none;
+}
 
 /* Compact: show bottom navigation bar */
 @media (max-width: 599px) {
-  .md3-nav-bar { display: flex; }
-  .md3-app { flex-direction: column; }
+  .md3-nav-bar {
+    display: flex;
+  }
+  .md3-app {
+    flex-direction: column;
+  }
 }
 
 /* Medium: show navigation rail */
 @media (min-width: 600px) and (max-width: 839px) {
-  .md3-nav-rail { display: flex; }
-  .md3-app { flex-direction: row; }
+  .md3-nav-rail {
+    display: flex;
+  }
+  .md3-app {
+    flex-direction: row;
+  }
 }
 
 /* Expanded+: show navigation drawer */
 @media (min-width: 840px) {
-  .md3-nav-drawer { display: flex; }
-  .md3-app { flex-direction: row; }
+  .md3-nav-drawer {
+    display: flex;
+  }
+  .md3-app {
+    flex-direction: row;
+  }
 }
 ```
 
@@ -461,12 +476,8 @@ Expanded (840dp+):  Navigation Drawer (side, standard)
     <md-navigation-drawer opened>
       <div slot="headline">My App</div>
       <md-list>
-        <md-list-item type="button" active>
-          <md-icon slot="start">home</md-icon>Home
-        </md-list-item>
-        <md-list-item type="button">
-          <md-icon slot="start">search</md-icon>Search
-        </md-list-item>
+        <md-list-item type="button" active> <md-icon slot="start">home</md-icon>Home </md-list-item>
+        <md-list-item type="button"> <md-icon slot="start">search</md-icon>Search </md-list-item>
         <md-list-item type="button">
           <md-icon slot="start">settings</md-icon>Settings
         </md-list-item>
@@ -485,7 +496,9 @@ Expanded (840dp+):  Navigation Drawer (side, standard)
   <!-- Main content -->
   <main class="md3-main">
     <header class="md3-top-app-bar">
-      <md-icon-button class="md3-menu-btn" aria-label="Menu"><md-icon>menu</md-icon></md-icon-button>
+      <md-icon-button class="md3-menu-btn" aria-label="Menu"
+        ><md-icon>menu</md-icon></md-icon-button
+      >
       <h1 class="md3-top-app-bar__title">Home</h1>
     </header>
     <div class="md3-body">
@@ -519,28 +532,59 @@ Expanded (840dp+):  Navigation Drawer (side, standard)
   color: var(--md-sys-color-on-surface);
 }
 
-.md3-main { flex: 1; display: flex; flex-direction: column; }
-.md3-body { flex: 1; padding: 16px; }
+.md3-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.md3-body {
+  flex: 1;
+  padding: 16px;
+}
 
 /* Compact */
 @media (max-width: 599px) {
-  .md3-app { flex-direction: column; }
-  .md3-nav-rail, .md3-nav-drawer { display: none; }
-  .md3-nav-bar { display: flex; order: 1; }
-  .md3-menu-btn { display: none; }
+  .md3-app {
+    flex-direction: column;
+  }
+  .md3-nav-rail,
+  .md3-nav-drawer {
+    display: none;
+  }
+  .md3-nav-bar {
+    display: flex;
+    order: 1;
+  }
+  .md3-menu-btn {
+    display: none;
+  }
 }
 
 /* Medium */
 @media (min-width: 600px) and (max-width: 839px) {
-  .md3-nav-bar, .md3-nav-drawer { display: none; }
-  .md3-nav-rail { display: flex; }
-  .md3-menu-btn { display: none; }
+  .md3-nav-bar,
+  .md3-nav-drawer {
+    display: none;
+  }
+  .md3-nav-rail {
+    display: flex;
+  }
+  .md3-menu-btn {
+    display: none;
+  }
 }
 
 /* Expanded+ */
 @media (min-width: 840px) {
-  .md3-nav-bar, .md3-nav-rail { display: none; }
-  .md3-nav-drawer { display: flex; }
-  .md3-menu-btn { display: none; }
+  .md3-nav-bar,
+  .md3-nav-rail {
+    display: none;
+  }
+  .md3-nav-drawer {
+    display: flex;
+  }
+  .md3-menu-btn {
+    display: none;
+  }
 }
 ```

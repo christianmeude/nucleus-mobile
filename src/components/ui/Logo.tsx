@@ -26,7 +26,9 @@ export const Logo = ({ size = 'md', showWordmark = true }: LogoProps) => {
         accessibilityIgnoresInvertColors
       />
       {showWordmark ? (
-        <Text style={[styles.wordmark, { fontSize: token.wordmark, letterSpacing: token.tracking }]}>
+        <Text
+          style={[styles.wordmark, { fontSize: token.wordmark, letterSpacing: token.tracking }]}
+        >
           NUCLEUS
         </Text>
       ) : null}

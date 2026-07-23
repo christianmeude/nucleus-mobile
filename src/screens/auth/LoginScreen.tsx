@@ -32,7 +32,11 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
-import BottomSheet, { BottomSheetBackdrop, BottomSheetTextInput, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetTextInput,
+  BottomSheetScrollView,
+} from '@gorhom/bottom-sheet';
 import { supabase } from '../../lib/supabase';
 
 type FocusField = 'email' | 'password' | 'forgotEmail' | 'code' | 'newPassword' | null;
@@ -41,7 +45,7 @@ export const LoginScreen = () => {
   const { signIn } = useAuth();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [focused, setFocused] = useState<FocusField>(null);
@@ -63,9 +67,18 @@ export const LoginScreen = () => {
   // Keyboard state for non-animatable props like placeholder
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   useEffect(() => {
-    const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setIsKeyboardOpen(true));
-    const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setIsKeyboardOpen(false));
-    return () => { showSub.remove(); hideSub.remove(); };
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardOpen(true),
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardOpen(false),
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
   }, []);
 
   // Universal Animation Language: Keyboard handling
@@ -102,7 +115,10 @@ export const LoginScreen = () => {
   useEffect(() => {
     if (error) {
       errorOpacity.value = withTiming(1, { duration: 300 });
-      errorTranslateY.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.back(1.5)) });
+      errorTranslateY.value = withTiming(0, {
+        duration: 300,
+        easing: Easing.out(Easing.back(1.5)),
+      });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } else {
       errorOpacity.value = withTiming(0, { duration: 200 });
@@ -115,19 +131,28 @@ export const LoginScreen = () => {
     transform: [{ translateY: errorTranslateY.value }],
   }));
 
-  const animatedInputWrapperStyle = (field: FocusField) => useAnimatedStyle(() => {
-    const isFocused = focused === field;
-    return {
-      borderColor: withTiming(
-        error ? theme.colors.state.danger : isFocused ? theme.colors.brand.accent : 'rgba(255, 255, 255, 0.2)',
-        { duration: 200 }
-      ),
-      backgroundColor: withTiming(
-        error ? theme.colors.state.dangerSurface : isFocused ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.08)',
-        { duration: 200 }
-      )
-    };
-  });
+  const animatedInputWrapperStyle = (field: FocusField) =>
+    useAnimatedStyle(() => {
+      const isFocused = focused === field;
+      return {
+        borderColor: withTiming(
+          error
+            ? theme.colors.state.danger
+            : isFocused
+              ? theme.colors.brand.accent
+              : 'rgba(255, 255, 255, 0.2)',
+          { duration: 200 },
+        ),
+        backgroundColor: withTiming(
+          error
+            ? theme.colors.state.dangerSurface
+            : isFocused
+              ? 'rgba(255, 255, 255, 0.12)'
+              : 'rgba(255, 255, 255, 0.08)',
+          { duration: 200 },
+        ),
+      };
+    });
 
   // Button Animation
   const buttonScale = useSharedValue(1);
@@ -137,14 +162,14 @@ export const LoginScreen = () => {
   }));
 
   const animatedBlurStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(keyboard.height.value, [0, 250], [0, 1], Extrapolation.CLAMP)
+    opacity: interpolate(keyboard.height.value, [0, 250], [0, 1], Extrapolation.CLAMP),
   }));
 
   const emailWrapStyle = animatedInputWrapperStyle('email');
   const passwordWrapStyle = animatedInputWrapperStyle('password');
 
-
-  const iconColor = (field: FocusField) => focused === field ? theme.colors.brand.accent : 'rgba(255, 255, 255, 0.6)';
+  const iconColor = (field: FocusField) =>
+    focused === field ? theme.colors.brand.accent : 'rgba(255, 255, 255, 0.6)';
 
   const handleButtonPressIn = () => {
     buttonScale.value = withTiming(0.96, { duration: 150 });
@@ -229,90 +254,126 @@ export const LoginScreen = () => {
   };
 
   const renderBackdrop = useCallback(
-    (props: any) => <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} opacity={0.6} />,
-    []
+    (props: any) => (
+      <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} opacity={0.6} />
+    ),
+    [],
   );
 
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={[theme.colors.brand.primarySurface, theme.colors.brand.primarySurface, theme.colors.brand.primaryHover]}
+        colors={[
+          theme.colors.brand.primarySurface,
+          theme.colors.brand.primarySurface,
+          theme.colors.brand.primaryHover,
+        ]}
         locations={[0, 0.25, 1]}
         style={StyleSheet.absoluteFill}
       />
       <SafeAreaView style={styles.safeArea}>
-        <Pressable style={styles.flex} onPress={() => { Keyboard.dismiss(); setFocused(null); }}>
+        <Pressable
+          style={styles.flex}
+          onPress={() => {
+            Keyboard.dismiss();
+            setFocused(null);
+          }}
+        >
           <Animated.View style={[styles.flex, animatedContainerStyle]}>
-            
             <View style={styles.spacer} />
 
             <View style={styles.header}>
               <Animated.View style={animatedLogoStyle}>
-                <Logo size="xl" showWordmark wordmarkStyle={animatedWordmarkStyle} />
+                <Logo size="lg" showWordmark />
               </Animated.View>
             </View>
 
             <View style={styles.spacer} />
 
             <View style={styles.formContainer}>
-              <Animated.View style={[StyleSheet.absoluteFill, animatedBlurStyle, { top: -150 }]} pointerEvents="none">
+              <Animated.View
+                style={[StyleSheet.absoluteFill, animatedBlurStyle, { top: -150 }]}
+                pointerEvents="none"
+              >
                 <LinearGradient
-                  colors={['rgba(22, 54, 115, 0)', 'rgba(22, 54, 115, 0.75)', 'rgba(22, 54, 115, 0.95)']}
+                  colors={[
+                    'rgba(22, 54, 115, 0)',
+                    'rgba(22, 54, 115, 0.75)',
+                    'rgba(22, 54, 115, 0.95)',
+                  ]}
                   locations={[0, 0.6, 1]}
                   style={StyleSheet.absoluteFill}
                 />
               </Animated.View>
-              
+
               <View style={styles.inputsWrapper}>
                 <View style={styles.formGroup}>
-                <Text style={styles.label}>Email</Text>
-                <Animated.View style={[styles.inputWrap, emailWrapStyle]}>
-                  <View style={styles.inputIcon}>
-                    <Mail size={20} color={error ? theme.colors.state.danger : focused === 'email' ? theme.colors.brand.accent : 'rgba(255, 255, 255, 0.6)'} />
-                  </View>
-                  <TextInput
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    placeholder="you@example.com"
-                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                    style={styles.input}
-                    value={email}
-                    onChangeText={(text: string) => {
-                      setEmail(text);
-                      if (error) setError('');
-                    }}
-                    onFocus={() => setFocused('email')}
-                    onBlur={() => setFocused(null)}
-                  />
-                </Animated.View>
-              </View>
-
-              <View style={styles.formGroup}>
-                <View style={styles.labelRow}>
-                  <Text style={styles.label}>Password</Text>
-                  <Pressable onPress={openForgotPassword}>
-                    <Text style={styles.forgotPasswordText}>Forgot?</Text>
-                  </Pressable>
+                  <Text style={styles.label}>Email</Text>
+                  <Animated.View style={[styles.inputWrap, emailWrapStyle]}>
+                    <View style={styles.inputIcon}>
+                      <Mail
+                        size={20}
+                        color={
+                          error
+                            ? theme.colors.state.danger
+                            : focused === 'email'
+                              ? theme.colors.brand.accent
+                              : 'rgba(255, 255, 255, 0.6)'
+                        }
+                      />
+                    </View>
+                    <TextInput
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                      placeholder="you@example.com"
+                      placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                      style={styles.input}
+                      value={email}
+                      onChangeText={(text: string) => {
+                        setEmail(text);
+                        if (error) setError('');
+                      }}
+                      onFocus={() => setFocused('email')}
+                      onBlur={() => setFocused(null)}
+                    />
+                  </Animated.View>
                 </View>
-                <Animated.View style={[styles.inputWrap, passwordWrapStyle]}>
-                  <View style={styles.inputIcon}>
-                    <Lock size={20} color={error ? theme.colors.state.danger : focused === 'password' ? theme.colors.brand.accent : 'rgba(255, 255, 255, 0.6)'} />
+
+                <View style={styles.formGroup}>
+                  <View style={styles.labelRow}>
+                    <Text style={styles.label}>Password</Text>
+                    <Pressable onPress={openForgotPassword}>
+                      <Text style={styles.forgotPasswordText}>Forgot?</Text>
+                    </Pressable>
                   </View>
-                  <TextInput
-                    secureTextEntry
-                    placeholder="Enter your password"
-                    placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                    style={styles.input}
-                    value={password}
-                    onChangeText={(text: string) => {
-                      setPassword(text);
-                      if (error) setError('');
-                    }}
-                    onFocus={() => setFocused('password')}
-                    onBlur={() => setFocused(null)}
-                  />
-                </Animated.View>
-              </View>
+                  <Animated.View style={[styles.inputWrap, passwordWrapStyle]}>
+                    <View style={styles.inputIcon}>
+                      <Lock
+                        size={20}
+                        color={
+                          error
+                            ? theme.colors.state.danger
+                            : focused === 'password'
+                              ? theme.colors.brand.accent
+                              : 'rgba(255, 255, 255, 0.6)'
+                        }
+                      />
+                    </View>
+                    <TextInput
+                      secureTextEntry
+                      placeholder="Enter your password"
+                      placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                      style={styles.input}
+                      value={password}
+                      onChangeText={(text: string) => {
+                        setPassword(text);
+                        if (error) setError('');
+                      }}
+                      onFocus={() => setFocused('password')}
+                      onBlur={() => setFocused(null)}
+                    />
+                  </Animated.View>
+                </View>
               </View>
 
               <Animated.View style={[styles.errorBox, animatedErrorStyle]}>
@@ -322,7 +383,12 @@ export const LoginScreen = () => {
 
               <View style={styles.actions}>
                 <AnimatedPressable
-                  style={[styles.primaryButton, animatedBtnStyle, { backgroundColor: theme.colors.brand.accent }, isSubmitting && styles.primaryButtonDisabled]}
+                  style={[
+                    styles.primaryButton,
+                    animatedBtnStyle,
+                    { backgroundColor: theme.colors.brand.accent },
+                    isSubmitting && styles.primaryButtonDisabled,
+                  ]}
                   onPress={onSubmit}
                   onPressIn={handleButtonPressIn}
                   onPressOut={handleButtonPressOut}
@@ -353,9 +419,15 @@ export const LoginScreen = () => {
           keyboardBehavior="extend"
           keyboardBlurBehavior="restore"
         >
-          <BottomSheetScrollView contentContainerStyle={styles.sheetContent}>
+          <BottomSheetScrollView
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.sheetContent}
+          >
             <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>{sheetStep === 1 ? 'Forgot Password' : 'Reset Password'}</Text>
+              <Text style={styles.sheetTitle}>
+                {sheetStep === 1 ? 'Forgot Password' : 'Reset Password'}
+              </Text>
               <Text style={styles.sheetSubtitle}>
                 {sheetStep === 1
                   ? "Enter your email address and we'll send you a verification code."
@@ -366,8 +438,18 @@ export const LoginScreen = () => {
             {sheetStep === 1 ? (
               <View style={styles.sheetFormGroup}>
                 <Text style={styles.sheetLabel}>Email</Text>
-                <View style={[styles.sheetInputWrap, focused === 'forgotEmail' && styles.sheetInputWrapFocused]}>
-                  <Icon icon={Mail} size={18} color={iconColor('forgotEmail')} style={styles.sheetInputIcon} />
+                <View
+                  style={[
+                    styles.sheetInputWrap,
+                    focused === 'forgotEmail' && styles.sheetInputWrapFocused,
+                  ]}
+                >
+                  <Icon
+                    icon={Mail}
+                    size={18}
+                    color={iconColor('forgotEmail')}
+                    style={styles.sheetInputIcon}
+                  />
                   <BottomSheetTextInput
                     autoCapitalize="none"
                     keyboardType="email-address"
@@ -385,8 +467,18 @@ export const LoginScreen = () => {
               <>
                 <View style={styles.sheetFormGroup}>
                   <Text style={styles.sheetLabel}>Verification Code</Text>
-                  <View style={[styles.sheetInputWrap, focused === 'code' && styles.sheetInputWrapFocused]}>
-                    <Icon icon={Grid3x3} size={18} color={iconColor('code')} style={styles.sheetInputIcon} />
+                  <View
+                    style={[
+                      styles.sheetInputWrap,
+                      focused === 'code' && styles.sheetInputWrapFocused,
+                    ]}
+                  >
+                    <Icon
+                      icon={Grid3x3}
+                      size={18}
+                      color={iconColor('code')}
+                      style={styles.sheetInputIcon}
+                    />
                     <BottomSheetTextInput
                       autoCapitalize="none"
                       keyboardType="number-pad"
@@ -403,8 +495,18 @@ export const LoginScreen = () => {
 
                 <View style={styles.sheetFormGroup}>
                   <Text style={styles.sheetLabel}>New Password</Text>
-                  <View style={[styles.sheetInputWrap, focused === 'newPassword' && styles.sheetInputWrapFocused]}>
-                    <Icon icon={Lock} size={18} color={iconColor('newPassword')} style={styles.sheetInputIcon} />
+                  <View
+                    style={[
+                      styles.sheetInputWrap,
+                      focused === 'newPassword' && styles.sheetInputWrapFocused,
+                    ]}
+                  >
+                    <Icon
+                      icon={Lock}
+                      size={18}
+                      color={iconColor('newPassword')}
+                      style={styles.sheetInputIcon}
+                    />
                     <BottomSheetTextInput
                       secureTextEntry
                       placeholder="Enter new password"
@@ -428,7 +530,12 @@ export const LoginScreen = () => {
             ) : null}
 
             {sheetSuccessMsg && !sheetError ? (
-              <View style={[styles.sheetErrorBox, { backgroundColor: theme.colors.state.successSurface }]}>
+              <View
+                style={[
+                  styles.sheetErrorBox,
+                  { backgroundColor: theme.colors.state.successSurface },
+                ]}
+              >
                 <Icon icon={CircleCheck} size={16} color={theme.colors.state.success} />
                 <Text style={[styles.sheetError, { color: theme.colors.state.success }]}>
                   {sheetSuccessMsg}
@@ -438,15 +545,35 @@ export const LoginScreen = () => {
 
             <View style={styles.sheetActions}>
               {sheetStep === 1 ? (
-                <Pressable style={styles.sheetPrimaryBtn} onPress={handleSendCode} disabled={sheetLoading}>
-                  {sheetLoading ? <ActivityIndicator color={theme.colors.brand.primary} /> : <Text style={styles.sheetPrimaryBtnText}>Send Reset Code</Text>}
+                <Pressable
+                  style={styles.sheetPrimaryBtn}
+                  onPress={handleSendCode}
+                  disabled={sheetLoading}
+                >
+                  {sheetLoading ? (
+                    <ActivityIndicator color={theme.colors.brand.primary} />
+                  ) : (
+                    <Text style={styles.sheetPrimaryBtnText}>Send Reset Code</Text>
+                  )}
                 </Pressable>
               ) : (
-                <Pressable style={styles.sheetPrimaryBtn} onPress={handleResetPassword} disabled={sheetLoading}>
-                  {sheetLoading ? <ActivityIndicator color={theme.colors.brand.primary} /> : <Text style={styles.sheetPrimaryBtnText}>Reset Password</Text>}
+                <Pressable
+                  style={styles.sheetPrimaryBtn}
+                  onPress={handleResetPassword}
+                  disabled={sheetLoading}
+                >
+                  {sheetLoading ? (
+                    <ActivityIndicator color={theme.colors.brand.primary} />
+                  ) : (
+                    <Text style={styles.sheetPrimaryBtnText}>Reset Password</Text>
+                  )}
                 </Pressable>
               )}
-              <Pressable style={styles.sheetCancelBtn} onPress={() => setShowForgotPassword(false)} disabled={sheetLoading}>
+              <Pressable
+                style={styles.sheetCancelBtn}
+                onPress={() => setShowForgotPassword(false)}
+                disabled={sheetLoading}
+              >
                 <Text style={styles.sheetCancelBtnText}>Cancel</Text>
               </Pressable>
             </View>

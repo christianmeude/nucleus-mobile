@@ -80,7 +80,8 @@ export const AnnotationPanel = ({
     groups.forEach((threads) => {
       threads.sort(
         (a, b) =>
-          new Date(a.annotation.createdAt || 0).getTime() - new Date(b.annotation.createdAt || 0).getTime()
+          new Date(a.annotation.createdAt || 0).getTime() -
+          new Date(b.annotation.createdAt || 0).getTime(),
       );
     });
 
@@ -94,7 +95,8 @@ export const AnnotationPanel = ({
   });
 
   const renderAnnotationItem = (annotation: PaperAnnotation, isReply: boolean = false) => {
-    const IconComponent = ANNOTATION_ICONS[annotation.annotationType] || ANNOTATION_ICONS['comment'];
+    const IconComponent =
+      ANNOTATION_ICONS[annotation.annotationType] || ANNOTATION_ICONS['comment'];
 
     return (
       <View
@@ -104,10 +106,7 @@ export const AnnotationPanel = ({
           itemLayouts.current[annotation.id] = e.nativeEvent.layout.y;
         }}
       >
-        <Pressable
-          style={styles.itemHeader}
-          onPress={() => onAnnotationPress?.(annotation)}
-        >
+        <Pressable style={styles.itemHeader} onPress={() => onAnnotationPress?.(annotation)}>
           <View style={styles.itemMeta}>
             <Icon icon={IconComponent} size={20} color={theme.colors.text.muted} />
             <Text style={styles.reviewerName}>{annotation.reviewerName}</Text>
@@ -143,7 +142,12 @@ export const AnnotationPanel = ({
       <View style={styles.header}>
         <Text style={styles.title}>Reviewer Feedback</Text>
       </View>
-      <ScrollView ref={scrollViewRef} contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        ref={scrollViewRef}
+        contentContainerStyle={styles.content}
+      >
         {annotations.length === 0 ? (
           <Text style={styles.empty}>No annotations for this paper.</Text>
         ) : (

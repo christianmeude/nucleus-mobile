@@ -48,7 +48,7 @@ const PendingMarker = () => {
         duration: 1500,
         easing: Easing.out(Easing.quad),
         useNativeDriver: true,
-      })
+      }),
     );
     loop.start();
     return () => loop.stop();
@@ -62,10 +62,7 @@ const PendingMarker = () => {
     <View style={styles.markerHost}>
       <Animated.View
         pointerEvents="none"
-        style={[
-          styles.pulseRing,
-          { opacity: ringOpacity, transform: [{ scale: ringScale }] },
-        ]}
+        style={[styles.pulseRing, { opacity: ringOpacity, transform: [{ scale: ringScale }] }]}
       />
       <Animated.View
         style={[
@@ -113,14 +110,16 @@ export const PaperProgressMap = ({ status }: PaperProgressMapProps) => {
                   ? 'pending'
                   : 'upcoming';
           const isActive = state !== 'upcoming' && state !== 'done';
-          const labelColor =
-            state === 'warning' || state === 'danger' ? blockedColor : undefined;
+          const labelColor = state === 'warning' || state === 'danger' ? blockedColor : undefined;
 
           return (
             <Fragment key={label}>
               {index > 0 ? (
                 <View
-                  style={[styles.connector, index <= filledThrough && { backgroundColor: barColor }]}
+                  style={[
+                    styles.connector,
+                    index <= filledThrough && { backgroundColor: barColor },
+                  ]}
                 />
               ) : null}
               <View style={styles.column}>
@@ -152,7 +151,11 @@ export const PaperProgressMap = ({ status }: PaperProgressMapProps) => {
                 )}
                 <Text
                   numberOfLines={1}
-                  style={[styles.label, isActive && styles.labelActive, labelColor && { color: labelColor }]}
+                  style={[
+                    styles.label,
+                    isActive && styles.labelActive,
+                    labelColor && { color: labelColor },
+                  ]}
                 >
                   {label}
                 </Text>

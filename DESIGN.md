@@ -2,30 +2,30 @@
 name: NUcleus
 description: Design system for NUcleus Mobile, the research repository app for National University Dasmariñas students.
 colors:
-  primary: "#1B3A8C"
-  primary-hover: "#16307A"
-  primary-pressed: "#102560"
-  primary-soft: "#D2DEF5"
-  primary-surface: "#EAF0FB"
-  accent: "#CDA434"
-  accent-hover: "#AE8829"
-  accent-soft: "#F4E7BD"
-  accent-surface: "#FBF6E8"
-  text-primary: "#0F172A"
-  text-secondary: "#475569"
-  text-muted: "#64748B"
-  text-disabled: "#94A3B8"
-  text-on-brand: "#FFFFFF"
-  text-on-accent: "#0F172A"
-  surface-base: "#F8FAFC"
-  surface-raised: "#FFFFFF"
-  surface-sunken: "#F1F5F9"
-  border-subtle: "#E2E8F0"
-  border-strong: "#CBD5E1"
-  border-focus: "#2E5BC9"
-  success: "#047857"
-  warning: "#D97706"
-  danger: "#B91C1C"
+  primary: '#1B3A8C'
+  primary-hover: '#16307A'
+  primary-pressed: '#102560'
+  primary-soft: '#D2DEF5'
+  primary-surface: '#EAF0FB'
+  accent: '#CDA434'
+  accent-hover: '#AE8829'
+  accent-soft: '#F4E7BD'
+  accent-surface: '#FBF6E8'
+  text-primary: '#0F172A'
+  text-secondary: '#475569'
+  text-muted: '#64748B'
+  text-disabled: '#94A3B8'
+  text-on-brand: '#FFFFFF'
+  text-on-accent: '#0F172A'
+  surface-base: '#F8FAFC'
+  surface-raised: '#FFFFFF'
+  surface-sunken: '#F1F5F9'
+  border-subtle: '#E2E8F0'
+  border-strong: '#CBD5E1'
+  border-focus: '#2E5BC9'
+  success: '#047857'
+  warning: '#D97706'
+  danger: '#B91C1C'
 typography:
   display:
     fontFamily: Roboto
@@ -103,28 +103,28 @@ spacing:
   3xl: 40px
 components:
   card:
-    backgroundColor: "{colors.surface-raised}"
-    rounded: "{rounded.lg}"
-    padding: "{spacing.lg}"
+    backgroundColor: '{colors.surface-raised}'
+    rounded: '{rounded.lg}'
+    padding: '{spacing.lg}'
   card-border:
-    borderColor: "{colors.border-subtle}"
+    borderColor: '{colors.border-subtle}'
   button-primary:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.text-on-brand}"
-    rounded: "{rounded.pill}"
+    backgroundColor: '{colors.primary}'
+    textColor: '{colors.text-on-brand}'
+    rounded: '{rounded.pill}'
     padding: 12px 24px
   button-primary-hover:
-    backgroundColor: "{colors.primary-hover}"
+    backgroundColor: '{colors.primary-hover}'
   button-primary-pressed:
-    backgroundColor: "{colors.primary-pressed}"
+    backgroundColor: '{colors.primary-pressed}'
   chip:
-    backgroundColor: "{colors.accent-surface}"
-    textColor: "{colors.accent-hover}"
-    rounded: "{rounded.sm}"
+    backgroundColor: '{colors.accent-surface}'
+    textColor: '{colors.accent-hover}'
+    rounded: '{rounded.sm}'
   avatar:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.text-on-brand}"
-    rounded: "{rounded.pill}"
+    backgroundColor: '{colors.primary}'
+    textColor: '{colors.text-on-brand}'
+    rounded: '{rounded.pill}'
 ---
 
 > **Single source of truth for the NUcleus design system — tokens, motion, and
@@ -134,7 +134,7 @@ components:
 > below are ported from it and reconciled to the tokens here. Where the two ever
 > disagreed, this file wins — every divergent hex in the old file was aspirational
 > and never adopted into the tokens. `docs/design/mockup.html` remains the literal
-> visual reference to eyeball against; build to the values in *this* file.
+> visual reference to eyeball against; build to the values in _this_ file.
 
 ## Overview
 
@@ -187,19 +187,19 @@ chips, category eyebrows, save/bookmark state) and never used decoratively.
 Heading sizes are calibrated against **Material 3 type-scale roles**, not
 sized up arbitrarily:
 
-| Token | Family | Size / Line height | Weight | M3 role reference | Use |
-| --- | --- | --- | --- | --- | --- |
-| `display` | Roboto | 28 / 36 | 600 | Headline Medium | Paper detail title |
-| `h1` | Roboto | 24 / 32 | 700 | Headline Small | Screen titles ("Browse"), dashboard greeting |
-| `h2` | Roboto | 20 / 28 | 700 | Title Large | Section headers, stat callouts |
-| `h3` | Roboto | 17 / 24 | 600 | Title Medium | Card titles (paper cards, tiles), nav bar titles |
-| `body-strong` | Roboto | 15 / 22 | 600 | Body Large | Emphasized body copy |
-| `body` | Roboto | 15 / 22 | 400 | Body Large | Default reading copy |
-| `body-small` | Roboto | 13 / 20 | 400 | Body Medium | Secondary copy, affiliations |
-| `label` | Roboto | 13 / 18 | 600 | Label Large | Filter/tab labels (uppercase, tracked) |
-| `metadata` | Roboto | 12 / 18 | 500 | Label Medium | Dates, view/download counts |
-| `caption` | Roboto | 11 / 16 | 400 | Label Small | Fine print, avatar initials |
-| `button` | Roboto | 15 / 20 | 600 | Label Large | Button and CTA labels |
+| Token         | Family | Size / Line height | Weight | M3 role reference | Use                                              |
+| ------------- | ------ | ------------------ | ------ | ----------------- | ------------------------------------------------ |
+| `display`     | Roboto | 28 / 36            | 600    | Headline Medium   | Paper detail title                               |
+| `h1`          | Roboto | 24 / 32            | 700    | Headline Small    | Screen titles ("Browse"), dashboard greeting     |
+| `h2`          | Roboto | 20 / 28            | 700    | Title Large       | Section headers, stat callouts                   |
+| `h3`          | Roboto | 17 / 24            | 600    | Title Medium      | Card titles (paper cards, tiles), nav bar titles |
+| `body-strong` | Roboto | 15 / 22            | 600    | Body Large        | Emphasized body copy                             |
+| `body`        | Roboto | 15 / 22            | 400    | Body Large        | Default reading copy                             |
+| `body-small`  | Roboto | 13 / 20            | 400    | Body Medium       | Secondary copy, affiliations                     |
+| `label`       | Roboto | 13 / 18            | 600    | Label Large       | Filter/tab labels (uppercase, tracked)           |
+| `metadata`    | Roboto | 12 / 18            | 500    | Label Medium      | Dates, view/download counts                      |
+| `caption`     | Roboto | 11 / 16            | 400    | Label Small       | Fine print, avatar initials                      |
+| `button`      | Roboto | 15 / 20            | 600    | Label Large       | Button and CTA labels                            |
 
 Every token is Roboto — there is no second family, so there is no chrome-vs-
 heading family rule to enforce. Hierarchy is carried entirely by size,
@@ -303,11 +303,11 @@ below have no external dependency beyond `react-native-reanimated` (already in
 the app), so they ship as-is.
 
 - **Signature: the sliding selection pill (nav bar).** A `primary-surface`
-  rounded rect sits *behind* the tab row (`z-index 0`) and animates its
+  rounded rect sits _behind_ the tab row (`z-index 0`) and animates its
   `left`/`width` to the active tab. The curve is a spring overshoot —
   **`cubic-bezier(.34, 1.3, .4, 1)` over 420ms**, expressed in Reanimated as
   `withTiming(target, { duration: 420, easing: Easing.bezier(.34, 1.3, .4, 1) })`.
-  The moving pill carries *all* the motion: the active icon + label just recolor
+  The moving pill carries _all_ the motion: the active icon + label just recolor
   to `primary`, **no icon scale**. This replaces any static active-dot.
 - **Press feedback.** FAB and tab presses use a light haptic
   (`expo-haptics` selection/impact-light) plus a scale-down on the FAB
@@ -319,16 +319,16 @@ the app), so they ship as-is.
   **scales down to `0.92` and rounds its corners to `14`** behind a dim scrim —
   the native-iOS modal card zoom-out. Implemented in `SheetPresenter` with one
   shared progress value: **open is a spring, `withSpring(1, { damping: 22,
-  stiffness: 240, mass: 0.9 })`**; **close is a `260ms` timed collapse**,
+stiffness: 240, mass: 0.9 })`**; **close is a `260ms` timed collapse**,
   `withTiming(0, { duration: 260 })`. Drag the grabber down past ~28% of the
   sheet height (or flick, `velocityY > 900`) to dismiss. Scrim tops out at `0.45`
   black; the presenter also dims `0.35`. Under reduced motion the sheet snaps
   open/closed with no scale, slide, or scrim fade.
   **The zoom-out, dim, and scrim track the sheet's live top — the open/close
-  spring *and* any active drag — not `progress` alone.** A `reveal` (1 fully up
+  spring _and_ any active drag — not `progress` alone.** A `reveal` (1 fully up
   → 0 hidden) is derived each frame from the sheet's current top and drives all
-  three, so dragging the sheet down *pans the presenter back in and lightens the
-  scrim smoothly in proportion to the sheet's height*, rather than holding the
+  three, so dragging the sheet down _pans the presenter back in and lightens the
+  scrim smoothly in proportion to the sheet's height_, rather than holding the
   full zoom until release.
 - **Bottom sheets (menus & pickers).** Short sheets (Browse sort/field, etc.)
   use `BottomSheet`, which drives **both** the slide and the backdrop dim off one
@@ -336,13 +336,13 @@ the app), so they ship as-is.
   lock-step with the sheet's height instead of snapping to full opacity when the
   modal mounts**. Same drag-to-dismiss (grabber, ~30% / `velocityY > 900`); the
   dim lightens as the sheet is pulled away. Reduced motion → instant, no fade.
-- **Confirming pop.** A save/bookmark toggling *on* gives a quick scale
+- **Confirming pop.** A save/bookmark toggling _on_ gives a quick scale
   overshoot on the icon — `withSequence(withTiming(1.32, 120ms),
-  withSpring(1, spring.pop))` (`spring.pop` = low-damping overshoot). Only on the
+withSpring(1, spring.pop))` (`spring.pop` = low-damping overshoot). Only on the
   affirmative action (not un-saving), and a no-op under reduced motion.
-- **Focus ring.** `border-focus` (navy `#2E5BC9`), 2px, 2px offset. *(The old
+- **Focus ring.** `border-focus` (navy `#2E5BC9`), 2px, 2px offset. _(The old
   visual-direction doc specified a gold focus ring; `border-focus` supersedes
-  it, since focus is navigation state, not emphasis — gold stays reserved.)*
+  it, since focus is navigation state, not emphasis — gold stays reserved.)_
 - **Reduced motion.** Mirror `prefers-reduced-motion` via Reanimated's
   `useReducedMotion()` — kill every animation and transition (the pill jumps to
   the active tab with no slide, screens appear without the rise).
@@ -379,7 +379,7 @@ Browse · Profile**, laid out
   `text-on-accent` token, because slate/white tested poorly for contrast on
   gold; intentional).
 - **Dependency-gated fidelity (deferred to A3 Polish).** The mockup's frosted
-  `blur(18px)` bar and gold-*gradient* FAB need `expo-blur` /
+  `blur(18px)` bar and gold-_gradient_ FAB need `expo-blur` /
   `expo-linear-gradient` (a dev-client rebuild). A1 ships a faithful
   approximation: an opaque `surface-raised` bar and a solid `accent` FAB with a
   sheen overlay + lit top edge. The motion — the point — is already exact.
@@ -392,7 +392,7 @@ over it. Faculty differ only in:
 
 - **No Submit FAB** (faculty don't submit). Four tabs fill the bar evenly —
   `[Home] [Review] [Browse] [Profile]`, no center gap.
-- **Review** takes the student's *Papers* slot (icon: a check-review pair, so it
+- **Review** takes the student's _Papers_ slot (icon: a check-review pair, so it
   reads distinctly from Browse's search glyph). **Browse** is literally the same
   shared repository screen both roles use.
 

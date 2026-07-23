@@ -30,7 +30,12 @@ export const FacultyProfileScreen = () => {
     // Same frame as the student Profile: navy banner bleeds under the status bar
     // (top edge opted out), floating tab bar owns the bottom.
     <Screen gutter={0} edges={{ top: false, bottom: false }}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
         <ProfileHeader
           initials={initials}
           name={user?.fullName || 'Faculty'}

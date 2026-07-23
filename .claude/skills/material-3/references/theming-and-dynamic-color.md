@@ -6,11 +6,11 @@ Complete guide to creating, applying, and managing Material Design 3 themes.
 
 The same **semantic roles** (primary, onSurface, surface containers, etc.) appear on every platform:
 
-| Platform | Theme surface |
-|----------|----------------|
-| **Jetpack Compose** | `MaterialTheme(colorScheme, typography, shapes, …)` |
-| **Flutter** | `ThemeData` + `ColorScheme`, `useMaterial3: true` |
-| **Web** | CSS custom properties `--md-sys-*` on `:root` or a subtree |
+| Platform            | Theme surface                                              |
+| ------------------- | ---------------------------------------------------------- |
+| **Jetpack Compose** | `MaterialTheme(colorScheme, typography, shapes, …)`        |
+| **Flutter**         | `ThemeData` + `ColorScheme`, `useMaterial3: true`          |
+| **Web**             | CSS custom properties `--md-sys-*` on `:root` or a subtree |
 
 **Web:** [Material Web is maintenance-only; M3 Expressive is not implemented on Web](https://m3.material.io/develop/web). Use `@material/web` + CSS knowing the stack is limited.
 
@@ -109,9 +109,11 @@ DynamicColorBuilder(
 ## Web: Theme Builder and CSS
 
 ### 1. Choose a Seed Color
+
 Start with a single hex color that represents your brand. The entire scheme generates from this seed.
 
 ### 2. Generate the Scheme
+
 Use `@material/material-color-utilities` to generate light and dark schemes:
 
 ```bash
@@ -119,12 +121,7 @@ npm install @material/material-color-utilities
 ```
 
 ```javascript
-import {
-  argbFromHex,
-  hexFromArgb,
-  SchemeContent,
-  Hct,
-} from '@material/material-color-utilities';
+import { argbFromHex, hexFromArgb, SchemeContent, Hct } from '@material/material-color-utilities';
 
 function generateTheme(seedHex, isDark = false, contrast = 0.0) {
   const hct = Hct.fromInt(argbFromHex(seedHex));
@@ -221,13 +218,13 @@ function exportAsCSS(seedHex) {
 
 If you have existing brand colors, map them to MD3 roles:
 
-| Brand concept | MD3 role |
-|--------------|----------|
-| Primary brand color | Use as seed for `primary` palette |
+| Brand concept         | MD3 role                                    |
+| --------------------- | ------------------------------------------- |
+| Primary brand color   | Use as seed for `primary` palette           |
 | Secondary brand color | Override `secondary` or use as custom color |
-| Accent color | Map to `tertiary` |
-| Alert/danger color | Override `error` (or keep MD3 default) |
-| Background | Generated from seed (don't hardcode) |
+| Accent color          | Map to `tertiary`                           |
+| Alert/danger color    | Override `error` (or keep MD3 default)      |
+| Background            | Generated from seed (don't hardcode)        |
 
 ### Using a Brand Color as Seed
 
@@ -260,6 +257,7 @@ const harmonizedOrange = hexFromArgb(Blend.harmonize(brandOrange, schemePrimary)
 ### Automatic Generation
 
 Dark theme is automatically generated from the same seed color. The tonal mapping simply shifts:
+
 - Light theme uses lighter tones (80-100) for surfaces, darker tones (10-40) for accents
 - Dark theme inverts: darker tones (4-22) for surfaces, lighter tones (80-90) for accents
 
@@ -268,15 +266,15 @@ Dark theme is automatically generated from the same seed color. The tonal mappin
 ```css
 /* Light theme (default) */
 :root {
-  --md-sys-color-primary: #6750A4;
-  --md-sys-color-surface: #FEF7FF;
+  --md-sys-color-primary: #6750a4;
+  --md-sys-color-surface: #fef7ff;
   /* ... all light tokens ... */
 }
 
 /* Dark theme via media query */
 @media (prefers-color-scheme: dark) {
   :root {
-    --md-sys-color-primary: #D0BCFF;
+    --md-sys-color-primary: #d0bcff;
     --md-sys-color-surface: #141218;
     /* ... all dark tokens ... */
   }
@@ -284,7 +282,7 @@ Dark theme is automatically generated from the same seed color. The tonal mappin
 
 /* Dark theme via class (for manual toggle) */
 .dark-theme {
-  --md-sys-color-primary: #D0BCFF;
+  --md-sys-color-primary: #d0bcff;
   --md-sys-color-surface: #141218;
   /* ... all dark tokens ... */
 }
@@ -344,11 +342,11 @@ document.getElementById('theme-toggle').addEventListener('click', () => theme.to
 
 MD3 supports 3 contrast levels, adjustable via the `contrast` parameter:
 
-| Level | Value | Effect |
-|-------|-------|--------|
-| Standard | 0.0 | Default tonal distance |
-| Medium | 0.5 | Increased tonal distance, easier to read |
-| High | 1.0 | Maximum tonal distance, highest legibility |
+| Level    | Value | Effect                                     |
+| -------- | ----- | ------------------------------------------ |
+| Standard | 0.0   | Default tonal distance                     |
+| Medium   | 0.5   | Increased tonal distance, easier to read   |
+| High     | 1.0   | Maximum tonal distance, highest legibility |
 
 ```javascript
 // Standard contrast
@@ -397,6 +395,7 @@ md-switch {
 Component tokens follow: `--md-{component}-{element}-{property}`
 
 Examples:
+
 - `--md-filled-button-container-color`
 - `--md-filled-button-container-shape`
 - `--md-filled-button-label-text-color`
@@ -411,11 +410,7 @@ Examples:
 Extract a color from an image and apply it as the theme:
 
 ```javascript
-import {
-  QuantizerCelebi,
-  Score,
-  argbFromRgb,
-} from '@material/material-color-utilities';
+import { QuantizerCelebi, Score, argbFromRgb } from '@material/material-color-utilities';
 
 async function themeFromImage(imageUrl) {
   const img = new Image();
@@ -432,7 +427,7 @@ async function themeFromImage(imageUrl) {
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const pixels = [];
   for (let i = 0; i < imageData.data.length; i += 4) {
-    pixels.push(argbFromRgb(imageData.data[i], imageData.data[i+1], imageData.data[i+2]));
+    pixels.push(argbFromRgb(imageData.data[i], imageData.data[i + 1], imageData.data[i + 2]));
   }
 
   // Quantize and score to find best seed color
@@ -455,14 +450,14 @@ Apply different themes to different sections of the UI:
 ```css
 /* Default theme */
 :root {
-  --md-sys-color-primary: #6750A4;
+  --md-sys-color-primary: #6750a4;
   /* ... */
 }
 
 /* Scoped theme for a section */
 .premium-section {
-  --md-sys-color-primary: #B69DF8;
-  --md-sys-color-primary-container: #3F2D7A;
+  --md-sys-color-primary: #b69df8;
+  --md-sys-color-primary-container: #3f2d7a;
   /* Only override what changes */
 }
 ```

@@ -9,6 +9,7 @@ export { IconButton } from './IconButton';
 export { EmptyState } from './EmptyState';
 export { ShimmerSkeleton as Skeleton } from './motion/ShimmerSkeleton';
 export { InlineNotice } from './InlineNotice';
+export { Input } from './Input';
 export { BottomSheet } from './BottomSheet';
 export { Divider } from './Divider';
 export { Logo } from './Logo';

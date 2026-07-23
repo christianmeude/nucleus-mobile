@@ -56,8 +56,10 @@ export const ResearchCard = ({
       {showStatusChip ? <PaperProgressMap status={paper.status} /> : null}
       {displayKeywords.length > 0 ? (
         <ScrollView
-          horizontal
+          showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
+          horizontal
+
           contentContainerStyle={styles.keywordRow}
         >
           {displayKeywords.map((keyword, index) => (

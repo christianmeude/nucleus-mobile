@@ -37,6 +37,7 @@ object MdSpacing {
 ```
 
 Use spacing tokens for:
+
 - Screen margins
 - Pane gaps
 - List item spacing
@@ -51,13 +52,13 @@ Do not scatter raw `Dp` literals throughout reusable UI. Keep one-off values loc
 
 MD3 defines 5 breakpoint classes:
 
-| Class | Width Range | Typical Devices | Columns |
-|-------|-----------|----------------|---------|
-| Compact | < 600dp | Phone portrait | 4 |
-| Medium | 600–839dp | Tablet portrait, foldable | 8 |
-| Expanded | 840–1199dp | Tablet landscape, small desktop | 12 |
-| Large | 1200–1599dp | Desktop | 12 |
-| Extra-large | 1600dp+ | Ultra-wide, large desktop | 12 |
+| Class       | Width Range | Typical Devices                 | Columns |
+| ----------- | ----------- | ------------------------------- | ------- |
+| Compact     | < 600dp     | Phone portrait                  | 4       |
+| Medium      | 600–839dp   | Tablet portrait, foldable       | 8       |
+| Expanded    | 840–1199dp  | Tablet landscape, small desktop | 12      |
+| Large       | 1200–1599dp | Desktop                         | 12      |
+| Extra-large | 1600dp+     | Ultra-wide, large desktop       | 12      |
 
 ### CSS Media Queries (web)
 
@@ -68,19 +69,24 @@ Use these for **CSS layouts**. **Compose** apps should use window size classes /
 /* No media query needed, this is the base */
 
 /* Medium */
-@media (min-width: 600px) { }
+@media (min-width: 600px) {
+}
 
 /* Expanded */
-@media (min-width: 840px) { }
+@media (min-width: 840px) {
+}
 
 /* Large */
-@media (min-width: 1200px) { }
+@media (min-width: 1200px) {
+}
 
 /* Extra-large */
-@media (min-width: 1600px) { }
+@media (min-width: 1600px) {
+}
 ```
 
 ### dp to px Conversion
+
 On the web, 1dp ≈ 1px at standard density. The breakpoint values translate directly to CSS pixels.
 
 ## Layout Anatomy
@@ -97,12 +103,12 @@ On the web, 1dp ≈ 1px at standard density. The breakpoint values translate dir
 ### Margin and Gutter Values
 
 | Window Size | Margins | Gutters |
-|-------------|---------|---------|
-| Compact | 16dp | 8dp |
-| Medium | 24dp | 16dp |
-| Expanded | 24dp | 16dp |
-| Large | 24dp | 24dp |
-| Extra-large | 24dp | 24dp |
+| ----------- | ------- | ------- |
+| Compact     | 16dp    | 8dp     |
+| Medium      | 24dp    | 16dp    |
+| Expanded    | 24dp    | 16dp    |
+| Large       | 24dp    | 24dp    |
+| Extra-large | 24dp    | 24dp    |
 
 ## Canonical Layouts
 
@@ -212,9 +218,15 @@ Expanded:   Side-by-side with wider detail pane
 
 /* Compact: show one at a time */
 @media (max-width: 599px) {
-  .md3-list-detail__detail { display: none; }
-  .md3-list-detail--detail-active .md3-list-detail__list { display: none; }
-  .md3-list-detail--detail-active .md3-list-detail__detail { display: block; }
+  .md3-list-detail__detail {
+    display: none;
+  }
+  .md3-list-detail--detail-active .md3-list-detail__list {
+    display: none;
+  }
+  .md3-list-detail--detail-active .md3-list-detail__detail {
+    display: block;
+  }
 }
 
 /* Medium+: side by side */
@@ -306,8 +318,12 @@ Expanded:   Same but with more space
     gap: 24px;
     padding: 24px;
   }
-  .md3-supporting-pane__primary { flex: 2; }
-  .md3-supporting-pane__secondary { flex: 1; }
+  .md3-supporting-pane__primary {
+    flex: 2;
+  }
+  .md3-supporting-pane__secondary {
+    flex: 1;
+  }
 }
 ```
 
@@ -340,16 +356,16 @@ For component-level responsive behavior (independent of viewport), use container
 
 Components transform across breakpoints:
 
-| Component | Compact | Medium (incl. foldable unfolded) | Expanded+ / Large screen |
-|-----------|---------|--------|-----------|
-| Navigation | Bottom bar | Side rail | Side drawer |
-| App bar | Small (64dp) | Small (64dp) | Small or Medium (112dp) |
-| Dialog | Full-screen | Centered dialog | Centered dialog (max 560dp wide) |
-| Bottom sheet | Full height | Partial height | Side sheet |
-| Search | Full-screen search view | Persistent search bar | Persistent search bar |
-| Cards | Full-width single column | Multi-column grid | Multi-column grid (max 4 cols) |
-| Content panes | Single pane | Optional second pane | Two or three panes |
-| Input method | Touch only | Touch + stylus | Touch + mouse/trackpad + keyboard |
+| Component     | Compact                  | Medium (incl. foldable unfolded) | Expanded+ / Large screen          |
+| ------------- | ------------------------ | -------------------------------- | --------------------------------- |
+| Navigation    | Bottom bar               | Side rail                        | Side drawer                       |
+| App bar       | Small (64dp)             | Small (64dp)                     | Small or Medium (112dp)           |
+| Dialog        | Full-screen              | Centered dialog                  | Centered dialog (max 560dp wide)  |
+| Bottom sheet  | Full height              | Partial height                   | Side sheet                        |
+| Search        | Full-screen search view  | Persistent search bar            | Persistent search bar             |
+| Cards         | Full-width single column | Multi-column grid                | Multi-column grid (max 4 cols)    |
+| Content panes | Single pane              | Optional second pane             | Two or three panes                |
+| Input method  | Touch only               | Touch + stylus                   | Touch + mouse/trackpad + keyboard |
 
 ## Complete App Layout Example
 
@@ -397,18 +413,26 @@ Components transform across breakpoints:
 
 /* Compact: stack vertically */
 @media (max-width: 599px) {
-  .md3-app-layout { flex-direction: column; }
-  .md3-content-area { padding: 16px; }
+  .md3-app-layout {
+    flex-direction: column;
+  }
+  .md3-content-area {
+    padding: 16px;
+  }
 }
 
 /* Medium */
 @media (min-width: 600px) and (max-width: 839px) {
-  .md3-content-area { padding: 24px; }
+  .md3-content-area {
+    padding: 24px;
+  }
 }
 
 /* Expanded+ */
 @media (min-width: 840px) {
-  .md3-content-area { padding: 24px; }
+  .md3-content-area {
+    padding: 24px;
+  }
 }
 
 /* Large+: constrain max content width */
@@ -429,12 +453,12 @@ MD3 provides specific guidance for foldable devices, tablets, and large-screen f
 
 Foldable devices introduce postures that don't exist on traditional phones:
 
-| Posture | Description | Layout behavior |
-|---------|-------------|----------------|
-| **Flat (unfolded)** | Device fully open, single large screen | Treat as Medium or Expanded window class based on width |
+| Posture                    | Description                                    | Layout behavior                                                                    |
+| -------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------- |
+| **Flat (unfolded)**        | Device fully open, single large screen         | Treat as Medium or Expanded window class based on width                            |
 | **Half-opened (tabletop)** | Folded ~90° horizontally, bottom half on table | Split content at the hinge — video/image on top half, controls/info on bottom half |
-| **Half-opened (book)** | Folded ~90° vertically, held like a book | Split content at the hinge — list on one side, detail on the other |
-| **Folded** | Device closed, outer/cover screen | Treat as Compact — show essential content only |
+| **Half-opened (book)**     | Folded ~90° vertically, held like a book       | Split content at the hinge — list on one side, detail on the other                 |
+| **Folded**                 | Device closed, outer/cover screen              | Treat as Compact — show essential content only                                     |
 
 ### Hinge-Aware Layouts
 
@@ -569,6 +593,7 @@ When the device is in book posture (vertical fold, held like a book), it natural
 For tablets, Chromebooks, desktop, and large foldables (Expanded, Large, Extra-large):
 
 **Content width constraints:**
+
 - Don't stretch content to fill ultra-wide screens — reading lines longer than ~80 characters become hard to scan
 - Constrain body content to a max width (typically 840–1040dp) and center it
 - Use the extra space for multi-pane layouts, not wider single columns
@@ -585,15 +610,16 @@ For tablets, Chromebooks, desktop, and large foldables (Expanded, Large, Extra-l
 
 **Multi-pane strategies by window class:**
 
-| Window class | Columns | Recommended layout |
-|-------------|---------|-------------------|
-| Compact (<600dp) | 4 | Single pane. Full-screen navigation between views. |
-| Medium (600–839dp) | 8 | Optional second pane. List-detail with narrow list. Rail navigation. |
-| Expanded (840–1199dp) | 12 | Two panes standard. List-detail or supporting pane. Drawer navigation. |
-| Large (1200–1599dp) | 12 | Two or three panes. Feed with side panel. Persistent supporting pane. |
-| Extra-large (1600dp+) | 12 | Three panes or constrained two-pane with generous margins. |
+| Window class          | Columns | Recommended layout                                                     |
+| --------------------- | ------- | ---------------------------------------------------------------------- |
+| Compact (<600dp)      | 4       | Single pane. Full-screen navigation between views.                     |
+| Medium (600–839dp)    | 8       | Optional second pane. List-detail with narrow list. Rail navigation.   |
+| Expanded (840–1199dp) | 12      | Two panes standard. List-detail or supporting pane. Drawer navigation. |
+| Large (1200–1599dp)   | 12      | Two or three panes. Feed with side panel. Persistent supporting pane.  |
+| Extra-large (1600dp+) | 12      | Three panes or constrained two-pane with generous margins.             |
 
 **Input and interaction differences:**
+
 - Large screens often have mouse/trackpad input — hover states and right-click menus matter
 - Touch targets remain 48dp minimum but can be supplemented with hover tooltips
 - Keyboard shortcuts become expected on desktop-class devices
@@ -603,26 +629,20 @@ For tablets, Chromebooks, desktop, and large foldables (Expanded, Large, Extra-l
 /* Add hover states for pointer devices */
 @media (hover: hover) {
   .md3-card:hover {
-    background: color-mix(
-      in srgb,
-      var(--md-sys-color-on-surface) 8%,
-      var(--md-sys-color-surface)
-    );
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, var(--md-sys-color-surface));
   }
 
   .md3-list-item:hover {
-    background: color-mix(
-      in srgb,
-      var(--md-sys-color-on-surface) 8%,
-      transparent
-    );
+    background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
   }
 }
 
 /* Ensure pointer-specific affordances */
 @media (pointer: fine) {
   /* Scrollbars, resize handles, tighter spacing are acceptable */
-  .md3-drag-handle { cursor: col-resize; }
+  .md3-drag-handle {
+    cursor: col-resize;
+  }
 }
 ```
 
@@ -680,25 +700,28 @@ Widget build(BuildContext context) {
 
 The three canonical layouts adapt naturally to foldables:
 
-| Layout | Foldable behavior |
-|--------|------------------|
-| **Feed** | Unfolded: multi-column grid fills both halves. Tabletop: grid on top, selected item preview on bottom. |
-| **List-detail** | Book posture: list on left half, detail on right half — a perfect natural fit. Tabletop: list on top, detail on bottom. |
-| **Supporting pane** | Book posture: primary on left, supporting on right. Tabletop: primary on top, supporting controls on bottom. |
+| Layout              | Foldable behavior                                                                                                       |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **Feed**            | Unfolded: multi-column grid fills both halves. Tabletop: grid on top, selected item preview on bottom.                  |
+| **List-detail**     | Book posture: list on left half, detail on right half — a perfect natural fit. Tabletop: list on top, detail on bottom. |
+| **Supporting pane** | Book posture: primary on left, supporting on right. Tabletop: primary on top, supporting controls on bottom.            |
 
 ### Testing Large Screens and Foldables
 
 **Web:**
+
 - Use Chrome DevTools responsive mode to test at 600, 840, 1200, and 1600px breakpoints
 - Test with pointer: coarse (touch) and pointer: fine (mouse) media queries
 - Verify content doesn't stretch beyond readable line lengths at 1600px+
 
 **Flutter:**
+
 - Use `DevicePreview` package to simulate foldables and tablets
 - Test with `MediaQuery` overrides for `displayFeatures`
 - Run on Android emulators: Pixel Fold, 7.6" foldable, 10" tablet, Chromebook
 
 **Compose:**
+
 - Use Android Studio foldable emulators (Pixel Fold, 7.6" Foldable)
 - Test posture changes: flat → half-opened → folded
 - Use `WindowInfoTracker` to verify fold-aware layout switching
@@ -722,12 +745,12 @@ When auditing, check these specific items:
 
 MD3 uses a 4dp base grid for spacing:
 
-| Use | Values |
-|-----|--------|
-| Component internal padding | 4, 8, 12, 16, 24dp |
-| Between components | 8, 12, 16, 24dp |
-| Section spacing | 24, 32, 48dp |
-| Layout margins | 16dp (compact), 24dp (medium+) |
-| Grid gutters | 8dp (compact), 16dp (medium), 24dp (large+) |
+| Use                        | Values                                      |
+| -------------------------- | ------------------------------------------- |
+| Component internal padding | 4, 8, 12, 16, 24dp                          |
+| Between components         | 8, 12, 16, 24dp                             |
+| Section spacing            | 24, 32, 48dp                                |
+| Layout margins             | 16dp (compact), 24dp (medium+)              |
+| Grid gutters               | 8dp (compact), 16dp (medium), 24dp (large+) |
 
 Always use multiples of 4dp for consistent spatial rhythm.

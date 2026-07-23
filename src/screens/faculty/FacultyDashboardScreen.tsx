@@ -2,10 +2,22 @@ import { useCallback, useMemo, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { DashboardHero, EmptyState, InlineNotice, Screen, Skeleton, CollapsibleSection } from '../../components/ui';
+import {
+  DashboardHero,
+  EmptyState,
+  InlineNotice,
+  Screen,
+  Skeleton,
+  CollapsibleSection,
+} from '../../components/ui';
 import { FacultyPaperCard } from '../../components/FacultyPaperCard';
 import { WorkloadStrip, WorkloadFilter } from '../../components/WorkloadStrip';
-import { facultyApi, summarizeFacultyWorkload, type FacultyAssignedPaper, FACULTY_ADVANCED_STATUSES } from '../../api/faculty';
+import {
+  facultyApi,
+  summarizeFacultyWorkload,
+  type FacultyAssignedPaper,
+  FACULTY_ADVANCED_STATUSES,
+} from '../../api/faculty';
 import { RootStackParamList } from '../../navigation/types';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
@@ -72,7 +84,9 @@ export const FacultyDashboardScreen = () => {
 
   const needsActionList = useMemo(() => {
     if (!papers) return [];
-    let list = papers.filter((p) => p.status === 'pending_faculty' || p.status === 'revision_required');
+    let list = papers.filter(
+      (p) => p.status === 'pending_faculty' || p.status === 'revision_required',
+    );
     if (activeFilter === 'needs_review') {
       list = list.filter((p) => p.status === 'pending_faculty');
     } else if (activeFilter === 'revision_sent') {
@@ -138,6 +152,8 @@ export const FacultyDashboardScreen = () => {
     // itself. Bottom edge is opted out too — the floating tab bar owns it.
     <Screen gutter={0} edges={{ top: false, bottom: false }}>
       <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         style={styles.container}
         contentContainerStyle={styles.content}
         refreshControl={
@@ -179,7 +195,11 @@ export const FacultyDashboardScreen = () => {
           ) : (
             <View style={styles.sections}>
               {showNeedsAction && (
-                <CollapsibleSection title="Needs action" count={needsActionList.length} initiallyExpanded={true}>
+                <CollapsibleSection
+                  title="Needs action"
+                  count={needsActionList.length}
+                  initiallyExpanded={true}
+                >
                   {needsActionList.length === 0 ? (
                     <EmptyState context="no-papers" />
                   ) : (
@@ -189,7 +209,11 @@ export const FacultyDashboardScreen = () => {
               )}
 
               {showCompleted && (
-                <CollapsibleSection title="Completed" count={completedList.length} initiallyExpanded={activeFilter === 'completed'}>
+                <CollapsibleSection
+                  title="Completed"
+                  count={completedList.length}
+                  initiallyExpanded={activeFilter === 'completed'}
+                >
                   {completedList.length === 0 ? (
                     <EmptyState context="no-papers" />
                   ) : (

@@ -53,7 +53,7 @@ export const ParallaxHeader = ({
             scrollY.value,
             [-headerHeight, 0, headerHeight],
             [-headerHeight / 2, 0, headerHeight * 0.75],
-            Extrapolation.CLAMP
+            Extrapolation.CLAMP,
           ),
         },
         {
@@ -61,7 +61,7 @@ export const ParallaxHeader = ({
             scrollY.value,
             [-headerHeight, 0, headerHeight],
             [2, 1, 1],
-            Extrapolation.CLAMP
+            Extrapolation.CLAMP,
           ),
         },
       ],
@@ -70,14 +70,17 @@ export const ParallaxHeader = ({
 
   return (
     <View style={[styles.container, style, backgroundColor ? { backgroundColor } : undefined]}>
-      <Animated.View style={[styles.headerContainer, { height: headerHeight }, headerAnimatedStyle]}>
+      <Animated.View
+        style={[styles.headerContainer, { height: headerHeight }, headerAnimatedStyle]}
+      >
         {headerContent}
       </Animated.View>
       <Animated.ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         contentContainerStyle={{ paddingTop: headerHeight }}
-        showsVerticalScrollIndicator={false}
       >
         {children}
       </Animated.ScrollView>

@@ -1,11 +1,5 @@
 import { ReactNode } from 'react';
-import {
-  ScrollView,
-  StyleProp,
-  StyleSheet,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { ScrollView, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -44,9 +38,7 @@ export const Screen = ({
   const { theme } = useTheme();
 
   const backgroundColor =
-    background === 'raised'
-      ? theme.colors.surface.raised
-      : theme.colors.surface.base;
+    background === 'raised' ? theme.colors.surface.raised : theme.colors.surface.base;
 
   const padding: ViewStyle = {
     paddingHorizontal: gutter,
@@ -57,21 +49,18 @@ export const Screen = ({
   if (scroll) {
     return (
       <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         style={[styles.flex, { backgroundColor }, style]}
         contentContainerStyle={[padding, contentContainerStyle]}
         keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
       >
         {children}
       </ScrollView>
     );
   }
 
-  return (
-    <View style={[styles.flex, { backgroundColor }, padding, style]}>
-      {children}
-    </View>
-  );
+  return <View style={[styles.flex, { backgroundColor }, padding, style]}>{children}</View>;
 };
 
 const styles = StyleSheet.create({

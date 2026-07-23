@@ -22,9 +22,7 @@ export const Surface = ({
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
-    <View style={[styles.shell, styles[tone], theme.shadows[elevation], style]}>
-      {children}
-    </View>
+    <View style={[styles.shell, styles[tone], theme.shadows[elevation], style]}>{children}</View>
   );
 };
 

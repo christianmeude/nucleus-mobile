@@ -23,12 +23,12 @@ Faculty screens predate the A-pillar redesign. Students got the full DESIGN.md t
 
 ### Current state (investigated)
 
-| Surface | Student | Faculty today |
-|---|---|---|
-| Tab bar | Custom `StudentTabBar.tsx`: floating blurred pill bar, spring indicator (`cubic-bezier(.34,1.3,.4,1)`, 420ms), gold gradient FAB | Stock bottom bar: opaque surface, hairline top border, active-dot (`FacultyTabs.tsx:29-56`) |
-| Header/bell | Shared `TopBar` (+ `hero` variant) → `Activity` screen | Hand-rolled `<Text>` title rows per screen; Notifications is a whole tab |
-| Repository | `BrowseScreen` (pull-to-refresh explore, FlatList, recent searches) | Separate `FacultyRepositoryScreen` |
-| Screen frame | `Screen` wrapper everywhere | Already adopted (OK) |
+| Surface      | Student                                                                                                                          | Faculty today                                                                               |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Tab bar      | Custom `StudentTabBar.tsx`: floating blurred pill bar, spring indicator (`cubic-bezier(.34,1.3,.4,1)`, 420ms), gold gradient FAB | Stock bottom bar: opaque surface, hairline top border, active-dot (`FacultyTabs.tsx:29-56`) |
+| Header/bell  | Shared `TopBar` (+ `hero` variant) → `Activity` screen                                                                           | Hand-rolled `<Text>` title rows per screen; Notifications is a whole tab                    |
+| Repository   | `BrowseScreen` (pull-to-refresh explore, FlatList, recent searches)                                                              | Separate `FacultyRepositoryScreen`                                                          |
+| Screen frame | `Screen` wrapper everywhere                                                                                                      | Already adopted (OK)                                                                        |
 
 ### Steps
 
@@ -43,6 +43,7 @@ Faculty screens predate the A-pillar redesign. Students got the full DESIGN.md t
 7. **Gates**: `npx tsc --noEmit`, `npm test`, ui-ux-pro-max React Native audit (Rule 9), eyeball against `docs/design/mockup.html`. PR → main.
 
 ### Out of scope for A
+
 - Any review-flow behavior change (annotations, decisions) — Workstream B.
 - `DESIGN.md` gains a short "Faculty tabs" note (same bar, no FAB, Review slot) so the spec stays the single source of truth.
 
@@ -51,29 +52,35 @@ Faculty screens predate the A-pillar redesign. Students got the full DESIGN.md t
 ## Workstream B — Faculty review cluster (after A merges)
 
 ### #15 — verify annotation overlays (dean/program-chair returns)
+
 No code expected (issue's own analysis: RLS read path already correct). Manual-QA checklist item; needs a test paper that completed a post-faculty review cycle. Close on verification.
 
 ### #11 — annotation threads on papers
+
 Reading path already delivered (faculty-access-v3 Phases 12–14: `facultyApi.getAnnotations()` + `PdfViewer` overlays + comments section). Verify against acceptance criteria, then close or fold the remaining gap ("create" half) into #14.
 
 ### #14 — annotation creation write path ← main build
+
 Faculty add page-anchored **sticky notes** to the PDF during review. Scope is
 notes-only by decision (2026-07-08): web intentionally removed freehand-draw and
 highlight-select from its annotation UI (`ae038e1`) and now only creates
 page-anchored `note` annotations, so mobile builds **only** the sticky-note path
 — no in-app drawing, no highlight-selection.
+
 - Write to `research_comments` using web's meta envelope: `[[meta]]{json}[[/meta]]\n<note>` with `annotationType: 'note'`, `pageNumber`, and `anchorPercent` (%-of-page point)
-- **No storage write path** (no drawing PNGs). The read-path `draw`/`highlight` overlay rendering in `PdfViewer` stays as-is for backward-compat with any historical web annotations — we drop *creation* of those types, not display of existing ones.
+- **No storage write path** (no drawing PNGs). The read-path `draw`/`highlight` overlay rendering in `PdfViewer` stays as-is for backward-compat with any historical web annotations — we drop _creation_ of those types, not display of existing ones.
 - Needs INSERT RLS policy or SECURITY DEFINER RPC on `research_comments` — **SQL gate (Rule 3): plain-language brief → Christian approves → deploy via MCP → snapshot in `docs/sql/`**
 - UI: tap-to-place a note pin on the PDF page across the WebView bridge (simpler than text-selection/draw capture)
 - Own branch: `feat/faculty-annotation-write`
 
 ### #9 — email/push on review actions
+
 - **Push**: Expo push — token registration on mobile, `notifications` insert trigger or edge function to dispatch. Server side runs privileged → SQL/edge-function gate (Rule 3).
 - **Email**: must match web SMTP templates without double-send when web also acts — needs web/backend coordination (issue's own constraint). Not solvable mobile-only.
 - Own branch: `feat/review-push-notifications`; email tracked with web team.
 
 ### Order
+
 A → #14 → #9 (push first, email pending coordination) → #11/#15 closed via verification alongside.
 
 ---

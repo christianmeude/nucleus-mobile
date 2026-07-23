@@ -1,11 +1,5 @@
 import { useCallback, useMemo, useEffect, useState } from 'react';
-import {
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Icon } from '../../components/ui/Icon';
 import { Sparkles, Eye, ArrowRight, Bookmark, ChevronRight } from 'lucide-react-native';
@@ -67,7 +61,7 @@ const paperYear = (paper: ResearchPaper): string => {
 const pickDepartmentCategory = (
   categories: Category[],
   program?: string | null,
-  department?: string | null
+  department?: string | null,
 ): Category | null => {
   const hay = `${program ?? ''} ${department ?? ''}`.toLowerCase().trim();
   if (!hay || categories.length === 0) return null;
@@ -86,7 +80,7 @@ const pickDepartmentCategory = (
       c.name
         .toLowerCase()
         .split(/\s+/)
-        .some((token) => token.length > 3 && hay.includes(token))
+        .some((token) => token.length > 3 && hay.includes(token)),
     ) ?? null
   );
 };
@@ -112,13 +106,14 @@ export const DashboardScreen = () => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
 
-    const [papersResult, savedResult, publishedResult, categoriesResult] =
-      await Promise.allSettled([
+    const [papersResult, savedResult, publishedResult, categoriesResult] = await Promise.allSettled(
+      [
         researchApi.getMyPapers(),
         getSavedPapers(3),
         researchApi.getPublishedPapers(),
         researchApi.getCategories(),
-      ]);
+      ],
+    );
 
     if (papersResult.status === 'fulfilled') {
       setPapers(papersResult.value);
@@ -168,7 +163,7 @@ export const DashboardScreen = () => {
   // to most-read overall when their department has too few (< 3) to fill a rail.
   const deptCategory = useMemo(
     () => pickDepartmentCategory(categories, user?.program, user?.department),
-    [categories, user?.program, user?.department]
+    [categories, user?.program, user?.department],
   );
 
   const recommended = useMemo(() => {
@@ -176,9 +171,7 @@ export const DashboardScreen = () => {
       (b.view_count || 0) - (a.view_count || 0);
 
     if (deptCategory) {
-      const inField = published
-        .filter((p) => p.category === deptCategory.id)
-        .sort(byViews);
+      const inField = published.filter((p) => p.category === deptCategory.id).sort(byViews);
       if (inField.length >= 3) return inField.slice(0, RAIL_LIMIT);
     }
     return [...published].sort(byViews).slice(0, RAIL_LIMIT);
@@ -198,6 +191,8 @@ export const DashboardScreen = () => {
     // bar owns it.
     <Screen gutter={0} edges={{ top: false, bottom: false }}>
       <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         style={styles.container}
         contentContainerStyle={styles.content}
         refreshControl={
@@ -236,43 +231,42 @@ export const DashboardScreen = () => {
             duration={ASSEMBLE.duration}
             fromScale={ASSEMBLE.fromScale}
           >
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Your submissions</Text>
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Your submissions</Text>
+                <PressableScale
+                  onPress={() => navigation.navigate('MyPapers')}
+                  accessibilityRole="button"
+                  accessibilityLabel="View all my papers"
+                  hitSlop={8}
+                >
+                  <Text style={styles.sectionLink}>My Papers ›</Text>
+                </PressableScale>
+              </View>
               <PressableScale
+                style={styles.statusStrip}
                 onPress={() => navigation.navigate('MyPapers')}
                 accessibilityRole="button"
-                accessibilityLabel="View all my papers"
-                hitSlop={8}
+                accessibilityLabel={`${counts.total} submissions: ${counts.review} in review, ${counts.revise} need revision, ${counts.published} published`}
               >
-                <Text style={styles.sectionLink}>My Papers ›</Text>
+                <View style={styles.statTile}>
+                  <Text style={styles.statNum}>{counts.total}</Text>
+                  <Text style={styles.statLabel}>Total</Text>
+                </View>
+                <View style={styles.statTile}>
+                  <Text style={styles.statNum}>{counts.review}</Text>
+                  <Text style={styles.statLabel}>In review</Text>
+                </View>
+                <View style={styles.statTile}>
+                  <Text style={[styles.statNum, styles.statNumWarn]}>{counts.revise}</Text>
+                  <Text style={styles.statLabel}>Revise</Text>
+                </View>
+                <View style={styles.statTile}>
+                  <Text style={[styles.statNum, styles.statNumGood]}>{counts.published}</Text>
+                  <Text style={styles.statLabel}>Published</Text>
+                </View>
               </PressableScale>
             </View>
-            <PressableScale
-              style={styles.statusStrip}
-              onPress={() => navigation.navigate('MyPapers')}
-              accessibilityRole="button"
-              accessibilityLabel={`${counts.total} submissions: ${counts.review} in review, ${counts.revise} need revision, ${counts.published} published`}
-            >
-              <View style={styles.statTile}>
-                <Text style={styles.statNum}>{counts.total}</Text>
-                <Text style={styles.statLabel}>Total</Text>
-              </View>
-              <View style={styles.statTile}>
-                <Text style={styles.statNum}>{counts.review}</Text>
-                <Text style={styles.statLabel}>In review</Text>
-              </View>
-              <View style={styles.statTile}>
-                <Text style={[styles.statNum, styles.statNumWarn]}>{counts.revise}</Text>
-                <Text style={styles.statLabel}>Revise</Text>
-              </View>
-              <View style={styles.statTile}>
-                <Text style={[styles.statNum, styles.statNumGood]}>{counts.published}</Text>
-                <Text style={styles.statLabel}>Published</Text>
-              </View>
-            </PressableScale>
-          </View>
-
           </FadeInView>
 
           {/* Recommended by department (most-read fallback) */}
@@ -283,82 +277,77 @@ export const DashboardScreen = () => {
             duration={ASSEMBLE.duration}
             fromScale={ASSEMBLE.fromScale}
           >
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle} numberOfLines={1}>
-                {railTitle}
-              </Text>
-              <PressableScale
-                onPress={() => navigation.navigate('Browse')}
-                accessibilityRole="button"
-                accessibilityLabel="Browse all papers"
-                hitSlop={8}
-              >
-                <Text style={styles.sectionLink}>Browse ›</Text>
-              </PressableScale>
-            </View>
-            {loading ? (
-              <View style={styles.railSkeleton}>
-                <Skeleton height={RAIL_CARD_HEIGHT} width={RAIL_CARD_WIDTH} />
-                <Skeleton height={RAIL_CARD_HEIGHT} width={RAIL_CARD_WIDTH} />
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle} numberOfLines={1}>
+                  {railTitle}
+                </Text>
+                <PressableScale
+                  onPress={() => navigation.navigate('Browse')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Browse all papers"
+                  hitSlop={8}
+                >
+                  <Text style={styles.sectionLink}>Browse ›</Text>
+                </PressableScale>
               </View>
-            ) : recommended.length === 0 ? (
-              <EmptyState
-                icon={<Icon icon={Sparkles} size={24} color={theme.colors.text.muted} />}
-                title="Nothing to recommend yet"
-                message="Published papers in your field will appear here."
-              />
-            ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.rail}
-              >
-                {recommended.map((paper, index) => (
-                  <PressableScale
-                    key={paper.id}
-                    style={styles.railCard}
-                    onPress={() =>
-                      navigation.navigate('ResearchDetail', { paperId: paper.id })
-                    }
-                    accessibilityRole="button"
-                    accessibilityLabel={paper.title || 'Paper'}
-                  >
-                    <View style={styles.railBand}>
-                      <LinearGradient
-                        colors={[theme.colors.brand.primary, theme.colors.border.focus]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={StyleSheet.absoluteFill}
-                      />
-                      {index === 0 ? (
-                        <View style={styles.railTag}>
-                          <Text style={styles.railTagText}>MOST READ</Text>
-                        </View>
-                      ) : null}
-                    </View>
-                    <View style={styles.railBody}>
-                      <Text style={styles.railTitle} numberOfLines={3}>
-                        {paper.title || 'Untitled'}
-                      </Text>
-                      <View style={styles.railMeta}>
-                        <Icon
-                          icon={Eye}
-                          size={12}
-                          color={theme.colors.text.muted}
+              {loading ? (
+                <View style={styles.railSkeleton}>
+                  <Skeleton height={RAIL_CARD_HEIGHT} width={RAIL_CARD_WIDTH} />
+                  <Skeleton height={RAIL_CARD_HEIGHT} width={RAIL_CARD_WIDTH} />
+                </View>
+              ) : recommended.length === 0 ? (
+                <EmptyState
+                  icon={<Icon icon={Sparkles} size={24} color={theme.colors.text.muted} />}
+                  title="Nothing to recommend yet"
+                  message="Published papers in your field will appear here."
+                />
+              ) : (
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  showsHorizontalScrollIndicator={false}
+                  horizontal
+
+                  contentContainerStyle={styles.rail}
+                >
+                  {recommended.map((paper, index) => (
+                    <PressableScale
+                      key={paper.id}
+                      style={styles.railCard}
+                      onPress={() => navigation.navigate('ResearchDetail', { paperId: paper.id })}
+                      accessibilityRole="button"
+                      accessibilityLabel={paper.title || 'Paper'}
+                    >
+                      <View style={styles.railBand}>
+                        <LinearGradient
+                          colors={[theme.colors.brand.primary, theme.colors.border.focus]}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={StyleSheet.absoluteFill}
                         />
-                        <Text style={styles.railMetaText}>{paper.view_count || 0}</Text>
-                        {paperYear(paper) ? (
-                          <Text style={styles.railMetaText}>{paperYear(paper)}</Text>
+                        {index === 0 ? (
+                          <View style={styles.railTag}>
+                            <Text style={styles.railTagText}>MOST READ</Text>
+                          </View>
                         ) : null}
                       </View>
-                    </View>
-                  </PressableScale>
-                ))}
-              </ScrollView>
-            )}
-          </View>
-
+                      <View style={styles.railBody}>
+                        <Text style={styles.railTitle} numberOfLines={3}>
+                          {paper.title || 'Untitled'}
+                        </Text>
+                        <View style={styles.railMeta}>
+                          <Icon icon={Eye} size={12} color={theme.colors.text.muted} />
+                          <Text style={styles.railMetaText}>{paper.view_count || 0}</Text>
+                          {paperYear(paper) ? (
+                            <Text style={styles.railMetaText}>{paperYear(paper)}</Text>
+                          ) : null}
+                        </View>
+                      </View>
+                    </PressableScale>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
           </FadeInView>
 
           {/* Explore by field */}
@@ -370,41 +359,35 @@ export const DashboardScreen = () => {
               duration={ASSEMBLE.duration}
               fromScale={ASSEMBLE.fromScale}
             >
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Explore by field</Text>
-                <PressableScale
-                  onPress={() => navigation.navigate('Browse')}
-                  accessibilityRole="button"
-                  accessibilityLabel="Browse all fields"
-                  hitSlop={8}
-                >
-                  <Text style={styles.sectionLink}>All ›</Text>
-                </PressableScale>
-              </View>
-              <View style={styles.fieldGrid}>
-                {categories.map((category) => (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Explore by field</Text>
                   <PressableScale
-                    key={category.id}
-                    style={styles.fieldTile}
-                    onPress={() =>
-                      navigation.navigate('Browse', { categoryId: category.id })
-                    }
+                    onPress={() => navigation.navigate('Browse')}
                     accessibilityRole="button"
-                    accessibilityLabel={`Explore ${category.name}`}
+                    accessibilityLabel="Browse all fields"
+                    hitSlop={8}
                   >
-                    <Text style={styles.fieldTileText} numberOfLines={2}>
-                      {category.name}
-                    </Text>
-                    <Icon
-                      icon={ArrowRight}
-                      size={15}
-                      color={theme.colors.text.muted}
-                    />
+                    <Text style={styles.sectionLink}>All ›</Text>
                   </PressableScale>
-                ))}
+                </View>
+                <View style={styles.fieldGrid}>
+                  {categories.map((category) => (
+                    <PressableScale
+                      key={category.id}
+                      style={styles.fieldTile}
+                      onPress={() => navigation.navigate('Browse', { categoryId: category.id })}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Explore ${category.name}`}
+                    >
+                      <Text style={styles.fieldTileText} numberOfLines={2}>
+                        {category.name}
+                      </Text>
+                      <Icon icon={ArrowRight} size={15} color={theme.colors.text.muted} />
+                    </PressableScale>
+                  ))}
+                </View>
               </View>
-            </View>
             </FadeInView>
           ) : null}
 
@@ -416,37 +399,31 @@ export const DashboardScreen = () => {
             duration={ASSEMBLE.duration}
             fromScale={ASSEMBLE.fromScale}
           >
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Saved</Text>
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Saved</Text>
+              </View>
+              {savedPapers.length === 0 ? (
+                <Text style={styles.savedEmpty}>Papers you bookmark will appear here.</Text>
+              ) : (
+                savedPapers.map((paper, index) => (
+                  <ListEntranceItem key={paper.id} index={index}>
+                    <PressableScale
+                      style={styles.savedRow}
+                      onPress={() => navigation.navigate('ResearchDetail', { paperId: paper.id })}
+                      accessibilityRole="button"
+                      accessibilityLabel={paper.title || 'Saved paper'}
+                    >
+                      <Icon icon={Bookmark} size={15} color={theme.colors.brand.accent} />
+                      <Text style={styles.savedTitle} numberOfLines={2}>
+                        {paper.title || 'Untitled'}
+                      </Text>
+                      <Icon icon={ChevronRight} size={14} color={theme.colors.text.muted} />
+                    </PressableScale>
+                  </ListEntranceItem>
+                ))
+              )}
             </View>
-            {savedPapers.length === 0 ? (
-              <Text style={styles.savedEmpty}>Papers you bookmark will appear here.</Text>
-            ) : (
-              savedPapers.map((paper, index) => (
-                <ListEntranceItem key={paper.id} index={index}>
-                  <PressableScale
-                    style={styles.savedRow}
-                    onPress={() =>
-                      navigation.navigate('ResearchDetail', { paperId: paper.id })
-                    }
-                    accessibilityRole="button"
-                    accessibilityLabel={paper.title || 'Saved paper'}
-                  >
-                    <Icon icon={Bookmark} size={15} color={theme.colors.brand.accent} />
-                    <Text style={styles.savedTitle} numberOfLines={2}>
-                      {paper.title || 'Untitled'}
-                    </Text>
-                    <Icon
-                      icon={ChevronRight}
-                      size={14}
-                      color={theme.colors.text.muted}
-                    />
-                  </PressableScale>
-                </ListEntranceItem>
-              ))
-            )}
-          </View>
           </FadeInView>
         </View>
       </ScrollView>
