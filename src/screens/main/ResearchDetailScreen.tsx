@@ -197,6 +197,11 @@ export const ResearchDetailScreen = () => {
   // paper still in review (only reachable from Dashboard/My Papers), there's nothing
   // published yet to meaningfully relate it to.
   const isRepositoryPaper = PUBLISHED_STATUSES.has(paper.status);
+  
+  // Feedback (annotations) is internal review info. It shouldn't be accessible
+  // to anyone on the repository page, as it's published.
+  const showFeedback = !isRepositoryPaper;
+
   const keywords = Array.isArray(paper.keywords) ? paper.keywords.filter(Boolean) : [];
   const categoryName = resolveCategoryName(paper.category, categoryNameById);
   const authorName = getPrimaryAuthorName(paper);
@@ -222,7 +227,7 @@ export const ResearchDetailScreen = () => {
             ref={pdfRef}
             uri={fileUri}
             variant="fill"
-            annotations={annotations}
+            annotations={showFeedback ? annotations : []}
             onFirstLoad={() => {
               if (viewTracked.current) return;
               viewTracked.current = true;
@@ -260,7 +265,7 @@ export const ResearchDetailScreen = () => {
 
           {/* Download is intentionally hidden pending backend allow_download support (Issue #8). */}
           <View style={styles.readRow}>
-            {annotations.length > 0 ? (
+            {annotations.length > 0 && showFeedback ? (
               <PressableScale
                 style={styles.feedbackBtn}
                 onPress={() => setPanelOpen(true)}
@@ -416,7 +421,7 @@ export const ResearchDetailScreen = () => {
           ) : null}
         </ScrollView>
       </Screen>
-      {annotations.length > 0 && (
+      {annotations.length > 0 && showFeedback && (
         <AnnotationPanel
           annotations={annotations}
           visible={panelOpen}
