@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, TextInput, View, Pressable } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
-import { Search } from 'lucide-react-native';
+import { Search, Plus } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
 import { Category, PaperStatus, ResearchPaper } from '../../types/domain';
@@ -106,7 +107,67 @@ export const MyPapersScreen = () => {
   }, [papers]);
 
   return (
-    <Screen edges={{ bottom: false }}>
+    <Screen gutter={0} edges={{ bottom: false }}>
+      <View style={styles.header}>
+        <TopBar variant="compact">
+          <View style={styles.titleWrap}>
+            <Text style={styles.title}>My Papers</Text>
+            <Text style={styles.subtitle}>{subtitle}</Text>
+          </View>
+        </TopBar>
+
+        <View style={styles.searchWrap}>
+          <Icon icon={Search} size={18} color={theme.colors.text.muted} />
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search your papers"
+            placeholderTextColor={theme.colors.text.disabled}
+            style={styles.searchInput}
+            accessibilityLabel="Search papers"
+            accessibilityHint="Filters your papers by title, abstract, or keywords"
+          />
+          {query ? (
+            <Chip label="Clear" active={false} onPress={() => setQuery('')} variant="filter" />
+          ) : null}
+        </View>
+
+        <View style={styles.pillContainer}>
+          {[
+            { key: 'action', label: 'Needs revision' },
+            { key: 'active', label: 'In review' },
+            { key: 'published', label: 'Approved' },
+            { key: 'all', label: 'All' },
+          ].map((entry) => {
+            const isActive = activeFilter === entry.key;
+            return (
+              <Pressable
+                key={entry.key}
+                style={[
+                  styles.pillSegment,
+                  isActive && { backgroundColor: theme.colors.brand.primary },
+                ]}
+                onPress={() => {
+                  if (!isActive) {
+                    Haptics.selectionAsync();
+                    setActiveFilter(entry.key as FilterKey);
+                  }
+                }}
+              >
+                <Text
+                  style={[
+                    styles.pillSegmentLabel,
+                    isActive && { color: theme.colors.text.onBrand },
+                  ]}
+                >
+                  {entry.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
       <LegendList
         recycleItems={false}
         style={styles.scroll}
@@ -120,59 +181,7 @@ export const MyPapersScreen = () => {
           />
         }
         ListHeaderComponent={() => (
-          <View style={styles.header}>
-            <TopBar variant="compact">
-              <View style={styles.titleWrap}>
-                <Text style={styles.title}>My Papers</Text>
-                <Text style={styles.subtitle}>{subtitle}</Text>
-              </View>
-            </TopBar>
-
-            <View style={styles.searchWrap}>
-              <Icon icon={Search} size={18} color={theme.colors.text.muted} />
-              <TextInput
-                value={query}
-                onChangeText={setQuery}
-                placeholder="Search your papers"
-                placeholderTextColor={theme.colors.text.disabled}
-                style={styles.searchInput}
-                accessibilityLabel="Search papers"
-                accessibilityHint="Filters your papers by title, abstract, or keywords"
-              />
-              {query ? (
-                <Chip label="Clear" active={false} onPress={() => setQuery('')} variant="filter" />
-              ) : null}
-            </View>
-
-            <View style={styles.filters}>
-              <Chip
-                label="All"
-                variant="filter"
-                active={activeFilter === 'all'}
-                onPress={() => setActiveFilter('all')}
-              />
-              <Chip
-                label="In review"
-                variant="filter"
-                active={activeFilter === 'active'}
-                onPress={() => setActiveFilter('active')}
-                tone="info"
-              />
-              <Chip
-                label="Needs revision"
-                variant="filter"
-                active={activeFilter === 'action'}
-                onPress={() => setActiveFilter('action')}
-                tone="warning"
-              />
-              <Chip
-                label="Published"
-                variant="filter"
-                active={activeFilter === 'published'}
-                onPress={() => setActiveFilter('published')}
-                tone="success"
-              />
-            </View>
+          <View style={styles.listHeader}>
 
             {error ? <InlineNotice tone="danger" message={error} /> : null}
 
@@ -200,6 +209,15 @@ export const MyPapersScreen = () => {
           </ListEntranceItem>
         )}
       />
+      
+      <Pressable
+        style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
+        onPress={() => navigation.getParent()?.navigate('SubmitResearch')}
+        accessibilityRole="button"
+        accessibilityLabel="Submit research"
+      >
+        <Icon icon={Plus} size={24} color={theme.colors.text.onBrand} />
+      </Pressable>
     </Screen>
   );
 };
@@ -214,11 +232,23 @@ const makeStyles = (t: Theme) =>
       flex: 1,
     },
     content: {
-      paddingTop: t.spacing.md,
+      paddingHorizontal: t.spacing.lg,
+      paddingTop: t.spacing.lg,
       paddingBottom: t.spacing['3xl'] + 120,
       gap: t.spacing.md,
+      flexGrow: 1,
     },
     header: {
+      paddingHorizontal: t.spacing.lg,
+      paddingTop: t.spacing.xl,
+      paddingBottom: t.spacing.sm,
+      gap: t.spacing.md,
+      backgroundColor: t.colors.surface.raised,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: t.colors.border.subtle,
+      zIndex: 10,
+    },
+    listHeader: {
       gap: t.spacing.md,
     },
     titleWrap: {
@@ -241,24 +271,53 @@ const makeStyles = (t: Theme) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: t.spacing.sm,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: t.colors.border.subtle,
+      backgroundColor: t.colors.surface.sunken,
       borderRadius: t.radii.md,
       borderCurve: 'continuous',
       paddingHorizontal: t.spacing.md,
-      paddingVertical: t.spacing.sm,
-      backgroundColor: t.colors.surface.sunken,
+      height: 44,
     },
     searchInput: {
       flex: 1,
       ...t.typography.body,
       color: t.colors.text.primary,
       paddingVertical: 0,
+      height: '100%',
     },
-    filters: {
+    pillContainer: {
       flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: t.spacing.sm,
+      backgroundColor: t.colors.surface.sunken,
+      borderRadius: 9999,
+      padding: 4,
+    },
+    pillSegment: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 8,
+      borderRadius: 9999,
+    },
+    pillSegmentLabel: {
+      ...t.typography.label,
+      color: t.colors.text.secondary,
+      textAlign: 'center',
+    },
+    fab: {
+      position: 'absolute',
+      bottom: 104,
+      right: t.spacing.lg,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: t.colors.brand.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...t.shadows.level2,
+      zIndex: 50,
+    },
+    fabPressed: {
+      backgroundColor: t.colors.brand.primaryPressed,
+      transform: [{ scale: 0.96 }],
     },
     skeletonList: {
       gap: t.spacing.md,

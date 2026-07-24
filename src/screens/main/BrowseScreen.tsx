@@ -355,7 +355,10 @@ export const BrowseScreen = () => {
 
   const listHeaderElement = (
     <>
-      <Animated.View layout={reducedMotion ? undefined : LinearTransition.springify()}>
+      <Animated.View 
+        layout={reducedMotion ? undefined : LinearTransition.springify()}
+        style={styles.listHeader}
+      >
         <BrowseFilterBar
           resultCount={sorted.length}
           fieldLabel={fieldLabel}
@@ -548,6 +551,10 @@ const makeStyles = (theme: Theme) =>
       gap: theme.spacing.md,
       paddingTop: theme.spacing.md,
       paddingBottom: theme.spacing.xl + 120,
+    },
+    listHeader: {
+      gap: theme.spacing.lg,
+      marginBottom: theme.spacing.lg,
     },
     loadingWrap: {
       gap: theme.spacing.md,
