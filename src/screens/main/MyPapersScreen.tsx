@@ -175,7 +175,10 @@ export const MyPapersScreen = () => {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={() => loadData(true)}
+            onRefresh={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              loadData(true);
+            }}
             tintColor={theme.colors.brand.primary}
             colors={[theme.colors.brand.primary]}
           />

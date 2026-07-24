@@ -9,6 +9,7 @@ import { Category, ResearchPaper, NotificationItem } from '../../types/domain';
 import { greetingForHour, initialsFor } from '../../utils/format';
 import { resolveCategoryName, buildCategoryNameById } from '../../utils/category';
 import { type Theme } from '../../theme';
+import { haptics } from '../../lib/haptics';
 import { isFirstEntranceArmed } from '../../lib/firstEntrance';
 import {
   DashboardHero,
@@ -114,7 +115,10 @@ export const DashboardScreen = () => {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={() => loadData(true)}
+            onRefresh={() => {
+              haptics.light();
+              loadData(true);
+            }}
             tintColor={theme.colors.brand.primary}
             colors={[theme.colors.brand.primary]}
           />

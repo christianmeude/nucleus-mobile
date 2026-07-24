@@ -14,6 +14,7 @@ import { ListEntranceItem } from './ListEntranceItem';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
 import { EmptyState, InlineNotice, Skeleton } from './ui';
+import { haptics } from '../lib/haptics';
 import { invitationsApi } from '../api/invitations';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -174,7 +175,10 @@ export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
-          onRefresh={() => loadData(true)}
+          onRefresh={() => {
+            haptics.light();
+            loadData(true);
+          }}
           tintColor={theme.colors.brand.primary}
           colors={[theme.colors.brand.primary]}
         />

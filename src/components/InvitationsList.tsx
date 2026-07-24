@@ -11,6 +11,7 @@ import { InvitationCard } from './InvitationCard';
 import { ListEntranceItem } from './ListEntranceItem';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
+import { haptics } from '../lib/haptics';
 import { EmptyState, InlineNotice, Skeleton } from './ui';
 
 const isExpired = (invitation: CoAuthorInvitation) => {
@@ -85,7 +86,10 @@ export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
-          onRefresh={() => loadData(true)}
+          onRefresh={() => {
+            haptics.light();
+            loadData(true);
+          }}
           tintColor={theme.colors.brand.primary}
           colors={[theme.colors.brand.primary]}
         />

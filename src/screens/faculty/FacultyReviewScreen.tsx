@@ -7,6 +7,7 @@ import { Search, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { EmptyState, InlineNotice, Screen, Skeleton, TopBar } from '../../components/ui';
 import { FacultyPaperCard } from '../../components/FacultyPaperCard';
+import { ListEntranceItem } from '../../components/ListEntranceItem';
 import { facultyApi, type FacultyAssignedPaper } from '../../api/faculty';
 import {
   FACULTY_QUEUE_FILTERS,
@@ -91,6 +92,7 @@ export const FacultyReviewScreen = () => {
   }, [filter, debouncedSearch, load]);
 
   const onRefresh = useCallback(async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setRefreshing(true);
     await load(0, filter, debouncedSearch);
     setRefreshing(false);
@@ -200,11 +202,13 @@ export const FacultyReviewScreen = () => {
         renderItem={({ item: rawItem, index }) => {
           const item = rawItem as FacultyAssignedPaper;
           return (
-            <FacultyPaperCard
-              paper={item}
-              index={index}
-              onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: item.id })}
-            />
+            <ListEntranceItem index={index}>
+              <FacultyPaperCard
+                paper={item}
+                index={index}
+                onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: item.id })}
+              />
+            </ListEntranceItem>
           );
         }}
       />

@@ -26,6 +26,7 @@ import { Category, ResearchPaper } from '../../types/domain';
 import { paperDate, getPrimaryAuthorName } from '../../utils/format';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
+import { haptics } from '../../lib/haptics';
 import {
   BottomSheet,
   EmptyState,
@@ -446,7 +447,10 @@ export const BrowseScreen = () => {
               refreshControl={
                 <RefreshControl
                   refreshing={refreshing}
-                  onRefresh={() => loadData(true)}
+                  onRefresh={() => {
+                    haptics.light();
+                    loadData(true);
+                  }}
                   tintColor={theme.colors.brand.primary}
                   colors={[theme.colors.brand.primary]}
                 />

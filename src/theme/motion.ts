@@ -29,7 +29,7 @@ export const motion = {
 
   // — reanimated withSpring presets —
   spring: {
-    press: { damping: 18, stiffness: 320, mass: 0.6 },
+    press: { damping: 18, stiffness: 280, mass: 0.6 },
     gentle: { damping: 20, stiffness: 180, mass: 1 },
     sheet: { damping: 24, stiffness: 240, mass: 0.9 },
     // Lively overshoot for a confirming "pop" (e.g. the save/bookmark toggle):

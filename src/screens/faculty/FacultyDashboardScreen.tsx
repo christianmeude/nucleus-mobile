@@ -14,6 +14,7 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import { greetingForHour, initialsFor } from '../../utils/format';
+import { haptics } from '../../lib/haptics';
 
 type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -72,6 +73,7 @@ export const FacultyDashboardScreen = () => {
   );
 
   const onRefresh = useCallback(async () => {
+    haptics.light();
     setRefreshing(true);
     await load();
     setRefreshing(false);

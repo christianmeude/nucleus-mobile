@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { FileWarning, PenTool, CheckCircle2 } from 'lucide-react-native';
 import { FacultyWorkloadSummary } from '../../api/faculty';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
@@ -19,6 +19,23 @@ const CX = RADIUS + STROKE_WIDTH;
 const CY = RADIUS + STROKE_WIDTH;
 const SIZE = CX * 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
+const AnimatedNumber = ({ value, style }: { value: number; style: any }) => {
+  return (
+    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.Text
+        key={value}
+        entering={FadeInDown.springify().damping(18).stiffness(200)}
+        exiting={FadeOutUp.springify().damping(18).stiffness(200)}
+        style={[style, { position: 'absolute' }]}
+      >
+        {value}
+      </Animated.Text>
+      {/* Invisible text to maintain layout width/height */}
+      <Text style={[style, { opacity: 0 }]}>{value}</Text>
+    </View>
+  );
+};
 
 export const WorkloadChart = ({ summary, onSelectFilter }: WorkloadChartProps) => {
   const { theme } = useTheme();
@@ -99,7 +116,7 @@ export const WorkloadChart = ({ summary, onSelectFilter }: WorkloadChartProps) =
           </G>
         </Svg>
         <View style={styles.centerContent} pointerEvents="none">
-          <Text style={styles.centerNumber}>{actionRequired}</Text>
+          <AnimatedNumber value={actionRequired} style={styles.centerNumber} />
           <Text style={styles.centerLabel}>Pending</Text>
         </View>
       </Animated.View>
@@ -116,7 +133,7 @@ export const WorkloadChart = ({ summary, onSelectFilter }: WorkloadChartProps) =
               </View>
               <View style={styles.legendTextContainer}>
                 <Text style={styles.legendLabel}>{seg.label}</Text>
-                <Text style={styles.legendValue}>{seg.value}</Text>
+                <AnimatedNumber value={seg.value} style={styles.legendValue} />
               </View>
             </Pressable>
           </Animated.View>
