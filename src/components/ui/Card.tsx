@@ -4,12 +4,15 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { Surface } from './Surface';
 import { PressableScale } from './motion/PressableScale';
+import { useListEntranceActive } from '../ListEntranceItem';
 
+type SurfaceElevation = 'level0' | 'level1' | 'level2';
 
 interface CardProps {
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
-  padding?: keyof Theme['spacing'];
+  padding?: keyof Theme['spacing'] | 'none';
+  elevation?: SurfaceElevation;
 }
 
 type PressableCardProps = CardProps & {
@@ -18,11 +21,16 @@ type PressableCardProps = CardProps & {
   accessibilityLabel?: string;
 };
 
-export const Card = ({ children, style, padding = 'lg' }: CardProps) => {
+export const Card = ({ children, style, padding = 'lg', elevation }: CardProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
-    <Surface style={[styles.card, { padding: theme.spacing[padding] }, style]}>{children}</Surface>
+    <Surface
+      elevation={elevation}
+      style={[styles.card, padding !== 'none' && { padding: theme.spacing[padding] }, style]}
+    >
+      {children}
+    </Surface>
   );
 };
 
@@ -30,12 +38,17 @@ export const PressableCard = ({
   children,
   style,
   padding = 'lg',
+  elevation = 'level1',
   onPress,
   disabled,
   accessibilityLabel,
 }: PressableCardProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const isEntering = useListEntranceActive();
+
+  const activeElevation = isEntering ? 'level0' : elevation;
+
   return (
     <PressableScale
       accessibilityRole="button"
@@ -47,7 +60,10 @@ export const PressableCard = ({
         disabled ? styles.disabled : null,
       ]}
     >
-      <Surface style={[styles.card, { padding: theme.spacing[padding] }, style]}>
+      <Surface
+        elevation={activeElevation}
+        style={[styles.card, padding !== 'none' && { padding: theme.spacing[padding] }, style]}
+      >
         {children}
       </Surface>
     </PressableScale>

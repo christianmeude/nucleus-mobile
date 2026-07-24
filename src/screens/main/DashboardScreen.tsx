@@ -19,7 +19,7 @@ import {
   Screen,
   Skeleton,
 } from '../../components/ui';
-import { MyPaperCard } from '../../components/MyPaperCard';
+import { StandardPaperCard } from '../../components/StandardPaperCard';
 import { NotificationCard } from '../../components/NotificationCard';
 import { ACTION_STATUSES, ACTIVE_STATUSES } from '../../components/PaperStatusChip';
 
@@ -159,8 +159,9 @@ export const DashboardScreen = () => {
                 {upNextPaper ? (
                   <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Up Next</Text>
-                    <MyPaperCard
+                    <StandardPaperCard
                       paper={upNextPaper}
+                      variant="papers"
                       category={resolveCategoryName(upNextPaper.category, categoryNameById)}
                       onPress={() => navigation.navigate('ResearchDetail', { paperId: upNextPaper.id })}
                     />

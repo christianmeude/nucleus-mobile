@@ -41,7 +41,7 @@ import { buildCategoryNameById, resolveCategoryName } from '../../utils/category
 import { BrowseHeader } from './browse/BrowseHeader';
 import { BrowseHero } from './browse/BrowseHero';
 import { BrowseFilterBar } from './browse/BrowseFilterBar';
-import { BrowseListCard } from './browse/BrowseListCard';
+import { StandardPaperCard } from '../../components/StandardPaperCard';
 import { BrowseGridCell } from './browse/BrowseGridCell';
 
 type SortKey = 'newest' | 'most_viewed';
@@ -335,11 +335,12 @@ export const BrowseScreen = () => {
               onOpen={openDetail}
             />
           ) : (
-            <BrowseListCard
+            <StandardPaperCard
               paper={item}
+              variant="browse"
+              category={categoryName}
               categoryColor={categoryColor}
-              categoryName={categoryName}
-              onOpen={openDetail}
+              onPress={() => navigation.navigate('ResearchDetail', { paperId: item.id })}
             />
           )}
         </Animated.View>

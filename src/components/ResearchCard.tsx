@@ -1,7 +1,7 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Icon } from './ui/Icon';
 import { Eye, Download } from 'lucide-react-native';
-import { PressableCard } from './ui/Card';
+import { PressableCard, Surface } from './ui';
 import { ResearchPaper } from '../types/domain';
 import { formatDate, getPrimaryAuthorName, paperDate, statusToLabel } from '../utils/format';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
@@ -28,12 +28,12 @@ export const ResearchCard = ({
 }: ResearchCardProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const isEntering = useListEntranceActive();
   const authorName = getPrimaryAuthorName(paper);
   const authorInitial = authorName.trim().charAt(0).toUpperCase() || '?';
   const displayKeywords = (Array.isArray(keywords) ? keywords : []).filter(Boolean).slice(0, 4);
   const keywordTint = `${theme.colors.brand.accent}33`;
-  const cardShadow = isEntering ? theme.shadows.level0 : theme.shadows.level2;
+  const isEntering = useListEntranceActive();
+  const readOnlyShadow = isEntering ? 'level0' : 'level2';
 
   const body = (
     <View style={styles.content}>
@@ -101,23 +101,21 @@ export const ResearchCard = ({
       <PressableCard
         onPress={onPress}
         accessibilityLabel={`${a11yTitle}, ${statusLabel}`}
-        style={cardShadow}
+        elevation="level2"
       >
         {body}
       </PressableCard>
     );
   }
-  return <View style={[styles.readOnly, cardShadow]}>{body}</View>;
+  return <Surface elevation={readOnlyShadow} style={styles.readOnly}>{body}</Surface>;
 };
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({
     readOnly: {
-      backgroundColor: t.colors.surface.raised,
       borderRadius: t.radii.lg,
       borderCurve: 'continuous',
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: t.colors.border.subtle,
       padding: t.spacing.lg,
     },
     content: {

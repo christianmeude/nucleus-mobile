@@ -9,7 +9,7 @@ import { Category, PaperStatus, ResearchPaper } from '../../types/domain';
 import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
-import { MyPaperCard } from '../../components/MyPaperCard';
+import { StandardPaperCard } from '../../components/StandardPaperCard';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
 import {
   ACTION_STATUSES,
@@ -204,8 +204,9 @@ export const MyPapersScreen = () => {
         estimatedItemSize={104}
         renderItem={({ item, index }) => (
           <ListEntranceItem key={item.id} index={index}>
-            <MyPaperCard
+            <StandardPaperCard
               paper={item}
+              variant="papers"
               category={resolveCategoryName(item.category, categoryNameById)}
               onPress={() => navigation.navigate('ResearchDetail', { paperId: item.id })}
             />
