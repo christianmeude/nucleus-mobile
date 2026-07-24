@@ -9,13 +9,11 @@ import { FacultyPaperCard } from '../../components/FacultyPaperCard';
 import { facultyApi, type FacultyAssignedPaper, type FacultyWorkloadSummary } from '../../api/faculty';
 import { NotificationItem } from '../../types/domain';
 import { NotificationCard } from '../../components/NotificationCard';
-import { resolveCurrentFacultyProfile } from '../../api/faculty';
 import { RootStackParamList } from '../../navigation/types';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import { greetingForHour, initialsFor } from '../../utils/format';
-import { supabase } from '../../api/supabase';
 
 type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
 

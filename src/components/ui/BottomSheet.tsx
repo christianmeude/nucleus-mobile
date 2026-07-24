@@ -1,7 +1,9 @@
 import { ReactNode, useEffect, useState } from 'react';
 import {
   LayoutChangeEvent,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   useWindowDimensions,
@@ -105,7 +107,10 @@ export const BottomSheet = ({ visible, onClose, children }: BottomSheetProps) =>
 
   return (
     <Modal transparent visible={rendered} animationType="none" onRequestClose={onClose}>
-      <View style={styles.root}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+        style={styles.root}
+      >
         <AnimatedPressable
           style={[styles.backdrop, backdropStyle]}
           onPress={onClose}
@@ -123,7 +128,7 @@ export const BottomSheet = ({ visible, onClose, children }: BottomSheetProps) =>
           </GestureDetector>
           {children}
         </Animated.View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
