@@ -216,7 +216,7 @@ const makeStyles = (theme: Theme) =>
   StyleSheet.create({
     header: {
       paddingHorizontal: theme.spacing.lg,
-      paddingTop: theme.spacing.md,
+      paddingTop: theme.spacing.xl,
       paddingBottom: theme.spacing.sm,
       gap: theme.spacing.md,
       backgroundColor: theme.colors.surface.raised,

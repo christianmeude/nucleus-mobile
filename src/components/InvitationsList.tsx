@@ -146,6 +146,7 @@ const makeStyles = (t: Theme) =>
       flex: 1,
     },
     content: {
+      paddingHorizontal: t.spacing.lg,
       paddingTop: t.spacing.md,
       paddingBottom: t.spacing['3xl'] + 120,
       gap: t.spacing.md,

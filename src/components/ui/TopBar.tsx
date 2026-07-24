@@ -99,20 +99,24 @@ export const TopBar = ({
           </Animated.Text>
         )}
       </View>
-      <View style={styles.actions}>
+      <View style={styles.actions} pointerEvents="box-none">
         {leading}
         {!hideBell && (
           <Pressable
             ref={bellCoachmarkRef}
             onPress={() => navigation.navigate('Activity')}
-            style={({ pressed }) => [styles.bell, pressed && styles.bellPressed]}
+            style={({ pressed }) => [
+              styles.bell,
+              isHero && styles.bellHero,
+              pressed && styles.bellPressed,
+            ]}
             accessibilityRole="button"
             accessibilityLabel="Activity"
-            hitSlop={8}
+            hitSlop={16}
           >
             <Icon
               icon={Bell}
-              size={20}
+              size={24}
               color={isHero ? theme.colors.text.onBrand : theme.colors.text.secondary}
             />
             {count > 0 ? (
@@ -136,6 +140,7 @@ const makeStyles = (t: Theme) =>
       justifyContent: 'space-between',
       gap: t.spacing.md,
       minHeight: 44,
+      position: 'relative',
     },
     rowLarge: {
       alignItems: 'flex-start',
@@ -158,18 +163,26 @@ const makeStyles = (t: Theme) =>
       color: t.colors.text.primary,
     },
     actions: {
+      position: 'absolute',
+      right: 0,
+      top: 0,
       flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'flex-end',
       gap: t.spacing.sm,
+      zIndex: 10,
     },
     bell: {
-      width: 36,
-      height: 36,
+      width: 44,
+      height: 44,
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: t.radii.pill,
       borderCurve: 'continuous',
       backgroundColor: t.colors.surface.sunken,
+    },
+    bellHero: {
+      backgroundColor: 'rgba(255,255,255,.14)',
     },
     bellPressed: {
       opacity: 0.6,
