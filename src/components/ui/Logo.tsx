@@ -3,17 +3,22 @@ import { useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 
 interface LogoProps {
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
   showWordmark?: boolean;
+  wordmarkStyle?: any;
 }
 
 const sizeMap = {
   sm: { mark: 48, wordmark: 16, tracking: 3 },
   md: { mark: 64, wordmark: 20, tracking: 4 },
   lg: { mark: 96, wordmark: 24, tracking: 5 },
+  xl: { mark: 128, wordmark: 32, tracking: 6 },
+  xxl: { mark: 160, wordmark: 40, tracking: 7 },
 } as const;
 
-export const Logo = ({ size = 'md', showWordmark = true }: LogoProps) => {
+import Animated from 'react-native-reanimated';
+
+export const Logo = ({ size = 'md', showWordmark = true, wordmarkStyle }: LogoProps) => {
   const styles = useThemedStyles(makeStyles);
   const token = sizeMap[size];
 
@@ -26,11 +31,9 @@ export const Logo = ({ size = 'md', showWordmark = true }: LogoProps) => {
         accessibilityIgnoresInvertColors
       />
       {showWordmark ? (
-        <Text
-          style={[styles.wordmark, { fontSize: token.wordmark, letterSpacing: token.tracking }]}
-        >
+        <Animated.Text style={[styles.wordmark, { fontSize: token.wordmark, letterSpacing: token.tracking }, wordmarkStyle]}>
           NUCLEUS
-        </Text>
+        </Animated.Text>
       ) : null}
     </View>
   );

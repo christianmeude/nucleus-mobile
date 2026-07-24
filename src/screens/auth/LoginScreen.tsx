@@ -94,9 +94,9 @@ export const LoginScreen = () => {
   });
 
   const animatedLogoStyle = useAnimatedStyle(() => {
-    // Logo scales down and translates down substantially to sit above form
-    const scale = interpolate(keyboard.height.value, [0, 250], [1, 0.75], Extrapolation.CLAMP);
-    const translateY = interpolate(keyboard.height.value, [0, 250], [0, 80], Extrapolation.CLAMP);
+    // Logo scales down and translates down slightly
+    const scale = interpolate(keyboard.height.value, [0, 250], [1, 0.65], Extrapolation.CLAMP);
+    const translateY = interpolate(keyboard.height.value, [0, 250], [0, 40], Extrapolation.CLAMP);
     return {
       transform: [{ scale }, { translateY }],
     };
@@ -284,7 +284,7 @@ export const LoginScreen = () => {
 
             <View style={styles.header}>
               <Animated.View style={animatedLogoStyle}>
-                <Logo size="lg" showWordmark />
+                <Logo size="xxl" showWordmark wordmarkStyle={animatedWordmarkStyle} />
               </Animated.View>
             </View>
 
