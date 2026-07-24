@@ -7,7 +7,6 @@ import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
 import { RootStackParamList, StudentTabsParamList } from './types';
 import { LoginScreen } from '../screens/auth/LoginScreen';
-// import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
 import { UnsupportedRoleScreen } from '../screens/auth/UnsupportedRoleScreen';
 import { DashboardScreen } from '../screens/main/DashboardScreen';
 import { MyPapersScreen } from '../screens/main/MyPapersScreen';
@@ -89,7 +88,6 @@ export const AppNavigator = () => {
         {!user ? (
           <>
             <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-            {/* <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: false }} /> */}
           </>
         ) : user.role === 'student' ? (
           <>

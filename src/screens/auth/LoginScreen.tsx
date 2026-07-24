@@ -95,8 +95,8 @@ export const LoginScreen = () => {
 
   const animatedLogoStyle = useAnimatedStyle(() => {
     // Logo scales down and translates down substantially to sit above form
-    const scale = interpolate(keyboard.height.value, [0, 250], [1, 0.5625], Extrapolation.CLAMP);
-    const translateY = interpolate(keyboard.height.value, [0, 250], [0, 106.6], Extrapolation.CLAMP);
+    const scale = interpolate(keyboard.height.value, [0, 250], [1, 0.75], Extrapolation.CLAMP);
+    const translateY = interpolate(keyboard.height.value, [0, 250], [0, 80], Extrapolation.CLAMP);
     return {
       transform: [{ scale }, { translateY }],
     };
