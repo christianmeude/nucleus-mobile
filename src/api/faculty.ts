@@ -10,6 +10,7 @@ import {
 } from '../utils/annotation';
 import { supabase } from '../lib/supabase';
 import { NotificationItem, PaperStatus } from '../types/domain';
+import { apiCache, SWROptions } from '../utils/apiCache';
 
 // =============================================================================
 // Faculty API (read-only v1)
@@ -46,7 +47,8 @@ export interface FacultyAssignedPaper {
 export interface FacultyWorkloadSummary {
   pendingReview: number; // status === 'pending_faculty'
   revisionRequired: number; // status === 'revision_required'
-  approvedByYou: number; // advanced past the faculty stage
+  forwardedByYou: number; // advanced past faculty stage but not final (e.g. pending_dean)
+  approvedByYou: number; // final approved or published
   totalAssigned: number;
 }
 
@@ -387,6 +389,7 @@ async function resolveCurrentFacultyProfile() {
 export function summarizeFacultyWorkload(papers: FacultyAssignedPaper[]): FacultyWorkloadSummary {
   let pendingReview = 0;
   let revisionRequired = 0;
+  let forwardedByYou = 0;
   let approvedByYou = 0;
 
   for (const paper of papers) {
@@ -394,12 +397,14 @@ export function summarizeFacultyWorkload(papers: FacultyAssignedPaper[]): Facult
       pendingReview += 1;
     } else if (paper.status === 'revision_required') {
       revisionRequired += 1;
-    } else if (FACULTY_ADVANCED_STATUSES.has(String(paper.status))) {
+    } else if (paper.status === 'approved' || paper.status === 'published') {
       approvedByYou += 1;
+    } else if (FACULTY_ADVANCED_STATUSES.has(String(paper.status))) {
+      forwardedByYou += 1;
     }
   }
 
-  return { pendingReview, revisionRequired, approvedByYou, totalAssigned: papers.length };
+  return { pendingReview, revisionRequired, forwardedByYou, approvedByYou, totalAssigned: papers.length };
 }
 
 // =============================================================================
@@ -612,111 +617,142 @@ export const facultyApi = {
    * Relies on the deployed research_papers SELECT policy
    * (faculty_id = email-resolved public.users.id) — no RPC.
    */
-  getAssignedPapers: async (): Promise<FacultyAssignedPaper[]> => {
-    const profile = await resolveCurrentFacultyProfile();
+  getAssignedPapers: async (options?: SWROptions<FacultyAssignedPaper[]>): Promise<FacultyAssignedPaper[]> => {
+    return apiCache.fetchWithSWR(
+      'faculty:assigned',
+      async () => {
+        const profile = await resolveCurrentFacultyProfile();
 
-    const { data, error } = await supabase
-      .from('research_papers')
-      .select(FACULTY_PAPER_SELECT)
-      .eq('faculty_id', profile.id);
+        const { data, error } = await supabase
+          .from('research_papers')
+          .select(FACULTY_PAPER_SELECT)
+          .eq('faculty_id', profile.id);
 
-    if (error) {
-      throw new Error(error.message || 'Unable to load assigned papers.');
-    }
+        if (error) {
+          throw new Error(error.message || 'Unable to load assigned papers.');
+        }
 
-    const rows = Array.isArray(data) ? (data as unknown as FacultyPaperRow[]) : [];
-    return rows.map(toFacultyAssignedPaper).sort((left, right) => paperSortTime(right) - paperSortTime(left));
+        const rows = Array.isArray(data) ? (data as unknown as FacultyPaperRow[]) : [];
+        return rows.map(toFacultyAssignedPaper).sort((left, right) => paperSortTime(right) - paperSortTime(left));
+      },
+      options
+    );
   },
 
-  getUpNextPaper: async (): Promise<FacultyAssignedPaper | null> => {
-    const profile = await resolveCurrentFacultyProfile();
-    
-    const { data, error } = await supabase
-      .from('research_papers')
-      .select(FACULTY_PAPER_SELECT)
-      .eq('faculty_id', profile.id)
-      .in('status', ['pending_faculty', 'revision_required'])
-      .order('submission_date', { ascending: true })
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle();
+  getUpNextPaper: async (options?: SWROptions<FacultyAssignedPaper | null>): Promise<FacultyAssignedPaper | null> => {
+    return apiCache.fetchWithSWR(
+      'faculty:upNext',
+      async () => {
+        const profile = await resolveCurrentFacultyProfile();
+        
+        const { data, error } = await supabase
+          .from('research_papers')
+          .select(FACULTY_PAPER_SELECT)
+          .eq('faculty_id', profile.id)
+          .in('status', ['pending_faculty', 'revision_required'])
+          .order('submission_date', { ascending: true })
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle();
 
-    if (error) {
-      throw new Error(error.message || 'Unable to load up-next paper.');
-    }
+        if (error) {
+          throw new Error(error.message || 'Unable to load up-next paper.');
+        }
 
-    return data ? toFacultyAssignedPaper(data as unknown as FacultyPaperRow) : null;
+        return data ? toFacultyAssignedPaper(data as unknown as FacultyPaperRow) : null;
+      },
+      options
+    );
   },
 
-  getDashboardSummary: async (): Promise<FacultyWorkloadSummary> => {
-    const profile = await resolveCurrentFacultyProfile();
-    
-    const { data, error } = await supabase
-      .from('research_papers')
-      .select('status')
-      .eq('faculty_id', profile.id);
+  getDashboardSummary: async (options?: SWROptions<FacultyWorkloadSummary>): Promise<FacultyWorkloadSummary> => {
+    return apiCache.fetchWithSWR(
+      'faculty:summary',
+      async () => {
+        const profile = await resolveCurrentFacultyProfile();
+        
+        const { data, error } = await supabase
+          .from('research_papers')
+          .select('status')
+          .eq('faculty_id', profile.id);
 
-    if (error) {
-      throw new Error(error.message || 'Unable to load dashboard summary.');
-    }
+        if (error) {
+          throw new Error(error.message || 'Unable to load dashboard summary.');
+        }
 
-    const rows = Array.isArray(data) ? data : [];
-    let pendingReview = 0;
-    let revisionRequired = 0;
-    let approvedByYou = 0;
+        const rows = Array.isArray(data) ? data : [];
+        let pendingReview = 0;
+        let revisionRequired = 0;
+        let forwardedByYou = 0;
+        let approvedByYou = 0;
 
-    rows.forEach(row => {
-      if (row.status === 'pending_faculty') pendingReview++;
-      else if (row.status === 'revision_required') revisionRequired++;
-      else if (FACULTY_ADVANCED_STATUSES.has(row.status)) approvedByYou++;
-    });
+        rows.forEach(row => {
+          if (row.status === 'pending_faculty') pendingReview++;
+          else if (row.status === 'revision_required') revisionRequired++;
+          else if (row.status === 'approved' || row.status === 'published') approvedByYou++;
+          else if (FACULTY_ADVANCED_STATUSES.has(row.status)) forwardedByYou++;
+        });
 
-    return {
-      pendingReview,
-      revisionRequired,
-      approvedByYou,
-      totalAssigned: rows.length,
-    };
+        return {
+          pendingReview,
+          revisionRequired,
+          forwardedByYou,
+          approvedByYou,
+          totalAssigned: rows.length,
+        };
+      },
+      options
+    );
   },
 
   getReviewQueue: async (
     page: number = 0,
     limit: number = 20,
-    filter: 'needs_review' | 'revisions' | 'approved' | 'all' = 'needs_review',
-    search?: string
+    filter: 'needs_review' | 'revisions' | 'forwarded' | 'approved' | 'all' = 'needs_review',
+    search?: string,
+    options?: SWROptions<FacultyAssignedPaper[]>
   ): Promise<FacultyAssignedPaper[]> => {
-    const profile = await resolveCurrentFacultyProfile();
-    
-    let query = supabase.from('research_papers').select(FACULTY_PAPER_SELECT).eq('faculty_id', profile.id);
-    
-    if (filter === 'needs_review') {
-      query = query.in('status', ['pending_faculty', 'revision_required']);
-    } else if (filter === 'revisions') {
-      query = query.eq('status', 'revision_required');
-    } else if (filter === 'approved') {
-      query = query.in('status', Array.from(FACULTY_ADVANCED_STATUSES));
-    }
-    
-    if (search && search.trim()) {
-      const q = search.trim();
-      query = query.or(`title.ilike.%${q}%,abstract.ilike.%${q}%`);
-    }
+    const cacheKey = `faculty:queue:${page}:${limit}:${filter}:${search || ''}`;
+    return apiCache.fetchWithSWR(
+      cacheKey,
+      async () => {
+        const profile = await resolveCurrentFacultyProfile();
+        
+        let query = supabase.from('research_papers').select(FACULTY_PAPER_SELECT).eq('faculty_id', profile.id);
+        
+        if (filter === 'needs_review') {
+          query = query.in('status', ['pending_faculty', 'revision_required']);
+        } else if (filter === 'revisions') {
+          query = query.eq('status', 'revision_required');
+        } else if (filter === 'forwarded') {
+          query = query.in('status', ['pending_dean', 'pending_program_chair', 'pending_editor', 'pending_admin']);
+        } else if (filter === 'approved') {
+          query = query.in('status', ['approved', 'published']);
+        }
+        
+        if (search && search.trim()) {
+          const q = search.trim();
+          query = query.or(`title.ilike.%${q}%,abstract.ilike.%${q}%`);
+        }
 
-    // Performance fix: remove nullsFirst: false to allow b-tree index usage
-    query = query.order('submission_date', { ascending: false })
-                 .order('created_at', { ascending: false });
+        // Performance fix: remove nullsFirst: false to allow b-tree index usage
+        query = query.order('submission_date', { ascending: false })
+                     .order('created_at', { ascending: false });
 
-    const from = page * limit;
-    query = query.range(from, from + limit - 1);
+        const from = page * limit;
+        query = query.range(from, from + limit - 1);
 
-    const { data, error } = await query;
+        const { data, error } = await query;
 
-    if (error) {
-      throw new Error(error.message || 'Unable to load the review queue.');
-    }
+        if (error) {
+          throw new Error(error.message || 'Unable to load the review queue.');
+        }
 
-    const rows = Array.isArray(data) ? (data as unknown as FacultyPaperRow[]) : [];
-    return rows.map(toFacultyAssignedPaper);
+        const rows = Array.isArray(data) ? (data as unknown as FacultyPaperRow[]) : [];
+        return rows.map(toFacultyAssignedPaper);
+      },
+      options
+    );
   },
 
   /** Full review detail for one assigned paper (metadata + workflow history). RLS-scoped. */
@@ -813,6 +849,8 @@ export const facultyApi = {
       throw new Error(error.message || 'Unable to approve the paper.');
     }
 
+    apiCache.invalidate('faculty:');
+    apiCache.invalidate('research:');
     return String(data ?? '');
   },
 
@@ -829,6 +867,8 @@ export const facultyApi = {
       throw new Error(error.message || 'Unable to request revision.');
     }
 
+    apiCache.invalidate('faculty:');
+    apiCache.invalidate('research:');
     return String(data ?? 'revision_required');
   },
 
@@ -845,6 +885,8 @@ export const facultyApi = {
       throw new Error(error.message || 'Unable to reject the paper.');
     }
 
+    apiCache.invalidate('faculty:');
+    apiCache.invalidate('research:');
     return String(data ?? 'rejected');
   },
 
@@ -895,24 +937,32 @@ export const facultyApi = {
       throw new Error(error.message || 'Unable to save the annotation.');
     }
 
+    apiCache.invalidate('faculty:');
+    apiCache.invalidate('research:');
     return String(data ?? '');
   },
 
   /** Published papers, newest first — same Repository content students browse. RLS-scoped. */
-  getPublishedPapers: async (): Promise<FacultyAssignedPaper[]> => {
-    await resolveCurrentFacultyProfile();
+  getPublishedPapers: async (options?: SWROptions<FacultyAssignedPaper[]>): Promise<FacultyAssignedPaper[]> => {
+    return apiCache.fetchWithSWR(
+      'faculty:published',
+      async () => {
+        await resolveCurrentFacultyProfile();
 
-    const { data, error } = await supabase
-      .from('research_papers')
-      .select(FACULTY_PAPER_SELECT)
-      .in('status', Array.from(PUBLISHED_STATUSES));
+        const { data, error } = await supabase
+          .from('research_papers')
+          .select(FACULTY_PAPER_SELECT)
+          .in('status', Array.from(PUBLISHED_STATUSES));
 
-    if (error) {
-      throw new Error(error.message || 'Unable to load published papers.');
-    }
+        if (error) {
+          throw new Error(error.message || 'Unable to load published papers.');
+        }
 
-    const rows = Array.isArray(data) ? (data as unknown as FacultyPaperRow[]) : [];
-    return rows.map(toFacultyAssignedPaper).sort((left, right) => paperSortTime(right) - paperSortTime(left));
+        const rows = Array.isArray(data) ? (data as unknown as FacultyPaperRow[]) : [];
+        return rows.map(toFacultyAssignedPaper).sort((left, right) => paperSortTime(right) - paperSortTime(left));
+      },
+      options
+    );
   },
 
   /** The signed-in faculty member's notifications, newest first. RLS-scoped (own user_id only). */

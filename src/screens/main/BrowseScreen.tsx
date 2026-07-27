@@ -15,6 +15,7 @@ import { Icon } from '../../components/ui/Icon';
 import { CloudOff, Library, Check } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { LegendList } from '@legendapp/list/react-native';
+import { ListEntranceItem } from '../../components/ListEntranceItem';
 
 import { researchApi } from '../../api/research';
 import { useAuth } from '../../context/AuthContext';
@@ -100,7 +101,7 @@ export const BrowseScreen = () => {
   const { hasSearchedOnce, loaded: hasSearchedOnceLoaded, markSearchedOnce } = useHasSearchedOnce();
 
   const loadData = useCallback(async (silent = false) => {
-    if (!silent) {
+    if (!silent && papers.length === 0) {
       setLoading(true);
     } else {
       setRefreshing(true);
@@ -108,8 +109,8 @@ export const BrowseScreen = () => {
 
     try {
       const [publishedRows, categoryRows] = await Promise.all([
-        researchApi.getPublishedPapers(),
-        researchApi.getCategories(),
+        researchApi.getPublishedPapers(undefined, { forceRefresh: silent }),
+        researchApi.getCategories({ forceRefresh: silent }),
       ]);
 
       setPapers(publishedRows);
@@ -121,7 +122,7 @@ export const BrowseScreen = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [papers.length]);
 
   useEffect(() => {
     loadData();
@@ -327,28 +328,30 @@ export const BrowseScreen = () => {
   }, [loadData]);
 
   const renderItem = useCallback(
-    ({ item }: { item: ResearchPaper }) => {
+    ({ item, index }: { item: ResearchPaper; index: number }) => {
       const categoryColor = colorForCategory(item.category);
       const categoryName = resolveCategoryName(item.category, categoryNameById);
       return (
-        <Animated.View layout={reducedMotion ? undefined : LinearTransition.springify()}>
-          {viewMode === 'grid' ? (
-            <BrowseGridCell
-              paper={item}
-              category={categoryName}
-              categoryColor={categoryColor}
-              onOpen={openDetail}
-            />
-          ) : (
-            <StandardPaperCard
-              paper={item}
-              variant="browse"
-              category={categoryName}
-              categoryColor={categoryColor}
-              onPress={() => openDetail(item.id)}
-            />
-          )}
-        </Animated.View>
+        <ListEntranceItem index={index}>
+          <Animated.View layout={reducedMotion ? undefined : LinearTransition.springify()}>
+            {viewMode === 'grid' ? (
+              <BrowseGridCell
+                paper={item}
+                category={categoryName}
+                categoryColor={categoryColor}
+                onOpen={openDetail}
+              />
+            ) : (
+              <StandardPaperCard
+                paper={item}
+                variant="browse"
+                category={categoryName}
+                categoryColor={categoryColor}
+                onPress={() => openDetail(item.id)}
+              />
+            )}
+          </Animated.View>
+        </ListEntranceItem>
       );
     },
     [viewMode, colorForCategory, categoryNameById, openDetail, reducedMotion],
@@ -440,6 +443,7 @@ export const BrowseScreen = () => {
           <Animated.View style={[styles.resultsWrap, resultsStyle]}>
             <LegendList
               recycleItems={true}
+              drawDistance={1500}
               style={styles.scroll}
               contentContainerStyle={styles.resultsContent}
               data={listData}

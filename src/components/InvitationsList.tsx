@@ -35,7 +35,7 @@ export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
   const [error, setError] = useState('');
 
   const loadData = useCallback(async (silent = false) => {
-    if (!silent) {
+    if (!silent && invitations.length === 0) {
       setLoading(true);
     } else {
       setRefreshing(true);
@@ -111,6 +111,7 @@ export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
       onScroll={onScroll}
       scrollEventThrottle={16}
       recycleItems={true}
+      drawDistance={1500}
       style={styles.container}
       contentContainerStyle={styles.content}
       refreshControl={

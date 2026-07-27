@@ -21,6 +21,7 @@ import {
 } from '../../components/ui';
 import { StandardPaperCard } from '../../components/StandardPaperCard';
 import { NotificationCard } from '../../components/NotificationCard';
+import { ListEntranceItem } from '../../components/ListEntranceItem';
 import { ACTION_STATUSES, ACTIVE_STATUSES } from '../../components/PaperStatusChip';
 
 const ASSEMBLE = { distance: 30, duration: 460, fromScale: 0.94 };
@@ -184,16 +185,17 @@ export const DashboardScreen = () => {
                   <View style={[styles.section, styles.activitySection]}>
                     <Text style={styles.sectionTitle}>Recent Activity</Text>
                     <View style={styles.activityList}>
-                      {notifications.map((item) => (
-                        <NotificationCard
-                          key={item.id}
-                          notification={item}
-                          onPress={() => {
-                            if (item.research_id) {
-                              navigation.navigate('ResearchDetail', { paperId: item.research_id });
-                            }
-                          }}
-                        />
+                      {notifications.map((item, index) => (
+                        <ListEntranceItem key={item.id} index={index}>
+                          <NotificationCard
+                            notification={item}
+                            onPress={() => {
+                              if (item.research_id) {
+                                navigation.navigate('ResearchDetail', { paperId: item.research_id });
+                              }
+                            }}
+                          />
+                        </ListEntranceItem>
                       ))}
                     </View>
                   </View>

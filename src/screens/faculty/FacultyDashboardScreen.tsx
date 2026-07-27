@@ -9,6 +9,7 @@ import { FacultyPaperCard } from '../../components/FacultyPaperCard';
 import { facultyApi, type FacultyAssignedPaper, type FacultyWorkloadSummary } from '../../api/faculty';
 import { NotificationItem } from '../../types/domain';
 import { NotificationCard } from '../../components/NotificationCard';
+import { ListEntranceItem } from '../../components/ListEntranceItem';
 import { FacultyTabNavigationProp } from '../../navigation/types';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
@@ -119,9 +120,10 @@ export const FacultyDashboardScreen = () => {
             <WorkloadChart
               summary={summary}
               onSelectFilter={(filter) => {
-                let initialFilter: 'needs_review' | 'revisions' | 'approved' | 'all' = 'all';
+                let initialFilter: 'needs_review' | 'revisions' | 'forwarded' | 'approved' | 'all' = 'all';
                 if (filter === 'needs_review') initialFilter = 'needs_review';
                 if (filter === 'revisions') initialFilter = 'revisions';
+                if (filter === 'forwarded') initialFilter = 'forwarded';
                 if (filter === 'approved') initialFilter = 'approved';
                 navigation.navigate('FacultyReview', { initialFilter });
               }}
@@ -161,16 +163,17 @@ export const FacultyDashboardScreen = () => {
                 <View style={[styles.section, styles.activitySection]}>
                   <Text style={styles.sectionTitle}>Recent Activity</Text>
                   <View style={styles.activityList}>
-                    {notifications.map((item) => (
-                      <NotificationCard
-                         key={item.id}
-                         notification={item}
-                         onPress={() => {
-                           if (item.research_id) {
-                             navigation.navigate('FacultyReviewDetail', { paperId: item.research_id });
-                           }
-                         }}
-                      />
+                    {notifications.map((item, index) => (
+                      <ListEntranceItem key={item.id} index={index}>
+                        <NotificationCard
+                           notification={item}
+                           onPress={() => {
+                             if (item.research_id) {
+                               navigation.navigate('FacultyReviewDetail', { paperId: item.research_id });
+                             }
+                           }}
+                        />
+                      </ListEntranceItem>
                     ))}
                   </View>
                 </View>

@@ -64,7 +64,7 @@ export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
 
   const loadData = useCallback(
     async (silent = false) => {
-      if (!silent) {
+      if (!silent && notifications.length === 0) {
         setLoading(true);
       } else {
         setRefreshing(true);
@@ -196,6 +196,7 @@ export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
       onScroll={onScroll}
       scrollEventThrottle={16}
       recycleItems={true}
+      drawDistance={1500}
       stickySectionHeadersEnabled={true}
       style={styles.container}
       contentContainerStyle={styles.content}

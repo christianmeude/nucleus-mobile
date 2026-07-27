@@ -1,6 +1,7 @@
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { FacultyQueueFilter } from '../screens/faculty/facultyStatus';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -23,7 +24,7 @@ export type StudentTabsParamList = {
 
 export type FacultyTabsParamList = {
   FacultyDashboard: undefined;
-  FacultyReview: { initialFilter?: 'needs_review' | 'revisions' | 'approved' | 'all' } | undefined;
+  FacultyReview: { initialFilter?: FacultyQueueFilter } | undefined;
   FacultyRepository: undefined;
   FacultyNotifications: undefined;
   FacultyProfile: undefined;

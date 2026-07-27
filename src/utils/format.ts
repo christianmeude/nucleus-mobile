@@ -37,27 +37,59 @@ export const greetingForHour = (hour: number) => {
   return 'Good evening,';
 };
 
+const formatDateCache = new Map<string, string>();
+const formatMonthYearCache = new Map<string, string>();
+const timestampCache = new Map<string, number>();
+
+function getMemoized(cache: Map<string, string>, key: string, compute: () => string): string {
+  const cached = cache.get(key);
+  if (cached !== undefined) return cached;
+  const result = compute();
+  if (cache.size >= 500) {
+    const firstKey = cache.keys().next().value;
+    if (firstKey !== undefined) cache.delete(firstKey);
+  }
+  cache.set(key, result);
+  return result;
+}
+
+function getMemoizedTimestamp(value: string): number {
+  const cached = timestampCache.get(value);
+  if (cached !== undefined) return cached;
+  const ts = new Date(value).getTime();
+  if (timestampCache.size >= 500) {
+    const firstKey = timestampCache.keys().next().value;
+    if (firstKey !== undefined) timestampCache.delete(firstKey);
+  }
+  timestampCache.set(value, ts);
+  return ts;
+}
+
 export const formatDate = (value?: string | null) => {
   if (!value) return 'N/A';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'N/A';
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: '2-digit',
-    year: 'numeric',
+  return getMemoized(formatDateCache, value, () => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric',
+    });
   });
 };
 
 export const formatMonthYear = (value?: string | null) => {
   if (!value) return '—';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  return getMemoized(formatMonthYearCache, value, () => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  });
 };
 
 export const formatRelativeTime = (value?: string | null) => {
   if (!value) return 'just now';
-  const target = new Date(value).getTime();
+  const target = getMemoizedTimestamp(value);
   if (Number.isNaN(target)) return 'just now';
   const diff = Math.max(0, Date.now() - target);
   const minutes = Math.floor(diff / (1000 * 60));

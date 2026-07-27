@@ -1,8 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
-import Animated, { FadeIn, FadeInDown, FadeOutUp } from 'react-native-reanimated';
-import { FileWarning, PenTool, CheckCircle2 } from 'lucide-react-native';
+import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
+import { FileWarning, PenTool, CheckCircle2, Send } from 'lucide-react-native';
 import { FacultyWorkloadSummary } from '../../api/faculty';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
@@ -10,7 +10,7 @@ import { Icon } from './Icon';
 
 interface WorkloadChartProps {
   summary: FacultyWorkloadSummary;
-  onSelectFilter?: (filter: 'needs_review' | 'revisions' | 'approved') => void;
+  onSelectFilter?: (filter: 'needs_review' | 'revisions' | 'forwarded' | 'approved') => void;
 }
 
 const RADIUS = 56;
@@ -25,8 +25,8 @@ const AnimatedNumber = ({ value, style }: { value: number; style: any }) => {
     <View style={{ alignItems: 'center', justifyContent: 'center' }}>
       <Animated.Text
         key={value}
-        entering={FadeInDown.springify().damping(18).stiffness(200)}
-        exiting={FadeOutUp.springify().damping(18).stiffness(200)}
+        entering={FadeIn.duration(250)}
+        exiting={FadeOut.duration(150)}
         style={[style, { position: 'absolute' }]}
       >
         {value}
@@ -50,15 +50,22 @@ export const WorkloadChart = ({ summary, onSelectFilter }: WorkloadChartProps) =
       key: 'needs_review' as const,
       label: 'Needs Review',
       value: summary.pendingReview,
-      color: theme.colors.state.warning,
+      color: theme.colors.brand.accent,
       icon: FileWarning,
     },
     {
       key: 'revisions' as const,
       label: 'In Revision',
       value: summary.revisionRequired,
-      color: theme.colors.brand.accent,
+      color: theme.colors.state.warning,
       icon: PenTool,
+    },
+    {
+      key: 'forwarded' as const,
+      label: 'Forwarded',
+      value: summary.forwardedByYou,
+      color: theme.colors.brand.primary,
+      icon: Send,
     },
     {
       key: 'approved' as const,
@@ -73,7 +80,7 @@ export const WorkloadChart = ({ summary, onSelectFilter }: WorkloadChartProps) =
 
   return (
     <View style={styles.container}>
-      <Animated.View style={styles.chartWrapper} entering={FadeIn.duration(600).springify()}>
+      <Animated.View style={styles.chartWrapper} entering={FadeIn.duration(400)}>
         <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
           <G rotation="-90" origin={`${CX}, ${CY}`}>
             {total === 0 ? (

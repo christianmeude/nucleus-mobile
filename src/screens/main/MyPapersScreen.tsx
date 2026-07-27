@@ -48,15 +48,15 @@ export const MyPapersScreen = () => {
   const [error, setError] = useState('');
 
   const loadData = useCallback(async (silent = false) => {
-    if (!silent) {
+    if (!silent && papers.length === 0) {
       setLoading(true);
     } else {
       setRefreshing(true);
     }
 
     const [papersResult, categoriesResult] = await Promise.allSettled([
-      researchApi.getMyPapers(),
-      researchApi.getCategories(),
+      researchApi.getMyPapers({ forceRefresh: silent }),
+      researchApi.getCategories({ forceRefresh: silent }),
     ]);
 
     if (papersResult.status === 'fulfilled') {
@@ -71,7 +71,7 @@ export const MyPapersScreen = () => {
 
     setLoading(false);
     setRefreshing(false);
-  }, []);
+  }, [papers.length]);
 
   useEffect(() => {
     loadData();
@@ -192,6 +192,8 @@ export const MyPapersScreen = () => {
 
       <LegendList
         recycleItems={true}
+        drawDistance={1500}
+        maintainScrollAtEnd={false}
         style={styles.scroll}
         contentContainerStyle={styles.content}
         refreshControl={

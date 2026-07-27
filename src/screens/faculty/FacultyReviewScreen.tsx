@@ -64,13 +64,15 @@ export const FacultyReviewScreen = () => {
     try {
       if (pageNum === 0) {
         setError(null);
-        if (!refreshing && pageNum === 0) setPapers(null); // Show skeleton on fresh load
+        if (!refreshing && pageNum === 0 && !papers) setPapers(null); // Show skeleton only if no existing papers
       } else {
         setLoadingMore(true);
       }
 
       const limit = 20;
-      const data = await facultyApi.getReviewQueue(pageNum, limit, currentFilter, currentSearch);
+      const data = await facultyApi.getReviewQueue(pageNum, limit, currentFilter, currentSearch, {
+        forceRefresh: refreshing,
+      });
       
       if (pageNum === 0) {
         setPapers(data);
@@ -85,7 +87,7 @@ export const FacultyReviewScreen = () => {
     } finally {
       setLoadingMore(false);
     }
-  }, [refreshing, filter, debouncedSearch]);
+  }, [refreshing, filter, debouncedSearch, papers]);
 
   // Load when filter or debounced search changes
   useEffect(() => {
@@ -183,6 +185,7 @@ export const FacultyReviewScreen = () => {
 
       <LegendList
         recycleItems={true}
+        drawDistance={1500}
         onScroll={onScroll}
         scrollEventThrottle={16}
         contentContainerStyle={styles.content}

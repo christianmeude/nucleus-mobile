@@ -14,6 +14,7 @@ jest.mock('../../lib/supabase', () => {
 
 import { supabase } from '../../lib/supabase';
 import { facultyApi, summarizeFacultyWorkload } from '../faculty';
+import { apiCache } from '../../utils/apiCache';
 import {
   createQueryBuilder,
   MockSupabaseClient,
@@ -39,6 +40,7 @@ function paperRow(overrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   jest.resetAllMocks();
+  apiCache.clear();
   mockSupabase.from.mockImplementation(() => createQueryBuilder(queryResult()));
   mockSupabase.storage.from.mockImplementation(() => ({
     createSignedUrl: jest.fn<() => Promise<any>>().mockResolvedValue(queryResult()),
@@ -52,6 +54,7 @@ describe('summarizeFacultyWorkload (pure)', () => {
     const summary = summarizeFacultyWorkload([
       { status: 'pending_faculty' } as any,
       { status: 'revision_required' } as any,
+      { status: 'pending_dean' } as any,
       { status: 'approved' } as any,
       { status: 'published' } as any,
       { status: 'draft' } as any,
@@ -60,8 +63,9 @@ describe('summarizeFacultyWorkload (pure)', () => {
     expect(summary).toEqual({
       pendingReview: 1,
       revisionRequired: 1,
+      forwardedByYou: 1,
       approvedByYou: 2,
-      totalAssigned: 5,
+      totalAssigned: 6,
     });
   });
 });

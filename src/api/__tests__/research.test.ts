@@ -18,6 +18,7 @@ jest.mock('../../lib/supabase', () => {
 
 import { supabase } from '../../lib/supabase';
 import { researchApi, submitApi } from '../research';
+import { apiCache } from '../../utils/apiCache';
 import {
   createQueryBuilder,
   MockSupabaseClient,
@@ -47,6 +48,7 @@ function defaultStorageBucket() {
 
 beforeEach(() => {
   jest.resetAllMocks();
+  apiCache.clear();
   mockSupabase.from.mockImplementation(() => createQueryBuilder(queryResult()));
   mockSupabase.storage.from.mockImplementation(() => defaultStorageBucket());
 });

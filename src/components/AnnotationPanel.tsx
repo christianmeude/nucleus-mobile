@@ -2,6 +2,7 @@ import React, { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Icon } from './ui/Icon';
 import { BottomSheet } from './ui';
+import { ListEntranceItem } from './ListEntranceItem';
 import { PaperAnnotation } from '../api/research';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
@@ -151,22 +152,24 @@ export const AnnotationPanel = ({
         {annotations.length === 0 ? (
           <Text style={styles.empty}>No annotations for this paper.</Text>
         ) : (
-          sortedKeys.map((key) => (
-            <View key={String(key)} style={styles.group}>
-              <Text style={styles.groupHeader}>
-                {key === 'general' ? 'General Comments' : `Page ${key}`}
-              </Text>
-              {threadedGroups.get(key)!.map((thread) => (
-                <View key={thread.annotation.id} style={styles.threadContainer}>
-                  {renderAnnotationItem(thread.annotation)}
-                  {thread.replies.length > 0 ? (
-                    <View style={styles.repliesContainer}>
-                      {thread.replies.map((reply) => renderAnnotationItem(reply, true))}
-                    </View>
-                  ) : null}
-                </View>
-              ))}
-            </View>
+          sortedKeys.map((key, index) => (
+            <ListEntranceItem key={String(key)} index={index}>
+              <View style={styles.group}>
+                <Text style={styles.groupHeader}>
+                  {key === 'general' ? 'General Comments' : `Page ${key}`}
+                </Text>
+                {threadedGroups.get(key)!.map((thread) => (
+                  <View key={thread.annotation.id} style={styles.threadContainer}>
+                    {renderAnnotationItem(thread.annotation)}
+                    {thread.replies.length > 0 ? (
+                      <View style={styles.repliesContainer}>
+                        {thread.replies.map((reply) => renderAnnotationItem(reply, true))}
+                      </View>
+                    ) : null}
+                  </View>
+                ))}
+              </View>
+            </ListEntranceItem>
           ))
         )}
       </ScrollView>

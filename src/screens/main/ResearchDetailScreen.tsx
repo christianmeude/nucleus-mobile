@@ -18,6 +18,7 @@ import { Category, ResearchPaper, WorkflowEntry } from '../../types/domain';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { motion, type Theme } from '../../theme';
+import { ListEntranceItem } from '../../components/ListEntranceItem';
 import {
   EmptyState,
   Icon,
@@ -355,31 +356,32 @@ export const ResearchDetailScreen = () => {
             <View style={styles.section}>
               <Text style={styles.sectionLabel}>Related papers</Text>
               <View style={styles.relatedList}>
-                {related.map((item) => {
+                {related.map((item, index) => {
                   const relatedCategory = resolveCategoryName(item.category, categoryNameById);
                   const relatedYear = yearOf(item);
                   return (
-                    <PressableScale
-                      key={item.id}
-                      style={styles.relatedRow}
-                      onPress={() => navigation.push(route.name, { paperId: item.id })}
-                      accessibilityRole="button"
-                      accessibilityLabel={item.title || 'Untitled paper'}
-                    >
-                      <View style={styles.relatedMark} />
-                      <View style={styles.relatedBody}>
-                        {relatedCategory ? (
-                          <Text style={styles.relatedCat}>{relatedCategory}</Text>
-                        ) : null}
-                        <Text style={styles.relatedTitle} numberOfLines={2}>
-                          {item.title}
-                        </Text>
-                        <Text style={styles.relatedAuthor} numberOfLines={1}>
-                          {getPrimaryAuthorName(item)}
-                          {relatedYear ? `  ·  ${relatedYear}` : ''}
-                        </Text>
-                      </View>
-                    </PressableScale>
+                    <ListEntranceItem key={item.id} index={index}>
+                      <PressableScale
+                        style={styles.relatedRow}
+                        onPress={() => navigation.push(route.name, { paperId: item.id })}
+                        accessibilityRole="button"
+                        accessibilityLabel={item.title || 'Untitled paper'}
+                      >
+                        <View style={styles.relatedMark} />
+                        <View style={styles.relatedBody}>
+                          {relatedCategory ? (
+                            <Text style={styles.relatedCat}>{relatedCategory}</Text>
+                          ) : null}
+                          <Text style={styles.relatedTitle} numberOfLines={2}>
+                            {item.title}
+                          </Text>
+                          <Text style={styles.relatedAuthor} numberOfLines={1}>
+                            {getPrimaryAuthorName(item)}
+                            {relatedYear ? `  ·  ${relatedYear}` : ''}
+                          </Text>
+                        </View>
+                      </PressableScale>
+                    </ListEntranceItem>
                   );
                 })}
               </View>
@@ -394,26 +396,27 @@ export const ResearchDetailScreen = () => {
               ) : (
                 <View style={styles.workflowList}>
                   {workflow.map((entry, index) => (
-                    <View
-                      key={entry.id}
-                      style={[styles.workflowRow, index === 0 ? styles.workflowRowCurrent : null]}
-                    >
-                      {index === 0 ? <View style={styles.workflowBar} /> : null}
-                      <View style={styles.workflowBody}>
-                        <Text style={styles.workflowName}>
-                          {statusToLabel(entry.status) || entry.action_type || 'Updated'}
+                    <ListEntranceItem key={entry.id} index={index}>
+                      <View
+                        style={[styles.workflowRow, index === 0 ? styles.workflowRowCurrent : null]}
+                      >
+                        {index === 0 ? <View style={styles.workflowBar} /> : null}
+                        <View style={styles.workflowBody}>
+                          <Text style={styles.workflowName}>
+                            {statusToLabel(entry.status) || entry.action_type || 'Updated'}
+                          </Text>
+                          {entry.reviewer_role ? (
+                            <Text style={styles.workflowMeta}>Reviewer: {entry.reviewer_role}</Text>
+                          ) : null}
+                          {entry.comments ? (
+                            <Text style={styles.workflowComment}>{entry.comments}</Text>
+                          ) : null}
+                        </View>
+                        <Text style={styles.workflowDate}>
+                          {formatDate(entry.reviewed_at || entry.created_at)}
                         </Text>
-                        {entry.reviewer_role ? (
-                          <Text style={styles.workflowMeta}>Reviewer: {entry.reviewer_role}</Text>
-                        ) : null}
-                        {entry.comments ? (
-                          <Text style={styles.workflowComment}>{entry.comments}</Text>
-                        ) : null}
                       </View>
-                      <Text style={styles.workflowDate}>
-                        {formatDate(entry.reviewed_at || entry.created_at)}
-                      </Text>
-                    </View>
+                    </ListEntranceItem>
                   ))}
                 </View>
               )}

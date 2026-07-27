@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Icon } from './ui/Icon';
 import { Eye, Download } from 'lucide-react-native';
 import { PressableCard, Surface } from './ui';
@@ -56,13 +56,7 @@ export const ResearchCard = memo(({
       </View>
       {showStatusChip ? <PaperProgressMap status={paper.status} variant="list" /> : null}
       {displayKeywords.length > 0 ? (
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          showsHorizontalScrollIndicator={false}
-          horizontal
-
-          contentContainerStyle={styles.keywordRow}
-        >
+        <View style={styles.keywordRow}>
           {displayKeywords.map((keyword, index) => (
             <View
               key={`${keyword}-${index}`}
@@ -73,7 +67,7 @@ export const ResearchCard = memo(({
               </Text>
             </View>
           ))}
-        </ScrollView>
+        </View>
       ) : null}
       {showEngagementCounts === true ? (
         <View
@@ -146,6 +140,8 @@ const makeStyles = (t: Theme) =>
       color: t.colors.text.onBrand,
     },
     keywordRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
       gap: t.spacing.xs,
       paddingRight: t.spacing.xs,
     },

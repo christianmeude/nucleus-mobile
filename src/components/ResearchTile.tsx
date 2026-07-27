@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ResearchPaper } from '../types/domain';
 import { formatDate, getPrimaryAuthorName, paperDate } from '../utils/format';
@@ -18,7 +19,7 @@ interface ResearchTileProps {
  * category eyebrow, author, and views · date footer. `ResearchCard` remains the
  * single-column card used elsewhere (My Papers, etc.).
  */
-export const ResearchTile = ({ paper, category, categoryColor, onPress }: ResearchTileProps) => {
+export const ResearchTile = memo(function ResearchTile({ paper, category, categoryColor, onPress }: ResearchTileProps) {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const authorName = getPrimaryAuthorName(paper);
@@ -52,7 +53,7 @@ export const ResearchTile = ({ paper, category, categoryColor, onPress }: Resear
       </View>
     </Pressable>
   );
-};
+});
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({

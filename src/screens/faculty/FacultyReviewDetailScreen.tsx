@@ -21,6 +21,7 @@ import {
   type PdfViewerRef,
 } from '../../components/PdfViewer';
 import { AnnotationPanel } from '../../components/AnnotationPanel';
+import { ListEntranceItem } from '../../components/ListEntranceItem';
 import { PaperAnnotation } from '../../api/research';
 import { facultyApi, type FacultyApprover, type FacultyReviewDetail } from '../../api/faculty';
 import { RootStackParamList } from '../../navigation/types';
@@ -337,18 +338,20 @@ export const FacultyReviewDetailScreen = () => {
               <Text style={styles.muted}>No review activity yet.</Text>
             ) : (
               <View style={styles.timeline}>
-                {detail.workflow.map((entry) => (
-                  <Card key={entry.id} padding="md">
-                    <Text style={styles.timelineHead}>
-                      {titleCase(entry.reviewerRole, 'Reviewer')}
-                      {entry.actionType ? ` · ${titleCase(entry.actionType)}` : ''}
-                    </Text>
-                    <Text style={styles.muted}>
-                      {entry.reviewerName ? `${entry.reviewerName} · ` : ''}
-                      {formatDate(entry.reviewedAt || entry.createdAt)}
-                    </Text>
-                    {entry.comments ? <Text style={styles.body}>{entry.comments}</Text> : null}
-                  </Card>
+                {detail.workflow.map((entry, index) => (
+                  <ListEntranceItem key={entry.id} index={index}>
+                    <Card padding="md">
+                      <Text style={styles.timelineHead}>
+                        {titleCase(entry.reviewerRole, 'Reviewer')}
+                        {entry.actionType ? ` · ${titleCase(entry.actionType)}` : ''}
+                      </Text>
+                      <Text style={styles.muted}>
+                        {entry.reviewerName ? `${entry.reviewerName} · ` : ''}
+                        {formatDate(entry.reviewedAt || entry.createdAt)}
+                      </Text>
+                      {entry.comments ? <Text style={styles.body}>{entry.comments}</Text> : null}
+                    </Card>
+                  </ListEntranceItem>
                 ))}
               </View>
             )}
@@ -364,24 +367,26 @@ export const FacultyReviewDetailScreen = () => {
               <Text style={styles.muted}>No general reviewer comments.</Text>
             ) : (
               <View style={styles.timeline}>
-                {pagelessAnnotations.map((ann) => {
+                {pagelessAnnotations.map((ann, index) => {
                   const replies = getReplies(ann.id);
                   return (
-                    <Card key={ann.id} padding="md">
-                      <Text style={styles.timelineHead}>{ann.reviewerName}</Text>
-                      <Text style={styles.muted}>
-                        {ann.reviewerRole ? `${titleCase(ann.reviewerRole)} · ` : ''}
-                        {formatDate(ann.createdAt)}
-                      </Text>
-                      {ann.note ? <Text style={styles.body}>{ann.note}</Text> : null}
-                      {replies.map((reply) => (
-                        <View key={reply.id} style={styles.annotationReply}>
-                          <Text style={styles.timelineHead}>{reply.reviewerName}</Text>
-                          <Text style={styles.muted}>{formatDate(reply.createdAt)}</Text>
-                          {reply.note ? <Text style={styles.body}>{reply.note}</Text> : null}
-                        </View>
-                      ))}
-                    </Card>
+                    <ListEntranceItem key={ann.id} index={index}>
+                      <Card padding="md">
+                        <Text style={styles.timelineHead}>{ann.reviewerName}</Text>
+                        <Text style={styles.muted}>
+                          {ann.reviewerRole ? `${titleCase(ann.reviewerRole)} · ` : ''}
+                          {formatDate(ann.createdAt)}
+                        </Text>
+                        {ann.note ? <Text style={styles.body}>{ann.note}</Text> : null}
+                        {replies.map((reply) => (
+                          <View key={reply.id} style={styles.annotationReply}>
+                            <Text style={styles.timelineHead}>{reply.reviewerName}</Text>
+                            <Text style={styles.muted}>{formatDate(reply.createdAt)}</Text>
+                            {reply.note ? <Text style={styles.body}>{reply.note}</Text> : null}
+                          </View>
+                        ))}
+                      </Card>
+                    </ListEntranceItem>
                   );
                 })}
               </View>

@@ -9,6 +9,7 @@ import {
   WorkflowEntry,
 } from '../types/domain';
 import { getPrimaryAuthorName, paperDate } from '../utils/format';
+import { apiCache, SWROptions } from '../utils/apiCache';
 import {
   parseAnnotationMeta,
   normalizeAnnotationType,
@@ -517,38 +518,51 @@ export const researchApi = {
     return rows.map(toPaperAnnotation);
   },
 
-  getMyPapers: async () => {
-    const rows = await loadResearchRows(PAPER_SELECT);
-    return rows.map(toResearchPaper).sort((left, right) => {
-      const leftDate = new Date(paperDate(left) || 0).getTime();
-      const rightDate = new Date(paperDate(right) || 0).getTime();
-      return rightDate - leftDate;
-    });
+  getMyPapers: async (options?: SWROptions<ResearchPaper[]>) => {
+    return apiCache.fetchWithSWR(
+      'research:myPapers',
+      async () => {
+        const rows = await loadResearchRows(PAPER_SELECT);
+        return rows.map(toResearchPaper).sort((left, right) => {
+          const leftDate = new Date(paperDate(left) || 0).getTime();
+          const rightDate = new Date(paperDate(right) || 0).getTime();
+          return rightDate - leftDate;
+        });
+      },
+      options
+    );
   },
 
-  getPublishedPapers: async (params?: ResearchListParams) => {
-    // Role-agnostic: the published repository is shared by students and faculty
-    // (faculty Browse reuses this screen). RLS already gates published rows to
-    // authenticated callers, so no student assertion here.
-    await resolveCurrentProfile();
+  getPublishedPapers: async (params?: ResearchListParams, options?: SWROptions<ResearchPaper[]>) => {
+    const cacheKey = `research:published:${JSON.stringify(params || {})}`;
+    return apiCache.fetchWithSWR(
+      cacheKey,
+      async () => {
+        // Role-agnostic: the published repository is shared by students and faculty
+        // (faculty Browse reuses this screen). RLS already gates published rows to
+        // authenticated callers, so no student assertion here.
+        await resolveCurrentProfile();
 
-    const { data, error } = await supabase
-      .from('research_papers')
-      .select(PAPER_SELECT)
-      .in('status', Array.from(PUBLISHED_STATUSES))
+        const { data, error } = await supabase
+          .from('research_papers')
+          .select(PAPER_SELECT)
+          .in('status', Array.from(PUBLISHED_STATUSES));
 
-    if (error) {
-      throw new Error(error.message || 'Unable to load published papers.');
-    }
+        if (error) {
+          throw new Error(error.message || 'Unable to load published papers.');
+        }
 
-    const rows = Array.isArray(data) ? (data as unknown as ResearchPaperRow[]) : [];
-    return filterPublishedRows(rows, params)
-      .map(toResearchPaper)
-      .sort((left, right) => {
-        const leftDate = new Date(paperDate(left) || 0).getTime();
-        const rightDate = new Date(paperDate(right) || 0).getTime();
-        return rightDate - leftDate;
-      });
+        const rows = Array.isArray(data) ? (data as unknown as ResearchPaperRow[]) : [];
+        return filterPublishedRows(rows, params)
+          .map(toResearchPaper)
+          .sort((left, right) => {
+            const leftDate = new Date(paperDate(left) || 0).getTime();
+            const rightDate = new Date(paperDate(right) || 0).getTime();
+            return rightDate - leftDate;
+          });
+      },
+      options
+    );
   },
 
   /**
@@ -600,16 +614,22 @@ export const researchApi = {
     return results.filter(p => p.id !== paper.id).slice(0, limit);
   },
 
-  getCategories: async () => {
-    const { data, error } = await supabase.from('research_categories').select('id, name').order('name', {
-      ascending: true,
-    });
+  getCategories: async (options?: SWROptions<Category[]>) => {
+    return apiCache.fetchWithSWR(
+      'research:categories',
+      async () => {
+        const { data, error } = await supabase.from('research_categories').select('id, name').order('name', {
+          ascending: true,
+        });
 
-    if (error) {
-      throw new Error(error.message || 'Unable to load categories.');
-    }
+        if (error) {
+          throw new Error(error.message || 'Unable to load categories.');
+        }
 
-    return (Array.isArray(data) ? data : []) as Category[];
+        return (Array.isArray(data) ? data : []) as Category[];
+      },
+      options
+    );
   },
 
   getResearchById: async (paperId: string) => {
@@ -1271,6 +1291,8 @@ async function submitResearch(input: SubmitInput): Promise<SubmitResult> {
     console.warn('[submitResearch] research_authors upsert warning:', error);
   }
 
+  apiCache.invalidate('research:');
+  apiCache.invalidate('faculty:');
   return { paper: toResearchPaper(paperRow) };
 }
 

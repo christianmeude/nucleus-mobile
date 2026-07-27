@@ -4,7 +4,7 @@ import { type Theme } from '../theme';
 import { AnimatedNumber } from './ui/motion/AnimatedNumber';
 import { FacultyWorkloadSummary } from '../api/faculty';
 
-export type WorkloadFilter = 'needs_review' | 'revision_sent' | 'completed' | null;
+export type WorkloadFilter = 'needs_review' | 'revision_sent' | 'forwarded' | 'completed' | null;
 
 interface WorkloadStripProps {
   summary: FacultyWorkloadSummary;
@@ -26,6 +26,11 @@ export const WorkloadStrip = ({ summary, activeFilter, onFilterChange }: Workloa
       id: 'revision_sent' as const,
       label: 'Revision Sent',
       count: summary.revisionRequired,
+    },
+    {
+      id: 'forwarded' as const,
+      label: 'Forwarded',
+      count: summary.forwardedByYou,
     },
     {
       id: 'completed' as const,
