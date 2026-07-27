@@ -1,5 +1,13 @@
-import { Fragment, useEffect, useRef } from 'react';
-import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import { Fragment, memo, useEffect } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  Easing as ReanimatedEasing,
+  cancelAnimation,
+} from 'react-native-reanimated';
 import { Icon } from './ui/Icon';
 import { Check, TriangleAlert, X } from 'lucide-react-native';
 import { PaperStatus } from '../types/domain';
@@ -34,41 +42,67 @@ const stageIndexForStatus = (status: PaperStatus): number => {
   }
 };
 
-/** Awaiting-review node: hollow ring that breathes + a fading ping, so the
- * "live" step reads as active without a static/flat chip. */
-const PendingMarker = () => {
+/** Static pending marker for list cards: lightweight, visually distinct active step with zero animation loops. */
+const StaticPendingMarker = () => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const progress = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.timing(progress, {
-        toValue: 1,
-        duration: 1500,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: true,
-      }),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [progress]);
-
-  const ringScale = progress.interpolate({ inputRange: [0, 1], outputRange: [1, 2.3] });
-  const ringOpacity = progress.interpolate({ inputRange: [0, 1], outputRange: [0.55, 0] });
-  const breatheScale = progress.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.14, 1] });
 
   return (
     <View style={styles.markerHost}>
-      <Animated.View
-        pointerEvents="none"
-        style={[styles.pulseRing, { opacity: ringOpacity, transform: [{ scale: ringScale }] }]}
+      <View
+        style={[
+          styles.marker,
+          styles.markerHollow,
+          {
+            borderColor: theme.colors.brand.primary,
+            borderWidth: 2,
+            backgroundColor: theme.colors.brand.primarySurface,
+          },
+        ]}
       />
+    </View>
+  );
+};
+
+/** Animated pending marker for detail screens: UI-thread Reanimated loop with zero JS overhead. */
+const AnimatedPendingMarker = () => {
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    progress.value = withRepeat(
+      withTiming(1, { duration: 1500, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }),
+      -1,
+      false
+    );
+    return () => {
+      cancelAnimation(progress);
+    };
+  }, [progress]);
+
+  const ringStyle = useAnimatedStyle(() => ({
+    opacity: 0.55 * (1 - progress.value),
+    transform: [{ scale: 1 + 1.3 * progress.value }],
+  }));
+
+  const breatheStyle = useAnimatedStyle(() => {
+    const p = progress.value;
+    const scale = p < 0.5 ? 1 + 0.28 * p : 1 + 0.28 * (1 - p);
+    return {
+      transform: [{ scale }],
+    };
+  });
+
+  return (
+    <View style={styles.markerHost}>
+      <Animated.View pointerEvents="none" style={[styles.pulseRing, ringStyle]} />
       <Animated.View
         style={[
           styles.marker,
           styles.markerHollow,
-          { borderColor: theme.colors.brand.primary, transform: [{ scale: breatheScale }] },
+          { borderColor: theme.colors.brand.primary },
+          breatheStyle,
         ]}
       />
     </View>
@@ -77,9 +111,10 @@ const PendingMarker = () => {
 
 interface PaperProgressMapProps {
   status: PaperStatus;
+  variant?: 'list' | 'detail';
 }
 
-export const PaperProgressMap = ({ status }: PaperProgressMapProps) => {
+export const PaperProgressMap = memo(({ status, variant = 'list' }: PaperProgressMapProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const isRejected = status === 'rejected';
@@ -124,7 +159,11 @@ export const PaperProgressMap = ({ status }: PaperProgressMapProps) => {
               ) : null}
               <View style={styles.column}>
                 {state === 'pending' ? (
-                  <PendingMarker />
+                  variant === 'detail' ? (
+                    <AnimatedPendingMarker />
+                  ) : (
+                    <StaticPendingMarker />
+                  )
                 ) : (
                   <View style={styles.markerHost}>
                     <View
@@ -169,7 +208,9 @@ export const PaperProgressMap = ({ status }: PaperProgressMapProps) => {
       ) : null}
     </View>
   );
-};
+});
+
+PaperProgressMap.displayName = 'PaperProgressMap';
 
 const MARKER_SIZE = 18;
 const COLUMN_WIDTH = 46;

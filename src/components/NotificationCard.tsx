@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from './ui/Icon';
 import { UserPlus, MessageSquareMore, CircleCheck, Bell } from 'lucide-react-native';
@@ -62,7 +62,7 @@ interface NotificationCardProps {
   onPress: () => void;
 }
 
-export const NotificationCard = ({ notification, onPress }: NotificationCardProps) => {
+export const NotificationCard = memo(({ notification, onPress }: NotificationCardProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [resolved, setResolved] = useState(false);
@@ -135,7 +135,9 @@ export const NotificationCard = ({ notification, onPress }: NotificationCardProp
       {unread ? <View style={styles.dot} /> : null}
     </Pressable>
   );
-};
+});
+
+NotificationCard.displayName = 'NotificationCard';
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({

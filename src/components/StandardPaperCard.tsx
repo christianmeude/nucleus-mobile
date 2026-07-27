@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { ResearchPaper } from '../types/domain';
 import { getPrimaryAuthorName, formatDate, paperDate } from '../utils/format';
@@ -15,7 +16,7 @@ export interface StandardPaperCardProps {
   onPress: () => void;
 }
 
-export const StandardPaperCard = ({
+export const StandardPaperCard = memo(({
   paper,
   variant,
   category,
@@ -66,11 +67,13 @@ export const StandardPaperCard = ({
           {metaParts.join('   ·   ')}
         </Text>
 
-        {variant === 'papers' ? <PaperProgressMap status={paper.status} /> : null}
+        {variant === 'papers' ? <PaperProgressMap status={paper.status} variant="list" /> : null}
       </View>
     </PressableCard>
   );
-};
+});
+
+StandardPaperCard.displayName = 'StandardPaperCard';
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({

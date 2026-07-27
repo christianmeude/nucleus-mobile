@@ -106,6 +106,28 @@ export const MyPapersScreen = () => {
     return `${base} · ${needsAttention} need${needsAttention === 1 ? 's' : ''} your attention`;
   }, [papers]);
 
+  const handlePaperPress = useCallback((paperId: string) => {
+    navigation.navigate('ResearchDetail', { paperId });
+  }, [navigation]);
+
+  const renderPaperItem = useCallback(({ item, index }: { item: ResearchPaper; index: number }) => (
+    <ListEntranceItem key={item.id} index={index}>
+      <StandardPaperCard
+        paper={item}
+        variant="papers"
+        category={resolveCategoryName(item.category, categoryNameById)}
+        onPress={() => handlePaperPress(item.id)}
+      />
+    </ListEntranceItem>
+  ), [categoryNameById, handlePaperPress]);
+
+  const handleRefresh = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    loadData(true);
+  }, [loadData]);
+
+  const keyExtractor = useCallback((item: ResearchPaper) => item.id, []);
+
   return (
     <Screen gutter={0} edges={{ bottom: false }}>
       <View style={styles.header}>
@@ -169,16 +191,13 @@ export const MyPapersScreen = () => {
       </View>
 
       <LegendList
-        recycleItems={false}
+        recycleItems={true}
         style={styles.scroll}
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              loadData(true);
-            }}
+            onRefresh={handleRefresh}
             tintColor={theme.colors.brand.primary}
             colors={[theme.colors.brand.primary]}
           />
@@ -200,18 +219,9 @@ export const MyPapersScreen = () => {
           </View>
         )}
         data={loading || filtered.length === 0 ? [] : filtered}
-        keyExtractor={(item) => item.id}
-        estimatedItemSize={104}
-        renderItem={({ item, index }) => (
-          <ListEntranceItem key={item.id} index={index}>
-            <StandardPaperCard
-              paper={item}
-              variant="papers"
-              category={resolveCategoryName(item.category, categoryNameById)}
-              onPress={() => navigation.navigate('ResearchDetail', { paperId: item.id })}
-            />
-          </ListEntranceItem>
-        )}
+        keyExtractor={keyExtractor}
+        estimatedItemSize={140}
+        renderItem={renderPaperItem}
       />
       
       <Pressable

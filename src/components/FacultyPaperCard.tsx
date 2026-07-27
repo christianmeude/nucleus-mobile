@@ -1,5 +1,5 @@
+import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, { SlideOutLeft } from 'react-native-reanimated';
 import { PressableCard } from './ui';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
@@ -48,45 +48,43 @@ const getDaysWaiting = (dateStr?: string | null) => {
   return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
 };
 
-export const FacultyPaperCard = ({ paper, onPress, index }: FacultyPaperCardProps) => {
+export const FacultyPaperCard = memo(({ paper, onPress }: FacultyPaperCardProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const config = getStatusConfig(paper.status, theme);
   const daysWaiting = getDaysWaiting(paper.submissionDate || paper.createdAt);
 
-  const cardContent = (
-    <Animated.View exiting={SlideOutLeft}>
-      <PressableCard
-        accessibilityLabel={`Review ${paper.title}`}
-        onPress={onPress}
-        style={styles.cardContainer}
-      >
-        <View style={[styles.leftBar, { backgroundColor: config.color }]} />
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Text style={styles.title} numberOfLines={2}>
-              {paper.title}
-            </Text>
-            <View style={[styles.pill, { backgroundColor: config.bg }]}>
-              <Text style={[styles.pillText, { color: config.color }]}>{config.label}</Text>
-            </View>
-          </View>
-
-          <View style={styles.footer}>
-            <Text style={styles.meta} numberOfLines={1}>
-              {paper.authorName} · {formatDate(paper.submissionDate || paper.createdAt)}
-            </Text>
-            <Text style={styles.daysText}>
-              {daysWaiting === 1 ? '1 day' : `${daysWaiting} days`}
-            </Text>
+  return (
+    <PressableCard
+      accessibilityLabel={`Review ${paper.title}`}
+      onPress={onPress}
+      style={styles.cardContainer}
+    >
+      <View style={[styles.leftBar, { backgroundColor: config.color }]} />
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <Text style={styles.title} numberOfLines={2}>
+            {paper.title}
+          </Text>
+          <View style={[styles.pill, { backgroundColor: config.bg }]}>
+            <Text style={[styles.pillText, { color: config.color }]}>{config.label}</Text>
           </View>
         </View>
-      </PressableCard>
-    </Animated.View>
-  );
 
-  return cardContent;
-};
+        <View style={styles.footer}>
+          <Text style={styles.meta} numberOfLines={1}>
+            {paper.authorName} · {formatDate(paper.submissionDate || paper.createdAt)}
+          </Text>
+          <Text style={styles.daysText}>
+            {daysWaiting === 1 ? '1 day' : `${daysWaiting} days`}
+          </Text>
+        </View>
+      </View>
+    </PressableCard>
+  );
+});
+
+FacultyPaperCard.displayName = 'FacultyPaperCard';
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({

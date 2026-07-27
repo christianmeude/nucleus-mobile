@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useEffect, useState } from 'react';
-import { Pressable, RefreshControl, StyleSheet, Text, TextInput, View, FlatList } from 'react-native';
+import { Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
+import { LegendList } from '@legendapp/list/react-native';
 import Animated, { useSharedValue } from 'react-native-reanimated';
 import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -13,14 +14,12 @@ import {
   FACULTY_QUEUE_FILTERS,
   type FacultyQueueFilter,
 } from './facultyStatus';
-import { RootStackParamList } from '../../navigation/types';
+import { FacultyTabsParamList, FacultyTabNavigationProp } from '../../navigation/types';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 
-type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
-
 export const FacultyReviewScreen = () => {
-  const navigation = useNavigation<FacultyNavigation>();
+  const navigation = useNavigation<FacultyTabNavigationProp>();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   
@@ -28,8 +27,10 @@ export const FacultyReviewScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   
-  const route = useRoute<RouteProp<RootStackParamList, 'FacultyReview'>>();
-  const [filter, setFilter] = useState<FacultyQueueFilter>(route.params?.initialFilter ?? 'needs_review');
+  const route = useRoute<RouteProp<FacultyTabsParamList, 'FacultyReview'>>();
+  const [filter, setFilter] = useState<FacultyQueueFilter>(
+    (route.params?.initialFilter as FacultyQueueFilter) ?? 'needs_review'
+  );
   const [search, setSearch] = useState('');
 
   const scrollOffset = useSharedValue(0);
@@ -42,7 +43,7 @@ export const FacultyReviewScreen = () => {
 
   useEffect(() => {
     if (route.params?.initialFilter) {
-      setFilter(route.params.initialFilter);
+      setFilter(route.params.initialFilter as FacultyQueueFilter);
     }
   }, [route.params?.initialFilter]);
 
@@ -103,6 +104,29 @@ export const FacultyReviewScreen = () => {
     load(page + 1, filter, debouncedSearch);
   }, [hasMore, loadingMore, papers, load, page, filter, debouncedSearch]);
 
+  const handlePaperPress = useCallback((paperId: string) => {
+    navigation.navigate('FacultyReviewDetail', { paperId });
+  }, [navigation]);
+
+  const renderPaperItem = useCallback(({ item: rawItem, index }: { item: any; index: number }) => {
+    const item = rawItem as FacultyAssignedPaper;
+    return (
+      <ListEntranceItem index={index}>
+        <FacultyPaperCard
+          paper={item}
+          index={index}
+          onPress={() => handlePaperPress(item.id)}
+        />
+      </ListEntranceItem>
+    );
+  }, [handlePaperPress]);
+
+  const keyExtractor = useCallback((item: any) => item.id, []);
+
+  const renderFooter = useCallback(() => (
+    loadingMore ? <View style={{ padding: 16 }}><Skeleton height={84} radius="lg" /></View> : null
+  ), [loadingMore]);
+
   return (
     <Screen gutter={0} edges={{ bottom: false }}>
       <View style={[styles.header, headerAnimatedStyle]}>
@@ -157,7 +181,8 @@ export const FacultyReviewScreen = () => {
         </View>
       </View>
 
-      <FlatList
+      <LegendList
+        recycleItems={true}
         onScroll={onScroll}
         scrollEventThrottle={16}
         contentContainerStyle={styles.content}
@@ -193,24 +218,12 @@ export const FacultyReviewScreen = () => {
           </View>
         )}
         data={papers ?? []}
-        keyExtractor={(item: any) => item.id}
+        keyExtractor={keyExtractor}
+        estimatedItemSize={130}
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
-        ListFooterComponent={() => 
-          loadingMore ? <View style={{ padding: 16 }}><Skeleton height={84} radius="lg" /></View> : null
-        }
-        renderItem={({ item: rawItem, index }) => {
-          const item = rawItem as FacultyAssignedPaper;
-          return (
-            <ListEntranceItem index={index}>
-              <FacultyPaperCard
-                paper={item}
-                index={index}
-                onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: item.id })}
-              />
-            </ListEntranceItem>
-          );
-        }}
+        ListFooterComponent={renderFooter}
+        renderItem={renderPaperItem}
       />
     </Screen>
   );

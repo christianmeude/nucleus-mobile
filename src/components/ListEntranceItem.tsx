@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, memo, ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet } from 'react-native';
 import { motion } from '../theme';
 import { useReduceMotion } from '../hooks/useReduceMotion';
@@ -12,12 +12,14 @@ const ListEntranceContext = createContext(false);
 
 export const useListEntranceActive = () => useContext(ListEntranceContext);
 
-export const ListEntranceItem = ({ index, children }: ListEntranceItemProps) => {
+export const ListEntranceItem = memo(({ index, children }: ListEntranceItemProps) => {
   const reduceMotion = useReduceMotion();
-  const opacity = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
-  const translateY = useRef(new Animated.Value(reduceMotion ? 0 : 8)).current;
-  const [entering, setEntering] = useState(!reduceMotion);
+  const shouldAnimateInitial = !reduceMotion && index < 8;
+  const opacity = useRef(new Animated.Value(shouldAnimateInitial ? 0 : 1)).current;
+  const translateY = useRef(new Animated.Value(shouldAnimateInitial ? 8 : 0)).current;
+  const [entering, setEntering] = useState(shouldAnimateInitial);
   const isMountedRef = useRef(true);
+  const hasAnimatedRef = useRef(!shouldAnimateInitial);
 
   useEffect(() => {
     return () => {
@@ -26,17 +28,19 @@ export const ListEntranceItem = ({ index, children }: ListEntranceItemProps) => 
   }, []);
 
   useEffect(() => {
-    if (reduceMotion) {
+    if (reduceMotion || index >= 8 || hasAnimatedRef.current) {
       opacity.setValue(1);
       translateY.setValue(0);
       setEntering(false);
+      hasAnimatedRef.current = true;
       return;
     }
 
+    hasAnimatedRef.current = true;
     setEntering(true);
 
     const animation = Animated.sequence([
-      Animated.delay(index < 12 ? index * motion.listStaggerDelay : 0),
+      Animated.delay(index * motion.listStaggerDelay),
       Animated.parallel([
         Animated.timing(opacity, {
           toValue: 1,
@@ -70,7 +74,9 @@ export const ListEntranceItem = ({ index, children }: ListEntranceItemProps) => 
       </Animated.View>
     </ListEntranceContext.Provider>
   );
-};
+});
+
+ListEntranceItem.displayName = 'ListEntranceItem';
 
 const styles = StyleSheet.create({
   wrap: {

@@ -9,14 +9,12 @@ import { FacultyPaperCard } from '../../components/FacultyPaperCard';
 import { facultyApi, type FacultyAssignedPaper, type FacultyWorkloadSummary } from '../../api/faculty';
 import { NotificationItem } from '../../types/domain';
 import { NotificationCard } from '../../components/NotificationCard';
-import { RootStackParamList } from '../../navigation/types';
+import { FacultyTabNavigationProp } from '../../navigation/types';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import { greetingForHour, initialsFor } from '../../utils/format';
 import { haptics } from '../../lib/haptics';
-
-type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
 
 const DashboardSkeleton = () => {
   const styles = useThemedStyles(makeStyles);
@@ -30,7 +28,7 @@ const DashboardSkeleton = () => {
 };
 
 export const FacultyDashboardScreen = () => {
-  const navigation = useNavigation<FacultyNavigation>();
+  const navigation = useNavigation<FacultyTabNavigationProp>();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();

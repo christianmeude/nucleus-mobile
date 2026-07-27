@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { CoAuthorInvitation } from '../types/domain';
 import { formatDate, statusToLabel } from '../utils/format';
@@ -49,7 +50,7 @@ interface InvitationCardProps {
   onDecline?: () => void;
 }
 
-export const InvitationCard = ({
+export const InvitationCard = memo(({
   invitation,
   acting = false,
   onAccept,
@@ -156,7 +157,9 @@ export const InvitationCard = ({
       ) : null}
     </View>
   );
-};
+});
+
+InvitationCard.displayName = 'InvitationCard';
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Icon } from './ui/Icon';
 import { Eye, Download } from 'lucide-react-native';
@@ -18,7 +19,7 @@ interface ResearchCardProps {
   keywords?: string[];
 }
 
-export const ResearchCard = ({
+export const ResearchCard = memo(({
   paper,
   onPress,
   showEngagementCounts = false,
@@ -53,7 +54,7 @@ export const ResearchCard = ({
           {authorName} · {formatDate(paperDate(paper))}
         </Text>
       </View>
-      {showStatusChip ? <PaperProgressMap status={paper.status} /> : null}
+      {showStatusChip ? <PaperProgressMap status={paper.status} variant="list" /> : null}
       {displayKeywords.length > 0 ? (
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -108,7 +109,9 @@ export const ResearchCard = ({
     );
   }
   return <Surface elevation={readOnlyShadow} style={styles.readOnly}>{body}</Surface>;
-};
+});
+
+ResearchCard.displayName = 'ResearchCard';
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({

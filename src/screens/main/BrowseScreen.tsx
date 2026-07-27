@@ -321,6 +321,11 @@ export const BrowseScreen = () => {
 
   const keyExtractor = useCallback((item: ResearchPaper) => item.id, []);
 
+  const handleRefresh = useCallback(() => {
+    haptics.light();
+    loadData(true);
+  }, [loadData]);
+
   const renderItem = useCallback(
     ({ item }: { item: ResearchPaper }) => {
       const categoryColor = colorForCategory(item.category);
@@ -340,13 +345,13 @@ export const BrowseScreen = () => {
               variant="browse"
               category={categoryName}
               categoryColor={categoryColor}
-              onPress={() => navigation.navigate('ResearchDetail', { paperId: item.id })}
+              onPress={() => openDetail(item.id)}
             />
           )}
         </Animated.View>
       );
     },
-    [viewMode, colorForCategory, categoryNameById, openDetail, styles, reducedMotion],
+    [viewMode, colorForCategory, categoryNameById, openDetail, reducedMotion],
   );
 
   const sortLabel = SORT_OPTIONS.find((option) => option.value === sort)?.label ?? 'Newest';
@@ -434,7 +439,7 @@ export const BrowseScreen = () => {
 
           <Animated.View style={[styles.resultsWrap, resultsStyle]}>
             <LegendList
-              recycleItems={false}
+              recycleItems={true}
               style={styles.scroll}
               contentContainerStyle={styles.resultsContent}
               data={listData}
@@ -448,10 +453,7 @@ export const BrowseScreen = () => {
               refreshControl={
                 <RefreshControl
                   refreshing={refreshing}
-                  onRefresh={() => {
-                    haptics.light();
-                    loadData(true);
-                  }}
+                  onRefresh={handleRefresh}
                   tintColor={theme.colors.brand.primary}
                   colors={[theme.colors.brand.primary]}
                 />

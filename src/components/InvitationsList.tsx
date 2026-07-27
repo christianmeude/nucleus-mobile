@@ -57,7 +57,7 @@ export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
     loadData();
   }, [loadData]);
 
-  const runAction = async (token: string, action: 'accept' | 'decline') => {
+  const runAction = useCallback(async (token: string, action: 'accept' | 'decline') => {
     setActingToken(token);
     setError('');
 
@@ -74,22 +74,49 @@ export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
     } finally {
       setActingToken('');
     }
-  };
+  }, [loadData]);
+
+  const handleRefresh = useCallback(() => {
+    haptics.light();
+    loadData(true);
+  }, [loadData]);
+
+  const keyExtractor = useCallback((item: any) => item.id, []);
+
+  const renderInvitationItem = useCallback(
+    ({ item: rawItem, index }: { item: any; index: number }) => {
+      const item = rawItem as CoAuthorInvitation;
+      const calendarExpired = item.status === 'pending' && isExpired(item);
+      const cardInvitation: CoAuthorInvitation = calendarExpired
+        ? { ...item, status: 'expired' }
+        : item;
+      const canAct = item.status === 'pending' && !calendarExpired;
+
+      return (
+        <ListEntranceItem key={item.id} index={index}>
+          <InvitationCard
+            invitation={cardInvitation}
+            acting={actingToken === item.token}
+            onAccept={canAct ? () => runAction(item.token, 'accept') : undefined}
+            onDecline={canAct ? () => runAction(item.token, 'decline') : undefined}
+          />
+        </ListEntranceItem>
+      );
+    },
+    [actingToken, runAction],
+  );
 
   return (
     <LegendList
       onScroll={onScroll}
       scrollEventThrottle={16}
-      recycleItems={false}
+      recycleItems={true}
       style={styles.container}
       contentContainerStyle={styles.content}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
-          onRefresh={() => {
-            haptics.light();
-            loadData(true);
-          }}
+          onRefresh={handleRefresh}
           tintColor={theme.colors.brand.primary}
           colors={[theme.colors.brand.primary]}
         />
@@ -119,27 +146,9 @@ export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
         </View>
       )}
       data={loading || invitations.length === 0 ? ([] as CoAuthorInvitation[]) : invitations}
-      keyExtractor={(item: any) => item.id}
-      estimatedItemSize={132}
-      renderItem={({ item: rawItem, index }) => {
-        const item = rawItem as CoAuthorInvitation;
-        const calendarExpired = item.status === 'pending' && isExpired(item);
-        const cardInvitation: CoAuthorInvitation = calendarExpired
-          ? { ...item, status: 'expired' }
-          : item;
-        const canAct = item.status === 'pending' && !calendarExpired;
-
-        return (
-          <ListEntranceItem key={item.id} index={index}>
-            <InvitationCard
-              invitation={cardInvitation}
-              acting={actingToken === item.token}
-              onAccept={canAct ? () => runAction(item.token, 'accept') : undefined}
-              onDecline={canAct ? () => runAction(item.token, 'decline') : undefined}
-            />
-          </ListEntranceItem>
-        );
-      }}
+      keyExtractor={keyExtractor}
+      estimatedItemSize={150}
+      renderItem={renderInvitationItem}
     />
   );
 };

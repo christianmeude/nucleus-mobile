@@ -137,48 +137,72 @@ export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
     ].filter((group) => group.data.length > 0);
   }, [notifications]);
 
-  const openNotification = async (item: NotificationItem) => {
-    if (!item.is_read) {
-      try {
-        await source.markRead(item.id);
-      } catch {
-        // Keep navigation usable if read-state update fails.
+  const openNotification = useCallback(
+    async (item: NotificationItem) => {
+      if (!item.is_read) {
+        try {
+          await source.markRead(item.id);
+        } catch {
+          // Keep navigation usable if read-state update fails.
+        }
+
+        setNotifications((prev) =>
+          prev.map((entry) => (entry.id === item.id ? { ...entry, is_read: true } : entry)),
+        );
       }
 
-      setNotifications((prev) =>
-        prev.map((entry) => (entry.id === item.id ? { ...entry, is_read: true } : entry)),
-      );
-    }
+      if (item.research_id) {
+        navigation.navigate(source.detailRoute, { paperId: item.research_id });
+      }
+    },
+    [source, navigation],
+  );
 
-    if (item.research_id) {
-      navigation.navigate(source.detailRoute, { paperId: item.research_id });
-    }
-  };
-
-  const markAllAsRead = async () => {
+  const markAllAsRead = useCallback(async () => {
     try {
       await source.markAllRead();
       setNotifications((prev) => prev.map((entry) => ({ ...entry, is_read: true })));
     } catch {
       setError('Unable to mark all notifications as read.');
     }
-  };
+  }, [source]);
+
+  const handleRefresh = useCallback(() => {
+    haptics.light();
+    loadData(true);
+  }, [loadData]);
+
+  const keyExtractor = useCallback((item: any) => item.id, []);
+
+  const renderSectionHeader = useCallback(
+    ({ section }: any) => <Text style={styles.groupTitle}>{section.title}</Text>,
+    [styles.groupTitle],
+  );
+
+  const renderNotificationItem = useCallback(
+    ({ item: rawItem, index }: { item: any; index: number }) => {
+      const item = rawItem as NotificationItem;
+      return (
+        <ListEntranceItem key={item.id} index={index}>
+          <NotificationCard notification={item} onPress={() => openNotification(item)} />
+        </ListEntranceItem>
+      );
+    },
+    [openNotification],
+  );
 
   return (
     <LegendSectionList
       onScroll={onScroll}
       scrollEventThrottle={16}
-      recycleItems={false}
+      recycleItems={true}
       stickySectionHeadersEnabled={true}
       style={styles.container}
       contentContainerStyle={styles.content}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
-          onRefresh={() => {
-            haptics.light();
-            loadData(true);
-          }}
+          onRefresh={handleRefresh}
           tintColor={theme.colors.brand.primary}
           colors={[theme.colors.brand.primary]}
         />
@@ -216,19 +240,10 @@ export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
         </View>
       }
       sections={loading || notifications.length === 0 ? ([] as typeof groups) : groups}
-      keyExtractor={(item: any) => item.id}
-      estimatedItemSize={72}
-      renderSectionHeader={({ section }) => (
-        <Text style={styles.groupTitle}>{(section as any).title}</Text>
-      )}
-      renderItem={({ item: rawItem, index }) => {
-        const item = rawItem as NotificationItem;
-        return (
-          <ListEntranceItem key={item.id} index={index}>
-            <NotificationCard notification={item} onPress={() => openNotification(item)} />
-          </ListEntranceItem>
-        );
-      }}
+      keyExtractor={keyExtractor}
+      estimatedItemSize={90}
+      renderSectionHeader={renderSectionHeader}
+      renderItem={renderNotificationItem}
     />
   );
 };
