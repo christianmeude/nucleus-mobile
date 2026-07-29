@@ -462,7 +462,7 @@ export const BrowseScreen = () => {
                   colors={[theme.colors.brand.primary]}
                 />
               }
-              estimatedItemSize={viewMode === 'grid' ? 180 : 120}
+              estimatedItemSize={viewMode === 'grid' ? 160 : 84}
             />
           </Animated.View>
 

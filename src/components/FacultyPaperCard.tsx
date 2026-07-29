@@ -29,10 +29,17 @@ const getStatusConfig = (status: string, t: Theme) => {
   }
   if (FACULTY_ADVANCED_STATUSES.has(status)) {
     const isFinal = status === 'approved' || status === 'published';
+    if (isFinal) {
+      return {
+        color: t.colors.state.success,
+        bg: t.colors.state.successSurface,
+        label: 'Approved',
+      };
+    }
     return {
-      color: t.colors.state.success,
-      bg: t.colors.state.successSurface,
-      label: isFinal ? 'Approved' : 'Forwarded',
+      color: t.colors.brand.primary,
+      bg: t.colors.brand.primarySurface,
+      label: 'Forwarded',
     };
   }
   return {
@@ -60,7 +67,7 @@ export const FacultyPaperCard = memo(({ paper, onPress }: FacultyPaperCardProps)
       onPress={onPress}
       style={styles.cardContainer}
     >
-      <View style={[styles.leftBar, { backgroundColor: config.color }]} />
+      <View style={[styles.indicatorPill, { backgroundColor: config.color }]} />
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title} numberOfLines={2}>
@@ -90,16 +97,16 @@ const makeStyles = (t: Theme) =>
   StyleSheet.create({
     cardContainer: {
       flexDirection: 'row',
-      padding: 0,
+      alignItems: 'stretch',
     },
-    leftBar: {
+    indicatorPill: {
       width: 4,
-      borderTopLeftRadius: t.radii.lg,
-      borderBottomLeftRadius: t.radii.lg,
+      borderRadius: 2,
+      marginRight: t.spacing.md,
+      marginVertical: 2,
     },
     content: {
       flex: 1,
-      padding: t.spacing.lg,
       gap: t.spacing.xs,
     },
     header: {

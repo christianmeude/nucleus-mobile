@@ -148,7 +148,7 @@ export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
       )}
       data={loading || invitations.length === 0 ? ([] as CoAuthorInvitation[]) : invitations}
       keyExtractor={keyExtractor}
-      estimatedItemSize={150}
+      estimatedItemSize={132}
       renderItem={renderInvitationItem}
     />
   );

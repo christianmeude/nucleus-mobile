@@ -242,7 +242,7 @@ export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
       }
       sections={loading || notifications.length === 0 ? ([] as typeof groups) : groups}
       keyExtractor={keyExtractor}
-      estimatedItemSize={90}
+      estimatedItemSize={72}
       renderSectionHeader={renderSectionHeader}
       renderItem={renderNotificationItem}
     />

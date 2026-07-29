@@ -1,10 +1,11 @@
-import { useCallback, useMemo, useEffect, useState } from 'react';
-import { Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useMemo, useEffect, useRef, useState } from 'react';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
-import Animated, { useSharedValue } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Search, X } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { EmptyState, InlineNotice, Screen, Skeleton, TopBar } from '../../components/ui';
 import { FacultyPaperCard } from '../../components/FacultyPaperCard';
@@ -33,21 +34,25 @@ export const FacultyReviewScreen = () => {
   );
   const [search, setSearch] = useState('');
 
-  const scrollOffset = useSharedValue(0);
-  const onScroll = useCallback(
-    (event: any) => {
-      scrollOffset.value = event.nativeEvent.contentOffset.y;
-    },
-    [scrollOffset],
-  );
+  const pillScrollRef = useRef<ScrollView>(null);
+  const [showRightHint, setShowRightHint] = useState(true);
+  const [showLeftHint, setShowLeftHint] = useState(false);
 
-  useEffect(() => {
-    if (route.params?.initialFilter) {
-      setFilter(route.params.initialFilter as FacultyQueueFilter);
-    }
-  }, [route.params?.initialFilter]);
+  const handlePillScroll = useCallback((event: any) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const canScrollRight = contentOffset.x < contentSize.width - layoutMeasurement.width - 15;
+    const canScrollLeft = contentOffset.x > 15;
+    if (canScrollRight !== showRightHint) setShowRightHint(canScrollRight);
+    if (canScrollLeft !== showLeftHint) setShowLeftHint(canScrollLeft);
+  }, [showRightHint, showLeftHint]);
 
-  const headerAnimatedStyle = {};
+  const subtitle = useMemo(() => {
+    if (!papers) return 'Loading queue...';
+    const total = papers.length;
+    if (total === 0) return 'No submissions in this view';
+    const activeLabel = FACULTY_QUEUE_FILTERS.find((f) => f.key === filter)?.label || 'All';
+    return `${total} ${activeLabel.toLowerCase()} submission${total === 1 ? '' : 's'}`;
+  }, [papers, filter]);
 
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -131,8 +136,13 @@ export const FacultyReviewScreen = () => {
 
   return (
     <Screen gutter={0} edges={{ bottom: false }}>
-      <View style={[styles.header, headerAnimatedStyle]}>
-        <TopBar title="Review" variant="large" scrollOffset={scrollOffset} />
+      <View style={styles.header}>
+        <TopBar variant="compact">
+          <View style={styles.titleWrap}>
+            <Text style={styles.title}>Review Queue</Text>
+            <Text style={styles.subtitle}>{subtitle}</Text>
+          </View>
+        </TopBar>
 
         <View style={styles.searchContainer}>
           <Search size={20} color={theme.colors.text.muted} style={styles.searchIcon} />
@@ -152,42 +162,97 @@ export const FacultyReviewScreen = () => {
           )}
         </View>
 
-        <View style={styles.pillContainer}>
-          {FACULTY_QUEUE_FILTERS.map((entry) => {
-            const isActive = filter === entry.key;
-            return (
-              <Pressable
-                key={entry.key}
-                style={[
-                  styles.pillSegment,
-                  isActive && { backgroundColor: theme.colors.brand.primary },
-                ]}
-                onPress={() => {
-                  if (!isActive) {
-                    Haptics.selectionAsync();
-                    setFilter(entry.key);
-                  }
-                }}
-              >
-                <Text
+        <View style={styles.pillContainerOuter}>
+          <ScrollView
+            ref={pillScrollRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            onScroll={handlePillScroll}
+            scrollEventThrottle={16}
+            onContentSizeChange={(w) => {
+              setShowRightHint(w > 360);
+            }}
+            style={styles.pillScrollWrapper}
+            contentContainerStyle={styles.pillContainer}
+          >
+            {FACULTY_QUEUE_FILTERS.map((entry) => {
+              const isActive = filter === entry.key;
+              return (
+                <Pressable
+                  key={entry.key}
                   style={[
-                    styles.pillSegmentLabel,
-                    isActive && { color: theme.colors.text.onBrand },
+                    styles.pillSegment,
+                    isActive && { backgroundColor: theme.colors.brand.primary },
                   ]}
+                  onPress={() => {
+                    if (!isActive) {
+                      Haptics.selectionAsync();
+                      setFilter(entry.key);
+                    }
+                  }}
                 >
-                  {entry.label}
-                </Text>
+                  <Text
+                    style={[
+                      styles.pillSegmentLabel,
+                      isActive && { color: theme.colors.text.onBrand },
+                    ]}
+                  >
+                    {entry.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+
+          {showLeftHint && (
+            <View style={styles.scrollHintLeftWrap} pointerEvents="box-none">
+              <LinearGradient
+                colors={[theme.colors.surface.sunken, 'transparent']}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={styles.scrollHintGradient}
+                pointerEvents="none"
+              />
+              <Pressable
+                style={styles.scrollHintButton}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  pillScrollRef.current?.scrollTo({ x: 0, animated: true });
+                }}
+                accessibilityLabel="Scroll left to see earlier filters"
+              >
+                <ChevronLeft size={16} color={theme.colors.brand.primary} />
               </Pressable>
-            );
-          })}
+            </View>
+          )}
+
+          {showRightHint && (
+            <View style={styles.scrollHintRightWrap} pointerEvents="box-none">
+              <LinearGradient
+                colors={['transparent', theme.colors.surface.sunken]}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={styles.scrollHintGradient}
+                pointerEvents="none"
+              />
+              <Pressable
+                style={styles.scrollHintButton}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  pillScrollRef.current?.scrollToEnd({ animated: true });
+                }}
+                accessibilityLabel="Scroll right to see more filters"
+              >
+                <ChevronRight size={16} color={theme.colors.brand.primary} />
+              </Pressable>
+            </View>
+          )}
         </View>
       </View>
 
       <LegendList
         recycleItems={true}
         drawDistance={1500}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         refreshControl={
@@ -222,7 +287,7 @@ export const FacultyReviewScreen = () => {
         )}
         data={papers ?? []}
         keyExtractor={keyExtractor}
-        estimatedItemSize={130}
+        estimatedItemSize={85}
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
         ListFooterComponent={renderFooter}
@@ -243,6 +308,22 @@ const makeStyles = (theme: Theme) =>
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: theme.colors.border.subtle,
       zIndex: 10,
+    },
+    titleWrap: {
+      flex: 1,
+      minWidth: 0,
+      justifyContent: 'center',
+    },
+    title: {
+      fontFamily: theme.fontFamilies.display.semibold,
+      fontSize: 26,
+      lineHeight: 32,
+      color: theme.colors.text.primary,
+    },
+    subtitle: {
+      fontFamily: theme.fontFamilies.ui.regular,
+      fontSize: 13,
+      color: theme.colors.text.muted,
     },
     searchContainer: {
       flexDirection: 'row',
@@ -266,17 +347,63 @@ const makeStyles = (theme: Theme) =>
       marginLeft: theme.spacing.sm,
       padding: theme.spacing.xs,
     },
+    pillScrollWrapper: {
+      flexGrow: 0,
+    },
+    pillContainerOuter: {
+      position: 'relative',
+    },
     pillContainer: {
       flexDirection: 'row',
       backgroundColor: theme.colors.surface.sunken,
       borderRadius: 9999,
       padding: 4,
+      gap: 4,
+    },
+    scrollHintLeftWrap: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: 48,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      paddingLeft: 4,
+    },
+    scrollHintRightWrap: {
+      position: 'absolute',
+      right: 0,
+      top: 0,
+      bottom: 0,
+      width: 48,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      paddingRight: 4,
+    },
+    scrollHintGradient: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: 9999,
+    },
+    scrollHintButton: {
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      backgroundColor: theme.colors.surface.raised,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.15,
+      shadowRadius: 2,
+      elevation: 2,
     },
     pillSegment: {
-      flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
       paddingVertical: 8,
+      paddingHorizontal: 16,
       borderRadius: 9999,
     },
     pillSegmentLabel: {

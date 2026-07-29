@@ -222,7 +222,7 @@ export const MyPapersScreen = () => {
         )}
         data={loading || filtered.length === 0 ? [] : filtered}
         keyExtractor={keyExtractor}
-        estimatedItemSize={140}
+        estimatedItemSize={104}
         renderItem={renderPaperItem}
       />
       
