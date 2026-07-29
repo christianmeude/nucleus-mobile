@@ -1,0 +1,3 @@
+# Push notification permission requested at first meaningful notification event, not at app startup
+
+The OS push permission prompt is shown contextually — the first time a student submits a paper, or the first time a faculty member receives a review assignment — rather than at app startup or on first login. iOS's permission dialog is a one-shot grant: if the user dismisses it because it appeared with no context, push is permanently disabled until they manually re-enable it in Settings. Delaying the prompt to a moment when the user has clear reason to want notifications significantly improves grant rates and is the only path to recovering from a denial without directing users to Settings.
