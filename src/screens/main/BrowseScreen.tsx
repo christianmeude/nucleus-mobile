@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Keyboard, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { ListRenderItem } from 'react-native';
 import Animated, {
@@ -30,6 +31,8 @@ import { type Theme } from '../../theme';
 import { haptics } from '../../lib/haptics';
 import {
   BottomSheet,
+  BottomSheetScrollView,
+  BottomSheetTextInput,
   EmptyState,
   InlineNotice,
   PressableScale,
@@ -82,8 +85,8 @@ export const BrowseScreen = () => {
   const [tempYearTo, setTempYearTo] = useState('');
   const [yearError, setYearError] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [yearSheetOpen, setYearSheetOpen] = useState(false);
-  const [fieldSheetOpen, setFieldSheetOpen] = useState(false);
+  const yearSheetRef = useRef<BottomSheetModal>(null);
+  const fieldSheetRef = useRef<BottomSheetModal>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -387,12 +390,12 @@ export const BrowseScreen = () => {
           fieldLabel={fieldLabel}
           yearLabel={yearLabel}
           viewMode={viewMode}
-          onOpenFieldSheet={() => setFieldSheetOpen(true)}
+          onOpenFieldSheet={() => fieldSheetRef.current?.present()}
           onOpenYearSheet={() => {
             setTempYearFrom(yearFrom);
             setTempYearTo(yearTo);
             setYearError('');
-            setYearSheetOpen(true);
+            yearSheetRef.current?.present();
           }}
           onChangeViewMode={setViewMode}
         />
@@ -488,8 +491,7 @@ export const BrowseScreen = () => {
         </View>
       </Screen>
 
-      <BottomSheet visible={yearSheetOpen} onClose={() => {
-        setYearSheetOpen(false);
+      <BottomSheet ref={yearSheetRef} onDismiss={() => {
         setYearError('');
       }}>
         <Text style={styles.sheetTitle}>Filter by Year</Text>
@@ -500,6 +502,7 @@ export const BrowseScreen = () => {
         )}
         <View style={styles.yearInputsRow}>
           <Input
+            component={BottomSheetTextInput}
             containerStyle={styles.yearInput}
             placeholder="From (e.g. 2020)"
             keyboardType="number-pad"
@@ -508,6 +511,7 @@ export const BrowseScreen = () => {
             onChangeText={setTempYearFrom}
           />
           <Input
+            component={BottomSheetTextInput}
             containerStyle={styles.yearInput}
             placeholder="To (e.g. 2022)"
             keyboardType="number-pad"
@@ -533,7 +537,7 @@ export const BrowseScreen = () => {
               setYearError('');
               setYearFrom(fStr);
               setYearTo(tStr);
-              setYearSheetOpen(false);
+              yearSheetRef.current?.dismiss();
             }}
           />
         </View>
@@ -548,16 +552,16 @@ export const BrowseScreen = () => {
                 setYearTo('');
                 setTempYearFrom('');
                 setTempYearTo('');
-                setYearSheetOpen(false);
+                yearSheetRef.current?.dismiss();
               }}
             />
           </View>
         )}
       </BottomSheet>
 
-      <BottomSheet visible={fieldSheetOpen} onClose={() => setFieldSheetOpen(false)}>
+      <BottomSheet ref={fieldSheetRef}>
         <Text style={styles.sheetTitle}>Field</Text>
-        <ScrollView
+        <BottomSheetScrollView
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
           style={styles.sheetScroll}
@@ -566,7 +570,7 @@ export const BrowseScreen = () => {
             style={styles.sheetRow}
             onPress={() => {
               setCategoryFilter('');
-              setFieldSheetOpen(false);
+              fieldSheetRef.current?.dismiss();
             }}
           >
             <Text style={[styles.sheetRowText, !categoryFilter ? styles.sheetRowActive : null]}>
@@ -584,7 +588,7 @@ export const BrowseScreen = () => {
                 style={styles.sheetRow}
                 onPress={() => {
                   setCategoryFilter(category.id);
-                  setFieldSheetOpen(false);
+                  fieldSheetRef.current?.dismiss();
                 }}
               >
                 <Text
@@ -597,7 +601,7 @@ export const BrowseScreen = () => {
               </PressableScale>
             );
           })}
-        </ScrollView>
+        </BottomSheetScrollView>
       </BottomSheet>
     </>
   );

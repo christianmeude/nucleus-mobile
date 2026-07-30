@@ -1,4 +1,5 @@
 import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -41,6 +42,7 @@ import { Category, ResearchPaper, SubmissionPolicy } from '../../types/domain';
 import { theme } from '../../theme';
 import {
   BottomSheet,
+  BottomSheetScrollView,
   Button,
   Card,
   Chip,
@@ -162,7 +164,10 @@ export const SubmitResearchScreen = () => {
   const [studentSearchResults, setStudentSearchResults] = useState<StudentSearchResult[]>([]);
   const [studentSearchLoading, setStudentSearchLoading] = useState(false);
 
-  const [pickerOpen, setPickerOpen] = useState<PickerKind | null>(null);
+  const categorySheetRef = useRef<BottomSheetModal>(null);
+  const departmentSheetRef = useRef<BottomSheetModal>(null);
+  const facultySheetRef = useRef<BottomSheetModal>(null);
+  const checklistSheetRef = useRef<BottomSheetModal>(null);
   const [showChecklistModal, setShowChecklistModal] = useState(false);
 
   const [bootstrapping, setBootstrapping] = useState(true);
@@ -485,12 +490,12 @@ export const SubmitResearchScreen = () => {
 
   const handleSubmitPress = () => {
     setSubmitError('');
-    setShowChecklistModal(true);
+    checklistSheetRef.current?.present();
   };
 
   const handleConfirmChecklist = async () => {
     if (!checklistComplete) return;
-    setShowChecklistModal(false);
+    checklistSheetRef.current?.dismiss();
     await performSubmit();
   };
 
@@ -711,7 +716,7 @@ export const SubmitResearchScreen = () => {
             <View style={styles.section}>
               <Text style={styles.label}>Research category *</Text>
               <Pressable
-                onPress={() => setPickerOpen('category')}
+                onPress={() => categorySheetRef.current?.present()}
                 accessibilityRole="button"
                 accessibilityLabel="Select research category"
                 style={styles.selectField}
@@ -734,7 +739,7 @@ export const SubmitResearchScreen = () => {
             <View style={styles.section}>
               <Text style={styles.label}>Department</Text>
               <Pressable
-                onPress={() => setPickerOpen('department')}
+                onPress={() => departmentSheetRef.current?.present()}
                 accessibilityRole="button"
                 accessibilityLabel="Select department"
                 style={styles.selectField}
@@ -760,7 +765,7 @@ export const SubmitResearchScreen = () => {
             <View style={styles.section}>
               <Text style={styles.label}>Faculty adviser *</Text>
               <Pressable
-                onPress={() => setPickerOpen('faculty')}
+                onPress={() => facultySheetRef.current?.present()}
                 accessibilityRole="button"
                 accessibilityLabel="Select faculty adviser"
                 style={styles.selectField}
@@ -920,9 +925,9 @@ export const SubmitResearchScreen = () => {
       ) : null}
 
       {/* Pickers */}
-      <BottomSheet visible={pickerOpen === 'category'} onClose={() => setPickerOpen(null)}>
+      <BottomSheet ref={categorySheetRef}>
         <Text style={styles.sheetTitle}>Select category</Text>
-        <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} style={styles.sheetList}>
+        <BottomSheetScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} style={styles.sheetList}>
           {categories.length === 0 ? (
             <EmptyState title="No categories available" />
           ) : (
@@ -931,7 +936,7 @@ export const SubmitResearchScreen = () => {
                 key={entry.id}
                 onPress={() => {
                   setFormField('category', entry.id);
-                  setPickerOpen(null);
+                  categorySheetRef.current?.dismiss();
                 }}
                 style={styles.sheetRow}
               >
@@ -942,17 +947,17 @@ export const SubmitResearchScreen = () => {
               </Pressable>
             ))
           )}
-        </ScrollView>
+        </BottomSheetScrollView>
       </BottomSheet>
 
-      <BottomSheet visible={pickerOpen === 'department'} onClose={() => setPickerOpen(null)}>
+      <BottomSheet ref={departmentSheetRef}>
         <Text style={styles.sheetTitle}>Select department</Text>
-        <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} style={styles.sheetList}>
+        <BottomSheetScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} style={styles.sheetList}>
           <Pressable
             onPress={() => {
               setFormField('department', '');
               setFormField('departmentId', '');
-              setPickerOpen(null);
+              departmentSheetRef.current?.dismiss();
             }}
             style={styles.sheetRow}
           >
@@ -974,7 +979,7 @@ export const SubmitResearchScreen = () => {
                   setFormField('departmentId', entry.id);
                   setFormField('department', entry.name);
                   setFormField('facultyId', '');
-                  setPickerOpen(null);
+                  departmentSheetRef.current?.dismiss();
                 }}
                 style={styles.sheetRow}
               >
@@ -988,12 +993,12 @@ export const SubmitResearchScreen = () => {
               </Pressable>
             ))
           )}
-        </ScrollView>
+        </BottomSheetScrollView>
       </BottomSheet>
 
-      <BottomSheet visible={pickerOpen === 'faculty'} onClose={() => setPickerOpen(null)}>
+      <BottomSheet ref={facultySheetRef}>
         <Text style={styles.sheetTitle}>Select faculty adviser</Text>
-        <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} style={styles.sheetList}>
+        <BottomSheetScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} style={styles.sheetList}>
           {facultyMembers.length === 0 ? (
             <EmptyState
               title="No faculty available"
@@ -1005,7 +1010,7 @@ export const SubmitResearchScreen = () => {
                 key={entry.id}
                 onPress={() => {
                   setFormField('facultyId', entry.id);
-                  setPickerOpen(null);
+                  facultySheetRef.current?.dismiss();
                 }}
                 style={styles.sheetRow}
               >
@@ -1021,11 +1026,11 @@ export const SubmitResearchScreen = () => {
               </Pressable>
             ))
           )}
-        </ScrollView>
+        </BottomSheetScrollView>
       </BottomSheet>
 
       {/* Checklist confirmation */}
-      <BottomSheet visible={showChecklistModal} onClose={() => setShowChecklistModal(false)}>
+      <BottomSheet ref={checklistSheetRef}>
         <Text style={styles.sheetTitle}>Submission checklist</Text>
         <Text style={styles.sheetIntro}>Confirm all required items before final submission.</Text>
         <View style={styles.checklist}>

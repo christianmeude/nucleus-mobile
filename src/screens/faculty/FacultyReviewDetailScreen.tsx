@@ -5,6 +5,7 @@ import { useNavigation, useRoute, type RouteProp } from '@react-navigation/nativ
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import { CheckCircle2, PenTool, XCircle } from 'lucide-react-native';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import {
   BottomSheet,
   Button,
@@ -14,6 +15,7 @@ import {
   PressableScale,
   Screen,
   Skeleton,
+  BottomSheetTextInput,
 } from '../../components/ui';
 import {
   PdfViewer,
@@ -61,8 +63,10 @@ export const FacultyReviewDetailScreen = () => {
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirmStep, setConfirmStep] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const actionSheetRef = useRef<BottomSheetModal>(null);
 
   const onSuccess = useCallback(() => {
+    actionSheetRef.current?.dismiss();
     setSheet(null);
     setShowSuccess(true);
     setTimeout(() => {
@@ -168,11 +172,13 @@ export const FacultyReviewDetailScreen = () => {
   );
 
   const closeSheet = useCallback(() => {
-    if (acting) return;
-    setSheet(null);
-    setActionError(null);
-    setConfirmStep(false);
-  }, [acting]);
+    actionSheetRef.current?.dismiss();
+    setTimeout(() => {
+      setSheet(null);
+      setActionError(null);
+      setConfirmStep(false);
+    }, 200);
+  }, []);
 
   const overlays = useMemo<PdfAnnotationOverlay[] | undefined>(
     () =>
@@ -202,6 +208,7 @@ export const FacultyReviewDetailScreen = () => {
     setActionError(null);
     setConfirmStep(false);
     setSheet('approve');
+    actionSheetRef.current?.present();
     if (approvers === null) {
       try {
         setApproversError(null);
@@ -216,6 +223,7 @@ export const FacultyReviewDetailScreen = () => {
     setActionError(null);
     setConfirmStep(false);
     setSheet(kind);
+    actionSheetRef.current?.present();
   }, []);
 
   const runApprove = useCallback(async () => {
@@ -234,7 +242,7 @@ export const FacultyReviewDetailScreen = () => {
     } finally {
       setActing(false);
     }
-  }, [approvers, selectedApproverId, comments, paperId, navigation]);
+  }, [approvers, selectedApproverId, comments, paperId, onSuccess]);
 
   const runRevision = useCallback(async () => {
     if (!notes.trim()) {
@@ -251,7 +259,7 @@ export const FacultyReviewDetailScreen = () => {
     } finally {
       setActing(false);
     }
-  }, [notes, paperId, navigation]);
+  }, [notes, paperId, onSuccess]);
 
   const runReject = useCallback(async () => {
     if (!reason.trim()) {
@@ -268,11 +276,9 @@ export const FacultyReviewDetailScreen = () => {
     } finally {
       setActing(false);
     }
-  }, [reason, paperId, navigation]);
+  }, [reason, paperId, onSuccess]);
 
   if (error && !detail) {
-    // `centered` carries no padding keys, so it's safe to pass straight to
-    // Screen's own `style` prop without colliding with its inset padding.
     return (
       <Screen edges={{ top: false }} style={styles.centered}>
         <InlineNotice tone="danger" message={error} />
@@ -281,9 +287,6 @@ export const FacultyReviewDetailScreen = () => {
   }
 
   if (!detail) {
-    // `content` sets its own paddingBottom, so it goes on a plain inner View
-    // (not Screen's `style` prop) to avoid overriding Screen's own bottom
-    // inset padding — the two stack additively this way.
     return (
       <Screen edges={{ top: false }}>
         <View style={styles.content}>
@@ -442,7 +445,7 @@ export const FacultyReviewDetailScreen = () => {
         </Animated.ScrollView>
       </Screen>
 
-      <BottomSheet visible={sheet !== null} onClose={closeSheet}>
+      <BottomSheet ref={actionSheetRef} onDismiss={() => setSheet(null)}>
         {sheet === 'approve' ? (
           <>
             <View style={[styles.sheetHeader, { backgroundColor: theme.colors.state.successSurface }]}>
@@ -501,6 +504,7 @@ export const FacultyReviewDetailScreen = () => {
 
                 <View>
                   <Input
+                    component={BottomSheetTextInput}
                     value={comments}
                     onChangeText={setComments}
                     placeholder="Optional note to the next reviewer"
@@ -557,6 +561,7 @@ export const FacultyReviewDetailScreen = () => {
 
                 <View>
                   <Input
+                    component={BottomSheetTextInput}
                     value={notes}
                     onChangeText={setNotes}
                     placeholder="Revision notes (required)"
@@ -611,6 +616,7 @@ export const FacultyReviewDetailScreen = () => {
 
                 <View>
                   <Input
+                    component={BottomSheetTextInput}
                     value={reason}
                     onChangeText={setReason}
                     placeholder="Rejection reason (required)"

@@ -14,6 +14,7 @@ import { useEffect } from 'react';
 import { AuthProvider } from './src/context/AuthContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
 import { CoachmarkProvider } from './src/components/coachmarks/CoachmarkProvider';
 
@@ -56,7 +57,9 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <AppShell />
+          <BottomSheetModalProvider>
+            <AppShell />
+          </BottomSheetModalProvider>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

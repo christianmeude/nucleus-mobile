@@ -1,4 +1,5 @@
-import React, { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
+import React, { forwardRef, useImperativeHandle, useMemo, useRef, useEffect } from 'react';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Icon } from './ui/Icon';
 import { BottomSheet } from './ui';
@@ -35,6 +36,15 @@ export const AnnotationPanel = ({
   const styles = useThemedStyles(makeStyles);
   const scrollViewRef = useRef<ScrollView>(null);
   const itemLayouts = useRef<Record<string, number>>({});
+  const panelRef = useRef<BottomSheetModal>(null);
+
+  useEffect(() => {
+    if (visible) {
+      panelRef.current?.present();
+    } else {
+      panelRef.current?.dismiss();
+    }
+  }, [visible]);
 
   React.useEffect(() => {
     if (visible && selectedAnnotationId) {
@@ -139,7 +149,7 @@ export const AnnotationPanel = ({
   };
 
   return (
-    <BottomSheet visible={visible} onClose={onClose}>
+    <BottomSheet ref={panelRef} onDismiss={onClose}>
       <View style={styles.header}>
         <Text style={styles.title}>Reviewer Feedback</Text>
       </View>
