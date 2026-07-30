@@ -14,9 +14,6 @@ export const BottomSheet = forwardRef<BottomSheetModal, BottomSheetProps>(
   ({ onDismiss, children, snapPoints }, ref) => {
     const { theme } = useTheme();
     const styles = useThemedStyles(makeStyles);
-    
-    const defaultSnapPoints = useMemo(() => ['50%', '90%'], []);
-    const activeSnapPoints = snapPoints || defaultSnapPoints;
 
     const renderBackdrop = useCallback(
       (props: any) => (
@@ -29,16 +26,17 @@ export const BottomSheet = forwardRef<BottomSheetModal, BottomSheetProps>(
       <BottomSheetModal
         ref={ref}
         index={0}
-        snapPoints={activeSnapPoints}
+        snapPoints={snapPoints}
+        enableDynamicSizing={!snapPoints}
         enablePanDownToClose
         onDismiss={onDismiss}
         backdropComponent={renderBackdrop}
         backgroundStyle={styles.bottomSheetBackground}
         handleIndicatorStyle={styles.bottomSheetIndicator}
-        keyboardBehavior="extend"
+        keyboardBehavior="interactive"
         keyboardBlurBehavior="restore"
       >
-        <BottomSheetView style={styles.sheetContent}>
+        <BottomSheetView style={[styles.sheetContent, !snapPoints && { flex: 0 }]}>
           {children}
         </BottomSheetView>
       </BottomSheetModal>
