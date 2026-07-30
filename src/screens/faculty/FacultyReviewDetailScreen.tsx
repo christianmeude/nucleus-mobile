@@ -144,6 +144,29 @@ export const FacultyReviewDetailScreen = () => {
     [paperId, loadAnnotations],
   );
 
+  const handleCreateHighlight = useCallback(
+    async (input: {
+      pageNumber: number;
+      highlightRects: { x: number; y: number; w: number; h: number }[];
+      note: string;
+    }) => {
+      await facultyApi.createHighlightAnnotation({ paperId, ...input });
+      await loadAnnotations();
+    },
+    [paperId, loadAnnotations],
+  );
+
+  const handleCreateDraw = useCallback(
+    async (input: {
+      pageNumber: number;
+      imageDataUrl: string;
+    }) => {
+      await facultyApi.createDrawAnnotation({ paperId, ...input });
+      await loadAnnotations();
+    },
+    [paperId, loadAnnotations],
+  );
+
   const closeSheet = useCallback(() => {
     if (acting) return;
     setSheet(null);
@@ -310,6 +333,8 @@ export const FacultyReviewDetailScreen = () => {
                 annotations={overlays}
                 canAnnotate={canReview}
                 onCreateNote={handleCreateNote}
+                onCreateHighlight={handleCreateHighlight}
+                onCreateDraw={handleCreateDraw}
                 onAnnotationPress={(id) => {
                   setSelectedAnnotationId(id);
                   setPanelOpen(true);

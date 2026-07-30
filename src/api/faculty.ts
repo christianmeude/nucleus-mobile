@@ -559,8 +559,25 @@ export interface CreateFacultyNoteInput {
   highlightColor?: string;
 }
 
+export interface CreateFacultyHighlightInput {
+  paperId: string;
+  note: string;
+  pageNumber: number;
+  highlightRects: AnnotationRect[];
+  selectedText?: string;
+  highlightColor?: string;
+}
+
+export interface CreateFacultyDrawInput {
+  paperId: string;
+  pageNumber: number;
+  imageDataUrl: string;
+}
+
 /** Gold pin, matching the PdfViewer note-pin fallback color. */
 const NOTE_PIN_COLOR = '#CDA434';
+/** Yellow highlight, matching the web fallback color. */
+const HIGHLIGHT_COLOR = '#FFDC00';
 
 /** Assemble the web-compatible meta-in-text envelope for a note-pin annotation. */
 function buildNoteEnvelope(input: CreateFacultyNoteInput): string {
@@ -575,6 +592,34 @@ function buildNoteEnvelope(input: CreateFacultyNoteInput): string {
   };
   return `${ANNOTATION_META_OPEN}${JSON.stringify(meta)}${ANNOTATION_META_CLOSE}\n${input.note.trim()}`;
 }
+
+/** Assemble the web-compatible meta-in-text envelope for a highlight annotation. */
+function buildHighlightEnvelope(input: CreateFacultyHighlightInput): string {
+  const meta = {
+    annotationType: 'comment' as const,
+    pageNumber: Math.max(1, Math.floor(input.pageNumber)),
+    highlightRects: input.highlightRects.map((r) => ({
+      x: Math.min(100, Math.max(0, r.x)),
+      y: Math.min(100, Math.max(0, r.y)),
+      w: Math.min(100, Math.max(0, r.w)),
+      h: Math.min(100, Math.max(0, r.h)),
+    })),
+    selectedText: input.selectedText || '',
+    highlightColor: input.highlightColor ?? HIGHLIGHT_COLOR,
+  };
+  return `${ANNOTATION_META_OPEN}${JSON.stringify(meta)}${ANNOTATION_META_CLOSE}\n${input.note.trim()}`;
+}
+
+/** Assemble the web-compatible meta-in-text envelope for a draw annotation. */
+function buildDrawEnvelope(input: CreateFacultyDrawInput, drawImageUrl: string): string {
+  const meta = {
+    annotationType: 'draw' as const,
+    pageNumber: Math.max(1, Math.floor(input.pageNumber)),
+    drawImageUrl,
+  };
+  return `${ANNOTATION_META_OPEN}${JSON.stringify(meta)}${ANNOTATION_META_CLOSE}\n`;
+}
+
 
 // =============================================================================
 // Repository + Notifications (read-only, #12)
@@ -935,6 +980,63 @@ export const facultyApi = {
 
     if (error) {
       throw new Error(error.message || 'Unable to save the annotation.');
+    }
+
+    apiCache.invalidate('faculty:');
+    apiCache.invalidate('research:');
+    return String(data ?? '');
+  },
+
+  createHighlightAnnotation: async (input: CreateFacultyHighlightInput): Promise<string> => {
+    await resolveCurrentFacultyProfile();
+
+    const note = input.note.trim();
+    if (!note) {
+      throw new Error('Add a comment before saving the highlight.');
+    }
+
+    const { data, error } = await supabase.rpc('create_faculty_annotation', {
+      p_paper_id: input.paperId,
+      p_comment: buildHighlightEnvelope({ ...input, note }),
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Unable to save the highlight annotation.');
+    }
+
+    apiCache.invalidate('faculty:');
+    apiCache.invalidate('research:');
+    return String(data ?? '');
+  },
+
+  createDrawAnnotation: async (input: CreateFacultyDrawInput): Promise<string> => {
+    await resolveCurrentFacultyProfile();
+
+    // Decode the data URL into a Blob
+    const res = await fetch(input.imageDataUrl);
+    const blob = await res.blob();
+    const fileName = `drawings/${input.paperId}/${Date.now()}_${Math.random().toString(36).substring(7)}.png`;
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('research-papers')
+      .upload(fileName, blob, {
+        contentType: 'image/png',
+      });
+
+    if (uploadError) {
+      throw new Error(uploadError.message || 'Unable to upload drawing.');
+    }
+
+    const { data: publicUrlData } = supabase.storage.from('research-papers').getPublicUrl(uploadData.path);
+    const drawImageUrl = publicUrlData.publicUrl;
+
+    const { data, error } = await supabase.rpc('create_faculty_annotation', {
+      p_paper_id: input.paperId,
+      p_comment: buildDrawEnvelope(input, drawImageUrl),
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Unable to save the drawing annotation.');
     }
 
     apiCache.invalidate('faculty:');

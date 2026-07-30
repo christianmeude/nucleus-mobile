@@ -160,29 +160,167 @@ const buildViewerHtml = (
     document.querySelectorAll('.ann-overlay').forEach(function(el) { el.style.display = 'none'; });
   };
 
-  // Note-placement mode (faculty write path). When on, a tap on a page posts the
-  // tapped point as page-percentage coords so the host can open a note composer.
-  window.__annotationMode = false;
-  window.__setAnnotationMode = function(on) {
-    window.__annotationMode = !!on;
-    document.body.style.cursor = on ? 'crosshair' : '';
+  // Annotation modes (faculty write path).
+  // 'none' | 'note' | 'highlight' | 'draw'
+  window.__annotationMode = 'none';
+  window.__setAnnotationMode = function(mode) {
+    window.__annotationMode = mode;
+    if (mode === 'note') document.body.style.cursor = 'crosshair';
+    else if (mode === 'highlight') document.body.style.cursor = 'text';
+    else if (mode === 'draw') document.body.style.cursor = 'url(https://cdn.jsdelivr.net/npm/lucide-static@0.344.0/icons/pencil.svg) 0 16, auto';
+    else document.body.style.cursor = '';
   };
-  document.addEventListener('click', function(ev) {
-    if (!window.__annotationMode) return;
+
+  // Drawing / Highlighting state
+  var activeAction = null;
+
+  function getPageRect(ev) {
+    var clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+    var clientY = ev.touches ? ev.touches[0].clientY : ev.clientY;
     var wrappers = Array.from(document.querySelectorAll('.page-wrapper'));
     for (var i = 0; i < wrappers.length; i++) {
       var r = wrappers[i].getBoundingClientRect();
-      if (ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom) {
-        post({
-          type: 'placeNote',
-          pageNumber: i + 1,
-          x: ((ev.clientX - r.left) / r.width) * 100,
-          y: ((ev.clientY - r.top) / r.height) * 100,
-        });
-        return;
+      if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+        return { pageIndex: i, rect: r, x: clientX - r.left, y: clientY - r.top, clientX: clientX, clientY: clientY };
       }
     }
-  });
+    return null;
+  }
+
+  function handlePointerDown(ev) {
+    if (window.__annotationMode === 'none' || window.__annotationMode === 'note') return;
+    var hit = getPageRect(ev);
+    if (!hit) return;
+    
+    // Prevent default scrolling when drawing/highlighting
+    if (ev.type.startsWith('touch')) ev.preventDefault();
+
+    if (window.__annotationMode === 'highlight') {
+      var overlay = document.createElement('div');
+      overlay.style.cssText = 'position:absolute;background:rgba(255,220,0,0.35);border:1px solid #FFDC00;pointer-events:none;';
+      var wrapper = document.querySelectorAll('.page-wrapper')[hit.pageIndex];
+      wrapper.appendChild(overlay);
+      
+      activeAction = {
+        type: 'highlight',
+        pageIndex: hit.pageIndex,
+        startX: hit.x,
+        startY: hit.y,
+        wrapper: wrapper,
+        rect: hit.rect,
+        overlay: overlay
+      };
+    } else if (window.__annotationMode === 'draw') {
+      var wrapper = document.querySelectorAll('.page-wrapper')[hit.pageIndex];
+      var canvas = document.createElement('canvas');
+      canvas.width = hit.rect.width;
+      canvas.height = hit.rect.height;
+      canvas.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;z-index:10;';
+      wrapper.appendChild(canvas);
+      
+      var ctx = canvas.getContext('2d');
+      ctx.strokeStyle = '#D32F2F'; // Red pen
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(hit.x, hit.y);
+      
+      activeAction = {
+        type: 'draw',
+        pageIndex: hit.pageIndex,
+        wrapper: wrapper,
+        rect: hit.rect,
+        canvas: canvas,
+        ctx: ctx
+      };
+    }
+  }
+
+  function handlePointerMove(ev) {
+    if (!activeAction) return;
+    if (ev.type.startsWith('touch')) ev.preventDefault();
+
+    var clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+    var clientY = ev.touches ? ev.touches[0].clientY : ev.clientY;
+    
+    var localX = clientX - activeAction.rect.left;
+    var localY = clientY - activeAction.rect.top;
+    
+    // Clamp to page
+    localX = Math.max(0, Math.min(activeAction.rect.width, localX));
+    localY = Math.max(0, Math.min(activeAction.rect.height, localY));
+
+    if (activeAction.type === 'highlight') {
+      var x = Math.min(activeAction.startX, localX);
+      var y = Math.min(activeAction.startY, localY);
+      var w = Math.abs(localX - activeAction.startX);
+      var h = Math.abs(localY - activeAction.startY);
+      
+      activeAction.overlay.style.left = (x / activeAction.rect.width * 100) + '%';
+      activeAction.overlay.style.top = (y / activeAction.rect.height * 100) + '%';
+      activeAction.overlay.style.width = (w / activeAction.rect.width * 100) + '%';
+      activeAction.overlay.style.height = (h / activeAction.rect.height * 100) + '%';
+      
+      activeAction.currentRect = {
+        x: x / activeAction.rect.width * 100,
+        y: y / activeAction.rect.height * 100,
+        w: w / activeAction.rect.width * 100,
+        h: h / activeAction.rect.height * 100
+      };
+    } else if (activeAction.type === 'draw') {
+      activeAction.ctx.lineTo(localX, localY);
+      activeAction.ctx.stroke();
+    }
+  }
+
+  function handlePointerUp(ev) {
+    if (!activeAction) {
+      // Handle note click
+      if (window.__annotationMode === 'note') {
+        var hit = getPageRect(ev);
+        if (hit) {
+          post({
+            type: 'placeNote',
+            pageNumber: hit.pageIndex + 1,
+            x: (hit.x / hit.rect.width) * 100,
+            y: (hit.y / hit.rect.height) * 100,
+          });
+        }
+      }
+      return;
+    }
+    
+    if (activeAction.type === 'highlight') {
+      if (activeAction.currentRect && activeAction.currentRect.w > 1 && activeAction.currentRect.h > 1) {
+        post({
+          type: 'placeHighlight',
+          pageNumber: activeAction.pageIndex + 1,
+          rect: activeAction.currentRect
+        });
+      }
+      activeAction.overlay.remove();
+    } else if (activeAction.type === 'draw') {
+      var dataUrl = activeAction.canvas.toDataURL('image/png');
+      post({
+        type: 'placeDraw',
+        pageNumber: activeAction.pageIndex + 1,
+        imageDataUrl: dataUrl
+      });
+      activeAction.canvas.remove();
+    }
+    
+    activeAction = null;
+  }
+
+  var container = document.getElementById('container');
+  // Use container for pointer events to avoid body scrolling issues
+  container.addEventListener('mousedown', handlePointerDown);
+  container.addEventListener('mousemove', handlePointerMove);
+  container.addEventListener('mouseup', handlePointerUp);
+  container.addEventListener('touchstart', handlePointerDown, { passive: false });
+  container.addEventListener('touchmove', handlePointerMove, { passive: false });
+  container.addEventListener('touchend', handlePointerUp);
 
   try {
     var url = ${JSON.stringify(uri)};
@@ -244,8 +382,10 @@ interface PdfSurfaceProps {
   /** Disable WebView scrolling (preview is a fixed, non-scrollable page). */
   scrollEnabled?: boolean;
   /** When true, a tap on a page reports its position via onPlaceNote (faculty add-note mode). */
-  annotationMode?: boolean;
+  annotationMode?: 'none' | 'note' | 'highlight' | 'draw';
   onPlaceNote?: (pageNumber: number, anchor: { x: number; y: number }) => void;
+  onPlaceHighlight?: (pageNumber: number, rect: AnnotationRect) => void;
+  onPlaceDraw?: (pageNumber: number, imageDataUrl: string) => void;
   onAnnotationPress?: (id: string) => void;
 }
 
@@ -259,8 +399,10 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
       showAnnotations = false,
       firstPageOnly = false,
       scrollEnabled = true,
-      annotationMode = false,
+      annotationMode = 'none',
       onPlaceNote,
+      onPlaceHighlight,
+      onPlaceDraw,
       onAnnotationPress,
     },
     ref,
@@ -308,7 +450,7 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
     useEffect(() => {
       if (!loaded || !webViewRef.current) return;
       webViewRef.current.injectJavaScript(
-        `window.__setAnnotationMode && window.__setAnnotationMode(${annotationMode ? 'true' : 'false'}); true;`,
+        `window.__setAnnotationMode && window.__setAnnotationMode('${annotationMode}'); true;`,
       );
     }, [annotationMode, loaded]);
 
@@ -321,6 +463,8 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
         x?: number;
         y?: number;
         id?: string;
+        rect?: AnnotationRect;
+        imageDataUrl?: string;
       } = {};
       try {
         payload = JSON.parse(event.nativeEvent.data);
@@ -345,6 +489,14 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
           typeof payload.y === 'number'
         ) {
           onPlaceNote?.(payload.pageNumber, { x: payload.x, y: payload.y });
+        }
+      } else if (payload.type === 'placeHighlight') {
+        if (typeof payload.pageNumber === 'number' && payload.rect) {
+          onPlaceHighlight?.(payload.pageNumber, payload.rect);
+        }
+      } else if (payload.type === 'placeDraw') {
+        if (typeof payload.pageNumber === 'number' && payload.imageDataUrl) {
+          onPlaceDraw?.(payload.pageNumber, payload.imageDataUrl);
         }
       } else if (payload.type === 'tapAnnotation' && payload.id) {
         onAnnotationPress?.(payload.id);
@@ -432,8 +584,19 @@ interface PdfViewerProps {
     anchorPercent: { x: number; y: number };
     note: string;
   }) => Promise<void>;
+  onCreateHighlight?: (input: {
+    pageNumber: number;
+    highlightRects: AnnotationRect[];
+    note: string;
+  }) => Promise<void>;
+  onCreateDraw?: (input: {
+    pageNumber: number;
+    imageDataUrl: string;
+  }) => Promise<void>;
   onAnnotationPress?: (id: string) => void;
 }
+
+import { MousePointer2, Highlighter } from 'lucide-react-native';
 
 export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
   (
@@ -445,6 +608,8 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
       variant = 'inline',
       canAnnotate = false,
       onCreateNote,
+      onCreateHighlight,
+      onCreateDraw,
       onAnnotationPress,
     },
     ref,
@@ -455,11 +620,13 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
     const [showAnnotations, setShowAnnotations] = useState(false);
 
     // Note-placement state (faculty add-note mode).
-    const [annotating, setAnnotating] = useState(false);
+    const [annotationMode, setAnnotationMode] = useState<'none' | 'note' | 'highlight' | 'draw'>('none');
     const [pendingAnchor, setPendingAnchor] = useState<{
+      type: 'note' | 'highlight';
       pageNumber: number;
-      x: number;
-      y: number;
+      x?: number;
+      y?: number;
+      rect?: AnnotationRect;
     } | null>(null);
     const [noteText, setNoteText] = useState('');
     const [savingNote, setSavingNote] = useState(false);
@@ -467,9 +634,9 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
 
     const fill = variant === 'fill';
     const hasPositionedAnnotations = (annotations ?? []).some((a) => a.pageNumber !== null);
-    const annotateEnabled = canAnnotate && !!onCreateNote;
+    const annotateEnabled = canAnnotate && (!!onCreateNote || !!onCreateHighlight || !!onCreateDraw);
     // While placing, keep existing pins visible so the reviewer can position relative to them.
-    const overlaysVisible = showAnnotations || annotating;
+    const overlaysVisible = showAnnotations || annotationMode !== 'none';
 
     const closeComposer = () => {
       if (savingNote) return;
@@ -479,24 +646,32 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
     };
 
     const saveNote = async () => {
-      if (!pendingAnchor || !onCreateNote) return;
+      if (!pendingAnchor) return;
       const note = noteText.trim();
       if (!note) {
-        setNoteError('Add a note before saving.');
+        setNoteError('Add a comment before saving.');
         return;
       }
       setSavingNote(true);
       setNoteError(null);
       try {
-        await onCreateNote({
-          pageNumber: pendingAnchor.pageNumber,
-          anchorPercent: { x: pendingAnchor.x, y: pendingAnchor.y },
-          note,
-        });
+        if (pendingAnchor.type === 'note' && onCreateNote && pendingAnchor.x !== undefined && pendingAnchor.y !== undefined) {
+          await onCreateNote({
+            pageNumber: pendingAnchor.pageNumber,
+            anchorPercent: { x: pendingAnchor.x, y: pendingAnchor.y },
+            note,
+          });
+        } else if (pendingAnchor.type === 'highlight' && onCreateHighlight && pendingAnchor.rect) {
+          await onCreateHighlight({
+            pageNumber: pendingAnchor.pageNumber,
+            highlightRects: [pendingAnchor.rect],
+            note,
+          });
+        }
         setSavingNote(false);
         setPendingAnchor(null);
         setNoteText('');
-        setAnnotating(false);
+        setAnnotationMode('none');
         setShowAnnotations(true);
       } catch (err) {
         setSavingNote(false);
@@ -504,21 +679,57 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
       }
     };
 
+    const handleSaveDrawing = async (pageNumber: number, imageDataUrl: string) => {
+      if (!onCreateDraw) return;
+      try {
+        await onCreateDraw({ pageNumber, imageDataUrl });
+        setShowAnnotations(true);
+        setAnnotationMode('none');
+      } catch (err) {
+        // ideally show toast, for now just reset
+        console.error(err);
+        setAnnotationMode('none');
+      }
+    };
+
     const renderControls = (isFullscreen = false) => (
       <View style={styles.controls}>
         {annotateEnabled ? (
-          <Pressable
-            onPress={() => {
-              setAnnotating((prev) => !prev);
-              setPendingAnchor(null);
-            }}
-            accessibilityRole="button"
-            accessibilityState={{ selected: annotating }}
-            accessibilityLabel={annotating ? 'Cancel adding a note' : 'Add a note'}
-            style={[styles.controlButton, annotating ? styles.controlButtonActive : null]}
-          >
-            <Icon icon={annotating ? X : Pencil} size={18} color={theme.colors.text.onBrand} />
-          </Pressable>
+          <>
+            <Pressable
+              onPress={() => {
+                setAnnotationMode((prev) => (prev === 'note' ? 'none' : 'note'));
+                setPendingAnchor(null);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={annotationMode === 'note' ? 'Cancel adding a note' : 'Add a note'}
+              style={[styles.controlButton, annotationMode === 'note' ? styles.controlButtonActive : null]}
+            >
+              <Icon icon={MousePointer2} size={18} color={theme.colors.text.onBrand} />
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                setAnnotationMode((prev) => (prev === 'highlight' ? 'none' : 'highlight'));
+                setPendingAnchor(null);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={annotationMode === 'highlight' ? 'Cancel highlight' : 'Highlight text'}
+              style={[styles.controlButton, annotationMode === 'highlight' ? styles.controlButtonActive : null]}
+            >
+              <Icon icon={Highlighter} size={18} color={theme.colors.text.onBrand} />
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                setAnnotationMode((prev) => (prev === 'draw' ? 'none' : 'draw'));
+                setPendingAnchor(null);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={annotationMode === 'draw' ? 'Cancel draw' : 'Draw'}
+              style={[styles.controlButton, annotationMode === 'draw' ? styles.controlButtonActive : null]}
+            >
+              <Icon icon={Pencil} size={18} color={theme.colors.text.onBrand} />
+            </Pressable>
+          </>
         ) : null}
         {hasPositionedAnnotations ? (
           <Pressable
@@ -568,18 +779,29 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
             onLoaded={onFirstLoad}
             annotations={annotations}
             showAnnotations={overlaysVisible}
-            annotationMode={annotating && !pendingAnchor}
+            annotationMode={pendingAnchor ? 'none' : annotationMode}
             onPlaceNote={(pageNumber, anchor) => {
               setNoteError(null);
               setNoteText('');
-              setPendingAnchor({ pageNumber, x: anchor.x, y: anchor.y });
+              setPendingAnchor({ type: 'note', pageNumber, x: anchor.x, y: anchor.y });
+            }}
+            onPlaceHighlight={(pageNumber, rect) => {
+              setNoteError(null);
+              setNoteText('');
+              setPendingAnchor({ type: 'highlight', pageNumber, rect });
+            }}
+            onPlaceDraw={(pageNumber, imageDataUrl) => {
+              handleSaveDrawing(pageNumber, imageDataUrl);
             }}
             onAnnotationPress={onAnnotationPress}
           />
           {renderControls(false)}
-          {annotating && !pendingAnchor ? (
+          {annotationMode !== 'none' && !pendingAnchor ? (
             <View style={styles.hint} pointerEvents="none">
-              <Text style={styles.hintText}>Tap the page to place a note</Text>
+              <Text style={styles.hintText}>
+                {annotationMode === 'note' ? 'Tap the page to place a note' : 
+                 annotationMode === 'highlight' ? 'Drag a box to highlight text' : 'Draw freehand on the page'}
+              </Text>
             </View>
           ) : null}
         </View>
@@ -610,17 +832,28 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
                       annotations={annotations}
                       showAnnotations={showAnnotations}
                       onAnnotationPress={onAnnotationPress}
-                      annotationMode={annotating && !pendingAnchor}
+                      annotationMode={pendingAnchor ? 'none' : annotationMode}
                       onPlaceNote={(pageNumber, anchor) => {
                         setNoteError(null);
                         setNoteText('');
-                        setPendingAnchor({ pageNumber, x: anchor.x, y: anchor.y });
+                        setPendingAnchor({ type: 'note', pageNumber, x: anchor.x, y: anchor.y });
+                      }}
+                      onPlaceHighlight={(pageNumber, rect) => {
+                        setNoteError(null);
+                        setNoteText('');
+                        setPendingAnchor({ type: 'highlight', pageNumber, rect });
+                      }}
+                      onPlaceDraw={(pageNumber, imageDataUrl) => {
+                        handleSaveDrawing(pageNumber, imageDataUrl);
                       }}
                     />
                     {renderControls(true)}
-                    {annotating && !pendingAnchor ? (
+                    {annotationMode !== 'none' && !pendingAnchor ? (
                       <View style={styles.hint} pointerEvents="none">
-                        <Text style={styles.hintText}>Tap the page to place a note</Text>
+                        <Text style={styles.hintText}>
+                          {annotationMode === 'note' ? 'Tap the page to place a note' : 
+                           annotationMode === 'highlight' ? 'Drag a box to highlight text' : 'Draw freehand on the page'}
+                        </Text>
                       </View>
                     ) : null}
                   </>
