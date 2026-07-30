@@ -8,3 +8,4 @@
 * **Action Queue (Invitations):** A strict list of pending requests that require explicit user action (Accept/Decline). Once acted upon, the item is removed from this queue.
 * **Student Dashboard:** A command center for the student, strictly focused on immediate priority and actionable insight (e.g., papers needing revision, in-flight status, recent feedback). It is *not* a place for discovering public papers.
 * **My Papers (Student):** The comprehensive ledger and historical archive of all submissions made by the student. It is the single source of truth for their complete submission history.
+* **Publication Year:** The year a paper was published or approved for the repository. For the purposes of browsing and filtering, the "Year" of a paper strictly refers to this date, not when it was initially submitted or when the record was created.

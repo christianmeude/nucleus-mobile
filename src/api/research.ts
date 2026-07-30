@@ -88,7 +88,8 @@ interface ResearchPaperRow {
 interface ResearchListParams {
   category?: string;
   search?: string;
-  year?: string;
+  yearFrom?: string;
+  yearTo?: string;
   author?: string;
 }
 
@@ -243,8 +244,12 @@ function toResearchPaper(row: ResearchPaperRow): ResearchPaper {
 function filterPublishedRows(rows: ResearchPaperRow[], params?: ResearchListParams) {
   const normalizedSearch = params?.search?.trim().toLowerCase() ?? '';
   const normalizedAuthor = params?.author?.trim().toLowerCase() ?? '';
-  const normalizedYear = params?.year?.trim() ?? '';
+  const yearFromStr = params?.yearFrom?.trim() ?? '';
+  const yearToStr = params?.yearTo?.trim() ?? '';
   const normalizedCategory = params?.category?.trim() ?? '';
+
+  const yearFrom = yearFromStr ? parseInt(yearFromStr, 10) : null;
+  const yearTo = yearToStr ? parseInt(yearToStr, 10) : null;
 
   return rows.filter((paper) => {
     const paperRecord = toResearchPaper(paper);
@@ -253,11 +258,18 @@ function filterPublishedRows(rows: ResearchPaperRow[], params?: ResearchListPara
       return false;
     }
 
-    if (normalizedYear) {
+    if (yearFrom !== null || yearTo !== null) {
       const dateValue = paperDate(paperRecord);
-      const paperYear = dateValue ? new Date(dateValue).getFullYear().toString() : '';
+      const paperYear = dateValue ? new Date(dateValue).getFullYear() : null;
 
-      if (paperYear !== normalizedYear) {
+      if (!paperYear) {
+        return false; // exclude if paper has no valid date
+      }
+      
+      if (yearFrom !== null && paperYear < yearFrom) {
+        return false;
+      }
+      if (yearTo !== null && paperYear > yearTo) {
         return false;
       }
     }
@@ -572,13 +584,17 @@ export const researchApi = {
    * then re-fetched here under the caller's own session, so RLS stays the single
    * content gate; the server relevance order is preserved.
    */
-  searchPapers: async (query: string, opts?: { limit?: number }): Promise<ResearchPaper[]> => {
+  searchPapers: async (query: string, opts?: { limit?: number; yearFrom?: string; yearTo?: string }): Promise<ResearchPaper[]> => {
     const trimmed = query.trim();
     if (!trimmed) return [];
 
+    const bodyPayload: any = { q: trimmed, limit: opts?.limit ?? 20 };
+    if (opts?.yearFrom) bodyPayload.year_from = parseInt(opts.yearFrom, 10);
+    if (opts?.yearTo) bodyPayload.year_to = parseInt(opts.yearTo, 10);
+
     const { data, error } = await supabase.functions.invoke<{
       results?: { paper_id: string; score: number }[];
-    }>('search-papers', { body: { q: trimmed, limit: opts?.limit ?? 20 } });
+    }>('search-papers', { body: bodyPayload });
 
     if (error) {
       throw new Error(error.message || 'Search is unavailable right now.');

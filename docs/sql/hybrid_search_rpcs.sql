@@ -23,7 +23,9 @@ create or replace function public.search_research_papers(
   match_count      integer          default 20,
   full_text_weight double precision default 1.0,
   semantic_weight  double precision default 1.0,
-  rrf_k            integer          default 50
+  rrf_k            integer          default 50,
+  filter_year_from integer          default null,
+  filter_year_to   integer          default null
 )
 returns table (paper_id uuid, score double precision)
 language sql
@@ -46,6 +48,8 @@ as $$
       and query_text is not null
       and length(btrim(query_text)) > 0
       and rp.search_vector @@ websearch_to_tsquery('english', query_text)
+      and (filter_year_from is null or extract(year from coalesce(rp.published_date, rp.submission_date, rp.created_at)) >= filter_year_from)
+      and (filter_year_to is null or extract(year from coalesce(rp.published_date, rp.submission_date, rp.created_at)) <= filter_year_to)
     order by rank_ix
     limit (select n * 4 from bounds)
   ),
@@ -57,6 +61,8 @@ as $$
     where rp.status::text = any (array['approved','published'])
       and rp.deleted_at is null
       and query_embedding is not null
+      and (filter_year_from is null or extract(year from coalesce(rp.published_date, rp.submission_date, rp.created_at)) >= filter_year_from)
+      and (filter_year_to is null or extract(year from coalesce(rp.published_date, rp.submission_date, rp.created_at)) <= filter_year_to)
     order by rank_ix
     limit (select n * 4 from bounds)
   )
@@ -70,5 +76,5 @@ as $$
   limit (select n from bounds);
 $$;
 
-revoke all on function public.search_research_papers(text, vector, integer, double precision, double precision, integer) from public, anon;
-grant execute on function public.search_research_papers(text, vector, integer, double precision, double precision, integer) to authenticated;
+revoke all on function public.search_research_papers(text, vector, integer, double precision, double precision, integer, integer, integer) from public, anon;
+grant execute on function public.search_research_papers(text, vector, integer, double precision, double precision, integer, integer, integer) to authenticated;

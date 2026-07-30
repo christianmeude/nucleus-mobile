@@ -32,10 +32,14 @@ Deno.serve(async (req) => {
 
   let q = '';
   let limit = 20;
+  let year_from: number | null = null;
+  let year_to: number | null = null;
   try {
     const body = await req.json();
     q = (body?.q ?? '').toString();
     if (typeof body?.limit === 'number') limit = body.limit;
+    if (typeof body?.year_from === 'number') year_from = body.year_from;
+    if (typeof body?.year_to === 'number') year_to = body.year_to;
   } catch {
     return json({ error: 'invalid body' }, 400);
   }
@@ -55,6 +59,8 @@ Deno.serve(async (req) => {
     query_text: q,
     query_embedding: JSON.stringify(embedding),
     match_count: Math.min(Math.max(limit, 1), 50),
+    filter_year_from: year_from,
+    filter_year_to: year_to,
   });
   if (error) return json({ error: error.message }, 400);
 

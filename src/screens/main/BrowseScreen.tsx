@@ -44,14 +44,10 @@ import { BrowseHero } from './browse/BrowseHero';
 import { BrowseFilterBar } from './browse/BrowseFilterBar';
 import { StandardPaperCard } from '../../components/StandardPaperCard';
 import { BrowseGridCell } from './browse/BrowseGridCell';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 
-type SortKey = 'newest' | 'most_viewed';
 type ViewMode = 'list' | 'grid';
-
-const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: 'newest', label: 'Newest' },
-  { value: 'most_viewed', label: 'Most viewed' },
-];
 
 const GREETINGS = [
   'What are you researching today?',
@@ -80,9 +76,13 @@ export const BrowseScreen = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
-  const [sort, setSort] = useState<SortKey>('newest');
+  const [yearFrom, setYearFrom] = useState('');
+  const [yearTo, setYearTo] = useState('');
+  const [tempYearFrom, setTempYearFrom] = useState('');
+  const [tempYearTo, setTempYearTo] = useState('');
+  const [yearError, setYearError] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [sortSheetOpen, setSortSheetOpen] = useState(false);
+  const [yearSheetOpen, setYearSheetOpen] = useState(false);
   const [fieldSheetOpen, setFieldSheetOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -202,7 +202,7 @@ export const BrowseScreen = () => {
     let cancelled = false;
     setSearchLoading(true);
     researchApi
-      .searchPapers(debouncedQuery)
+      .searchPapers(debouncedQuery, { yearFrom, yearTo })
       .then((rows) => {
         if (cancelled) return;
         setServerResults(rows);
@@ -219,7 +219,7 @@ export const BrowseScreen = () => {
     return () => {
       cancelled = true;
     };
-  }, [useServerSearch, debouncedQuery]);
+  }, [useServerSearch, debouncedQuery, yearFrom, yearTo]);
 
   const commitExplore = useCallback(() => {
     exploreReveal.current = true;
@@ -269,36 +269,45 @@ export const BrowseScreen = () => {
   const isFiltering = Boolean(query.trim() || categoryFilter);
 
   const matched = useMemo(() => {
-    if (useServerSearch) {
-      const rows = serverResults ?? [];
-      return categoryFilter ? rows.filter((paper) => paper.category === categoryFilter) : rows;
-    }
+    let rows = useServerSearch ? (serverResults ?? []) : papers;
 
-    const normalized = query.trim().toLowerCase();
-    return papers
-      .filter((paper) => {
-        if (!categoryFilter) return true;
-        return paper.category === categoryFilter;
-      })
-      .filter((paper) => {
-        if (!normalized) return true;
-        const keywords = Array.isArray(paper.keywords) ? paper.keywords.join(' ') : '';
-        const authorName = getPrimaryAuthorName(paper);
-        const target = `${paper.title} ${paper.abstract} ${keywords} ${authorName}`.toLowerCase();
-        return target.includes(normalized);
-      });
-  }, [useServerSearch, serverResults, categoryFilter, papers, query]);
+    const yFrom = yearFrom ? parseInt(yearFrom, 10) : null;
+    const yTo = yearTo ? parseInt(yearTo, 10) : null;
+
+    return rows.filter((paper) => {
+      if (categoryFilter && paper.category !== categoryFilter) {
+        return false;
+      }
+
+      if (yFrom !== null || yTo !== null) {
+        const dateValue = paperDate(paper);
+        const paperYear = dateValue ? new Date(dateValue).getFullYear() : null;
+
+        if (!paperYear) return false;
+        if (yFrom !== null && paperYear < yFrom) return false;
+        if (yTo !== null && paperYear > yTo) return false;
+      }
+
+      if (!useServerSearch) {
+        const normalized = query.trim().toLowerCase();
+        if (normalized) {
+          const keywords = Array.isArray(paper.keywords) ? paper.keywords.join(' ') : '';
+          const authorName = getPrimaryAuthorName(paper);
+          const target = `${paper.title} ${paper.abstract} ${keywords} ${authorName}`.toLowerCase();
+          if (!target.includes(normalized)) return false;
+        }
+      }
+
+      return true;
+    });
+  }, [useServerSearch, serverResults, categoryFilter, papers, query, yearFrom, yearTo]);
 
   const sorted = useMemo(() => {
     if (useServerSearch) return matched;
     const arr = [...matched];
-    if (sort === 'most_viewed') {
-      arr.sort((left, right) => viewsOf(right) - viewsOf(left));
-    } else {
-      arr.sort((left, right) => timeOf(right) - timeOf(left));
-    }
+    arr.sort((left, right) => timeOf(right) - timeOf(left));
     return arr;
-  }, [useServerSearch, matched, sort]);
+  }, [useServerSearch, matched]);
 
   const featured = useMemo(() => {
     if (isFiltering || papers.length === 0) return null;
@@ -357,7 +366,11 @@ export const BrowseScreen = () => {
     [viewMode, colorForCategory, categoryNameById, openDetail, reducedMotion],
   );
 
-  const sortLabel = SORT_OPTIONS.find((option) => option.value === sort)?.label ?? 'Newest';
+  let yearLabel = 'All Years';
+  if (yearFrom && yearTo) yearLabel = `${yearFrom} - ${yearTo}`;
+  else if (yearFrom) yearLabel = `From ${yearFrom}`;
+  else if (yearTo) yearLabel = `Up to ${yearTo}`;
+
   const fieldLabel = categoryFilter
     ? (resolveCategoryName(categoryFilter, categoryNameById) ?? 'Field')
     : 'All fields';
@@ -372,10 +385,15 @@ export const BrowseScreen = () => {
         <BrowseFilterBar
           resultCount={sorted.length}
           fieldLabel={fieldLabel}
-          sortLabel={sortLabel}
+          yearLabel={yearLabel}
           viewMode={viewMode}
           onOpenFieldSheet={() => setFieldSheetOpen(true)}
-          onOpenSortSheet={() => setSortSheetOpen(true)}
+          onOpenYearSheet={() => {
+            setTempYearFrom(yearFrom);
+            setTempYearTo(yearTo);
+            setYearError('');
+            setYearSheetOpen(true);
+          }}
           onChangeViewMode={setViewMode}
         />
 
@@ -470,26 +488,71 @@ export const BrowseScreen = () => {
         </View>
       </Screen>
 
-      <BottomSheet visible={sortSheetOpen} onClose={() => setSortSheetOpen(false)}>
-        <Text style={styles.sheetTitle}>Sort by</Text>
-        {SORT_OPTIONS.map((option) => {
-          const active = sort === option.value;
-          return (
-            <PressableScale
-              key={option.value}
-              style={styles.sheetRow}
+      <BottomSheet visible={yearSheetOpen} onClose={() => {
+        setYearSheetOpen(false);
+        setYearError('');
+      }}>
+        <Text style={styles.sheetTitle}>Filter by Year</Text>
+        {!!yearError && (
+          <Text style={{ color: theme.colors.state.danger, marginBottom: 12, ...theme.typography.caption }}>
+            {yearError}
+          </Text>
+        )}
+        <View style={styles.yearInputsRow}>
+          <Input
+            containerStyle={styles.yearInput}
+            placeholder="From (e.g. 2020)"
+            keyboardType="number-pad"
+            maxLength={4}
+            value={tempYearFrom}
+            onChangeText={setTempYearFrom}
+          />
+          <Input
+            containerStyle={styles.yearInput}
+            placeholder="To (e.g. 2022)"
+            keyboardType="number-pad"
+            maxLength={4}
+            value={tempYearTo}
+            onChangeText={setTempYearTo}
+          />
+        </View>
+        <View style={{ marginTop: 16 }}>
+          <Button
+            label="Apply Filter"
+            onPress={() => {
+              const fStr = tempYearFrom.trim();
+              const tStr = tempYearTo.trim();
+              const f = parseInt(fStr, 10);
+              const t = parseInt(tStr, 10);
+              
+              if (fStr && tStr && !isNaN(f) && !isNaN(t) && f > t) {
+                setYearError('"From" year cannot be greater than "To" year.');
+                return;
+              }
+              
+              setYearError('');
+              setYearFrom(fStr);
+              setYearTo(tStr);
+              setYearSheetOpen(false);
+            }}
+          />
+        </View>
+        {(yearFrom || yearTo) && (
+          <View style={{ marginTop: 8 }}>
+            <Button
+              label="Clear Year Filter"
+              variant="subtle"
               onPress={() => {
-                setSort(option.value);
-                setSortSheetOpen(false);
+                setYearError('');
+                setYearFrom('');
+                setYearTo('');
+                setTempYearFrom('');
+                setTempYearTo('');
+                setYearSheetOpen(false);
               }}
-            >
-              <Text style={[styles.sheetRowText, active ? styles.sheetRowActive : null]}>
-                {option.label}
-              </Text>
-              {active ? <Icon icon={Check} size={18} color={theme.colors.brand.primary} /> : null}
-            </PressableScale>
-          );
-        })}
+            />
+          </View>
+        )}
       </BottomSheet>
 
       <BottomSheet visible={fieldSheetOpen} onClose={() => setFieldSheetOpen(false)}>
@@ -593,5 +656,13 @@ const makeStyles = (theme: Theme) =>
     },
     sheetScroll: {
       maxHeight: 360,
+    },
+    yearInputsRow: {
+      flexDirection: 'row',
+      gap: theme.spacing.md,
+      marginTop: theme.spacing.md,
+    },
+    yearInput: {
+      flex: 1,
     },
   });

@@ -9,20 +9,20 @@ type ViewMode = 'list' | 'grid';
 export interface BrowseFilterBarProps {
   resultCount: number;
   fieldLabel: string;
-  sortLabel: string;
+  yearLabel: string;
   viewMode: ViewMode;
   onOpenFieldSheet: () => void;
-  onOpenSortSheet: () => void;
+  onOpenYearSheet: () => void;
   onChangeViewMode: (mode: ViewMode) => void;
 }
 
 export const BrowseFilterBar = ({
   resultCount,
   fieldLabel,
-  sortLabel,
+  yearLabel,
   viewMode,
   onOpenFieldSheet,
-  onOpenSortSheet,
+  onOpenYearSheet,
   onChangeViewMode,
 }: BrowseFilterBarProps) => {
   const { theme } = useTheme();
@@ -48,12 +48,12 @@ export const BrowseFilterBar = ({
         </PressableScale>
         <PressableScale
           style={styles.sortLink}
-          onPress={onOpenSortSheet}
+          onPress={onOpenYearSheet}
           accessibilityRole="button"
-          accessibilityLabel={`Sort: ${sortLabel}`}
+          accessibilityLabel={`Year: ${yearLabel}`}
           hitSlop={8}
         >
-          <Text style={styles.sortLinkText}>{sortLabel}</Text>
+          <Text style={styles.sortLinkText}>{yearLabel}</Text>
           <Icon icon={ChevronDown} size={13} color={theme.colors.brand.primary} />
         </PressableScale>
         <View style={styles.viewToggle}>
