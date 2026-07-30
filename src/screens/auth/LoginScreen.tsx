@@ -54,7 +54,6 @@ export const LoginScreen = () => {
 
   // Bottom Sheet State
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const snapPoints = useMemo(() => ['70%', '90%'], []);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [sheetStep, setSheetStep] = useState<1 | 2>(1);
   const [forgotEmail, setForgotEmail] = useState('');
@@ -410,13 +409,13 @@ export const LoginScreen = () => {
         <BottomSheet
           ref={bottomSheetRef}
           index={0}
-          snapPoints={snapPoints}
+          enableDynamicSizing={true}
           enablePanDownToClose
           onClose={() => setShowForgotPassword(false)}
           backdropComponent={renderBackdrop}
           backgroundStyle={styles.bottomSheetBackground}
           handleIndicatorStyle={styles.bottomSheetIndicator}
-          keyboardBehavior="extend"
+          keyboardBehavior="interactive"
           keyboardBlurBehavior="restore"
         >
           <BottomSheetScrollView
