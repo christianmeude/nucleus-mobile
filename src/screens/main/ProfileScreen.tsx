@@ -4,10 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { ProfileHeader, Screen, SettingsRow } from '../../components/ui';
-import { Mail, Lock, Moon, LogOut, RefreshCcw } from 'lucide-react-native';
+import { Mail, Lock, Moon, LogOut } from 'lucide-react-native';
 import { initialsFor } from '../../utils/format';
-// TEMP QA helper (#69) — remove with the row below before merging.
-import { resetFirstRun } from '../../lib/devResetFirstRun';
 
 export const ProfileScreen = () => {
   const { user, signOut } = useAuth();
@@ -68,16 +66,6 @@ export const ProfileScreen = () => {
             divided
             onPress={signOut}
             accessibilityLabel="Sign out"
-          />
-          {/* TEMP QA (#69) — replay onboarding + coachmarks. Remove before merge. */}
-          <SettingsRow
-            icon={RefreshCcw}
-            label="Reset first-run (DEV)"
-            subtitle="Replay onboarding + coachmarks"
-            divided
-            trailing="chevron"
-            onPress={resetFirstRun}
-            accessibilityLabel="Reset first-run onboarding and coachmarks"
           />
         </View>
       </ScrollView>
