@@ -193,10 +193,11 @@ export const BrowseScreen = () => {
   const submitSearch = useCallback(() => runSearch(query), [query, runSearch]);
 
   const debouncedQuery = useDebouncedValue(query.trim(), 350);
-  const useServerSearch = flags.hybridSearch && debouncedQuery.length > 0;
+  const isTyping = query.trim() !== debouncedQuery;
+  const useServerSearch = flags.hybridSearch && query.trim().length > 0;
 
   useEffect(() => {
-    if (!useServerSearch) {
+    if (!flags.hybridSearch || debouncedQuery.length === 0) {
       setServerResults(null);
       setSearchError('');
       setSearchLoading(false);
@@ -291,7 +292,7 @@ export const BrowseScreen = () => {
         if (yTo !== null && paperYear > yTo) return false;
       }
 
-      if (!useServerSearch) {
+      if (!flags.hybridSearch) {
         const normalized = query.trim().toLowerCase();
         if (normalized) {
           const keywords = Array.isArray(paper.keywords) ? paper.keywords.join(' ') : '';
@@ -410,7 +411,7 @@ export const BrowseScreen = () => {
   );
 
   const listEmptyElement =
-    loading || (useServerSearch && searchLoading) ? (
+    loading || (useServerSearch && (searchLoading || isTyping)) ? (
       <View style={styles.loadingWrap}>
         <Skeleton height={140} />
         <Skeleton height={84} />

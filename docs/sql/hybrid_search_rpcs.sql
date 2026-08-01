@@ -61,6 +61,7 @@ as $$
     where rp.status::text = any (array['approved','published'])
       and rp.deleted_at is null
       and query_embedding is not null
+      and rpe.embedding <=> query_embedding < 0.6
       and (filter_year_from is null or extract(year from coalesce(rp.published_date, rp.submission_date, rp.created_at)) >= filter_year_from)
       and (filter_year_to is null or extract(year from coalesce(rp.published_date, rp.submission_date, rp.created_at)) <= filter_year_to)
     order by rank_ix
