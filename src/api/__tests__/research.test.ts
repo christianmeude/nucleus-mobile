@@ -393,6 +393,57 @@ describe('researchApi.getProfileData', () => {
   });
 });
 
+describe('researchApi.getRelatedPapers', () => {
+  it('fetches similar papers via hybrid search and filters out the current paper', async () => {
+    mockSupabase.functions.invoke.mockResolvedValueOnce({
+      data: {
+        results: [
+          { paper_id: 'p2', score: 0.9 },
+          { paper_id: 'p1', score: 0.8 },
+          { paper_id: 'p3', score: 0.7 }
+        ]
+      },
+      error: null
+    });
+
+    const builder = createQueryBuilder(
+      queryResult({
+        data: [
+          row({ id: 'p2' }),
+          row({ id: 'p1' }),
+          row({ id: 'p3' })
+        ]
+      })
+    );
+    mockSupabase.from.mockReturnValueOnce(builder);
+
+    const paper = row({ id: 'p1', title: 'Test Title', abstract: 'Test Abstract' }) as any;
+    const result = await researchApi.getRelatedPapers(paper, 2);
+
+    expect(mockSupabase.functions.invoke).toHaveBeenCalledWith('search-papers', {
+      body: { q: 'Test Title Test Abstract', limit: 4 }
+    });
+    
+    expect(builder.in).toHaveBeenCalledWith('id', ['p2', 'p1', 'p3']);
+    
+    // p1 is filtered out, leaving p2 and p3
+    expect(result.map(r => r.id)).toEqual(['p2', 'p3']);
+  });
+  
+  it('gracefully handles empty search results', async () => {
+    mockSupabase.functions.invoke.mockResolvedValueOnce({
+      data: { results: [] },
+      error: null
+    });
+
+    const paper = row({ id: 'p1', title: 'Test', abstract: 'Abstract' }) as any;
+    const result = await researchApi.getRelatedPapers(paper, 3);
+
+    expect(result).toEqual([]);
+    expect(mockSupabase.from).not.toHaveBeenCalled();
+  });
+});
+
 describe('submitApi.getSubmissionPolicy', () => {
   it('normalizes allowed file types from the stored settings row', async () => {
     mockSupabase.from.mockReturnValueOnce(

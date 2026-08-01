@@ -85,6 +85,7 @@ export interface MockSupabaseClient {
   from: jest.Mock<(...args: any[]) => MockQueryBuilder>;
   rpc: jest.Mock<(...args: any[]) => Promise<any>>;
   storage: { from: jest.Mock<(...args: any[]) => any> };
+  functions: { invoke: jest.Mock<(...args: any[]) => Promise<any>> };
 }
 
 /** A fresh, empty Supabase client mock. Configure `.from`/`.rpc`/`.auth.getUser` per test. */
@@ -94,6 +95,7 @@ export function createSupabaseClientMock(): MockSupabaseClient {
     from: jest.fn(() => createQueryBuilder(queryResult())),
     rpc: jest.fn(),
     storage: { from: jest.fn() },
+    functions: { invoke: jest.fn() },
   };
 }
 
