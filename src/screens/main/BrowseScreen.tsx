@@ -2,15 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Keyboard, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { ListRenderItem } from 'react-native';
-import Animated, {
-  Easing,
-  LinearTransition,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { LinearTransition, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../../components/ui/Icon';
 import { CloudOff, Library, Check } from 'lucide-react-native';
@@ -21,7 +13,6 @@ import { ListEntranceItem } from '../../components/ListEntranceItem';
 import { researchApi } from '../../api/research';
 import { useAuth } from '../../context/AuthContext';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { useHasSearchedOnce } from '../../hooks/useHasSearchedOnce';
 import { useRecentSearches } from '../../hooks/useRecentSearches';
 import { flags } from '../../config/flags';
 import { Category, ResearchPaper } from '../../types/domain';
@@ -43,7 +34,6 @@ import {
 import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
 
 import { BrowseHeader } from './browse/BrowseHeader';
-import { BrowseHero } from './browse/BrowseHero';
 import { BrowseFilterBar } from './browse/BrowseFilterBar';
 import { StandardPaperCard } from '../../components/StandardPaperCard';
 import { BrowseGridCell } from './browse/BrowseGridCell';
@@ -52,19 +42,6 @@ import { Input } from '../../components/ui/Input';
 
 type ViewMode = 'list' | 'grid';
 
-const GREETINGS = [
-  'What are you researching today?',
-  'What do you want to learn?',
-  'Find your next reference.',
-  'Search the repository.',
-  "What's on your mind?",
-  'Discover published research.',
-  'Look something up.',
-];
-
-const pickGreeting = () => GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
-
-const viewsOf = (paper: ResearchPaper) => paper.view_count || 0;
 const timeOf = (paper: ResearchPaper) => new Date(paperDate(paper) || 0).getTime();
 
 export const BrowseScreen = () => {
@@ -91,17 +68,11 @@ export const BrowseScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
-  const [searched, setSearched] = useState(false);
-  const [greeting, setGreeting] = useState(pickGreeting);
   const [serverResults, setServerResults] = useState<ResearchPaper[] | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState('');
-  const progress = useSharedValue(0);
 
-  const exploreReveal = useRef(false);
-  const skipMorphAnim = useRef(false);
   const { recent, addRecent } = useRecentSearches();
-  const { hasSearchedOnce, loaded: hasSearchedOnceLoaded, markSearchedOnce } = useHasSearchedOnce();
 
   const loadData = useCallback(async (silent = false) => {
     if (!silent && papers.length === 0) {
@@ -129,53 +100,14 @@ export const BrowseScreen = () => {
 
   useEffect(() => {
     loadData();
-    setGreeting(pickGreeting());
   }, [loadData]);
-
-  useEffect(() => {
-    if (hasSearchedOnceLoaded && hasSearchedOnce) {
-      skipMorphAnim.current = true;
-      setSearched(true);
-    }
-  }, [hasSearchedOnceLoaded, hasSearchedOnce]);
 
   const paramCategoryId: string | undefined = route.params?.categoryId;
   useEffect(() => {
     if (!paramCategoryId) return;
-    skipMorphAnim.current = true;
     setCategoryFilter(paramCategoryId);
-    setSearched(true);
     navigation.setParams({ categoryId: undefined });
   }, [paramCategoryId, navigation]);
-
-  useEffect(() => {
-    if (skipMorphAnim.current) {
-      progress.value = searched ? 1 : 0;
-      skipMorphAnim.current = false;
-      return;
-    }
-    if (searched && exploreReveal.current) {
-      exploreReveal.current = false;
-      progress.value = reducedMotion
-        ? 1
-        : withSpring(1, { damping: 16, stiffness: 190, velocity: 5 });
-      return;
-    }
-    exploreReveal.current = false;
-    progress.value = reducedMotion
-      ? searched
-        ? 1
-        : 0
-      : withTiming(searched ? 1 : 0, { duration: 420, easing: Easing.out(Easing.cubic) });
-  }, [searched, progress, reducedMotion]);
-
-  const spacerStyle = useAnimatedStyle(() => ({ flexGrow: 1 - progress.value }));
-  const greetingStyle = useAnimatedStyle(() => ({ opacity: 1 - progress.value }));
-  const resultsStyle = useAnimatedStyle(() => ({
-    flexGrow: progress.value,
-    opacity: progress.value,
-    transform: [{ translateY: (1 - progress.value) * 24 }],
-  }));
 
   const runSearch = useCallback(
     (term: string) => {
@@ -183,11 +115,9 @@ export const BrowseScreen = () => {
       if (!trimmed) return;
       addRecent(trimmed);
       setQuery(trimmed);
-      setSearched(true);
-      markSearchedOnce();
       Keyboard.dismiss();
     },
-    [addRecent, markSearchedOnce],
+    [addRecent],
   );
 
   const submitSearch = useCallback(() => runSearch(query), [query, runSearch]);
@@ -225,20 +155,10 @@ export const BrowseScreen = () => {
     };
   }, [useServerSearch, debouncedQuery, yearFrom, yearTo]);
 
-  const commitExplore = useCallback(() => {
-    exploreReveal.current = true;
-    setSearched(true);
-    markSearchedOnce();
-  }, [markSearchedOnce]);
-
   const clearSearch = useCallback(() => {
     setQuery('');
     Keyboard.dismiss();
-    if (!hasSearchedOnce) {
-      setSearched(false);
-      setGreeting(pickGreeting());
-    }
-  }, [hasSearchedOnce]);
+  }, []);
 
   const categoryNameById = useMemo(() => buildCategoryNameById(categories), [categories]);
 
@@ -313,15 +233,7 @@ export const BrowseScreen = () => {
     return arr;
   }, [useServerSearch, matched]);
 
-  const featured = useMemo(() => {
-    if (isFiltering || papers.length === 0) return null;
-    return [...papers].sort((left, right) => viewsOf(right) - viewsOf(left))[0] ?? null;
-  }, [isFiltering, papers]);
-
-  const gridItems = useMemo(() => {
-    if (!featured) return sorted;
-    return sorted.filter((paper) => paper.id !== featured.id);
-  }, [featured, sorted]);
+  const gridItems = sorted;
 
   const listData = loading || (useServerSearch && searchLoading) ? [] : gridItems;
 
@@ -378,14 +290,11 @@ export const BrowseScreen = () => {
   const fieldLabel = categoryFilter
     ? (resolveCategoryName(categoryFilter, categoryNameById) ?? 'Field')
     : 'All fields';
-  const showClear = searched || Boolean(query.trim());
+  const showClear = Boolean(query.trim());
 
   const listHeaderElement = (
     <>
-      <Animated.View 
-        layout={reducedMotion ? undefined : LinearTransition.springify()}
-        style={styles.listHeader}
-      >
+      <View style={styles.listHeader}>
         <BrowseFilterBar
           resultCount={sorted.length}
           fieldLabel={fieldLabel}
@@ -402,11 +311,7 @@ export const BrowseScreen = () => {
         />
 
         {error ? <InlineNotice tone="danger" message={error} /> : null}
-
-        {!loading && featured ? (
-          <BrowseHero featured={featured} viewsOf={viewsOf} onOpen={openDetail} />
-        ) : null}
-      </Animated.View>
+      </View>
     </>
   );
 
@@ -445,24 +350,15 @@ export const BrowseScreen = () => {
         >
           <TopBar />
 
-          <Animated.View style={[styles.spacer, spacerStyle]} pointerEvents="none" />
-
           <BrowseHeader
-            greeting={greeting}
-            greetingStyle={greetingStyle as any}
             query={query}
             setQuery={setQuery}
             submitSearch={submitSearch}
             clearSearch={clearSearch}
-            searched={searched}
             showClear={showClear}
-            recent={recent}
-            runSearch={runSearch}
-            onExploreCommit={commitExplore}
-            reducedMotion={reducedMotion}
           />
 
-          <Animated.View style={[styles.resultsWrap, resultsStyle]}>
+          <View style={styles.resultsWrap}>
             <LegendList
               recycleItems={true}
               drawDistance={1500}
@@ -486,9 +382,7 @@ export const BrowseScreen = () => {
               }
               estimatedItemSize={viewMode === 'grid' ? 160 : 84}
             />
-          </Animated.View>
-
-          <Animated.View style={[styles.spacer, spacerStyle]} pointerEvents="none" />
+          </View>
         </View>
       </Screen>
 

@@ -37,80 +37,25 @@ const SUGGESTED_SEARCHES = [
 ];
 
 export interface BrowseHeaderProps {
-  greeting: string;
-  greetingStyle: StyleProp<TextStyle>;
   query: string;
   setQuery: (text: string) => void;
   submitSearch: () => void;
   clearSearch: () => void;
-  searched: boolean;
   showClear: boolean;
-  recent: string[];
-  runSearch: (term: string) => void;
-  onExploreCommit: () => void;
-  reducedMotion: boolean;
 }
 
 export const BrowseHeader = ({
-  greeting,
-  greetingStyle,
   query,
   setQuery,
   submitSearch,
   clearSearch,
-  searched,
   showClear,
-  recent,
-  runSearch,
-  onExploreCommit,
-  reducedMotion,
 }: BrowseHeaderProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const exploreFill = useSharedValue(0);
-  const explorePop = useSharedValue(1);
-
-  const exploreGesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .onUpdate((event) => {
-          const travelled = Math.max(0, -event.translationY);
-          exploreFill.value = Math.min(1, travelled / EXPLORE_DRAG_DISTANCE);
-        })
-        .onEnd(() => {
-          const committed = exploreFill.value >= EXPLORE_COMMIT_THRESHOLD;
-          if (committed) {
-            if (reducedMotion) {
-              exploreFill.value = 1;
-            } else {
-              exploreFill.value = withTiming(1, { duration: 140, easing: Easing.out(Easing.quad) });
-              explorePop.value = withSequence(
-                withTiming(1.3, { duration: 110, easing: Easing.out(Easing.quad) }),
-                withTiming(1, { duration: 160, easing: Easing.out(Easing.quad) }),
-              );
-            }
-            runOnJS(onExploreCommit)();
-          } else if (reducedMotion) {
-            exploreFill.value = 0;
-          } else {
-            exploreFill.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.cubic) });
-          }
-        }),
-    [exploreFill, explorePop, onExploreCommit, reducedMotion],
-  );
-
-  const explorePopStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: explorePop.value }],
-  }));
-  const exploreFillStyle = useAnimatedStyle(() => ({
-    height: exploreFill.value * EXPLORE_ARROW_SIZE,
-  }));
 
   return (
     <View style={styles.headerBlock}>
-      <Animated.Text style={[styles.greeting, greetingStyle]} pointerEvents="none">
-        {greeting}
-      </Animated.Text>
 
       <View style={styles.searchWrap}>
         <Icon icon={Search} size={18} color={theme.colors.text.muted} />
@@ -132,90 +77,6 @@ export const BrowseHeader = ({
           <Chip label="Clear" active={false} onPress={clearSearch} variant="filter" />
         </View>
       </View>
-
-      {!searched && recent.length > 0 ? (
-        <Animated.View style={[styles.recentRow, greetingStyle]} pointerEvents="box-none">
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            showsHorizontalScrollIndicator={false}
-            horizontal
-
-            contentContainerStyle={styles.recentRowContent}
-            keyboardShouldPersistTaps="handled"
-          >
-            {recent.map((term, index) => (
-              <PressableScale
-                key={term}
-                style={styles.recentChip}
-                onPress={() => runSearch(term)}
-                accessibilityRole="button"
-                accessibilityLabel={`Search recent: ${term}`}
-              >
-                {index === 0 ? (
-                  <Icon
-                    icon={Clock}
-                    size={14}
-                    color={theme.colors.brand.primary}
-                    style={styles.recentChipIcon}
-                  />
-                ) : null}
-                <Text style={styles.recentChipText}>{term}</Text>
-              </PressableScale>
-            ))}
-          </ScrollView>
-        </Animated.View>
-      ) : null}
-
-      {!searched ? (
-        <Animated.View style={[styles.suggestedRow, greetingStyle]} pointerEvents="box-none">
-          <Text style={styles.suggestedLabel}>Popular searches</Text>
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            showsHorizontalScrollIndicator={false}
-            horizontal
-
-            contentContainerStyle={styles.suggestedRowContent}
-            keyboardShouldPersistTaps="handled"
-          >
-            {SUGGESTED_SEARCHES.map((term) => (
-              <PressableScale
-                key={term}
-                style={styles.suggestedChip}
-                onPress={() => runSearch(term)}
-                accessibilityRole="button"
-                accessibilityLabel={`Search suggested: ${term}`}
-              >
-                <Icon
-                  icon={TrendingUp}
-                  size={13}
-                  color={theme.colors.text.secondary}
-                  style={styles.suggestedChipIcon}
-                />
-                <Text style={styles.suggestedChipText}>{term}</Text>
-              </PressableScale>
-            ))}
-          </ScrollView>
-        </Animated.View>
-      ) : null}
-
-      {!searched ? (
-        <GestureDetector gesture={exploreGesture}>
-          <Animated.View style={[styles.exploreHint, greetingStyle]}>
-            <Animated.View style={[styles.exploreArrowTile, explorePopStyle]}>
-              <Icon icon={ArrowUp} size={18} color={theme.colors.brand.primary} />
-              <Animated.View
-                style={[styles.exploreArrowFillMask, exploreFillStyle]}
-                pointerEvents="none"
-              >
-                <View style={styles.exploreArrowFillInner}>
-                  <Icon icon={ArrowUp} size={18} color={theme.colors.text.onBrand} />
-                </View>
-              </Animated.View>
-            </Animated.View>
-            <Text style={styles.exploreLabel}>Swipe up to browse papers</Text>
-          </Animated.View>
-        </GestureDetector>
-      ) : null}
     </View>
   );
 };
