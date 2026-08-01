@@ -18,7 +18,7 @@ export const flags = {
    * backfill (`embed-papers`) has run and search is QA'd end-to-end; while false,
    * Browse keeps its existing on-device filtering.
    */
-  hybridSearch: false,
+  hybridSearch: true,
 } as const;
 
 export type Flags = typeof flags;
