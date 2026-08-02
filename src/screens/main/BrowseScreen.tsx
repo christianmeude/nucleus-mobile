@@ -513,8 +513,7 @@ const makeStyles = (theme: Theme) =>
       flexBasis: 0,
     },
     resultsWrap: {
-      flexBasis: 0,
-      minHeight: 1,
+      flex: 1,
       overflow: 'hidden',
     },
     scroll: {
