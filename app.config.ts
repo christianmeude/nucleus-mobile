@@ -31,6 +31,7 @@ export default ({ config }: ConfigContext): any => {
           : 'com.christianmeude.nucleus',
     },
     android: {
+      googleServicesFile: './google-services.json',
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',
         backgroundColor: '#ffffff',

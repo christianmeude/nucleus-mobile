@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import { usePushNotifications } from '../../hooks/usePushNotifications';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -45,6 +46,8 @@ export const FacultyDashboardScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
 
+  const { requestAndRegisterPushToken } = usePushNotifications();
+
   const load = useCallback(async () => {
     try {
       setError(null);
@@ -58,6 +61,11 @@ export const FacultyDashboardScreen = () => {
       setSummary(summaryData);
       setUpNextPaper(paperData);
       setNotifications(notifData);
+
+      // Contextual prompt: first time they receive an assignment
+      if (summaryData.pendingReview > 0 || paperData !== null) {
+        requestAndRegisterPushToken();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load your dashboard.');
     } finally {

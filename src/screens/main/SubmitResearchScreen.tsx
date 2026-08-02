@@ -52,6 +52,7 @@ import {
   Skeleton,
 } from '../../components/ui';
 import { RootStackParamList } from '../../navigation/types';
+import { usePushNotifications } from '../../hooks/usePushNotifications';
 
 type SubmitNav = NativeStackNavigationProp<RootStackParamList, 'SubmitResearch'>;
 type SubmitRoute = RouteProp<RootStackParamList, 'SubmitResearch'>;
@@ -142,6 +143,7 @@ const FormSection = ({
 export const SubmitResearchScreen = () => {
   const navigation = useNavigation<SubmitNav>();
   const route = useRoute<SubmitRoute>();
+  const { requestAndRegisterPushToken } = usePushNotifications();
   const resubmitPaperId = route.params?.resubmitPaperId;
   const isResubmit = Boolean(resubmitPaperId);
   const insets = useSafeAreaInsets();
@@ -466,6 +468,9 @@ export const SubmitResearchScreen = () => {
         console.warn('[SubmitResearch] local draft cleanup failed:', error);
       }
       await submitApi.deleteMyDraft(resubmitPaperId || null);
+
+      // Request push notifications contextually on first submission success
+      await requestAndRegisterPushToken();
 
       setSubmitSuccess(true);
       setTimeout(() => {
