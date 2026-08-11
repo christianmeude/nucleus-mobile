@@ -1,11 +1,33 @@
-# Glossary
+# Capstone Nucleus
 
-## Core Concepts
+The unified mobile client for students and faculty to manage, submit, and review research papers at National University Dasmariñas.
 
-* **Faculty Dashboard:** A command center focused on insight and immediate priority. It surfaces high-level workload metrics, an "Up Next" priority item, and an activity feed of recent events. It does *not* function as a comprehensive list of papers.
-* **Review Queue:** The comprehensive ledger and management screen for all papers assigned to a faculty member. It supports searching, filtering by status, and bulk processing. It is the single source of truth for the faculty's complete historical and current workload.
-* **Activity Stream (Notifications):** A read-only, historical feed of events for awareness (e.g., "User invited you to a project"). These items are not actionable inline.
-* **Action Queue (Invitations):** A strict list of pending requests that require explicit user action (Accept/Decline). Once acted upon, the item is removed from this queue.
-* **Student Dashboard:** A command center for the student, strictly focused on immediate priority and actionable insight (e.g., papers needing revision, in-flight status, recent feedback). It is *not* a place for discovering public papers.
-* **My Papers (Student):** The comprehensive ledger and historical archive of all submissions made by the student. It is the single source of truth for their complete submission history.
-* **Publication Year:** The year a paper was published or approved for the repository. For the purposes of browsing and filtering, the "Year" of a paper strictly refers to this date, not when it was initially submitted or when the record was created.
+## Language
+
+**Faculty Dashboard**:
+A command center focused on insight and immediate priority, surfacing high-level workload metrics and an activity feed.
+_Avoid_: Faculty home, faculty index
+
+**Review Queue**:
+The comprehensive ledger and management screen for all papers assigned to a faculty member, supporting bulk processing.
+_Avoid_: Faculty papers, assignment list
+
+**Activity Stream**:
+A read-only, historical feed of events (e.g., "User invited you to a project") that are not actionable inline.
+_Avoid_: Notifications, feed
+
+**Action Queue**:
+A strict list of pending requests that require explicit user action (e.g., Accept/Decline), which are removed once acted upon.
+_Avoid_: Invitations, pending requests
+
+**Student Dashboard**:
+A command center for the student focused on immediate priority and actionable insight (e.g., papers needing revision).
+_Avoid_: Student home, public discover page
+
+**My Papers**:
+The comprehensive ledger and historical archive of all submissions made by the student.
+_Avoid_: Student history, student repository
+
+**Publication Year**:
+The year a paper was published or approved for the repository, strictly referring to this date rather than when it was submitted.
+_Avoid_: Submission year, creation date
