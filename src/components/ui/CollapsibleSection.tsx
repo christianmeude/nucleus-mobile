@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { ChevronDown } from 'lucide-react-native';
+
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { Icon } from './Icon';
+import { ChevronDown } from 'lucide-react-native';
+
 
 interface CollapsibleSectionProps {
   title: string;

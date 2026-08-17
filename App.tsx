@@ -16,6 +16,7 @@ import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
+import { PrivacyProvider } from './src/context/PrivacyContext';
 import { CoachmarkProvider } from './src/components/coachmarks/CoachmarkProvider';
 
 SplashScreen.preventAutoHideAsync();
@@ -44,9 +45,11 @@ const AppShell = () => {
     <>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <AuthProvider>
+        <PrivacyProvider>
           <CoachmarkProvider>
             <AppNavigator />
           </CoachmarkProvider>
+        </PrivacyProvider>
       </AuthProvider>
     </>
   );

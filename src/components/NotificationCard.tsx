@@ -1,7 +1,8 @@
 import { memo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from './ui/Icon';
-import { UserPlus, MessageSquareMore, CircleCheck, Bell } from 'lucide-react-native';
+import { UserPlus, MessageCircle, CircleCheck, Bell } from 'lucide-react-native';
+
 import { NotificationItem } from '../types/domain';
 import { formatRelativeTime } from '../utils/format';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
@@ -33,7 +34,7 @@ const visualForType = (type: string | undefined, c: Theme['colors']): IconVisual
     t.includes('feedback')
   ) {
     return {
-      icon: MessageSquareMore,
+      icon: MessageCircle,
       color: c.state.warning,
       bg: c.state.warningSurface,
     };

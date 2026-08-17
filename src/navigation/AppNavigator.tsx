@@ -23,6 +23,7 @@ import { Logo } from '../components/ui';
 import { ResearchDetailHeader } from './ResearchDetailHeader';
 import { useHasOnboarded } from '../hooks/useHasOnboarded';
 import { OnboardingScreen } from '../screens/onboarding/OnboardingScreen';
+import { PrivacyNoticeGate } from '../components/auth/PrivacyNoticeGate';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<StudentTabsParamList>();
@@ -87,7 +88,16 @@ export const AppNavigator = () => {
       >
         {!user ? (
           <>
-            <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+            <Stack.Screen 
+              name="Login" 
+              options={{ headerShown: false }}
+            >
+              {() => (
+                <PrivacyNoticeGate>
+                  <LoginScreen />
+                </PrivacyNoticeGate>
+              )}
+            </Stack.Screen>
           </>
         ) : user.role === 'student' ? (
           <>

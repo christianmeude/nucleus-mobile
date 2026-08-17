@@ -3,7 +3,7 @@ import { RefreshControl, StyleSheet, View, Text } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
 import Animated from 'react-native-reanimated';
 import { Icon } from './ui/Icon';
-import { MailOpen } from 'lucide-react-native';
+
 import { useFocusEffect } from '@react-navigation/native';
 import { invitationsApi } from '../api/invitations';
 import { CoAuthorInvitation } from '../types/domain';
@@ -93,7 +93,7 @@ export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
       const canAct = item.status === 'pending' && !calendarExpired;
 
       return (
-        <ListEntranceItem key={item.id} index={index}>
+        <ListEntranceItem index={index}>
           <InvitationCard
             invitation={cardInvitation}
             acting={actingToken === item.token}

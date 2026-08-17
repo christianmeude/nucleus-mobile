@@ -9,11 +9,13 @@ import Animated, {
   cancelAnimation,
 } from 'react-native-reanimated';
 import { Icon } from './ui/Icon';
-import { Check, TriangleAlert, X } from 'lucide-react-native';
+
 import { PaperStatus } from '../types/domain';
 import { statusToLabel } from '../utils/format';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
+import { Check, TriangleAlert, X } from 'lucide-react-native';
+
 
 type NodeState = 'done' | 'pending' | 'upcoming' | 'warning' | 'danger' | 'complete';
 

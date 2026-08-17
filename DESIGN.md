@@ -127,418 +127,132 @@ components:
     rounded: '{rounded.pill}'
 ---
 
-> **Single source of truth for the NUcleus design system — tokens, motion, and
-> screen composition.** Authoritative, and matches the live tokens in
-> `src/theme/`. This file absorbed the former `docs/design/VISUAL_DIRECTION.md`
-> (the A-pillar redesign look + motion): the **Motion** and **Screens** sections
-> below are ported from it and reconciled to the tokens here. Where the two ever
-> disagreed, this file wins — every divergent hex in the old file was aspirational
-> and never adopted into the tokens. `docs/design/mockup.html` remains the literal
-> visual reference to eyeball against; build to the values in _this_ file.
+# Design System: NUcleus
 
 ## Overview
 
-NUcleus Mobile is a research repository for National University Dasmariñas
-students — browsing, reading, and submitting papers is the whole job of the
-app. The direction is **Modern Clarity**: a clean, sans-only system built for
-long reading sessions on a phone screen, calibrated against Material 3's
-type-scale and shape conventions rather than a bespoke scale.
+**Creative North Star: "Modern Clarity"**
 
-**Roboto is the single app-wide typeface** — every role, from headings
-(`display`, `h1`–`h3`) through body copy, chrome, labels, metadata, and
-buttons. It's also Material 3's own default typeface, so the UI layer reads
-as neutral and platform-native rather than stylized. Visual hierarchy comes
-from size, weight, and letter-spacing per token, not from a second family:
-heading sizes are pinned to Material 3 Headline/Title roles, not inflated
-past them.
+NUcleus Mobile is a research repository for National University Dasmariñas students. Browsing, reading, and submitting papers is the whole job of the app. The aesthetic philosophy is built for long reading sessions on a phone screen, calibrated against Material 3's type-scale and shape conventions rather than a bespoke scale. It feels native, legible, and academically serious without being overly corporate.
 
-Brand color is navy-and-gold, drawn from the NUcleus wordmark: navy for
-primary actions, navigation, and links; gold reserved for emphasis (status
-chips, category eyebrows, save/bookmark state) and never used decoratively.
+**Key Characteristics:**
+- **One Typeface**: Roboto is the single app-wide typeface to read as neutral and platform-native.
+- **Strict Brand Alignment**: Navy for primary actions and navigation; gold reserved strictly for emphasis.
+- **Soft Geometry**: Modest corner radii tied closely to platform (Material 3/iOS) defaults.
+- **Reading-First**: Ample spacing and disciplined use of color ensure cognitive ease during reading.
 
 ## Colors
 
-- **Primary (`#1B3A8C`)** — brand navy. Primary buttons, active nav state,
-  links, focus rings. `primary-hover` / `primary-pressed` step down in
-  lightness for interaction states; `primary-soft` / `primary-surface` are
-  tint backgrounds for badges and selected rows.
-- **Accent (`#CDA434`)** — brand gold (a true metallic gold; retuned 2026-07-08
-  from the prior marigold `#F5A623`, which read as a strong yellow). Reserved for
-  emphasis: status chips, category eyebrows, the bookmark/save affordance, and
-  the Submit FAB. Never used for large fills or decoration — gold that appears
-  everywhere stops meaning anything.
-- **Text** — `text-primary` (`#0F172A`) for headings and primary reading
-  text, `text-secondary` (`#475569`) for supporting copy, `text-muted`
-  (`#64748B`) for metadata and captions, `text-disabled` (`#94A3B8`) for
-  inactive state. `text-on-brand` / `text-on-accent` are the fixed
-  foregrounds for navy/gold fills.
-- **Surface** — `surface-base` (`#F8FAFC`) is the screen background,
-  `surface-raised` (`#FFFFFF`) is every card, `surface-sunken` (`#F1F5F9`)
-  is recessed areas (search fields, skeleton loaders).
-- **Border** — `border-subtle` for card and divider hairlines,
-  `border-strong` for higher-contrast dividers, `border-focus` for the
-  keyboard-focus ring.
-- **State** — success/warning/danger map to paper workflow status (approved,
-  revision required, rejected) and always pair with their `*-surface` tint
-  for the pill background, never a solid fill on body text.
+The palette is anchored by the university's navy and gold, with navy driving structure and gold reserved for rare emphasis.
+
+### Primary
+- **Brand Navy** (#1B3A8C): The core action color. Used for primary buttons, active nav state, links, and focus rings. Hover and pressed states step down in lightness. `primary-surface` (#EAF0FB) is the tint background for selected rows.
+
+### Secondary
+- **Brand Gold** (#CDA434): A true metallic gold. Reserved strictly for emphasis: status chips, category eyebrows, the bookmark/save affordance, and the Submit FAB.
+
+### Neutral
+- **Text Primary** (#0F172A): Headings and primary reading text.
+- **Text Secondary** (#475569): Supporting copy.
+- **Text Muted** (#64748B): Metadata and captions.
+- **Surface Base** (#F8FAFC): The main screen background.
+- **Surface Raised** (#FFFFFF): Every card and elevated element.
+- **Surface Sunken** (#F1F5F9): Recessed areas like search fields and skeleton loaders.
+- **Border Subtle** (#E2E8F0): Hairlines for cards and dividers.
+
+### Named Rules
+**The Emphasis Rule.** Gold is never used for large fills or decoration. Gold that appears everywhere stops meaning anything.
 
 ## Typography
 
-Heading sizes are calibrated against **Material 3 type-scale roles**, not
-sized up arbitrarily:
+**Display Font:** Roboto (with system sans-serif fallback)
+**Body Font:** Roboto (with system sans-serif fallback)
 
-| Token         | Family | Size / Line height | Weight | M3 role reference | Use                                              |
-| ------------- | ------ | ------------------ | ------ | ----------------- | ------------------------------------------------ |
-| `display`     | Roboto | 28 / 36            | 600    | Headline Medium   | Paper detail title                               |
-| `h1`          | Roboto | 24 / 32            | 700    | Headline Small    | Screen titles ("Browse"), dashboard greeting     |
-| `h2`          | Roboto | 20 / 28            | 700    | Title Large       | Section headers, stat callouts                   |
-| `h3`          | Roboto | 17 / 24            | 600    | Title Medium      | Card titles (paper cards, tiles), nav bar titles |
-| `body-strong` | Roboto | 15 / 22            | 600    | Body Large        | Emphasized body copy                             |
-| `body`        | Roboto | 15 / 22            | 400    | Body Large        | Default reading copy                             |
-| `body-small`  | Roboto | 13 / 20            | 400    | Body Medium       | Secondary copy, affiliations                     |
-| `label`       | Roboto | 13 / 18            | 600    | Label Large       | Filter/tab labels (uppercase, tracked)           |
-| `metadata`    | Roboto | 12 / 18            | 500    | Label Medium      | Dates, view/download counts                      |
-| `caption`     | Roboto | 11 / 16            | 400    | Label Small       | Fine print, avatar initials                      |
-| `button`      | Roboto | 15 / 20            | 600    | Label Large       | Button and CTA labels                            |
+**Character:** Utilitarian, highly legible, and native. Visual hierarchy is achieved entirely through size, weight, and letter-spacing per token, rather than introducing a second family.
 
-Every token is Roboto — there is no second family, so there is no chrome-vs-
-heading family rule to enforce. Hierarchy is carried entirely by size,
-weight, and letter-spacing.
+### Hierarchy
+- **Display** (600, 28px, 36px): Paper detail titles.
+- **Headline (h1)** (700, 24px, 32px): Screen titles ("Browse"), dashboard greeting.
+- **Title (h2)** (700, 20px, 28px): Section headers, stat callouts.
+- **Title Small (h3)** (600, 17px, 24px): Card titles, nav bar titles.
+- **Body Strong** (600, 15px, 22px): Emphasized body copy.
+- **Body** (400, 15px, 22px): Default reading copy.
+- **Body Small** (400, 13px, 20px): Secondary copy, affiliations.
+- **Label** (600, 13px, 18px, uppercase): Filter/tab labels.
+- **Metadata** (500, 12px, 18px): Dates, view/download counts.
+- **Caption** (400, 11px, 16px): Fine print, avatar initials.
+- **Button** (600, 15px, 20px): Button and CTA labels.
 
-Body/UI sizes are untouched from the previous system — only the family on
-the heading roles (`display`, `h1`–`h3`) changed, from Montserrat to Roboto;
-sizes stay pinned to the nearest M3 Headline/Title role as before.
+### Named Rules
+**The Single Font Rule.** Do not introduce a second font family. Hierarchy comes from size and weight.
 
 ## Layout
 
-Spacing follows an 8-point grid (with a 4px half-step for tight groupings):
-`4 · 8 · 12 · 16 · 24 · 32 · 40`. Card padding is `lg` (16px) — Material 3's
-own card examples use the same 16px content padding, so this stays as-is
-rather than being inflated for its own sake. Two rules govern how spacing is
-applied:
+Spacing follows an 8-point grid (with a 4px half-step for tight groupings). Card padding defaults to `16px` (Material 3 standard). Screen edge margins are `16px` on primary content screens. Tap targets are never smaller than 44×44pt, per platform convention.
 
-1. **Related elements sit closer than unrelated ones.** Inside a card,
-   related fields (title → author → status) use `sm`–`md` gaps.
-2. Screen edge margins are `lg` (16px) on primary content screens. Tap
-   targets are never smaller than 44×44pt, per platform convention,
-   regardless of the visual size of the icon inside them.
+**The Spacing Rule.** Related elements sit closer than unrelated ones. Inside a card, related fields (title → author → status) use `sm`–`md` gaps.
 
 ## Elevation & Depth
 
-Elevation is soft and used sparingly — cards separate from the background
-mainly through a `border-subtle` hairline, with shadow reserved for cards
-that need to read as "above" other content (Material 3's own guidance:
-elevation is communicated primarily through surface tone, shadow is the
-exception, not the default):
+Elevation is soft and used sparingly. The system relies primarily on surface tone and subtle borders rather than heavy skeuomorphism.
 
-- `level0` — flat, no shadow. Default resting state during list-entrance
-  animation.
-- `level1` — `0 1px 3px rgba(0,0,0,0.06)`, elevation 1. Tiles and secondary
-  cards.
-- `level2` — `0 4px 12px rgba(0,0,0,0.1)`, elevation 4. Primary paper cards
-  once settled (post entrance-animation).
+### Shadow Vocabulary
+- **Level 0 (Flat):** Resting state, no shadow.
+- **Level 1 (Subtle Lift):** `0 1px 3px rgba(0,0,0,0.06)`. Used for tiles and secondary cards.
+- **Level 2 (Raised):** `0 4px 12px rgba(0,0,0,0.1)`. Used for primary paper cards once settled.
+
+### Named Rules
+**The Hairline Rule.** Cards separate from the background mainly through a `border-subtle` hairline. Shadow is reserved for cards that need to read as "above" other content.
 
 ## Shapes
 
-Corner radius scales with the size of the element it's applied to, not used
-decoratively — the scale sits close to Material 3's own shape tokens
-(extra-small 4 / small 8 / medium 12 / large 16):
+Corner radius scales with the size of the element it's applied to and is never used decoratively. The scale aligns with Material 3.
 
-- `sm` (8px) — chips, small tags. (M3 extra-small/small)
-- `md` (10px) — inputs, icon buttons, small placeholders. (M3 small)
-- `lg` (14px) — the default for every card (paper cards, tiles, invitations,
-  notifications). (M3 medium, the token M3 itself assigns to cards)
-- `xl` (18px) — larger surfaces, hero banners. (M3 large)
-- `pill` (999px) — avatars, buttons, badges, filter chips — anything meant
-  to read as a fully-rounded control.
+- **8px (sm):** Chips, small tags.
+- **10px (md):** Inputs, icon buttons.
+- **14px (lg):** The default for every card.
+- **18px (xl):** Larger surfaces, hero banners.
+- **999px (pill):** Avatars, buttons, badges.
 
-Every card-shaped `View`/`Pressable` sets `borderCurve: 'continuous'` for
-the iOS squircle corner treatment — this was inconsistently applied before
-this pass (`ResearchCard`, `ResearchTile`, and the shared `Card` primitive
-were missing it while `MyPaperCard`/`InvitationCard`/`NotificationCard`
-already had it) and is now uniform.
+### Named Rules
+**The Continuous Corner Rule.** Every card-shaped `View` or `Pressable` must set `borderCurve: 'continuous'` for the native iOS squircle treatment.
 
 ## Components
 
-- **Card** — `surface-raised` fill, `border-subtle` hairline, `lg` radius,
-  `lg` padding, continuous corner curve. The one shared primitive
-  (`components/ui/Card.tsx`) behind every paper card, tile, and list row in
-  the app — change it once, every screen inherits it.
-- **Button (primary)** — `primary` fill, `text-on-brand` label in the
-  `button` style, pill radius. Hover/pressed states step to
-  `primary-hover` / `primary-pressed`. Disabled uses `border-subtle` fill
-  with `text-disabled` label.
-- **Chip / status pill** — tint-surface background (e.g. `accent-surface`,
-  `state.success-surface`) with the matching saturated color as text,
-  `sm` radius, never a solid fill behind body-length text.
-- **Avatar** — initials in `caption` weight on a `primary` fill, pill
-  radius. Falls back to initials before any generic icon.
-- **Category eyebrow** — `label`-style, uppercase, `accent` color, always
-  above a title, never used standalone.
+### Card
+- **Shape:** 14px radius (lg) with continuous curve.
+- **Background:** `surface-raised` (#FFFFFF) with a `border-subtle` hairline.
+- **Padding:** 16px (lg).
+
+### Primary Button
+- **Shape:** 999px radius (pill).
+- **Background:** `primary` (#1B3A8C) with `text-on-brand` (#FFFFFF).
+- **Padding:** 12px 24px.
+- **Hover/Focus:** Steps to `primary-hover` (#16307A) / `primary-pressed` (#102560).
+- **Disabled:** `border-subtle` fill with `text-disabled` label.
+
+### Chip / Status Pill
+- **Style:** Tint-surface background (e.g. `accent-surface`, `success-surface`) with matching saturated color text.
+- **Shape:** 8px radius (sm).
+- **State:** Never a solid fill behind body-length text.
+
+### Avatar
+- **Style:** Initials in `caption` weight on a `primary` fill.
+- **Shape:** 999px radius (pill).
+
+### Inputs / Search Field
+- **Style:** `surface-sunken` (#F1F5F9) fill, `border-subtle` hairline, 10px radius (md) with continuous curve.
+- **Focus:** `border-focus` (#2E5BC9) 2px ring.
 
 ## Do's and Don'ts
 
-- **Do** use Roboto everywhere — headings, chrome, buttons, chips. **Don't**
-  introduce a second family; hierarchy comes from size and weight, not typeface.
-- **Do** check a heading size against the nearest Material 3 Headline/Title
-  role before changing it. **Don't** size up a heading just because it "could
-  be bigger" — if the scale needs to change, change the role mapping
-  deliberately and update this doc, not one screen at a time.
-- **Do** reserve gold for emphasis (status, save state, category eyebrow).
-  **Don't** use gold as a fill color for large surfaces or decoration.
+### Do:
+- **Do** check a heading size against the nearest Material 3 Headline/Title role before changing it.
 - **Do** set `borderCurve: 'continuous'` on every new card-shaped surface.
-  **Don't** ship a rounded corner without it — the mismatch between plain
-  and continuous corners is visible side by side.
-- **Not yet implemented:** a dark theme. Every screen ships light-only
-  today; if dark mode is scoped as a future undertaking, it should extend
-  `theme/colors.ts` with a parallel token set rather than hardcoding
-  per-screen overrides. (`theme/colors.ts` already carries a `dark` scheme
-  behind the off `darkMode` flag; the flip is gated on a `SubmitResearch`
-  dark pass.)
+- **Do** reserve gold exclusively for emphasis.
 
-## Motion
-
-Motion is a spec, not a vibe — port the curve and duration exactly. All values
-below have no external dependency beyond `react-native-reanimated` (already in
-the app), so they ship as-is.
-
-- **Signature: the sliding selection pill (nav bar).** A `primary-surface`
-  rounded rect sits _behind_ the tab row (`z-index 0`) and animates its
-  `left`/`width` to the active tab. The curve is a spring overshoot —
-  **`cubic-bezier(.34, 1.3, .4, 1)` over 420ms**, expressed in Reanimated as
-  `withTiming(target, { duration: 420, easing: Easing.bezier(.34, 1.3, .4, 1) })`.
-  The moving pill carries _all_ the motion: the active icon + label just recolor
-  to `primary`, **no icon scale**. This replaces any static active-dot.
-- **Press feedback.** FAB and tab presses use a light haptic
-  (`expo-haptics` selection/impact-light) plus a scale-down on the FAB
-  (`:active` → `scale .9`). Every tappable element gives visual feedback within
-  ~100ms.
-- **Screen-enter.** New screens fade in with an 8px upward rise over ~320ms.
-- **Sheet presentation (iOS card).** A full-screen sheet (e.g. the paper viewer
-  behind "View Full Paper") slides up from the bottom while the presenting screen
-  **scales down to `0.92` and rounds its corners to `14`** behind a dim scrim —
-  the native-iOS modal card zoom-out. Implemented in `SheetPresenter` with one
-  shared progress value: **open is a spring, `withSpring(1, { damping: 22,
-stiffness: 240, mass: 0.9 })`**; **close is a `260ms` timed collapse**,
-  `withTiming(0, { duration: 260 })`. Drag the grabber down past ~28% of the
-  sheet height (or flick, `velocityY > 900`) to dismiss. Scrim tops out at `0.45`
-  black; the presenter also dims `0.35`. Under reduced motion the sheet snaps
-  open/closed with no scale, slide, or scrim fade.
-  **The zoom-out, dim, and scrim track the sheet's live top — the open/close
-  spring _and_ any active drag — not `progress` alone.** A `reveal` (1 fully up
-  → 0 hidden) is derived each frame from the sheet's current top and drives all
-  three, so dragging the sheet down _pans the presenter back in and lightens the
-  scrim smoothly in proportion to the sheet's height_, rather than holding the
-  full zoom until release.
-- **Bottom sheets (menus & pickers).** Short sheets (Browse sort/field, etc.)
-  use `BottomSheet`, which drives **both** the slide and the backdrop dim off one
-  shared progress (open `spring.sheet`, close `240ms` timed) so **the dim fades in
-  lock-step with the sheet's height instead of snapping to full opacity when the
-  modal mounts**. Same drag-to-dismiss (grabber, ~30% / `velocityY > 900`); the
-  dim lightens as the sheet is pulled away. Reduced motion → instant, no fade.
-- **Confirming pop.** A save/bookmark toggling _on_ gives a quick scale
-  overshoot on the icon — `withSequence(withTiming(1.32, 120ms),
-withSpring(1, spring.pop))` (`spring.pop` = low-damping overshoot). Only on the
-  affirmative action (not un-saving), and a no-op under reduced motion.
-- **Focus ring.** `border-focus` (navy `#2E5BC9`), 2px, 2px offset. _(The old
-  visual-direction doc specified a gold focus ring; `border-focus` supersedes
-  it, since focus is navigation state, not emphasis — gold stays reserved.)_
-- **Reduced motion.** Mirror `prefers-reduced-motion` via Reanimated's
-  `useReducedMotion()` — kill every animation and transition (the pill jumps to
-  the active tab with no slide, screens appear without the rise).
-
-## Screens (A-pillar redesign)
-
-Screen-composition specs ported from the redesign mockup, reconciled to the
-tokens above. Where a surface is larger than the `shape` scale tops out at
-(`xl` 18), a bespoke radius is called out — floating navigation and hero banners
-are the only surfaces allowed past the token scale. Likewise the floating bar
-and FAB carry bespoke drop shadows heavier than `level2`, because they float
-above all page content rather than resting on the background.
-
-### Navigation bar (A1)
-
-A floating, detached bar — four tabs split around a gold center Submit FAB (a
-solid 3D button centered in the bar, not raised). Labels: **Home · Papers ·
-Browse · Profile**, laid out
-`[Home] [Papers] [·FAB·] [Browse] [Profile]`.
-
-- **Bar:** `position: absolute`, `left/right: 16`, `bottom: 14`, `height: 66`,
-  radius **26** (bespoke, past `xl`), `borderCurve: 'continuous'`,
-  `border-subtle` hairline. Shadow `0 14px 34px -14px rgba(11,27,71,.6)`.
-- **Selection pill:** `primary-surface` fill, `top: 9`, `height: 48`,
-  radius 16, behind the tabs. Animated per **Motion** above.
-- **Submit FAB:** gold **squircle**, `58×58`, radius 22, **vertically centered in
-  the bar** (`top: 4`, no overhang — retuned 2026-07-08 from the earlier
-  `top: -20` lift). `borderCurve: 'continuous'`. Reads as a **solid 3D button**:
-  a vertical top-lit gold gradient (`gold.200 → gold.500`), a white specular
-  gloss over the top ~55%, a `rgba(255,255,255,.5)` bevel rim, and a grounded
-  deep-gold drop shadow (`shadowColor #4A3800`, `y 8`, blur 12, opacity .45,
-  `elevation 12`). Glyph = a bold rounded **`add`** (plus); ink **`#3A2600`**
-  (a warm ink-on-gold — the one place the FAB glyph departs from the
-  `text-on-accent` token, because slate/white tested poorly for contrast on
-  gold; intentional).
-- **Dependency-gated fidelity (deferred to A3 Polish).** The mockup's frosted
-  `blur(18px)` bar and gold-_gradient_ FAB need `expo-blur` /
-  `expo-linear-gradient` (a dev-client rebuild). A1 ships a faithful
-  approximation: an opaque `surface-raised` bar and a solid `accent` FAB with a
-  sheen overlay + lit top edge. The motion — the point — is already exact.
-
-#### Faculty tabs
-
-The faculty navigator uses the **same** floating bar. There is one shared
-`FloatingTabBar` primitive; `StudentTabBar` and `FacultyTabBar` are thin configs
-over it. Faculty differ only in:
-
-- **No Submit FAB** (faculty don't submit). Four tabs fill the bar evenly —
-  `[Home] [Review] [Browse] [Profile]`, no center gap.
-- **Review** takes the student's _Papers_ slot (icon: a check-review pair, so it
-  reads distinctly from Browse's search glyph). **Browse** is literally the same
-  shared repository screen both roles use.
-
-Everything else — the frosted blur bar, the sliding-spring selection pill, the
-`primary-surface` fill, radii, shadow, and motion — is identical by construction,
-so the two bars can't drift apart. Bell parity: faculty reach notifications
-through the same `TopBar` bell → `Activity` screen (notifications only; no
-invites segment). Faculty Profile matches student Profile — no bell.
-
-### Shared refinements (2026-07-09)
-
-- **One notification bell, one look, one slot.** The `TopBar` bell is the only
-  global element and is **always rightmost** — a subtle circle on every screen
-  (`surface-sunken` on light headers, `rgba(255,255,255,.14)` on the navy hero),
-  same size/badge/position throughout, so it never nudges between screens. Any
-  account control (the profile avatar) sits to its **left**, never displacing it.
-- **Filter chips are retired for browsing/sorting.** Category and sort controls
-  are delivered as **toolbar dropdown links → bottom sheets** (Browse) or
-  **tappable tile grids** (Dashboard "Explore by field"), not chip rows. Status
-  chips inside My Papers stay (fixed, few, self-describing).
-- **One search field.** Browse and My Papers share the exact same search-field
-  treatment (see Browse).
-
-### Dashboard (A3)
-
-Reader-first Home — a glance at your own submissions, then discovery. It is
-**not** a trimmed My Papers.
-
-- **Navy hero header:** `linear-gradient(158deg, primary, primary-hover)`,
-  bottom radius 28 (bespoke). **Student Home shows only greeting + name** — no
-  sub-line under it (the institution/program line was dropped; program lives in
-  Profile, submission status in the glance strip below). The block is padded
-  down off the status bar (`insets.top + spacing.xl`) so it reads as centered in
-  the band, not jammed to the top. Faculty keeps a one-line status sub-line
-  (review summary) via the shared hero's optional `statusLine`. Faint radial gold
-  glow; a giant translucent "N" watermark bottom-right (`rgba(255,255,255,.05)`).
-  Right side: **profile avatar, then the bell** (bell rightmost per Shared
-  refinements). Avatar = gold squircle (`44×44`, radius `lg`,
-  `borderCurve: 'continuous'`), ink-on-gold (`#3A2600`) initials.
-- **No Submit CTA.** Submitting is the always-present Submit FAB on every
-  screen; a second call-to-action on Home is redundant and was removed.
-- **Your submissions (glance):** a 4-tile strip — Total / In review / Revise
-  (warning color) / Published (success color) — the whole strip is one tap
-  target to My Papers. Tiles are `surface-raised`, radius `lg`, `level1` shadow.
-- **Recommended · <field>** discovery rail (horizontal): papers in the
-  student's field, most-read first, falling back to **Most read** overall when
-  the field has < 3 published. Cards are a **fixed size — `208 × 202`, uniform
-  for every paper** — gradient band on top, gold `MOST READ` tag on the first
-  card, 3-line title clamp, view-count/year meta pinned to the card bottom.
-- **Explore by field:** a **two-column tile grid** (not chips) — one
-  `surface-raised` tile per research category (radius `lg`, hairline border,
-  `level1`, `minHeight 60`, name + `arrow-forward`), each deep-linking into
-  Browse with that field preselected. Header carries an `All ›` link to Browse.
-- **Saved** section list.
-- Generous spacing — no cramped stat grid.
-
-### Browse (A2)
-
-- **Search bar is the shared field** — identical to My Papers': `surface-sunken`
-  fill, hairline `border-subtle`, radius `md`, `borderCurve: 'continuous'`,
-  search glyph + input + a "Clear" chip. The two screens' search fields stay
-  visually identical.
-- **Recent searches** as `primary-surface` chips (clock icon on the first) and a
-  **Popular searches** row.
-- A **"Swipe up to browse papers"** explore hint with a fill-on-hold up-arrow
-  tile in a `primary-surface` tile.
-- **Filtering & sorting live in the results toolbar, not a chip row** — two
-  dropdown links, `All fields ▾` and `Newest ▾`, each opening a bottom sheet
-  (the field list scrolls, capped at `360`; a checkmark marks the active row).
-  A selected field name is truncated (`maxWidth 128`) so the toolbar keeps one
-  line.
-
-### Profile (A3)
-
-- **Navy banner** `height: 120`, bottom radius 26 (bespoke), mono "N" watermark.
-- Gold avatar squircle (`82×82`, radius 24, `borderCurve: 'continuous'`)
-  overlapping the banner (`margin-top: -42`, 4px `surface-base`-colored border).
-- Name, then **program**, then **department** beneath it — centered. No
-  email-prefix "handle" (it read as a random username). Same identity block on
-  the faculty Profile.
-- Settings rows with `primary-surface` icon tiles: **Recovery email**,
-  **Password**, **Dark mode** (navy toggle), **Sign out**.
-
-### First-run (A4)
-
-No raster illustration — the carousel is built entirely from `lucide-react-native`
-inside token-styled tiles, which matches the app's modern iconography standard and
-stays locked to the palette rather than depending on external art generation. Four
-slides, one swipeable `FlatList` (`pagingEnabled`, horizontal), full-bleed
-`surface-base` background:
-
-- **Slide layout:** icon tile centered in the top ~45% of the screen — `132×132`
-  circle, `primary-surface` fill, the slide's Lucide glyph at `56px` in
-  `primary` (last slide's glyph in `accent` — the one emphasis exception, since
-  it's the "you're ready" beat). Below: `h1` headline, `body` subcopy
-  (`text-secondary`), both center-aligned with `lg` side margins.
-- **Slide 1 — Discover NU Research.** Icon: `Search`. "Browse research
-  across every department — search, filter, and read what NU is publishing."
-- **Slide 2 — Submit in Minutes.** Icon: `CloudUpload`. "Upload your
-  paper and send it straight into faculty review, right from your phone."
-- **Slide 3 — Follow Every Stage.** Illustration is a standalone stage-progress
-  strip — `Submitted → Faculty → Dean → Published` with the third dot in the
-  `accent` gold-ring current-stage treatment — not a generic icon. **Note:**
-  Dashboard's own stage-progress card (the component this slide originally
-  meant to reuse) was removed from `DashboardScreen.tsx` per issue #50 — this
-  motif no longer exists anywhere in the codebase and must be built fresh for
-  this slide (a small presentational component, not wired to any real
-  submission data). "Track your submission from faculty review to
-  publication, every step visible."
-- **Slide 4 — Stay in the Loop.** Icon: `notifications-outline` with a small
-  `accent`-filled badge dot top-right of the tile (glyph itself in `accent`,
-  the emphasis exception noted above). "Get notified the moment your status
-  changes or a co-author invites you in."
-- **Pagination:** dot row below the copy block, `sm` gap — active dot
-  `primary` fill `8px`, inactive `border-subtle` fill `6px`, animated width/opacity
-  cross-fade on page change (reuse the **Motion** section's screen-enter timing,
-  ~200ms, not the nav-pill spring — this is a content swap, not a selection).
-- **Controls:** `Skip` as plain `label`-style text (`text-secondary`) top-right,
-  safe-area padding. Bottom: pill `button-primary` reading "Next" on slides
-  1–3, becoming "Get Started" (still `button-primary`, no gold — gold stays on
-  the icon only, not a second emphasis surface) on slide 4.
-- **Persistence:** a `useHasOnboarded` hook, same shape as `useHasSearchedOnce`
-  (`src/hooks/useHasSearchedOnce.ts`) — one `AsyncStorage` boolean, checked
-  once at the `AppNavigator` auth gate (frozen file — needs the same
-  scoped-unfreeze move A1 used) between the "no user" and role branches, so a
-  returning student never sees this again after their first completed or
-  skipped pass.
-- **Reduced motion:** the page cross-fade and dot animation both no-op under
-  `useReducedMotion()` — swipe still works, just an instant cut instead of a
-  fade.
-
-#### Coachmarks (first-time nav, post-onboarding)
-
-Contextual tooltips shown once each, the first time a returning-from-onboarding
-student reaches the real UI — not part of the carousel itself.
-
-- **Bubble:** `primary` fill, `text-on-brand` `body-small` text, radius `md`,
-  a 6px triangle pointer aimed at the target control, `level2` shadow.
-  Dismiss button: small `label`-style "Got it" in `accent` (the one gold
-  element on an otherwise all-navy surface, same logic as the Dashboard's
-  current-stage dot).
-- **Targets, shown in sequence, one at a time:** the top-right notification
-  bell (`TopBar`) — "Your invites and updates show up here"; the Submit FAB —
-  "Tap to submit your research"; the Browse tab — "Discover papers by
-  category or search". Each dismissal reveals the next; dismissing or tapping
-  anywhere outside advances/ends the sequence.
-- **Persistence:** a single `AsyncStorage` array of seen coachmark ids (same
-  hook family as `useHasOnboarded`), so partial progress (e.g. app closed
-  mid-sequence) resumes rather than restarting.
+### Don't:
+- **Don't** size up a heading just because it "could be bigger".
+- **Don't** use gold as a fill color for large surfaces or decoration.
+- **Don't** introduce a second font family; rely on Roboto's weights.
+- **Don't** ship a rounded corner without `borderCurve: 'continuous'` on iOS.

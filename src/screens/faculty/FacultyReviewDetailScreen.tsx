@@ -1,10 +1,11 @@
+import { Icon } from '../../components/ui/Icon';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, ZoomIn, SlideOutLeft, FadeOut } from 'react-native-reanimated';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
-import { CheckCircle2, PenTool, XCircle } from 'lucide-react-native';
+
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import {
   BottomSheet,
@@ -31,6 +32,8 @@ import { RootStackParamList } from '../../navigation/types';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { formatDate } from '../../utils/format';
+import { CircleX, Pencil, CircleCheck } from 'lucide-react-native';
+
 
 type FacultyDetailRoute = RouteProp<RootStackParamList, 'FacultyReviewDetail'>;
 type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
@@ -426,18 +429,18 @@ export const FacultyReviewDetailScreen = () => {
               <Text style={styles.sectionTitle}>Your decision</Text>
               <View style={styles.decisionRow}>
                 <View style={styles.decisionButtonWrapper}>
-                  <Button label="Reject" variant="danger" icon={<XCircle size={18} color={theme.colors.text.onBrand} />} onPress={() => openSheet('reject')} />
+                  <Button label="Reject" variant="danger" icon={<Icon icon={CircleX} size={18} color={theme.colors.text.onBrand} />} onPress={() => openSheet('reject')} />
                 </View>
                 <View style={styles.decisionButtonWrapper}>
                   <Button
                     label="Revision"
                     variant="accent"
-                    icon={<PenTool size={18} color={theme.colors.text.onBrand} />}
+                    icon={<Icon icon={Pencil} size={18} color={theme.colors.text.onBrand} />}
                     onPress={() => openSheet('revision')}
                   />
                 </View>
                 <View style={styles.decisionButtonWrapper}>
-                  <Button label="Approve" variant="success" icon={<CheckCircle2 size={18} color={theme.colors.text.onBrand} />} onPress={openApprove} />
+                  <Button label="Approve" variant="success" icon={<Icon icon={CircleCheck} size={18} color={theme.colors.text.onBrand} />} onPress={openApprove} />
                 </View>
               </View>
             </View>
@@ -449,7 +452,7 @@ export const FacultyReviewDetailScreen = () => {
         {sheet === 'approve' ? (
           <>
             <View style={[styles.sheetHeader, { backgroundColor: theme.colors.state.successSurface }]}>
-              <CheckCircle2 size={24} color={theme.colors.state.success} />
+              <Icon icon={CircleCheck} size={24} color={theme.colors.state.success} />
               <Text style={[styles.sheetTitle, { color: theme.colors.brand.primary }]}>Approve &amp; forward</Text>
             </View>
 
@@ -536,7 +539,7 @@ export const FacultyReviewDetailScreen = () => {
         {sheet === 'revision' ? (
           <>
             <View style={[styles.sheetHeader, { backgroundColor: theme.colors.brand.accentSurface }]}>
-              <PenTool size={24} color={theme.colors.brand.accent} />
+              <Icon icon={Pencil} size={24} color={theme.colors.brand.accent} />
               <Text style={[styles.sheetTitle, { color: theme.colors.brand.accent }]}>Request revision</Text>
             </View>
 
@@ -593,7 +596,7 @@ export const FacultyReviewDetailScreen = () => {
         {sheet === 'reject' ? (
           <>
             <View style={[styles.sheetHeader, { backgroundColor: theme.colors.state.dangerSurface }]}>
-              <XCircle size={24} color={theme.colors.state.danger} />
+              <Icon icon={CircleX} size={24} color={theme.colors.state.danger} />
               <Text style={[styles.sheetTitle, { color: theme.colors.state.danger }]}>Reject paper</Text>
             </View>
 
@@ -667,7 +670,7 @@ export const FacultyReviewDetailScreen = () => {
       {showSuccess && (
         <View style={styles.successOverlay}>
           <Animated.View entering={ZoomIn.springify().damping(12).stiffness(200)} style={styles.successIcon}>
-            <CheckCircle2 size={64} color={theme.colors.state.success} />
+            <Icon icon={CircleCheck} size={64} color={theme.colors.state.success} />
             <Text style={styles.successText}>Decision Submitted</Text>
           </Animated.View>
         </View>
@@ -831,11 +834,7 @@ const makeStyles = (theme: Theme) =>
       borderRadius: 24,
       alignItems: 'center',
       gap: theme.spacing.md,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.15,
-      shadowRadius: 12,
-      elevation: 8,
+      ...theme.shadows.level2,
     },
     successText: {
       ...theme.typography.h3,

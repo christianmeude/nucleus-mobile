@@ -1,12 +1,13 @@
 import { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Bell } from 'lucide-react-native';
+
 import { useNavigation } from '@react-navigation/native';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { Icon } from './Icon';
 import { useActivityCount } from '../../hooks/useActivityCount';
 import { useCoachmarkTarget } from '../coachmarks/CoachmarkProvider';
+import { Bell } from 'lucide-react-native';
 
 import Animated, {
   useAnimatedStyle,

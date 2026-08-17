@@ -20,8 +20,8 @@ import { isFirstEntranceArmed } from '../../lib/firstEntrance';
 import { COACHMARK_COPY, type CoachmarkId, nextCoachmark } from './sequence';
 
 // Bubble geometry (triangle pointer, radius md, level2 shadow).
-const POINTER_H = 9;
-const POINTER_HALF = 9;
+const POINTER_H = 6;
+const POINTER_HALF = 6;
 const EDGE = 16; // min gap from screen edge
 const GAP = 10; // gap between the target control and the pointer tip
 const BUBBLE_MAX = 300;
@@ -240,7 +240,7 @@ const makeStyles = (t: Theme) =>
       ...StyleSheet.absoluteFill,
       backgroundColor: 'rgba(8, 15, 35, 0.32)',
     },
-    // A standard light card: white surface, hairline outline, soft elevation.
+    // A standard bubble: primary surface, md radius, soft elevation.
     bubble: {
       position: 'absolute',
       flexDirection: 'row',
@@ -248,21 +248,19 @@ const makeStyles = (t: Theme) =>
       gap: t.spacing.md,
       paddingVertical: t.spacing.md,
       paddingHorizontal: t.spacing.lg,
-      backgroundColor: t.colors.surface.raised,
-      borderRadius: t.radii.lg,
+      backgroundColor: t.colors.brand.primary,
+      borderRadius: t.radii.md,
       borderCurve: 'continuous',
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: t.colors.border.subtle,
       ...t.shadows.level2,
     },
     bubbleText: {
       flex: 1,
-      ...t.typography.body,
-      color: t.colors.text.primary,
+      ...t.typography.bodySmall,
+      color: t.colors.text.onBrand,
     },
     gotIt: {
       ...t.typography.label,
-      color: t.colors.brand.primary,
+      color: t.colors.brand.accent,
     },
     gotItPressed: {
       opacity: 0.6,
@@ -276,7 +274,7 @@ const makeStyles = (t: Theme) =>
       borderBottomWidth: POINTER_H,
       borderLeftColor: 'transparent',
       borderRightColor: 'transparent',
-      borderBottomColor: t.colors.surface.raised,
+      borderBottomColor: t.colors.brand.primary,
     },
     pointerDown: {
       position: 'absolute',
@@ -287,6 +285,6 @@ const makeStyles = (t: Theme) =>
       borderTopWidth: POINTER_H,
       borderLeftColor: 'transparent',
       borderRightColor: 'transparent',
-      borderTopColor: t.colors.surface.raised,
+      borderTopColor: t.colors.brand.primary,
     },
   });

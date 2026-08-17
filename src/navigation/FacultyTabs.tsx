@@ -3,7 +3,7 @@ import { FacultyTabsParamList } from './types';
 import { FacultyDashboardScreen } from '../screens/faculty/FacultyDashboardScreen';
 import { FacultyReviewScreen } from '../screens/faculty/FacultyReviewScreen';
 import { BrowseScreen } from '../screens/main/BrowseScreen';
-import { FacultyProfileScreen } from '../screens/faculty/FacultyProfileScreen';
+import { ProfileScreen } from '../screens/main/ProfileScreen';
 import { FacultyTabBar } from './FacultyTabBar';
 
 const Tabs = createBottomTabNavigator<FacultyTabsParamList>();
@@ -28,7 +28,7 @@ export const FacultyTabs = () => {
       <Tabs.Screen name="FacultyDashboard" component={FacultyDashboardScreen} />
       <Tabs.Screen name="FacultyReview" component={FacultyReviewScreen} />
       <Tabs.Screen name="FacultyRepository" component={BrowseScreen} />
-      <Tabs.Screen name="FacultyProfile" component={FacultyProfileScreen} />
+      <Tabs.Screen name="FacultyProfile" component={ProfileScreen} />
     </Tabs.Navigator>
   );
 };

@@ -14,18 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DocumentPicker from 'expo-document-picker';
-import {
-  Check,
-  ChevronDown,
-  ChevronLeft,
-  CircleAlert,
-  CircleCheck,
-  CloudUpload,
-  FileText,
-  Plus,
-  Search,
-  X,
-} from 'lucide-react-native';
+import { Check, ChevronDown, ChevronLeft, CircleAlert, CircleCheck, CloudUpload, FileText, Plus, Search, X,  } from 'lucide-react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {

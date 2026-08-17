@@ -2,11 +2,12 @@ import React from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
 import Animated, { FadeIn, FadeInDown, FadeOut } from 'react-native-reanimated';
-import { FileWarning, PenTool, CheckCircle2, Send } from 'lucide-react-native';
+
 import { FacultyWorkloadSummary } from '../../api/faculty';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { Icon } from './Icon';
+import { FileText, Pencil, Send, CircleCheck } from 'lucide-react-native';
 
 interface WorkloadChartProps {
   summary: FacultyWorkloadSummary;
@@ -51,14 +52,14 @@ export const WorkloadChart = ({ summary, onSelectFilter }: WorkloadChartProps) =
       label: 'Needs Review',
       value: summary.pendingReview,
       color: theme.colors.brand.accent,
-      icon: FileWarning,
+      icon: FileText,
     },
     {
       key: 'revisions' as const,
       label: 'In Revision',
       value: summary.revisionRequired,
       color: theme.colors.state.warning,
-      icon: PenTool,
+      icon: Pencil,
     },
     {
       key: 'forwarded' as const,
@@ -72,7 +73,7 @@ export const WorkloadChart = ({ summary, onSelectFilter }: WorkloadChartProps) =
       label: 'Approved',
       value: summary.approvedByYou,
       color: theme.colors.state.success,
-      icon: CheckCircle2,
+      icon: CircleCheck,
     },
   ];
 
@@ -136,7 +137,7 @@ export const WorkloadChart = ({ summary, onSelectFilter }: WorkloadChartProps) =
               style={({ pressed }) => [styles.legendItem, pressed && styles.legendItemPressed]}
             >
               <View style={[styles.legendIcon, { backgroundColor: seg.color + '1A' }]}>
-                <Icon icon={seg.icon} size={16} color={seg.color} />
+                <Icon icon={seg.icon as any} size={16} color={seg.color} />
               </View>
               <View style={styles.legendTextContainer}>
                 <Text style={styles.legendLabel}>{seg.label}</Text>

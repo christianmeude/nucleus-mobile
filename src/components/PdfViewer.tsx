@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from './ui/Icon';
-import { Expand, X, Eye, Pencil } from 'lucide-react-native';
+
 import * as WebBrowser from 'expo-web-browser';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { forwardRef, useImperativeHandle } from 'react';
@@ -36,6 +36,8 @@ import { Button, InlineNotice } from './ui';
 const PDFJS_VERSION = '3.11.174';
 
 import { AnnotationType, AnnotationRect, AnnotationPoint } from '../utils/annotation';
+import { MousePointer2, Highlighter, Pencil, Eye, Maximize, X } from 'lucide-react-native';
+
 
 /**
  * A positioned annotation overlay to render on top of a PDF page.
@@ -61,7 +63,13 @@ export interface PdfViewerRef {
  * `firstPageOnly` renders just page 1 with no scroll — used for the tap-to-open preview. */
 const buildViewerHtml = (
   uri: string,
-  backgroundColor: string,
+  themeColors: {
+    background: string;
+    canvas: string;
+    shadow: string;
+    accent: string;
+    danger: string;
+  },
   firstPageOnly = false,
 ): string => `<!DOCTYPE html>
 <html>
@@ -69,10 +77,10 @@ const buildViewerHtml = (
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=4, user-scalable=yes" />
 <style>
-  html, body { margin: 0; padding: 0; background: ${backgroundColor}; ${firstPageOnly ? 'overflow: hidden;' : ''} }
+  html, body { margin: 0; padding: 0; background: ${themeColors.background}; ${firstPageOnly ? 'overflow: hidden;' : ''} }
   #container { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: ${firstPageOnly ? '0' : '8px'}; }
   .page-wrapper { position: relative; width: 100%; }
-  canvas { width: 100%; height: auto; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.15); display: block; }
+  canvas { width: 100%; height: auto; background: ${themeColors.canvas}; box-shadow: 0 1px 4px ${themeColors.shadow}; display: block; }
   .ann-overlay { position: absolute; pointer-events: none; display: none; }
   .ann-pin { border-radius: 50%; border: 2px solid rgba(255,255,255,0.85); width: 16px; height: 16px; transform: translate(-50%,-50%); }
 </style>
@@ -117,12 +125,12 @@ const buildViewerHtml = (
         ann.highlightRects.forEach(function(rect) {
           var el = document.createElement('div');
           el.className = 'ann-overlay';
-          el.style.cssText = 'position:absolute;border-radius:2px;pointer-events:auto;cursor:pointer;';
+          el.style.cssText = 'position:absolute;pointer-events:auto;cursor:pointer;';
           el.style.left = rect.x + '%';
           el.style.top = rect.y + '%';
           el.style.width = rect.w + '%';
           el.style.height = rect.h + '%';
-          el.style.background = safeColor(ann.highlightColor, 0.35) || 'rgba(255,220,0,0.35)';
+          el.style.background = safeColor(ann.highlightColor, 0.35) || safeColor('${themeColors.accent}', 0.35);
           el.onclick = function(e) { e.stopPropagation(); post({ type: 'tapAnnotation', id: ann.id }); };
           wrapper.appendChild(el);
         });
@@ -133,7 +141,7 @@ const buildViewerHtml = (
         pin.style.cssText = 'position:absolute;pointer-events:auto;cursor:pointer;';
         pin.style.left = ann.anchorPercent.x + '%';
         pin.style.top = ann.anchorPercent.y + '%';
-        pin.style.background = safeColor(ann.highlightColor, 0.9) || '#CDA434';
+        pin.style.background = safeColor(ann.highlightColor, 0.9) || '${themeColors.accent}';
         pin.onclick = function(e) { e.stopPropagation(); post({ type: 'tapAnnotation', id: ann.id }); };
         wrapper.appendChild(pin);
       }
@@ -197,7 +205,7 @@ const buildViewerHtml = (
 
     if (window.__annotationMode === 'highlight') {
       var overlay = document.createElement('div');
-      overlay.style.cssText = 'position:absolute;background:rgba(255,220,0,0.35);border:1px solid #FFDC00;pointer-events:none;';
+      overlay.style.cssText = 'position:absolute;background:' + safeColor('${themeColors.accent}', 0.35) + ';border:1px solid ${themeColors.accent};pointer-events:none;';
       var wrapper = document.querySelectorAll('.page-wrapper')[hit.pageIndex];
       wrapper.appendChild(overlay);
       
@@ -219,7 +227,7 @@ const buildViewerHtml = (
       wrapper.appendChild(canvas);
       
       var ctx = canvas.getContext('2d');
-      ctx.strokeStyle = '#D32F2F'; // Red pen
+      ctx.strokeStyle = '${themeColors.danger}'; // Red pen
       ctx.lineWidth = 3;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -525,7 +533,17 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
           ref={webViewRef}
           key={uri}
           source={{
-            html: buildViewerHtml(uri, theme.colors.surface.sunken, firstPageOnly),
+            html: buildViewerHtml(
+              uri,
+              {
+                background: theme.colors.surface.sunken,
+                canvas: theme.colors.surface.raised,
+                shadow: theme.colors.border.subtle,
+                accent: theme.colors.brand.accent,
+                danger: theme.colors.state.danger,
+              },
+              firstPageOnly,
+            ),
             baseUrl: 'https://localhost/',
           }}
           originWhitelist={['*']}
@@ -596,7 +614,7 @@ interface PdfViewerProps {
   onAnnotationPress?: (id: string) => void;
 }
 
-import { MousePointer2, Highlighter } from 'lucide-react-native';
+
 
 export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
   (
@@ -748,7 +766,7 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
             accessibilityLabel="View PDF fullscreen"
             style={styles.controlButton}
           >
-            <Icon icon={Expand} size={18} color={theme.colors.text.onBrand} />
+            <Icon icon={Maximize} size={18} color={theme.colors.text.onBrand} />
           </Pressable>
         )}
       </View>

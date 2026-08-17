@@ -1,10 +1,11 @@
+import { Icon } from '../../components/ui/Icon';
 import { useCallback, useMemo, useEffect, useRef, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
 import Animated from 'react-native-reanimated';
 import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react-native';
+
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { EmptyState, InlineNotice, Screen, Skeleton, TopBar } from '../../components/ui';
@@ -18,6 +19,8 @@ import {
 import { FacultyTabsParamList, FacultyTabNavigationProp } from '../../navigation/types';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
+import { Search, X, ChevronLeft, ChevronRight } from 'lucide-react-native';
+
 
 export const FacultyReviewScreen = () => {
   const navigation = useNavigation<FacultyTabNavigationProp>();
@@ -145,7 +148,7 @@ export const FacultyReviewScreen = () => {
         </TopBar>
 
         <View style={styles.searchContainer}>
-          <Search size={20} color={theme.colors.text.muted} style={styles.searchIcon} />
+          <Icon icon={Search} size={20} color={theme.colors.text.muted} style={styles.searchIcon} />
           <TextInput
             value={search}
             onChangeText={setSearch}
@@ -157,7 +160,7 @@ export const FacultyReviewScreen = () => {
           />
           {search.length > 0 && (
             <Pressable onPress={() => setSearch('')} hitSlop={8} style={styles.clearButton}>
-              <X size={16} color={theme.colors.text.muted} />
+              <Icon icon={X} size={16} color={theme.colors.text.muted} />
             </Pressable>
           )}
         </View>
@@ -221,7 +224,7 @@ export const FacultyReviewScreen = () => {
                 }}
                 accessibilityLabel="Scroll left to see earlier filters"
               >
-                <ChevronLeft size={16} color={theme.colors.brand.primary} />
+                <Icon icon={ChevronLeft} size={16} color={theme.colors.brand.primary} />
               </Pressable>
             </View>
           )}
@@ -243,7 +246,7 @@ export const FacultyReviewScreen = () => {
                 }}
                 accessibilityLabel="Scroll right to see more filters"
               >
-                <ChevronRight size={16} color={theme.colors.brand.primary} />
+                <Icon icon={ChevronRight} size={16} color={theme.colors.brand.primary} />
               </Pressable>
             </View>
           )}
@@ -393,11 +396,7 @@ const makeStyles = (theme: Theme) =>
       backgroundColor: theme.colors.surface.raised,
       alignItems: 'center',
       justifyContent: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.15,
-      shadowRadius: 2,
-      elevation: 2,
+      ...theme.shadows.level1,
     },
     pillSegment: {
       alignItems: 'center',

@@ -13,9 +13,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '../../components/ui/Icon';
 import { Mail, Lock, CircleAlert, Grid3x3, CircleCheck } from 'lucide-react-native';
 import { useAuth } from '../../context/AuthContext';
+import { usePrivacy } from '../../context/PrivacyContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { Logo, Button } from '../../components/ui';
+import { DevResetModal } from '../../components/dev/DevResetModal';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -43,6 +45,7 @@ type FocusField = 'email' | 'password' | 'forgotEmail' | 'code' | 'newPassword' 
 
 export const LoginScreen = () => {
   const { signIn } = useAuth();
+  const { resetPrivacy } = usePrivacy();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -51,6 +54,7 @@ export const LoginScreen = () => {
   const [focused, setFocused] = useState<FocusField>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [devModalVisible, setDevModalVisible] = useState(false);
 
   // Bottom Sheet State
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -399,11 +403,20 @@ export const LoginScreen = () => {
                     <Text style={styles.primaryButtonText}>Sign In</Text>
                   )}
                 </AnimatedPressable>
+
+                {/* TEMPORARY DEV BUTTON */}
+                <Pressable onPress={() => setDevModalVisible(true)} style={{ marginTop: 16, alignItems: 'center' }}>
+                  <Text style={{ color: 'rgba(255,255,255,0.5)', textDecorationLine: 'underline' }}>
+                    [Dev] FTUE Simulator
+                  </Text>
+                </Pressable>
               </View>
             </View>
           </Animated.View>
         </Pressable>
       </SafeAreaView>
+
+      <DevResetModal visible={devModalVisible} onClose={() => setDevModalVisible(false)} />
 
       {showForgotPassword && (
         <BottomSheet

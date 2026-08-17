@@ -31,3 +31,7 @@ _Avoid_: Student history, student repository
 **Publication Year**:
 The year a paper was published or approved for the repository, strictly referring to this date rather than when it was submitted.
 _Avoid_: Submission year, creation date
+
+**Privacy Notice Gate**:
+A client-side UI wrapper around authentication flows (Login and Register) that ensures users have accepted the Data Privacy Policy and RA 10173 terms before proceeding. Acceptance is ephemeral (in-memory per app session) and does not persist to the backend. External links open in the system browser to reduce friction when returning to accept terms.
+_Avoid_: Privacy modal, terms screen

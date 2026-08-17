@@ -18,10 +18,12 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { ArrowUp, Clock, Search, TrendingUp } from 'lucide-react-native';
+
 import { Chip, Icon, PressableScale } from '../../../components/ui';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import { type Theme } from '../../../theme';
+import { Search } from 'lucide-react-native';
+
 
 const EXPLORE_DRAG_DISTANCE = 110;
 const EXPLORE_COMMIT_THRESHOLD = 0.4;

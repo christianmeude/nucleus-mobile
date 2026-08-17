@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, TextInput, View, Pressable } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
-import { Search, Plus } from 'lucide-react-native';
+
 import * as Haptics from 'expo-haptics';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
@@ -11,6 +11,8 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { StandardPaperCard } from '../../components/StandardPaperCard';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
+import { Search, Plus } from 'lucide-react-native';
+
 import {
   ACTION_STATUSES,
   ACTIVE_STATUSES,
@@ -111,7 +113,7 @@ export const MyPapersScreen = () => {
   }, [navigation]);
 
   const renderPaperItem = useCallback(({ item, index }: { item: ResearchPaper; index: number }) => (
-    <ListEntranceItem key={item.id} index={index}>
+    <ListEntranceItem index={index}>
       <StandardPaperCard
         paper={item}
         variant="papers"

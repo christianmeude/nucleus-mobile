@@ -1,8 +1,10 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { ChevronDown, Grid, Menu } from 'lucide-react-native';
+
 import { Icon, PressableScale } from '../../../components/ui';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import { type Theme } from '../../../theme';
+import { ChevronDown, List, LayoutGrid } from 'lucide-react-native';
+
 
 type ViewMode = 'list' | 'grid';
 
@@ -64,7 +66,7 @@ export const BrowseFilterBar = ({
             accessibilityLabel="List view"
           >
             <Icon
-              icon={Menu}
+              icon={List}
               size={17}
               color={viewMode === 'list' ? theme.colors.brand.primary : theme.colors.text.muted}
             />
@@ -76,7 +78,7 @@ export const BrowseFilterBar = ({
             accessibilityLabel="Grid view"
           >
             <Icon
-              icon={Grid}
+              icon={LayoutGrid}
               size={15}
               color={viewMode === 'grid' ? theme.colors.brand.primary : theme.colors.text.muted}
             />

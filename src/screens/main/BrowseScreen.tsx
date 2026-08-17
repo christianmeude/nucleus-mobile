@@ -5,7 +5,7 @@ import type { ListRenderItem } from 'react-native';
 import Animated, { LinearTransition, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../../components/ui/Icon';
-import { CloudOff, Library, Check } from 'lucide-react-native';
+
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { LegendList } from '@legendapp/list/react-native';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
@@ -39,6 +39,8 @@ import { StandardPaperCard } from '../../components/StandardPaperCard';
 import { BrowseGridCell } from './browse/BrowseGridCell';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { CloudOff, Landmark, Check } from 'lucide-react-native';
+
 
 type ViewMode = 'list' | 'grid';
 
@@ -258,24 +260,22 @@ export const BrowseScreen = () => {
       const categoryName = resolveCategoryName(item.category, categoryNameById);
       return (
         <ListEntranceItem index={index}>
-          <Animated.View layout={reducedMotion ? undefined : LinearTransition.springify()}>
-            {viewMode === 'grid' ? (
-              <BrowseGridCell
-                paper={item}
-                category={categoryName}
-                categoryColor={categoryColor}
-                onOpen={openDetail}
-              />
-            ) : (
-              <StandardPaperCard
-                paper={item}
-                variant="browse"
-                category={categoryName}
-                categoryColor={categoryColor}
-                onPress={() => openDetail(item.id)}
-              />
-            )}
-          </Animated.View>
+          {viewMode === 'grid' ? (
+            <BrowseGridCell
+              paper={item}
+              category={categoryName}
+              categoryColor={categoryColor}
+              onOpen={openDetail}
+            />
+          ) : (
+            <StandardPaperCard
+              paper={item}
+              variant="browse"
+              category={categoryName}
+              categoryColor={categoryColor}
+              onPress={() => openDetail(item.id)}
+            />
+          )}
         </ListEntranceItem>
       );
     },
@@ -331,7 +331,7 @@ export const BrowseScreen = () => {
       />
     ) : sorted.length === 0 ? (
       <EmptyState
-        icon={<Icon icon={Library} size={24} color={theme.colors.text.muted} />}
+        icon={<Icon icon={Landmark} size={24} color={theme.colors.text.muted} />}
         title="No papers found"
         message={
           query.trim() ? `No results for "${query.trim()}"` : 'No papers found in this category'

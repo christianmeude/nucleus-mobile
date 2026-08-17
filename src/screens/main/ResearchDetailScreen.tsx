@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Bookmark, File, FileText, MessageCircle } from 'lucide-react-native';
+
 import { BlurView } from 'expo-blur';
 import Animated, {
   useAnimatedStyle,
@@ -38,6 +38,8 @@ import {
 } from '../../utils/format';
 import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
 import { PUBLISHED_STATUSES } from '../../components/PaperStatusChip';
+import { File, MessageCircle, Bookmark, FileText } from 'lucide-react-native';
+
 
 type DetailRouteProp = RouteProp<RootStackParamList, 'ResearchDetail'>;
 

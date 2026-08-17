@@ -1,10 +1,12 @@
 import { NativeStackHeaderProps } from '@react-navigation/native-stack';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '../components/ui/Icon';
-import { ChevronLeft } from 'lucide-react-native';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
+import { ChevronLeft } from 'lucide-react-native';
+
 
 export const ResearchDetailHeader = ({ navigation, options }: NativeStackHeaderProps) => {
   const insets = useSafeAreaInsets();

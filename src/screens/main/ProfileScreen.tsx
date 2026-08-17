@@ -4,8 +4,10 @@ import { useAuth } from '../../context/AuthContext';
 import { useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { ProfileHeader, Screen, SettingsRow } from '../../components/ui';
-import { Mail, Lock, Moon, LogOut } from 'lucide-react-native';
+
 import { initialsFor } from '../../utils/format';
+import { Mail, Lock, Moon, LogOut } from 'lucide-react-native';
+
 
 export const ProfileScreen = () => {
   const { user, signOut } = useAuth();
@@ -13,13 +15,19 @@ export const ProfileScreen = () => {
 
   const initials = useMemo(() => initialsFor(user?.fullName), [user?.fullName]);
 
-  // Identity lines under the name: program first, department beneath it. The
-  // email-prefix "handle" was dropped — it read as a random username.
-  const identityLines = useMemo(
-    () =>
-      [user?.program?.trim(), user?.department?.trim()].filter((part): part is string => !!part),
-    [user?.program, user?.department],
-  );
+  const roleLabel = useMemo(() => {
+    if (!user?.role) return '';
+    return user.role.charAt(0).toUpperCase() + user.role.slice(1);
+  }, [user?.role]);
+
+  // Identity lines under the name: Department first (broader context), then Program or Role.
+  const identityLines = useMemo(() => {
+    const primary = user?.department?.trim();
+    const secondary = user?.role === 'faculty' ? roleLabel : (user?.program?.trim() || roleLabel);
+    return [primary, secondary].filter((part): part is string => !!part);
+  }, [user?.department, user?.program, user?.role, roleLabel]);
+
+  const fallbackName = user?.role === 'faculty' ? 'Faculty' : 'Student';
 
   return (
     // Top edge opted out of Screen's own inset padding: the navy banner (inside
@@ -34,7 +42,7 @@ export const ProfileScreen = () => {
       >
         <ProfileHeader
           initials={initials}
-          name={user?.fullName || 'Student'}
+          name={user?.fullName || fallbackName}
           handle={identityLines[0]}
           subhandle={identityLines[1]}
         />

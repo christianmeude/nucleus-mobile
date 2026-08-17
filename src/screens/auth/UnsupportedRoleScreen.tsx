@@ -1,3 +1,4 @@
+import { Icon } from '../../components/ui/Icon';
 import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,6 +16,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { TriangleAlert } from 'lucide-react-native';
+
+
 
 export const UnsupportedRoleScreen = () => {
   const { user, signOut } = useAuth();
@@ -81,7 +84,7 @@ export const UnsupportedRoleScreen = () => {
 
           <View style={styles.content}>
             <View style={styles.iconCircle}>
-              <TriangleAlert size={36} color={theme.colors.state.warning} />
+              <Icon icon={TriangleAlert} size={36} color={theme.colors.state.warning} />
             </View>
 
             <View style={styles.textContainer}>

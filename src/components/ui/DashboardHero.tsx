@@ -15,14 +15,9 @@ const HERO_GRADIENT_START = { x: 0.313, y: 0.036 };
 const HERO_GRADIENT_END = { x: 0.687, y: 0.964 };
 
 /**
- * Gold gradient for the profile avatar squircle — `linear-gradient(135deg,
- * #F8C156, #F5A623)` from the redesign mockup's `.avatar` (gold[300] → gold[500]).
- * Fixed hex (not theme-scoped) so the avatar reads as the same solid gold chip
- * the mockup shows, and distinct from the translucent-white Activity bell beside
- * it. `AVATAR_INK` is the warm ink-on-gold glyph color shared with the A1 FAB.
+ * Gold gradient for the profile avatar squircle using semantic tokens
+ * distinct from the translucent-white Activity bell beside it.
  */
-const AVATAR_GRADIENT = ['#F8C156', '#F5A623'] as const;
-const AVATAR_INK = '#3A2600';
 
 interface DashboardHeroProps {
   greeting: string;
@@ -73,7 +68,7 @@ export const DashboardHero = ({
               accessibilityLabel="Profile"
             >
               <LinearGradient
-                colors={AVATAR_GRADIENT}
+                colors={[theme.colors.brand.accentSoft, theme.colors.brand.accent]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFill}
@@ -168,6 +163,6 @@ const makeStyles = (t: Theme) =>
     heroAvatarText: {
       fontFamily: t.fontFamilies.ui.bold,
       fontSize: 15,
-      color: AVATAR_INK,
+      color: t.colors.text.onAccent,
     },
   });

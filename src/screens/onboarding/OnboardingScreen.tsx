@@ -21,9 +21,10 @@ import {
   ArrowRight,
   Trophy,
   Check,
-  LucideIcon,
 } from 'lucide-react-native';
-import { PressableScale } from '../../components/ui';
+import type { LucideIcon } from 'lucide-react-native';
+import { PressableScale, Icon } from '../../components/ui';
+
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { armFirstEntrance } from '../../lib/firstEntrance';

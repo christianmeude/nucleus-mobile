@@ -3,7 +3,7 @@ import { Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native'
 import { SectionList as LegendSectionList } from '@legendapp/list/section-list';
 import Animated from 'react-native-reanimated';
 import { Icon } from './ui/Icon';
-import { Bell } from 'lucide-react-native';
+
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { notificationsApi } from '../api/notifications';
 import { facultyApi } from '../api/faculty';

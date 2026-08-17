@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Icon } from '../../components/ui/Icon';
-import { ChevronLeft } from 'lucide-react-native';
+
 import { useNavigation } from '@react-navigation/native';
 import Animated, { useSharedValue } from 'react-native-reanimated';
 import { useAuth } from '../../context/AuthContext';
@@ -10,6 +10,8 @@ import { type Theme } from '../../theme';
 import { Chip, PressableScale, Screen, TopBar } from '../../components/ui';
 import { NotificationsList } from '../../components/NotificationsList';
 import { InvitationsList } from '../../components/InvitationsList';
+import { ChevronLeft } from 'lucide-react-native';
+
 
 type ActivityTab = 'notifications' | 'invites';
 

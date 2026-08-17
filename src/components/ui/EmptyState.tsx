@@ -1,9 +1,10 @@
+import { Icon } from '../../components/ui/Icon';
 import { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useThemedStyles, useTheme } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
-import { CheckCircle, SearchX, FileX, BellOff, Info } from 'lucide-react-native';
+
 
 export type EmptyStateContext =
   'all-caught-up' | 'no-results' | 'no-papers' | 'no-notifications' | 'default';
@@ -19,27 +20,27 @@ const CONTEXT_DEFAULTS = {
   'all-caught-up': {
     title: 'All caught up!',
     message: 'There are no pending items for you to review.',
-    IconComponent: CheckCircle,
+    IconComponent: 'checkmark.circle',
   },
   'no-results': {
     title: 'No results found',
     message: 'Try a different search or filter.',
-    IconComponent: SearchX,
+    IconComponent: 'magnifyingglass',
   },
   'no-papers': {
     title: 'No papers yet',
     message: 'You have not submitted any papers.',
-    IconComponent: FileX,
+    IconComponent: 'doc',
   },
   'no-notifications': {
     title: 'No notifications',
     message: "You'll hear from us when something happens.",
-    IconComponent: BellOff,
+    IconComponent: 'bell.slash',
   },
   default: {
     title: 'Nothing here',
     message: 'There is nothing to show at this time.',
-    IconComponent: Info,
+    IconComponent: 'info.circle',
   },
 } as const;
 
@@ -56,7 +57,7 @@ export const EmptyState = ({ title, message, icon, context }: EmptyStateProps) =
   let displayIcon = icon;
   if (!displayIcon && context) {
     const IconComp = ctx?.IconComponent ?? defaultCtx.IconComponent;
-    displayIcon = <IconComp size={40} color={theme.colors.brand.primary} />;
+    displayIcon = <Icon icon={IconComp as any} size={40} color={theme.colors.brand.primary} />;
   }
 
   return (

@@ -1,10 +1,11 @@
+import { Icon } from '../../components/ui/Icon';
 import { useCallback, useMemo, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { usePushNotifications } from '../../hooks/usePushNotifications';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ArrowRight } from 'lucide-react-native';
+
 import { DashboardHero, EmptyState, InlineNotice, Screen, Skeleton, WorkloadChart } from '../../components/ui';
 import { FacultyPaperCard } from '../../components/FacultyPaperCard';
 import { facultyApi, type FacultyAssignedPaper, type FacultyWorkloadSummary } from '../../api/faculty';
@@ -17,6 +18,8 @@ import { type Theme } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import { greetingForHour, initialsFor } from '../../utils/format';
 import { haptics } from '../../lib/haptics';
+import { ArrowRight } from 'lucide-react-native';
+
 
 const DashboardSkeleton = () => {
   const styles = useThemedStyles(makeStyles);
@@ -156,7 +159,7 @@ export const FacultyDashboardScreen = () => {
                         onPress={() => navigation.navigate('FacultyReview', { initialFilter: 'needs_review' })}
                       >
                         <Text style={styles.seeAllText}>See all {summary.pendingReview} pending papers</Text>
-                        <ArrowRight size={16} color={theme.colors.brand.primary} />
+                        <Icon icon={ArrowRight} size={16} color={theme.colors.brand.primary} />
                       </Pressable>
                     </View>
                   )}
