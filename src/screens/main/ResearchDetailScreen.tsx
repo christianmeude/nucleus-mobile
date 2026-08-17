@@ -266,8 +266,13 @@ export const ResearchDetailScreen = () => {
             <Text style={styles.metaText}>{paper.download_count || 0} downloads</Text>
           </View>
 
-          {/* Download is intentionally hidden pending backend allow_download support (Issue #8). */}
+          {/* Download is disabled pending backend allow_download support (Issue #8). */}
           <View style={styles.readRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ ...theme.typography.bodySmall, color: theme.colors.text.muted, fontStyle: 'italic' }}>
+                Download unavailable
+              </Text>
+            </View>
             {annotations.length > 0 && showFeedback ? (
               <PressableScale
                 style={styles.feedbackBtn}
@@ -392,9 +397,9 @@ export const ResearchDetailScreen = () => {
 
           {showWorkflow ? (
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Workflow history</Text>
+              <Text style={styles.sectionLabel}>Submission timeline</Text>
               {workflow.length === 0 ? (
-                <Text style={styles.workflowEmpty}>No workflow history available.</Text>
+                <Text style={styles.workflowEmpty}>No timeline available.</Text>
               ) : (
                 <View style={styles.workflowList}>
                   {workflow.map((entry, index) => (
@@ -528,6 +533,7 @@ const makeStyles = (theme: Theme) =>
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.border.subtle,
       borderRadius: theme.radii.md,
+      borderCurve: 'continuous',
     },
     feedbackBtnText: {
       ...theme.typography.bodyStrong,
@@ -541,6 +547,7 @@ const makeStyles = (theme: Theme) =>
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.border.subtle,
       borderRadius: theme.radii.md,
+      borderCurve: 'continuous',
     },
     section: {
       marginTop: theme.spacing.xl,
@@ -604,6 +611,7 @@ const makeStyles = (theme: Theme) =>
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.border.subtle,
       borderRadius: theme.radii.sm,
+      borderCurve: 'continuous',
       backgroundColor: theme.colors.surface.raised,
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: 6,

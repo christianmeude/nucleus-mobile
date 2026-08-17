@@ -98,8 +98,8 @@ const makeStyles = (t: Theme) =>
   StyleSheet.create({
     hero: {
       overflow: 'hidden',
-      borderBottomLeftRadius: 28,
-      borderBottomRightRadius: 28,
+      borderBottomLeftRadius: 36,
+      borderBottomRightRadius: 36,
       borderCurve: 'continuous',
     },
     heroGlow: {
@@ -109,26 +109,28 @@ const makeStyles = (t: Theme) =>
       width: 180,
       height: 180,
       borderRadius: t.radii.pill,
+      borderCurve: 'continuous',
       opacity: 0.18,
     },
     heroWatermark: {
       position: 'absolute',
-      right: -18,
-      bottom: -36,
-      fontSize: 168,
-      lineHeight: 168,
+      right: -24,
+      bottom: -48,
+      fontSize: 220,
+      lineHeight: 220,
       fontFamily: t.fontFamilies.display.bold,
-      opacity: 0.05,
+      opacity: 0.08,
     },
     heroContent: {
-      paddingHorizontal: t.spacing.lg,
-      paddingBottom: t.spacing.xl,
+      paddingHorizontal: t.spacing.xl,
+      paddingBottom: t.spacing['2xl'],
     },
     heroGreeting: {
-      fontFamily: t.fontFamilies.ui.regular,
-      fontSize: 14,
+      fontFamily: t.fontFamilies.display.semibold,
+      fontSize: 16,
+      letterSpacing: 0.5,
       color: t.colors.text.onBrand,
-      opacity: 0.75,
+      opacity: 0.85,
     },
     heroTextContent: {
       flex: 1,
@@ -136,9 +138,9 @@ const makeStyles = (t: Theme) =>
       justifyContent: 'center',
     },
     heroName: {
-      ...t.typography.h1,
+      ...t.typography.display,
       color: t.colors.text.onBrand,
-      marginTop: 2,
+      marginTop: 4,
     },
     heroSubLine: {
       fontFamily: t.fontFamilies.ui.regular,

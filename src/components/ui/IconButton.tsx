@@ -45,6 +45,7 @@ const makeStyles = (t: Theme) =>
       minHeight: 44,
       minWidth: 44,
       borderRadius: t.radii.pill,
+      borderCurve: 'continuous',
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: t.colors.surface.raised,

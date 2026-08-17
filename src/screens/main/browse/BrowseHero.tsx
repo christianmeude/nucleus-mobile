@@ -43,6 +43,7 @@ export const makeStyles = (theme: Theme) =>
     hero: {
       backgroundColor: theme.colors.brand.primary,
       borderRadius: theme.radii.xl,
+      borderCurve: 'continuous',
       padding: theme.spacing.xl,
       overflow: 'hidden',
     },
@@ -53,6 +54,7 @@ export const makeStyles = (theme: Theme) =>
       width: 120,
       height: 120,
       borderRadius: theme.radii.pill,
+      borderCurve: 'continuous',
       borderWidth: 1,
       borderColor: 'rgba(255, 255, 255, 0.09)',
     },
@@ -63,6 +65,7 @@ export const makeStyles = (theme: Theme) =>
       width: 80,
       height: 80,
       borderRadius: theme.radii.pill,
+      borderCurve: 'continuous',
       borderWidth: 1,
       borderColor: 'rgba(255, 255, 255, 0.06)',
     },

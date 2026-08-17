@@ -1,7 +1,6 @@
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SymbolView, SFSymbol } from 'expo-symbols';
 import type { LucideIcon } from 'lucide-react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
@@ -13,22 +12,20 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
-import { FadeInView } from '../components/ui';
+import { FadeInView, Icon } from '../components/ui';
 import { haptics } from '../lib/haptics';
 import { useReduceMotion } from '../hooks/useReduceMotion';
 import { useCoachmarkTarget } from '../components/coachmarks/CoachmarkProvider';
 import { type CoachmarkId } from '../components/coachmarks/sequence';
 import { isFirstEntranceArmed } from '../lib/firstEntrance';
 
-export type IconPair = [outline: SFSymbol, filled: SFSymbol, lucideIcon: LucideIcon];
-
 /**
- * Per-tab label + outline/filled icon pair, keyed by route name. An optional
+ * Per-tab label + icon pair, keyed by route name. An optional
  * `coachmarkId` registers that tab as a first-run coachmark target (#69) — the
  * student bar maps it on Browse; the faculty bar leaves it unset, so nothing
  * registers there.
  */
-export type TabMeta = Record<string, { label: string; icon: IconPair; coachmarkId?: CoachmarkId }>;
+export type TabMeta = Record<string, { label: string; icon: LucideIcon; coachmarkId?: CoachmarkId }>;
 
 // Faithful port of the visual-direction mockup's `.navind` transition:
 // `left .42s cubic-bezier(.34,1.3,.4,1)` — a spring-overshoot slide.
@@ -88,15 +85,7 @@ const TabItem = ({
       accessibilityState={{ selected: focused }}
       accessibilityLabel={meta.label}
     >
-      <SymbolView
-        name={focused ? meta.icon[1] : meta.icon[0]}
-        size={22}
-        tintColor={color}
-        fallback={(() => {
-          const FallbackIcon = meta.icon[2];
-          return <FallbackIcon size={22} color={color} />;
-        })()}
-      />
+      <Icon icon={meta.icon} size={22} color={color} />
       <Text style={[styles.tabLabel, { color }]} numberOfLines={1}>
         {meta.label}
       </Text>

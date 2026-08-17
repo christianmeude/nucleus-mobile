@@ -140,6 +140,7 @@ export const SubmitResearchScreen = () => {
   const [formData, setFormData] = useState<SubmitDraftFormState>(EMPTY_FORM);
   const [selectedCoAuthors, setSelectedCoAuthors] = useState<StudentSearchResult[]>([]);
   const [file, setFile] = useState<SubmitFileInput | null>(null);
+  const [currentStep, setCurrentStep] = useState(1);
 
   const [resubmitPaper, setResubmitPaper] = useState<ResearchPaper | null>(null);
 
@@ -415,6 +416,11 @@ export const SubmitResearchScreen = () => {
   );
 
   const checklistComplete = checklistItems.every((item) => item.done);
+  
+  const step1Complete = checklistItems[0].done;
+  const step2Complete = checklistItems[1].done && checklistItems[2].done;
+  const step3Complete = checklistItems[3].done && checklistItems[4].done;
+  const step4Complete = true;
 
   // ─── Submit pipeline ───
   const performSubmit = useCallback(async () => {
@@ -581,9 +587,7 @@ export const SubmitResearchScreen = () => {
             {isResubmit ? 'Resubmit Research' : 'Submit Research'}
           </Text>
           <Text style={styles.subtitle}>
-            {isResubmit
-              ? 'Update and improve your research submission.'
-              : 'Share your work with the university community.'}
+            Step {currentStep} of 4
           </Text>
         </View>
 
@@ -603,6 +607,7 @@ export const SubmitResearchScreen = () => {
             ) : null}
 
             {/* Attachment */}
+            {currentStep === 1 && (
             <FormSection number={1} title="Attachment">
               {file ? (
                 <View style={styles.fileRow}>
@@ -651,8 +656,10 @@ export const SubmitResearchScreen = () => {
                 </Pressable>
               )}
             </FormSection>
+            )}
 
             {/* Paper details */}
+            {currentStep === 2 && (
             <FormSection number={2} title="Paper details">
             {/* Title */}
             <View style={styles.section}>
@@ -703,8 +710,10 @@ export const SubmitResearchScreen = () => {
             </View>
 
             </FormSection>
+            )}
 
             {/* Classification */}
+            {currentStep === 3 && (
             <FormSection number={3} title="Classification">
             {/* Category */}
             <View style={styles.section}>
@@ -782,8 +791,11 @@ export const SubmitResearchScreen = () => {
             </View>
 
             </FormSection>
+            )}
 
             {/* Co-authors */}
+            {currentStep === 4 && (
+            <>
             <FormSection number={4} title="Co-authors">
             {/* Co-authors search */}
             <View style={styles.section}>
@@ -879,6 +891,8 @@ export const SubmitResearchScreen = () => {
               </Text>
             </View>
             </FormSection>
+            </>
+            )}
 
             {submitError ? <InlineNotice tone="danger" message={submitError} /> : null}
             {submitSuccess ? (
@@ -897,24 +911,64 @@ export const SubmitResearchScreen = () => {
 
       {!bootstrapping ? (
         <View style={[styles.footer, { paddingBottom: insets.bottom + theme.spacing.md }]}>
-          <Pressable
-            onPress={handleSubmitPress}
-            disabled={submitDisabled}
-            style={({ pressed }) => [
-              styles.submit,
-              submitDisabled && styles.submitDisabled,
-              pressed && !submitDisabled && styles.submitPressed,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={isResubmit ? 'Review and update' : 'Review and submit'}
-          >
-            {submitting ? (
-              <ActivityIndicator size="small" color={theme.colors.text.onBrand} />
-            ) : null}
-            <Text style={[styles.submitText, submitDisabled && styles.submitTextDisabled]}>
-              {isResubmit ? 'Review & update' : 'Review & submit'}
-            </Text>
-          </Pressable>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            {currentStep > 1 && (
+              <Pressable
+                onPress={() => setCurrentStep(prev => prev - 1)}
+                disabled={submitting}
+                style={({ pressed }) => [
+                  styles.submit,
+                  { flex: 1, backgroundColor: theme.colors.surface.sunken, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.border.subtle },
+                  pressed && { opacity: 0.7 }
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Back to previous step"
+              >
+                <Text style={[styles.submitText, { color: theme.colors.text.primary }]}>
+                  Back
+                </Text>
+              </Pressable>
+            )}
+            
+            {currentStep < 4 ? (
+              <Pressable
+                onPress={() => setCurrentStep(prev => prev + 1)}
+                disabled={(currentStep === 1 && !step1Complete) || (currentStep === 2 && !step2Complete) || (currentStep === 3 && !step3Complete) || submitting}
+                style={({ pressed }) => [
+                  styles.submit,
+                  { flex: 2 },
+                  ((currentStep === 1 && !step1Complete) || (currentStep === 2 && !step2Complete) || (currentStep === 3 && !step3Complete)) && styles.submitDisabled,
+                  pressed && styles.submitPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Continue to next step"
+              >
+                <Text style={[styles.submitText, ((currentStep === 1 && !step1Complete) || (currentStep === 2 && !step2Complete) || (currentStep === 3 && !step3Complete)) && styles.submitTextDisabled]}>
+                  Continue
+                </Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={handleSubmitPress}
+                disabled={submitDisabled}
+                style={({ pressed }) => [
+                  styles.submit,
+                  { flex: 2 },
+                  submitDisabled && styles.submitDisabled,
+                  pressed && !submitDisabled && styles.submitPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={isResubmit ? 'Review and update' : 'Review and submit'}
+              >
+                {submitting ? (
+                  <ActivityIndicator size="small" color={theme.colors.text.onBrand} />
+                ) : null}
+                <Text style={[styles.submitText, submitDisabled && styles.submitTextDisabled]}>
+                  {isResubmit ? 'Review & update' : 'Review & submit'}
+                </Text>
+              </Pressable>
+            )}
+          </View>
         </View>
       ) : null}
 

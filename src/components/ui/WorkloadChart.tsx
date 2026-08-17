@@ -200,6 +200,7 @@ const makeStyles = (t: Theme) =>
       width: 30,
       height: 30,
       borderRadius: t.radii.md,
+      borderCurve: 'continuous',
       alignItems: 'center',
       justifyContent: 'center',
     },

@@ -75,6 +75,7 @@ const makeStyles = (t: Theme) =>
     card: {
       borderRadius: t.radii.lg,
       borderCurve: 'continuous',
+      backgroundColor: t.colors.surface.raised,
       borderWidth: StyleSheet.hairlineWidth,
     },
     pressable: {

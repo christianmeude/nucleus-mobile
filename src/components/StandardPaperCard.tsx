@@ -89,6 +89,7 @@ const makeStyles = (t: Theme) =>
       width: 6,
       height: 6,
       borderRadius: t.radii.pill,
+      borderCurve: 'continuous',
     },
     cat: {
       fontFamily: t.fontFamilies.ui.semibold,

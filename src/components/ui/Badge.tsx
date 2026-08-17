@@ -21,6 +21,7 @@ const makeStyles = (t: Theme) =>
       minWidth: 10,
       height: 10,
       borderRadius: t.radii.pill,
+      borderCurve: 'continuous',
       backgroundColor: t.colors.brand.accent,
       alignItems: 'center',
       justifyContent: 'center',

@@ -82,6 +82,7 @@ const makeStyles = (t: Theme) =>
   StyleSheet.create({
     base: {
       borderRadius: t.radii.pill,
+      borderCurve: 'continuous',
       borderWidth: 1,
       minHeight: 44,
       minWidth: 44,

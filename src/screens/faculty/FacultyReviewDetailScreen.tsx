@@ -762,6 +762,7 @@ const makeStyles = (theme: Theme) =>
       borderWidth: 1,
       borderColor: theme.colors.border.subtle,
       borderRadius: theme.radii.md,
+      borderCurve: 'continuous',
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
       backgroundColor: theme.colors.surface.base,

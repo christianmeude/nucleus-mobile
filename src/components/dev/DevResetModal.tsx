@@ -116,6 +116,7 @@ const makeStyles = (t: Theme) =>
     card: {
       backgroundColor: t.colors.surface.base,
       borderRadius: t.radii.xl,
+      borderCurve: 'continuous',
       padding: t.spacing.xl,
       width: '100%',
       ...t.shadows.level2,
@@ -155,6 +156,7 @@ const makeStyles = (t: Theme) =>
       backgroundColor: t.colors.brand.primary,
       paddingVertical: t.spacing.md,
       borderRadius: t.radii.lg,
+      borderCurve: 'continuous',
       alignItems: 'center',
     },
     saveBtnText: {

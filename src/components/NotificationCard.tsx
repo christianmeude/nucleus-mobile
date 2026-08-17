@@ -195,6 +195,7 @@ const makeStyles = (t: Theme) =>
       width: 8,
       height: 8,
       borderRadius: t.radii.pill,
+      borderCurve: 'continuous',
       backgroundColor: t.colors.brand.primary,
       marginTop: 6,
     },

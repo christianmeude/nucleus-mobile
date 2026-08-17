@@ -306,6 +306,7 @@ const makeStyles = (t: Theme) =>
       flexDirection: 'row',
       backgroundColor: t.colors.surface.sunken,
       borderRadius: 9999,
+      borderCurve: 'continuous',
       padding: 4,
     },
     pillSegment: {
@@ -314,6 +315,7 @@ const makeStyles = (t: Theme) =>
       justifyContent: 'center',
       paddingVertical: 8,
       borderRadius: 9999,
+      borderCurve: 'continuous',
     },
     pillSegmentLabel: {
       ...t.typography.label,
@@ -327,6 +329,7 @@ const makeStyles = (t: Theme) =>
       width: 56,
       height: 56,
       borderRadius: 28,
+      borderCurve: 'continuous',
       backgroundColor: t.colors.brand.primary,
       alignItems: 'center',
       justifyContent: 'center',

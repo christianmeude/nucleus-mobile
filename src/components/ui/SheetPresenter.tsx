@@ -104,6 +104,7 @@ export const SheetPresenter = ({
     return {
       transform: [{ scale: interpolate(reveal, [0, 1], [1, PRESENTER_MIN_SCALE]) }],
       borderRadius: interpolate(reveal, [0, 1], [0, PRESENTER_RADIUS]),
+      borderCurve: 'continuous',
     };
   });
 
@@ -223,6 +224,7 @@ const makeStyles = (t: Theme) =>
       width: 42,
       height: 4,
       borderRadius: t.radii.pill,
+      borderCurve: 'continuous',
       backgroundColor: t.colors.border.strong,
     },
     sheetBody: {

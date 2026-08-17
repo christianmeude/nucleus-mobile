@@ -26,6 +26,7 @@ const makeStyles = (t: Theme) =>
     card: {
       backgroundColor: t.colors.surface.raised,
       borderRadius: t.radii.lg,
+      borderCurve: 'continuous',
       borderWidth: 1,
       borderColor: t.colors.border.subtle,
       padding: t.spacing.md,

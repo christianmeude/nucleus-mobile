@@ -145,50 +145,47 @@ export const FacultyDashboardScreen = () => {
             <DashboardSkeleton />
           ) : (
             <View style={styles.sections}>
-              {upNextPaper && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Up Next</Text>
-                  <FacultyPaperCard
-                    paper={upNextPaper}
-                    onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: upNextPaper.id })}
-                  />
-                  {summary && summary.pendingReview > 1 && (
-                    <View style={styles.seeAllWrapper}>
-                      <Pressable 
-                        style={({ pressed }) => [styles.seeAllButton, pressed && { opacity: 0.6 }]}
-                        onPress={() => navigation.navigate('FacultyReview', { initialFilter: 'needs_review' })}
-                      >
-                        <Text style={styles.seeAllText}>See all {summary.pendingReview} pending papers</Text>
-                        <Icon icon={ArrowRight} size={16} color={theme.colors.brand.primary} />
-                      </Pressable>
-                    </View>
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Action Required</Text>
+                
+                <View style={styles.activityList}>
+                  {upNextPaper && (
+                    <FacultyPaperCard
+                      paper={upNextPaper}
+                      onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: upNextPaper.id })}
+                    />
                   )}
+                  
+                  {notifications.map((item, index) => (
+                    <ListEntranceItem key={item.id} index={upNextPaper ? index + 1 : index}>
+                      <NotificationCard
+                         notification={item}
+                         onPress={() => {
+                           if (item.research_id) {
+                             navigation.navigate('FacultyReviewDetail', { paperId: item.research_id });
+                           }
+                         }}
+                      />
+                    </ListEntranceItem>
+                  ))}
                 </View>
-              )}
 
-              {!upNextPaper && summary && summary.pendingReview === 0 && (
-                 <EmptyState context="all-caught-up" />
-              )}
-
-              {notifications && notifications.length > 0 && (
-                <View style={[styles.section, styles.activitySection]}>
-                  <Text style={styles.sectionTitle}>Recent Activity</Text>
-                  <View style={styles.activityList}>
-                    {notifications.map((item, index) => (
-                      <ListEntranceItem key={item.id} index={index}>
-                        <NotificationCard
-                           notification={item}
-                           onPress={() => {
-                             if (item.research_id) {
-                               navigation.navigate('FacultyReviewDetail', { paperId: item.research_id });
-                             }
-                           }}
-                        />
-                      </ListEntranceItem>
-                    ))}
+                {summary && summary.pendingReview > 1 && (
+                  <View style={styles.seeAllWrapper}>
+                    <Pressable 
+                      style={({ pressed }) => [styles.seeAllButton, pressed && { opacity: 0.6 }]}
+                      onPress={() => navigation.navigate('FacultyReview', { initialFilter: 'needs_review' })}
+                    >
+                      <Text style={styles.seeAllText}>See all {summary.pendingReview} pending papers</Text>
+                      <Icon icon={ArrowRight} size={16} color={theme.colors.brand.primary} />
+                    </Pressable>
                   </View>
-                </View>
-              )}
+                )}
+
+                {!upNextPaper && notifications.length === 0 && (
+                   <EmptyState context="all-caught-up" />
+                )}
+              </View>
             </View>
           )}
         </View>

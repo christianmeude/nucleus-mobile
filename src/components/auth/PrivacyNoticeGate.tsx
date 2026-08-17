@@ -306,6 +306,7 @@ const makeStyles = (t: Theme) =>
     card: {
       backgroundColor: t.colors.surface.base,
       borderRadius: t.radii.xl,
+      borderCurve: 'continuous',
       padding: t.spacing.lg,
       ...t.shadows.level1,
       marginBottom: t.spacing.xl,
@@ -358,6 +359,7 @@ const makeStyles = (t: Theme) =>
       borderLeftWidth: 4,
       borderLeftColor: t.colors.brand.primary,
       borderRadius: t.radii.lg,
+      borderCurve: 'continuous',
       padding: t.spacing.lg,
       marginTop: t.spacing.md,
       gap: t.spacing.md,
@@ -420,6 +422,7 @@ const makeStyles = (t: Theme) =>
     acceptButton: {
       backgroundColor: t.colors.brand.primary,
       borderRadius: t.radii.lg,
+      borderCurve: 'continuous',
       height: 48,
       paddingHorizontal: t.spacing.xl,
       justifyContent: 'center',

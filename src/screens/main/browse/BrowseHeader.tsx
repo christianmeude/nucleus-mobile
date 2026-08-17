@@ -24,7 +24,6 @@ import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import { type Theme } from '../../../theme';
 import { Search } from 'lucide-react-native';
 
-
 const EXPLORE_DRAG_DISTANCE = 110;
 const EXPLORE_COMMIT_THRESHOLD = 0.4;
 const EXPLORE_ARROW_SIZE = 34;
@@ -58,7 +57,6 @@ export const BrowseHeader = ({
 
   return (
     <View style={styles.headerBlock}>
-
       <View style={styles.searchWrap}>
         <Icon icon={Search} size={18} color={theme.colors.text.muted} />
         <TextInput
@@ -142,6 +140,7 @@ export const makeStyles = (theme: Theme) =>
       minHeight: 44,
       paddingHorizontal: theme.spacing.md,
       borderRadius: theme.radii.pill,
+      borderCurve: 'continuous',
       backgroundColor: theme.colors.brand.primarySoft,
     },
     recentChipIcon: {
@@ -173,6 +172,7 @@ export const makeStyles = (theme: Theme) =>
       minHeight: 44,
       paddingHorizontal: theme.spacing.md,
       borderRadius: theme.radii.pill,
+      borderCurve: 'continuous',
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.border.subtle,
       backgroundColor: theme.colors.surface.raised,
@@ -193,6 +193,7 @@ export const makeStyles = (theme: Theme) =>
       width: EXPLORE_ARROW_SIZE,
       height: EXPLORE_ARROW_SIZE,
       borderRadius: 12,
+      borderCurve: 'continuous',
       marginBottom: theme.spacing.xs,
       alignItems: 'center',
       justifyContent: 'center',

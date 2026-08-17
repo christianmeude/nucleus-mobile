@@ -75,6 +75,7 @@ const makeStyles = (t: Theme) =>
     base: {
       minHeight: 44,
       borderRadius: t.radii.md,
+      borderCurve: 'continuous',
       paddingHorizontal: t.spacing.lg,
       alignItems: 'center',
       justifyContent: 'center',

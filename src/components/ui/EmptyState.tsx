@@ -87,6 +87,7 @@ const makeStyles = (t: Theme) =>
       width: 96,
       height: 96,
       borderRadius: 48,
+      borderCurve: 'continuous',
       backgroundColor: t.colors.brand.primarySurface,
       alignItems: 'center',
       justifyContent: 'center',

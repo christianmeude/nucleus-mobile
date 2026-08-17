@@ -79,6 +79,7 @@ const makeStyles = (t: Theme) =>
       backgroundColor: t.colors.brand.primarySurface,
       paddingHorizontal: t.spacing.sm,
       borderRadius: t.radii.pill,
+      borderCurve: 'continuous',
       alignItems: 'center',
       justifyContent: 'center',
     },

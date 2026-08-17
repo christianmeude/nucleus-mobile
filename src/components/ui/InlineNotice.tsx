@@ -55,6 +55,7 @@ const makeStyles = (t: Theme) =>
     container: {
       borderWidth: 1,
       borderRadius: t.radii.md,
+      borderCurve: 'continuous',
       paddingHorizontal: t.spacing.md,
       paddingVertical: t.spacing.sm,
     },

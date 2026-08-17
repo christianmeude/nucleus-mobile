@@ -27,6 +27,7 @@ const makeStyles = (t: Theme) =>
       position: 'absolute',
       borderWidth: 3,
       borderRadius: t.radii.pill,
+      borderCurve: 'continuous',
       width: '100%',
       height: '75%',
       backgroundColor: 'transparent',
@@ -46,6 +47,7 @@ const makeStyles = (t: Theme) =>
       width: 10,
       height: 10,
       borderRadius: t.radii.pill,
+      borderCurve: 'continuous',
       backgroundColor: t.colors.brand.accent,
     },
   });

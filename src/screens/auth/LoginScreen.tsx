@@ -762,6 +762,7 @@ const makeStyles = (theme: Theme) =>
       gap: theme.spacing.xs,
       backgroundColor: theme.colors.state.dangerSurface,
       borderRadius: theme.radii.md,
+      borderCurve: 'continuous',
       padding: theme.spacing.sm,
     },
     sheetError: {
