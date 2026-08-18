@@ -3,12 +3,12 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
-  useFonts as useRoboto,
-  Roboto_400Regular,
-  Roboto_500Medium,
-  Roboto_600SemiBold,
-  Roboto_700Bold,
-} from '@expo-google-fonts/roboto';
+  useFonts as useInter,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { AuthProvider } from './src/context/AuthContext';
@@ -24,11 +24,11 @@ SplashScreen.preventAutoHideAsync();
 const AppShell = () => {
   const { scheme } = useTheme();
 
-  const [fontsReady, error] = useRoboto({
-    Roboto_400Regular,
-    Roboto_500Medium,
-    Roboto_600SemiBold,
-    Roboto_700Bold,
+  const [fontsReady, error] = useInter({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
   });
 
   useEffect(() => {
@@ -56,7 +56,7 @@ const AppShell = () => {
 
   return (
     <>
-      <StatusBar style="light" backgroundColor="#1B3A8C" />
+      <StatusBar style="light" />
       <AuthProvider>
         <PrivacyProvider>
           <CoachmarkProvider>

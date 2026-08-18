@@ -404,12 +404,14 @@ export const LoginScreen = () => {
                   )}
                 </AnimatedPressable>
 
-                {/* TEMPORARY DEV BUTTON */}
-                <Pressable onPress={() => setDevModalVisible(true)} style={{ marginTop: 16, alignItems: 'center' }}>
-                  <Text style={{ color: 'rgba(255,255,255,0.5)', textDecorationLine: 'underline' }}>
-                    [Dev] FTUE Simulator
-                  </Text>
-                </Pressable>
+                {/* TEMPORARY DEV BUTTON (Hidden) */}
+                {false && (
+                  <Pressable onPress={() => setDevModalVisible(true)} style={{ marginTop: 16, alignItems: 'center' }}>
+                    <Text style={{ color: 'rgba(255,255,255,0.5)', textDecorationLine: 'underline' }}>
+                      [Dev] FTUE Simulator
+                    </Text>
+                  </Pressable>
+                )}
               </View>
             </View>
           </Animated.View>
