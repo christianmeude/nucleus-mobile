@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Switch, Text, View } from 'react-native';
 import { type LucideIcon } from 'lucide-react-native';
 import { ChevronRight } from 'lucide-react-native';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
@@ -15,15 +15,15 @@ interface SettingsRowProps {
   divided?: boolean;
   trailing?: SettingsRowTrailing;
   onPress?: () => void;
+  value?: boolean;
+  onValueChange?: (value: boolean) => void;
   accessibilityLabel?: string;
 }
 
 /**
  * A single Profile settings row (DESIGN.md Profile A3): `primary-surface` icon
- * tile, label + optional subtitle, and a trailing chevron or (non-functional)
- * toggle. Shared by the student and faculty Profile screens. Only rows with a
- * real `onPress` are pressable; informational rows stay static, matching the
- * app's convention for not-yet-wired entries.
+ * tile, label + optional subtitle, and a trailing chevron or native toggle.
+ * Shared by the student and faculty Profile screens.
  */
 export const SettingsRow = ({
   icon,
@@ -32,6 +32,8 @@ export const SettingsRow = ({
   divided,
   trailing,
   onPress,
+  value = false,
+  onValueChange,
   accessibilityLabel,
 }: SettingsRowProps) => {
   const { theme } = useTheme();
@@ -53,14 +55,15 @@ export const SettingsRow = ({
       {trailing === 'chevron' ? (
         <Icon icon={ChevronRight} size={18} color={theme.colors.text.disabled} />
       ) : trailing === 'toggle' ? (
-        <View
-          style={styles.toggleTrack}
+        <Switch
+          value={value}
+          onValueChange={onValueChange}
           accessibilityRole="switch"
-          accessibilityState={{ disabled: true, checked: false }}
-          accessibilityLabel="Dark mode (not yet available)"
-        >
-          <View style={styles.toggleThumb} />
-        </View>
+          accessibilityState={{ checked: value }}
+          accessibilityLabel={accessibilityLabel ?? label}
+          trackColor={{ false: theme.colors.border.strong, true: theme.colors.brand.primary }}
+          thumbColor={theme.colors.surface.raised}
+        />
       ) : null}
     </View>
   );
@@ -119,22 +122,5 @@ const makeStyles = (t: Theme) =>
       lineHeight: t.typography.caption.lineHeight,
       color: t.colors.text.muted,
       marginTop: t.spacing.xs,
-    },
-    toggleTrack: {
-      width: 44,
-      height: 26,
-      borderRadius: t.radii.pill,
-      borderCurve: 'continuous',
-      backgroundColor: t.colors.border.subtle,
-      justifyContent: 'center',
-      padding: 3,
-    },
-    toggleThumb: {
-      width: 20,
-      height: 20,
-      borderRadius: t.radii.pill,
-      borderCurve: 'continuous',
-      backgroundColor: t.colors.surface.raised,
-      ...t.shadows.level1,
     },
   });

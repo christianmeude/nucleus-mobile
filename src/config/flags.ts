@@ -9,7 +9,7 @@
  * light scheme regardless of OS appearance or stored preference.
  */
 export const flags = {
-  darkMode: false,
+  darkMode: true,
 
   /**
    * `hybridSearch` gates Browse's server-side hybrid search (Issue #29): a
