@@ -11,10 +11,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '../../components/ui/Icon';
-import { Mail, Lock, CircleAlert, Grid3x3, CircleCheck } from 'lucide-react-native';
+import { Mail, Lock, CircleAlert, Grid3x3, CircleCheck, Sun, Moon } from 'lucide-react-native';
 import { useAuth } from '../../context/AuthContext';
 import { usePrivacy } from '../../context/PrivacyContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { type Theme } from '../../theme';
 import { Logo, Button, BottomSheet } from '../../components/ui';
 import { DevResetModal } from '../../components/dev/DevResetModal';
@@ -43,8 +44,9 @@ type FocusField = 'email' | 'password' | 'forgotEmail' | 'code' | 'newPassword' 
 export const LoginScreen = () => {
   const { signIn } = useAuth();
   const { resetPrivacy } = usePrivacy();
-  const { theme } = useTheme();
+  const { theme, scheme, preference, setPreference } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const insets = useSafeAreaInsets();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -273,6 +275,9 @@ export const LoginScreen = () => {
     }
   }, [showForgotPassword, sheetStep]);
 
+  const isDark = scheme === 'dark';
+  const ghostToggleStyle = { top: insets.top + 12, right: theme.spacing.lg } as const;
+
   return (
     <View style={styles.root}>
       <LinearGradient
@@ -284,6 +289,23 @@ export const LoginScreen = () => {
         locations={[0, 0.25, 1]}
         style={StyleSheet.absoluteFill}
       />
+      <View style={[styles.ghostToggleWrap, ghostToggleStyle]}>
+        <Pressable
+          onPress={() => {
+            Haptics.selectionAsync().catch(() => {});
+            setPreference(isDark ? 'light' : 'dark');
+          }}
+          accessibilityRole="switch"
+          accessibilityLabel={`Theme: ${scheme}. Tap to switch to ${isDark ? 'light' : 'dark'}`}
+          accessibilityState={{ checked: isDark }}
+          hitSlop={12}
+          style={styles.ghostToggleTrack}
+        >
+          <View style={[styles.ghostToggleThumb, isDark ? styles.ghostThumbDark : styles.ghostThumbLight]}>
+            <Icon icon={isDark ? Moon : Sun} size={14} color="rgba(255,255,255,0.95)" />
+          </View>
+        </Pressable>
+      </View>
       <SafeAreaView style={styles.safeArea}>
         <Pressable
           style={styles.flex}
@@ -789,5 +811,35 @@ const makeStyles = (theme: Theme) =>
     sheetCancelBtnText: {
       ...theme.typography.button,
       color: theme.colors.text.secondary,
+    },
+    ghostToggleWrap: {
+      position: 'absolute',
+      zIndex: 10,
+    },
+    ghostToggleTrack: {
+      width: 46,
+      height: 30,
+      borderRadius: 15,
+      borderCurve: 'continuous',
+      backgroundColor: 'rgba(255,255,255,0.10)',
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.14)',
+      padding: 3,
+      justifyContent: 'center',
+    },
+    ghostToggleThumb: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      borderCurve: 'continuous',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'rgba(255,255,255,0.22)',
+    },
+    ghostThumbLight: {
+      alignSelf: 'flex-start',
+    },
+    ghostThumbDark: {
+      alignSelf: 'flex-end',
     },
   });
