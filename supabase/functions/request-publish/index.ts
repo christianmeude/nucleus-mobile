@@ -41,13 +41,28 @@ Deno.serve(async (req) => {
     auth: { persistSession: false },
   });
 
-  // Verify the user token
+  // Verify the user token — this gives us auth.users.id
   const { data: { user }, error: authError } = await adminClient.auth.getUser(authHeader.replace('Bearer ', ''));
   if (authError || !user) {
     return json({ error: 'Unauthorized' }, 401);
   }
 
-  // Ensure paper exists and is approved, and user is author
+  // Resolve auth.users.id → public.users.id.
+  // research_papers.author_id references public.users.id (not auth.users.id),
+  // so we need the profile row id, not the JWT sub.
+  const { data: profile, error: profileError } = await adminClient
+    .from('users')
+    .select('id')
+    .eq('email', user.email!)
+    .single();
+
+  if (profileError || !profile) {
+    return json({ error: 'User profile not found' }, 404);
+  }
+
+  const profileId = profile.id;
+
+  // Ensure paper exists, is approved, and the caller is the author
   const { data: paper, error: fetchError } = await adminClient
     .from('research_papers')
     .select('id, status, author_id')
@@ -58,7 +73,7 @@ Deno.serve(async (req) => {
     return json({ error: 'Paper not found' }, 404);
   }
 
-  if (paper.author_id !== user.id) {
+  if (paper.author_id !== profileId) {
     return json({ error: 'Only the author can request publication' }, 403);
   }
 
@@ -73,7 +88,7 @@ Deno.serve(async (req) => {
     .update({
       doi,
       publish_requested_at: nowIso,
-      publish_requested_by: user.id,
+      publish_requested_by: profileId,
       updated_at: nowIso,
     })
     .eq('id', paperId);
