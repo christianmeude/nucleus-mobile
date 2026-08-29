@@ -24,7 +24,7 @@ export const ShimmerSkeleton = ({
   width = '100%',
   radius = 'sm',
 }: ShimmerSkeletonProps) => {
-  const { theme } = useTheme();
+  const { theme, scheme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const reduceMotion = useReducedMotion();
   const progress = useSharedValue(0);
@@ -60,7 +60,11 @@ export const ShimmerSkeleton = ({
     <View style={[baseStyle, styles.overflowHidden]}>
       <Animated.View style={[StyleSheet.absoluteFill, animatedStyle]}>
         <LinearGradient
-          colors={['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.4)', 'rgba(255, 255, 255, 0)']}
+          colors={
+            scheme === 'dark'
+              ? ['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.05)', 'rgba(255, 255, 255, 0)']
+              : ['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.4)', 'rgba(255, 255, 255, 0)']
+          }
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={StyleSheet.absoluteFill}

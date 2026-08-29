@@ -21,7 +21,7 @@ type PressableCardProps = CardProps & {
   accessibilityLabel?: string;
 };
 
-export const Card = ({ children, style, padding = 'lg', elevation }: CardProps) => {
+export const Card = ({ children, style, padding = 'md', elevation = 'level0' }: CardProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
@@ -37,8 +37,8 @@ export const Card = ({ children, style, padding = 'lg', elevation }: CardProps) 
 export const PressableCard = ({
   children,
   style,
-  padding = 'lg',
-  elevation = 'level1',
+  padding = 'md',
+  elevation = 'level0',
   onPress,
   disabled,
   accessibilityLabel,
@@ -76,7 +76,6 @@ const makeStyles = (t: Theme) =>
       borderRadius: t.radii.lg,
       borderCurve: 'continuous',
       backgroundColor: t.colors.surface.raised,
-      borderWidth: StyleSheet.hairlineWidth,
     },
     pressable: {
       borderRadius: t.radii.lg,

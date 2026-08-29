@@ -165,8 +165,6 @@ const makeStyles = (t: Theme) =>
   StyleSheet.create({
     card: {
       backgroundColor: t.colors.surface.raised,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: t.colors.border.subtle,
       borderRadius: t.radii.lg,
       borderCurve: 'continuous',
       padding: t.spacing.lg,

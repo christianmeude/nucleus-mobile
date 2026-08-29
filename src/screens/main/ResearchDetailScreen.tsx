@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import * as Haptics from 'expo-haptics';
 import { BlurView } from 'expo-blur';
 import Animated, {
   useAnimatedStyle,
@@ -24,6 +25,7 @@ import {
   EmptyState,
   Icon,
   InlineNotice,
+  Input,
   PressableScale,
   Screen,
   SheetPresenter,
@@ -83,6 +85,38 @@ export const ResearchDetailScreen = () => {
   }));
   const [error, setError] = useState('');
   const [pdfOpen, setPdfOpen] = useState(false);
+  const [publishTarget, setPublishTarget] = useState<ResearchPaper | null>(null);
+  const [doiInput, setDoiInput] = useState('');
+  const [publishSubmitting, setPublishSubmitting] = useState(false);
+  const [publishError, setPublishError] = useState('');
+
+  const submitPublishRequest = useCallback(async () => {
+    if (!publishTarget) return;
+    
+    // Validate DOI
+    const cleaned = doiInput.trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i, '');
+    if (!/^10\.\d{4,9}\/\S+$/i.test(cleaned)) {
+      setPublishError('Please enter a valid DOI (e.g. 10.1234/example)');
+      return;
+    }
+
+    setPublishError('');
+    setPublishSubmitting(true);
+    try {
+      await researchApi.requestPublish(publishTarget.id, cleaned);
+      setPublishTarget(null);
+      setDoiInput('');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      // Refresh paper to update UI
+      const detail = await researchApi.getResearchById(paperId);
+      setPaper(detail.paper);
+    } catch (err: any) {
+      setPublishError(err.message || 'Failed to submit publication request.');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setPublishSubmitting(false);
+    }
+  }, [publishTarget, doiInput, paperId]);
 
   const pdfRef = useRef<PdfViewerRef>(null);
 
@@ -247,7 +281,45 @@ export const ResearchDetailScreen = () => {
         ) : null
       }
     >
-      <Screen edges={{ top: false }}>
+      <SheetPresenter
+        open={!!publishTarget}
+        onClose={() => {
+          setPublishTarget(null);
+          setDoiInput('');
+          setPublishError('');
+        }}
+        sheet={
+          <View style={styles.sheetContent}>
+            <Text style={styles.sheetTitle}>Formal publication</Text>
+            <Text style={styles.sheetDesc}>
+              Your paper is approved for the internal repository. If you have published it externally, enter your journal's DOI to request formal publication.
+            </Text>
+
+            <Input
+              placeholder="e.g. 10.1234/example"
+              value={doiInput}
+              onChangeText={setDoiInput}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              containerStyle={styles.sheetInput}
+            />
+
+            {publishError ? (
+              <View style={{ marginBottom: 16 }}>
+                <InlineNotice tone="danger" message={publishError} />
+              </View>
+            ) : null}
+
+            <Button
+              label="Submit for validation"
+              onPress={submitPublishRequest}
+              loading={publishSubmitting}
+            />
+          </View>
+        }
+      >
+        <Screen edges={{ top: false }}>
         <ScrollView
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
@@ -286,6 +358,27 @@ export const ResearchDetailScreen = () => {
               <Text style={styles.doiLink} selectable>
                 https://doi.org/{paper.doi}
               </Text>
+            </View>
+          )}
+
+          {paper.status === 'approved' && !paper.publish_requested_at && isOwner && (
+            <View style={styles.doiCard}>
+              <View style={styles.doiHeader}>
+                <Icon icon={ShieldCheck} size={16} color={theme.colors.brand.primary} />
+                <Text style={styles.doiTitle}>Ready for Publication</Text>
+              </View>
+              <View style={{ marginTop: theme.spacing.sm }}>
+                <Button label="Request Publication" variant="soft" size="sm" onPress={() => setPublishTarget(paper)} />
+              </View>
+            </View>
+          )}
+          {paper.status === 'approved' && paper.publish_requested_at && isOwner && (
+            <View style={styles.doiCard}>
+              <View style={styles.doiHeader}>
+                <Icon icon={ShieldCheck} size={16} color={theme.colors.state.success} />
+                <Text style={styles.doiTitle}>Publication Requested</Text>
+              </View>
+              <Text style={styles.doiLink}>Pending admin review.</Text>
             </View>
           )}
 
@@ -468,6 +561,7 @@ export const ResearchDetailScreen = () => {
           }}
         />
       )}
+      </SheetPresenter>
     </SheetPresenter>
   );
 };
@@ -767,5 +861,23 @@ const makeStyles = (theme: Theme) =>
     workflowEmpty: {
       ...theme.typography.bodySmall,
       color: theme.colors.text.muted,
+    },
+    sheetContent: {
+      paddingBottom: theme.spacing.xl,
+      paddingHorizontal: theme.spacing.lg,
+      paddingTop: theme.spacing.md,
+    },
+    sheetTitle: {
+      ...theme.typography.h3,
+      color: theme.colors.text.primary,
+      marginBottom: theme.spacing.xs,
+    },
+    sheetDesc: {
+      ...theme.typography.body,
+      color: theme.colors.text.secondary,
+      marginBottom: theme.spacing.lg,
+    },
+    sheetInput: {
+      marginBottom: theme.spacing.lg,
     },
   });

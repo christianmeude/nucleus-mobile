@@ -152,14 +152,12 @@ export const ProfileScreen = () => {
           <SettingsRow
             icon={Mail}
             label="Recovery email"
-            subtitle="Add or update your password recovery email"
             trailing="chevron"
             onPress={openRecoverySheet}
           />
           <SettingsRow
             icon={Lock}
             label="Password"
-            subtitle="Change your password"
             divided
             trailing="chevron"
             onPress={() => {
@@ -171,7 +169,6 @@ export const ProfileScreen = () => {
           <SettingsRow
             icon={Moon}
             label="Dark mode"
-            subtitle={preference === 'system' ? `Following system (${scheme})` : `Using ${preference} appearance`}
             divided
             trailing="toggle"
             value={scheme === 'dark'}

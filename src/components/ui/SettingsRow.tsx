@@ -6,7 +6,7 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { PressableScale } from './motion/PressableScale';
 import { Icon } from './Icon';
-import Animated, { useAnimatedStyle, withSpring, useSharedValue } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, withTiming, Easing, useSharedValue } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 type SettingsRowTrailing = 'chevron' | 'toggle';
@@ -90,7 +90,7 @@ const ReanimatedToggle = ({
   const { theme } = useTheme();
   const progress = useSharedValue(value ? 1 : 0);
   useEffect(() => {
-    progress.value = withSpring(value ? 1 : 0, { damping: 18, stiffness: 260 });
+    progress.value = withTiming(value ? 1 : 0, { duration: 250, easing: Easing.inOut(Easing.quad) });
   }, [value]);
   const thumbStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: progress.value * 16 }],

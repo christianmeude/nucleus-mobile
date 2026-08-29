@@ -695,7 +695,7 @@ const makeStyles = (theme: Theme) =>
     },
     primaryButton: {
       paddingVertical: theme.spacing.md,
-      borderRadius: theme.radii.lg,
+      borderRadius: theme.radii.pill,
       borderCurve: 'continuous',
       alignItems: 'center',
       justifyContent: 'center',
@@ -777,9 +777,9 @@ const makeStyles = (theme: Theme) =>
       marginTop: theme.spacing.md,
     },
     sheetPrimaryBtn: {
-      backgroundColor: theme.colors.brand.accent,
+      backgroundColor: theme.colors.brand.primary,
       paddingVertical: theme.spacing.md,
-      borderRadius: theme.radii.lg,
+      borderRadius: theme.radii.pill,
       borderCurve: 'continuous',
       alignItems: 'center',
       justifyContent: 'center',
@@ -787,7 +787,7 @@ const makeStyles = (theme: Theme) =>
     },
     sheetPrimaryBtnText: {
       ...theme.typography.button,
-      color: theme.colors.brand.primary,
+      color: theme.colors.text.onBrand,
     },
     sheetCancelBtn: {
       paddingVertical: theme.spacing.sm,

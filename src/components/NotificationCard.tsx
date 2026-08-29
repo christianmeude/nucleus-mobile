@@ -7,7 +7,7 @@ import { NotificationItem } from '../types/domain';
 import { formatRelativeTime } from '../utils/format';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
-import { Button } from './ui';
+
 import { invitationsApi } from '../api/invitations';
 
 type IconVisual = {
@@ -124,10 +124,14 @@ export const NotificationCard = memo(({ notification, onPress }: NotificationCar
 
 
         {isRevision && (
-          <View style={styles.chipsRow}>
-            <View style={styles.buttonWrapper}>
-              <Button label="View Paper" variant="secondary" size="sm" onPress={onPress} />
-            </View>
+          <View style={styles.actionRow}>
+            <Pressable
+              onPress={onPress}
+              style={({ pressed }) => [styles.actionLink, pressed && { opacity: 0.7 }]}
+              hitSlop={8}
+            >
+              <Text style={styles.actionLinkText}>View paper</Text>
+            </Pressable>
           </View>
         )}
 
@@ -199,12 +203,17 @@ const makeStyles = (t: Theme) =>
       backgroundColor: t.colors.brand.primary,
       marginTop: 6,
     },
-    chipsRow: {
+    actionRow: {
       flexDirection: 'row',
-      gap: t.spacing.sm,
-      marginTop: t.spacing.sm,
+      marginTop: 4,
     },
-    buttonWrapper: {
-      alignSelf: 'flex-start',
+    actionLink: {
+      alignItems: 'flex-start',
+    },
+    actionLinkText: {
+      fontFamily: t.fontFamilies.ui.semibold,
+      fontSize: 12,
+      color: t.colors.brand.primary,
+      textDecorationLine: 'underline',
     },
   });

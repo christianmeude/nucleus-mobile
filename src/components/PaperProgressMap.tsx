@@ -14,7 +14,7 @@ import { PaperStatus } from '../types/domain';
 import { statusToLabel } from '../utils/format';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
-import { Check, TriangleAlert, X } from 'lucide-react-native';
+import { Check, Pencil, X } from 'lucide-react-native';
 
 
 type NodeState = 'done' | 'pending' | 'upcoming' | 'warning' | 'danger' | 'complete';
@@ -117,8 +117,9 @@ interface PaperProgressMapProps {
 }
 
 export const PaperProgressMap = memo(({ status, variant = 'list' }: PaperProgressMapProps) => {
-  const { theme } = useTheme();
+  const { theme, scheme } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const isDark = scheme === 'dark';
   const isRejected = status === 'rejected';
   const isRevision = status === 'revision_required';
   const isComplete = status === 'approved' || status === 'published';
@@ -128,11 +129,13 @@ export const PaperProgressMap = memo(({ status, variant = 'list' }: PaperProgres
   const blockedIndex = isRejected || isRevision ? 0 : -1;
   const currentIndex = stageIndexForStatus(status);
   const filledThrough = isComplete ? 4 : blockedIndex >= 0 ? blockedIndex : currentIndex;
+  
   const barColor = isComplete ? theme.colors.state.success : theme.colors.brand.primary;
   const blockedColor = isRejected ? theme.colors.state.danger : theme.colors.state.warning;
+  const iconColor = theme.colors.text.onBrand;
 
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, isDark && { opacity: 0.75 }]}>
       <View style={styles.track}>
         {STAGES.map((label, index) => {
           const state: NodeState = isComplete
@@ -150,16 +153,17 @@ export const PaperProgressMap = memo(({ status, variant = 'list' }: PaperProgres
           const labelColor = state === 'warning' || state === 'danger' ? blockedColor : undefined;
 
           return (
-            <Fragment key={label}>
-              {index > 0 ? (
+            <View key={label} style={styles.column}>
+              <View style={styles.markerRow}>
                 <View
                   style={[
-                    styles.connector,
-                    index <= filledThrough && { backgroundColor: barColor },
+                    styles.halfConnector,
+                    index > 0
+                      ? { backgroundColor: index <= filledThrough ? barColor : theme.colors.border.subtle }
+                      : { backgroundColor: 'transparent' },
                   ]}
                 />
-              ) : null}
-              <View style={styles.column}>
+                
                 {state === 'pending' ? (
                   variant === 'detail' ? (
                     <AnimatedPendingMarker />
@@ -179,29 +183,37 @@ export const PaperProgressMap = memo(({ status, variant = 'list' }: PaperProgres
                       ]}
                     >
                       {state === 'done' || state === 'complete' ? (
-                        <Icon icon={Check} size={10} color={theme.colors.text.onBrand} />
+                        <Icon icon={Check} size={10} color={iconColor} />
                       ) : null}
                       {state === 'warning' ? (
-                        <Icon icon={TriangleAlert} size={9} color={theme.colors.text.onBrand} />
+                        <Icon icon={Pencil} size={9} color={iconColor} />
                       ) : null}
                       {state === 'danger' ? (
-                        <Icon icon={X} size={9} color={theme.colors.text.onBrand} />
+                        <Icon icon={X} size={9} color={iconColor} />
                       ) : null}
                     </View>
                   </View>
                 )}
-                <Text
-                  numberOfLines={1}
+
+                <View
                   style={[
-                    styles.label,
-                    isActive && styles.labelActive,
-                    labelColor && { color: labelColor },
+                    styles.halfConnector,
+                    index < STAGES.length - 1
+                      ? { backgroundColor: index < filledThrough ? barColor : theme.colors.border.subtle }
+                      : { backgroundColor: 'transparent' },
                   ]}
-                >
-                  {label}
-                </Text>
+                />
               </View>
-            </Fragment>
+              <Text
+                style={[
+                  styles.label,
+                  isActive && styles.labelActive,
+                  labelColor && { color: labelColor },
+                ]}
+              >
+                {label}
+              </Text>
+            </View>
           );
         })}
       </View>
@@ -228,16 +240,18 @@ const makeStyles = (t: Theme) =>
       alignItems: 'flex-start',
     },
     column: {
-      width: COLUMN_WIDTH,
+      flex: 1,
       alignItems: 'center',
       gap: 4,
     },
-    connector: {
+    markerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      width: '100%',
+    },
+    halfConnector: {
       flex: 1,
       height: 3,
-      borderRadius: 1.5,
-      backgroundColor: t.colors.border.subtle,
-      marginTop: MARKER_SIZE / 2 - 1.5,
     },
     markerHost: {
       width: MARKER_SIZE,

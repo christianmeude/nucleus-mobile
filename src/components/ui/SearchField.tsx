@@ -16,7 +16,7 @@ interface SearchFieldProps {
 export const SearchField = ({
   value,
   onChangeText,
-  placeholder = 'Search papers, authors, keywords',
+  placeholder = 'Search',
   onSubmitEditing,
   accessibilityLabel = 'Search papers',
   accessibilityHint,
@@ -51,7 +51,7 @@ const makeStyles = (t: Theme) =>
       backgroundColor: t.colors.surface.sunken,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: t.colors.border.subtle,
-      borderRadius: t.radii.md,
+      borderRadius: t.radii.pill,
       borderCurve: 'continuous',
       paddingHorizontal: t.spacing.md,
       height: 44,

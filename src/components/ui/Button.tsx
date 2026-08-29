@@ -2,7 +2,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { palette, type Theme } from '../../theme';
 
-type ButtonVariant = 'primary' | 'secondary' | 'subtle' | 'accent' | 'warning' | 'danger' | 'success';
+type ButtonVariant = 'primary' | 'secondary' | 'subtle' | 'soft' | 'accent' | 'warning' | 'danger' | 'success';
 type ButtonSize = 'md' | 'sm';
 
 interface ButtonProps {
@@ -112,7 +112,7 @@ const makeStyles = (t: Theme) =>
   StyleSheet.create({
     base: {
       minHeight: 44,
-      borderRadius: t.radii.md,
+      borderRadius: t.radii.pill,
       borderCurve: 'continuous',
       paddingHorizontal: t.spacing.lg,
       alignItems: 'center',
@@ -155,6 +155,15 @@ const makeStyles = (t: Theme) =>
       backgroundColor: t.colors.surface.sunken,
     },
     subtleLabel: {
+      color: t.colors.brand.primary,
+    },
+    softBase: {
+      backgroundColor: t.colors.brand.primarySoft,
+    },
+    softPressed: {
+      backgroundColor: t.colors.surface.sunken,
+    },
+    softLabel: {
       color: t.colors.brand.primary,
     },
     accentBase: {

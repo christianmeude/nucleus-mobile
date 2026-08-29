@@ -1,8 +1,9 @@
 import { memo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ResearchPaper } from '../types/domain';
 import { getPrimaryAuthorName, formatDate, paperDate } from '../utils/format';
-import { PressableCard, PublishedBadge, Button } from './ui';
+import { PressableCard, PublishedBadge, Icon } from './ui';
+import { ArrowRight } from 'lucide-react-native';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
 import { PaperProgressMap } from './PaperProgressMap';
@@ -79,9 +80,16 @@ export const StandardPaperCard = memo(({
           <View style={styles.progressContainer}>
             <PaperProgressMap status={paper.status} variant="list" />
             {paper.status === 'approved' && !paper.publish_requested_at && !!onRequestPublication && (
-              <View style={styles.actionRow}>
-                <Button label="Request Publication" variant="secondary" size="sm" onPress={onRequestPublication} />
-              </View>
+              <Pressable
+                onPress={onRequestPublication}
+                style={({ pressed }) => [styles.actionLink, pressed && { opacity: 0.6 }]}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Request Publication"
+              >
+                <Text style={styles.actionLinkText}>Request formal publication</Text>
+                <Icon icon={ArrowRight} size={14} color={theme.colors.brand.primary} />
+              </Pressable>
             )}
             {paper.status === 'approved' && paper.publish_requested_at && (
               <View style={styles.pendingRow}>
@@ -136,17 +144,34 @@ const makeStyles = (t: Theme) =>
       gap: 12,
       marginTop: 4,
     },
-    actionRow: {
+    actionLink: {
       flexDirection: 'row',
-      justifyContent: 'flex-start',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
+      marginTop: 8,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      backgroundColor: t.colors.brand.primarySoft,
+      borderRadius: t.radii.pill,
+      alignSelf: 'center',
+    },
+    actionLinkText: {
+      fontFamily: t.fontFamilies.ui.bold,
+      fontSize: 11,
+      color: t.colors.brand.primary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
     },
     pendingRow: {
       flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 2,
     },
     pendingText: {
-      fontFamily: t.fontFamilies.ui.medium,
-      fontSize: 12,
+      fontFamily: t.fontFamilies.ui.semibold,
+      fontSize: 11,
       color: t.colors.text.disabled,
       fontStyle: 'italic',
     },
