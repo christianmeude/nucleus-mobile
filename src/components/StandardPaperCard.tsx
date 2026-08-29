@@ -1,9 +1,9 @@
 import { memo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ResearchPaper } from '../types/domain';
-import { getPrimaryAuthorName, formatDate, paperDate } from '../utils/format';
+import { getPrimaryAuthorName, formatDate, paperDate, statusToLabel } from '../utils/format';
 import { PressableCard, PublishedBadge, Icon } from './ui';
-import { ArrowRight } from 'lucide-react-native';
+import { ArrowRight, ShieldCheck, AlertTriangle, XCircle } from 'lucide-react-native';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
 import { PaperProgressMap } from './PaperProgressMap';
@@ -79,6 +79,8 @@ export const StandardPaperCard = memo(({
         {variant === 'papers' ? (
           <View style={styles.progressContainer}>
             <PaperProgressMap status={paper.status} variant="list" />
+
+            {/* Action: request publication */}
             {paper.status === 'approved' && !paper.publish_requested_at && !!onRequestPublication && (
               <Pressable
                 onPress={onRequestPublication}
@@ -91,9 +93,34 @@ export const StandardPaperCard = memo(({
                 <Icon icon={ArrowRight} size={14} color={theme.colors.brand.primary} />
               </Pressable>
             )}
+
+            {/* Status: publication pending */}
             {paper.status === 'approved' && paper.publish_requested_at && (
-              <View style={styles.pendingRow}>
-                <Text style={styles.pendingText}>Publication requested (pending admin review)</Text>
+              <View style={styles.statusRow}>
+                <Icon icon={ShieldCheck} size={14} color={theme.colors.state.success} />
+                <Text style={[styles.statusText, { color: theme.colors.state.success }]}>
+                  Publication requested · pending admin review
+                </Text>
+              </View>
+            )}
+
+            {/* Status: needs revision */}
+            {paper.status === 'revision_required' && (
+              <View style={styles.statusRow}>
+                <Icon icon={AlertTriangle} size={14} color={theme.colors.state.warning} />
+                <Text style={[styles.statusText, { color: theme.colors.state.warning }]}>
+                  {statusToLabel('revision_required')}
+                </Text>
+              </View>
+            )}
+
+            {/* Status: rejected */}
+            {paper.status === 'rejected' && (
+              <View style={styles.statusRow}>
+                <Icon icon={XCircle} size={14} color={theme.colors.state.danger} />
+                <Text style={[styles.statusText, { color: theme.colors.state.danger }]}>
+                  {statusToLabel('rejected')}
+                </Text>
               </View>
             )}
           </View>
@@ -162,16 +189,20 @@ const makeStyles = (t: Theme) =>
       textTransform: 'uppercase',
       letterSpacing: 0.5,
     },
-    pendingRow: {
+    statusRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      marginTop: 2,
+      gap: 5,
+      marginTop: 8,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      alignSelf: 'center',
     },
-    pendingText: {
-      fontFamily: t.fontFamilies.ui.semibold,
+    statusText: {
+      fontFamily: t.fontFamilies.ui.bold,
       fontSize: 11,
-      color: t.colors.text.disabled,
-      fontStyle: 'italic',
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
     },
   });
