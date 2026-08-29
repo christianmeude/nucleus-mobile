@@ -149,7 +149,7 @@ export const AnnotationPanel = ({
   };
 
   return (
-    <BottomSheet ref={panelRef} onDismiss={onClose}>
+    <BottomSheet ref={panelRef} onDismiss={onClose} snapPoints={['50%', '90%']}>
       <View style={styles.header}>
         <Text style={styles.title}>Reviewer Feedback</Text>
       </View>

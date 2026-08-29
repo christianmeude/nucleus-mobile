@@ -16,7 +16,7 @@ import { useAuth } from '../../context/AuthContext';
 import { usePrivacy } from '../../context/PrivacyContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
-import { Logo, Button } from '../../components/ui';
+import { Logo, Button, BottomSheet } from '../../components/ui';
 import { DevResetModal } from '../../components/dev/DevResetModal';
 import Animated, {
   useSharedValue,
@@ -34,11 +34,8 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
-import BottomSheet, {
-  BottomSheetBackdrop,
-  BottomSheetTextInput,
-  BottomSheetScrollView,
-} from '@gorhom/bottom-sheet';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { supabase } from '../../lib/supabase';
 
 type FocusField = 'email' | 'password' | 'forgotEmail' | 'code' | 'newPassword' | null;
@@ -57,7 +54,7 @@ export const LoginScreen = () => {
   const [devModalVisible, setDevModalVisible] = useState(false);
 
   // Bottom Sheet State
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [sheetStep, setSheetStep] = useState<1 | 2>(1);
   const [forgotEmail, setForgotEmail] = useState('');
@@ -256,13 +253,6 @@ export const LoginScreen = () => {
     setShowForgotPassword(true);
   };
 
-  const renderBackdrop = useCallback(
-    (props: any) => (
-      <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} opacity={0.6} />
-    ),
-    [],
-  );
-
   return (
     <View style={styles.root}>
       <LinearGradient
@@ -423,15 +413,8 @@ export const LoginScreen = () => {
       {showForgotPassword && (
         <BottomSheet
           ref={bottomSheetRef}
-          index={0}
-          enableDynamicSizing={true}
-          enablePanDownToClose
-          onClose={() => setShowForgotPassword(false)}
-          backdropComponent={renderBackdrop}
-          backgroundStyle={styles.bottomSheetBackground}
-          handleIndicatorStyle={styles.bottomSheetIndicator}
-          keyboardBehavior="interactive"
-          keyboardBlurBehavior="restore"
+          onDismiss={() => setShowForgotPassword(false)}
+          snapPoints={['50%', '90%']}
         >
           <BottomSheetScrollView
             showsVerticalScrollIndicator={false}
@@ -703,15 +686,6 @@ const makeStyles = (theme: Theme) =>
       letterSpacing: 0.5,
     },
     // Bottom Sheet Styles
-    bottomSheetBackground: {
-      backgroundColor: theme.colors.brand.primaryHover,
-      borderTopLeftRadius: theme.radii.xl,
-      borderTopRightRadius: theme.radii.xl,
-    },
-    bottomSheetIndicator: {
-      backgroundColor: 'rgba(255, 255, 255, 0.4)',
-      width: 48,
-    },
     sheetContent: {
       padding: theme.spacing['2xl'],
       gap: theme.spacing.xl,

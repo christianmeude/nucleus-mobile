@@ -20,6 +20,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   DepartmentRow,
   FacultyMember,
+  ProgramRow,
   StudentSearchResult,
   SubmitDraftFormState,
   SubmitDraftPayload,
@@ -46,7 +47,7 @@ import { usePushNotifications } from '../../hooks/usePushNotifications';
 type SubmitNav = NativeStackNavigationProp<RootStackParamList, 'SubmitResearch'>;
 type SubmitRoute = RouteProp<RootStackParamList, 'SubmitResearch'>;
 
-type PickerKind = 'category' | 'department' | 'faculty';
+type PickerKind = 'category' | 'department' | 'program' | 'faculty';
 
 const DRAFT_KEY_PREFIX = 'submission_draft_';
 const AUTOSAVE_INTERVAL_MS = 30_000;
@@ -60,6 +61,8 @@ const EMPTY_FORM: SubmitDraftFormState = {
   facultyId: '',
   department: '',
   departmentId: '',
+  program: '',
+  programId: '',
 };
 
 const draftStorageKey = (resubmitPaperId?: string) =>
@@ -146,6 +149,7 @@ export const SubmitResearchScreen = () => {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [departments, setDepartments] = useState<DepartmentRow[]>([]);
+  const [programs, setPrograms] = useState<ProgramRow[]>([]);
   const [facultyMembers, setFacultyMembers] = useState<FacultyMember[]>([]);
   const [policy, setPolicy] = useState<SubmissionPolicy>({
     maxFileSizeMb: 10,
@@ -158,6 +162,7 @@ export const SubmitResearchScreen = () => {
 
   const categorySheetRef = useRef<BottomSheetModal>(null);
   const departmentSheetRef = useRef<BottomSheetModal>(null);
+  const programSheetRef = useRef<BottomSheetModal>(null);
   const facultySheetRef = useRef<BottomSheetModal>(null);
   const checklistSheetRef = useRef<BottomSheetModal>(null);
   const [showChecklistModal, setShowChecklistModal] = useState(false);
@@ -217,6 +222,8 @@ export const SubmitResearchScreen = () => {
               facultyId: '',
               department: paper.department || '',
               departmentId: paper.department_id || '',
+              program: paper.program?.name || '',
+              programId: paper.program_id || '',
             }));
             const structured = structuredCoAuthorsFromPaper(paper);
             if (structured.length > 0) {
@@ -293,6 +300,24 @@ export const SubmitResearchScreen = () => {
     };
   }, [formData.department, formData.departmentId]);
 
+  // ─── Programs cascade when department changes ───
+  // Mirrors the web cascade: picking a program implies its parent department
+  // (submission routes by the program's department). The list is scoped to the
+  // chosen department; an empty program set means the department has no active
+  // programs (optional field), rendered as an EmptyState hint in the picker.
+  useEffect(() => {
+    let cancelled = false;
+    const loadPrograms = async () => {
+      const list = await submitApi.getPrograms(formData.departmentId || null);
+      if (cancelled) return;
+      setPrograms(list);
+    };
+    loadPrograms();
+    return () => {
+      cancelled = true;
+    };
+  }, [formData.departmentId]);
+
   // ─── Draft autosave (local + best-effort server) ───
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -307,6 +332,7 @@ export const SubmitResearchScreen = () => {
         Boolean(snap.formData.category) ||
         Boolean(snap.formData.facultyId) ||
         Boolean(snap.formData.departmentId) ||
+        Boolean(snap.formData.programId) ||
         snap.selectedCoAuthors.length > 0;
 
       if (!hasContent) return;
@@ -390,6 +416,12 @@ export const SubmitResearchScreen = () => {
     return matchedById?.name || formData.department || 'Select department (optional)';
   }, [formData.department, formData.departmentId, departments]);
 
+  const programLabel = useMemo(() => {
+    if (!formData.programId) return 'Select program (optional)';
+    const matchedById = programs.find((p) => p.id === formData.programId);
+    return matchedById?.name || formData.program || 'Select program (optional)';
+  }, [formData.program, formData.programId, programs]);
+
   const facultyLabel = useMemo(() => {
     if (!formData.facultyId) return 'Select faculty adviser';
     const matched = facultyMembers.find((entry) => entry.id === formData.facultyId);
@@ -441,6 +473,7 @@ export const SubmitResearchScreen = () => {
         facultyId: formData.facultyId,
         department: formData.department,
         departmentId: formData.departmentId,
+        programId: formData.programId,
         coAuthorIds: selectedCoAuthors.map((entry) => entry.id),
       });
 
@@ -764,6 +797,37 @@ export const SubmitResearchScreen = () => {
               </Text>
             </View>
 
+            {/* Program (optional, cascades from department) */}
+            <View style={styles.section}>
+              <Text style={styles.label}>Program</Text>
+              <Pressable
+                onPress={() => programSheetRef.current?.present()}
+                accessibilityRole="button"
+                accessibilityLabel="Select program"
+                style={[
+                  styles.selectField,
+                  !formData.departmentId && styles.selectFieldDisabled,
+                ]}
+                disabled={!formData.departmentId || submitting}
+              >
+                <Text
+                  style={[
+                    styles.selectFieldLabel,
+                    !formData.programId && styles.selectFieldPlaceholder,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {programLabel}
+                </Text>
+                <Icon icon={ChevronDown} size={18} color={theme.colors.text.muted} />
+              </Pressable>
+              <Text style={styles.helperText}>
+                {formData.departmentId
+                  ? 'Select the academic program for this research (optional).'
+                  : 'Select a department first to list its programs.'}
+              </Text>
+            </View>
+
             {/* Faculty adviser (required by stricter checklist rule) */}
             <View style={styles.section}>
               <Text style={styles.label}>Faculty adviser *</Text>
@@ -973,7 +1037,7 @@ export const SubmitResearchScreen = () => {
       ) : null}
 
       {/* Pickers */}
-      <BottomSheet ref={categorySheetRef}>
+      <BottomSheet ref={categorySheetRef} snapPoints={['50%', '90%']}>
         <Text style={styles.sheetTitle}>Select category</Text>
         <BottomSheetScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} style={styles.sheetList}>
           {categories.length === 0 ? (
@@ -998,7 +1062,7 @@ export const SubmitResearchScreen = () => {
         </BottomSheetScrollView>
       </BottomSheet>
 
-      <BottomSheet ref={departmentSheetRef}>
+      <BottomSheet ref={departmentSheetRef} snapPoints={['50%', '90%']}>
         <Text style={styles.sheetTitle}>Select department</Text>
         <BottomSheetScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} style={styles.sheetList}>
           <Pressable
@@ -1027,6 +1091,8 @@ export const SubmitResearchScreen = () => {
                   setFormField('departmentId', entry.id);
                   setFormField('department', entry.name);
                   setFormField('facultyId', '');
+                  setFormField('programId', '');
+                  setFormField('program', '');
                   departmentSheetRef.current?.dismiss();
                 }}
                 style={styles.sheetRow}
@@ -1044,7 +1110,57 @@ export const SubmitResearchScreen = () => {
         </BottomSheetScrollView>
       </BottomSheet>
 
-      <BottomSheet ref={facultySheetRef}>
+      <BottomSheet ref={programSheetRef} snapPoints={['50%', '90%']}>
+        <Text style={styles.sheetTitle}>Select program</Text>
+        <Text style={styles.sheetIntro}>
+          {departmentLabel === 'Select department (optional)'
+            ? 'Select a department first.'
+            : `Programs in ${departmentLabel}`}
+        </Text>
+        <BottomSheetScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} style={styles.sheetList}>
+          <Pressable
+            onPress={() => {
+              setFormField('program', '');
+              setFormField('programId', '');
+              programSheetRef.current?.dismiss();
+            }}
+            style={styles.sheetRow}
+          >
+            <Text style={styles.sheetRowLabel}>None</Text>
+            {!formData.programId ? (
+              <Icon icon={Check} size={18} color={theme.colors.brand.primary} />
+            ) : null}
+          </Pressable>
+          {formData.departmentId && programs.length === 0 ? (
+            <EmptyState
+              title="No programs available"
+              message="This department has no active programs. Program selection is optional."
+            />
+          ) : (
+            programs.map((entry) => (
+              <Pressable
+                key={entry.id}
+                onPress={() => {
+                  setFormField('programId', entry.id);
+                  setFormField('program', entry.name);
+                  programSheetRef.current?.dismiss();
+                }}
+                style={styles.sheetRow}
+              >
+                <Text style={styles.sheetRowLabel}>
+                  {entry.code ? `${entry.code} — ` : ''}
+                  {entry.name}
+                </Text>
+                {formData.programId === entry.id ? (
+                  <Icon icon={Check} size={18} color={theme.colors.brand.primary} />
+                ) : null}
+              </Pressable>
+            ))
+          )}
+        </BottomSheetScrollView>
+      </BottomSheet>
+
+      <BottomSheet ref={facultySheetRef} snapPoints={['50%', '90%']}>
         <Text style={styles.sheetTitle}>Select faculty adviser</Text>
         <BottomSheetScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} style={styles.sheetList}>
           {facultyMembers.length === 0 ? (
@@ -1204,6 +1320,9 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     flex: 1,
     marginRight: theme.spacing.sm,
+  },
+  selectFieldDisabled: {
+    opacity: 0.5,
   },
   selectFieldPlaceholder: {
     color: theme.colors.text.muted,

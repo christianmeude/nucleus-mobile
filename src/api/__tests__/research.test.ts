@@ -148,6 +148,79 @@ describe('researchApi.getPublishedPapers', () => {
 
     await expect(researchApi.getPublishedPapers()).rejects.toThrow('timeout');
   });
+
+  it('filters papers by department name client-side', async () => {
+    queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
+    const builder = createQueryBuilder(
+      queryResult({
+        data: [
+          row({ id: 'p1', department: 'CCIS', department_id: 'd1' }),
+          row({ id: 'p2', department: 'College of Education', department_id: 'd2' }),
+        ],
+      })
+    );
+    mockSupabase.from.mockReturnValueOnce(builder);
+
+    const result = await researchApi.getPublishedPapers({ department: 'college of education' });
+
+    expect(result.map((p) => p.id)).toEqual(['p2']);
+  });
+
+  it('filters papers by program name and maps the program relation through', async () => {
+    queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
+    const builder = createQueryBuilder(
+      queryResult({
+        data: [
+          row({
+            id: 'p1',
+            department: 'CCIS',
+            department_id: 'd1',
+            program_id: 'pr1',
+            program: { id: 'pr1', name: 'Computer Science', code: 'BSCS' },
+          }),
+          row({
+            id: 'p2',
+            department: 'CCIS',
+            department_id: 'd1',
+            program_id: 'pr2',
+            program: { id: 'pr2', name: 'Information Technology', code: 'BSIT' },
+          }),
+          row({ id: 'p3', department: 'CCIS', department_id: 'd1' }),
+        ],
+      })
+    );
+    mockSupabase.from.mockReturnValueOnce(builder);
+
+    const result = await researchApi.getPublishedPapers({ department: 'ccis', program: 'computer science' });
+
+    expect(result.map((p) => p.id)).toEqual(['p1']);
+    expect(result[0].department_id).toBe('d1');
+    expect(result[0].program_id).toBe('pr1');
+    expect(result[0].program).toEqual({ id: 'pr1', name: 'Computer Science', code: 'BSCS' });
+  });
+
+  it('excludes papers without a matching program when a program filter is set', async () => {
+    queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
+    const builder = createQueryBuilder(
+      queryResult({
+        data: [
+          row({ id: 'p1', department: 'CCIS', department_id: 'd1' }),
+          row({
+            id: 'p2',
+            department: 'CCIS',
+            department_id: 'd1',
+            program_id: 'pr2',
+            program: { id: 'pr2', name: 'Information Technology', code: 'BSIT' },
+          }),
+        ],
+      })
+    );
+    mockSupabase.from.mockReturnValueOnce(builder);
+
+    const result = await researchApi.getPublishedPapers({ program: 'computer science' });
+
+    expect(result.map((p) => p.id)).toEqual([]);
+  });
 });
 
 describe('researchApi.getCategories', () => {
@@ -486,6 +559,48 @@ describe('submitApi.getDepartments', () => {
     );
 
     await expect(submitApi.getDepartments()).resolves.toEqual([]);
+  });
+});
+
+describe('submitApi.getPrograms', () => {
+  it('filters by department and returns active programs ordered by name', async () => {
+    const builder = createQueryBuilder(
+      queryResult({
+        data: [
+          { id: 'pr1', name: 'Computer Science', code: 'BSCS', department_id: 'd1' },
+          { id: 'pr2', name: 'Information Technology', code: 'BSIT', department_id: 'd1' },
+        ],
+      })
+    );
+    mockSupabase.from.mockReturnValueOnce(builder);
+
+    await expect(submitApi.getPrograms('d1')).resolves.toEqual([
+      { id: 'pr1', name: 'Computer Science', code: 'BSCS', department_id: 'd1' },
+      { id: 'pr2', name: 'Information Technology', code: 'BSIT', department_id: 'd1' },
+    ]);
+
+    expect(builder.select).toHaveBeenCalledWith('id, name, code, department_id');
+    expect(builder.eq).toHaveBeenNthCalledWith(1, 'is_active', true);
+    expect(builder.eq).toHaveBeenNthCalledWith(2, 'department_id', 'd1');
+    expect(builder.order).toHaveBeenCalledWith('name', { ascending: true });
+  });
+
+  it('skips the department filter when no department is given', async () => {
+    const builder = createQueryBuilder(queryResult({ data: [] }));
+    mockSupabase.from.mockReturnValueOnce(builder);
+
+    await expect(submitApi.getPrograms()).resolves.toEqual([]);
+
+    expect(builder.eq).toHaveBeenCalledTimes(1);
+    expect(builder.eq).toHaveBeenCalledWith('is_active', true);
+  });
+
+  it('returns an empty array on a Supabase error rather than throwing', async () => {
+    mockSupabase.from.mockReturnValueOnce(
+      createQueryBuilder(queryResult({ error: { message: 'relation missing' } }))
+    );
+
+    await expect(submitApi.getPrograms('d1')).resolves.toEqual([]);
   });
 });
 

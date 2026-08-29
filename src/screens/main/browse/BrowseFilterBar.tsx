@@ -11,9 +11,11 @@ type ViewMode = 'list' | 'grid';
 export interface BrowseFilterBarProps {
   resultCount: number;
   fieldLabel: string;
+  deptLabel: string;
   yearLabel: string;
   viewMode: ViewMode;
   onOpenFieldSheet: () => void;
+  onOpenDeptSheet: () => void;
   onOpenYearSheet: () => void;
   onChangeViewMode: (mode: ViewMode) => void;
 }
@@ -21,9 +23,11 @@ export interface BrowseFilterBarProps {
 export const BrowseFilterBar = ({
   resultCount,
   fieldLabel,
+  deptLabel,
   yearLabel,
   viewMode,
   onOpenFieldSheet,
+  onOpenDeptSheet,
   onOpenYearSheet,
   onChangeViewMode,
 }: BrowseFilterBarProps) => {
@@ -45,6 +49,18 @@ export const BrowseFilterBar = ({
         >
           <Text style={styles.fieldLinkText} numberOfLines={1}>
             {fieldLabel}
+          </Text>
+          <Icon icon={ChevronDown} size={13} color={theme.colors.brand.primary} />
+        </PressableScale>
+        <PressableScale
+          style={styles.sortLink}
+          onPress={onOpenDeptSheet}
+          accessibilityRole="button"
+          accessibilityLabel={`Department or program: ${deptLabel}`}
+          hitSlop={8}
+        >
+          <Text style={styles.deptLinkText} numberOfLines={1}>
+            {deptLabel}
           </Text>
           <Icon icon={ChevronDown} size={13} color={theme.colors.brand.primary} />
         </PressableScale>
@@ -123,6 +139,12 @@ export const makeStyles = (theme: Theme) =>
       fontSize: 13,
       color: theme.colors.brand.primary,
       maxWidth: 128,
+    },
+    deptLinkText: {
+      fontFamily: theme.fontFamilies.ui.medium,
+      fontSize: 13,
+      color: theme.colors.brand.primary,
+      maxWidth: 120,
     },
     viewToggle: {
       flexDirection: 'row',

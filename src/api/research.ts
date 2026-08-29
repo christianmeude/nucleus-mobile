@@ -40,6 +40,12 @@ interface ResearchAuthorRow {
   last_name?: string | null;
 }
 
+interface ProgramRelation {
+  id: string;
+  name: string;
+  code?: string | null;
+}
+
 type ResearchAuthorRelation = ResearchAuthorRow | ResearchAuthorRow[] | null | undefined;
 
 interface ResearchAuthorEntryRow {
@@ -79,6 +85,10 @@ interface ResearchPaperRow {
   view_count?: number | null;
   download_count?: number | null;
   author_id?: string | null;
+  department?: string | null;
+  department_id?: string | null;
+  program_id?: string | null;
+  program?: ProgramRelation | null;
   author?: ResearchAuthorRelation;
   users?: ResearchAuthorRelation;
   structured_authors?: ResearchAuthorEntryRow[] | null;
@@ -91,6 +101,8 @@ interface ResearchListParams {
   yearFrom?: string;
   yearTo?: string;
   author?: string;
+  department?: string;
+  program?: string;
 }
 
 export const PUBLISHED_STATUSES = new Set(['approved', 'published']);
@@ -112,6 +124,14 @@ const PAPER_SELECT = `
   view_count,
   download_count,
   author_id,
+  department,
+  department_id,
+  program_id,
+  program:programs!research_papers_program_id_fkey(
+    id,
+    name,
+    code
+  ),
   author:users!research_papers_author_id_fkey(
     id,
     email,
@@ -235,6 +255,12 @@ function toResearchPaper(row: ResearchPaperRow): ResearchPaper {
     rejection_reason: row.rejection_reason ?? null,
     view_count: row.view_count ?? undefined,
     download_count: row.download_count ?? undefined,
+    department: row.department ?? null,
+    department_id: row.department_id ?? null,
+    program_id: row.program_id ?? null,
+    program: row.program
+      ? { id: row.program.id, name: row.program.name, code: row.program.code ?? null }
+      : null,
     users: primaryAuthor ?? null,
     author: primaryAuthor ?? null,
     structured_authors: structuredAuthors,
@@ -247,6 +273,8 @@ function filterPublishedRows(rows: ResearchPaperRow[], params?: ResearchListPara
   const yearFromStr = params?.yearFrom?.trim() ?? '';
   const yearToStr = params?.yearTo?.trim() ?? '';
   const normalizedCategory = params?.category?.trim() ?? '';
+  const normalizedDept = params?.department?.trim().toLowerCase() ?? '';
+  const normalizedProgram = params?.program?.trim().toLowerCase() ?? '';
 
   const yearFrom = yearFromStr ? parseInt(yearFromStr, 10) : null;
   const yearTo = yearToStr ? parseInt(yearToStr, 10) : null;
@@ -255,6 +283,14 @@ function filterPublishedRows(rows: ResearchPaperRow[], params?: ResearchListPara
     const paperRecord = toResearchPaper(paper);
 
     if (normalizedCategory && paper.category !== normalizedCategory) {
+      return false;
+    }
+
+    if (normalizedDept && (paper.department || '').trim().toLowerCase() !== normalizedDept) {
+      return false;
+    }
+
+    if (normalizedProgram && (paper.program?.name || '').trim().toLowerCase() !== normalizedProgram) {
       return false;
     }
 
@@ -853,6 +889,13 @@ export interface DepartmentRow {
   code?: string | null;
 }
 
+export interface ProgramRow {
+  id: string;
+  name: string;
+  code?: string | null;
+  department_id: string;
+}
+
 export interface FacultyMember {
   id: string;
   email?: string;
@@ -884,6 +927,8 @@ export interface SubmitDraftFormState {
   facultyId: string;
   department: string;
   departmentId: string;
+  program: string;
+  programId: string;
 }
 
 export interface SubmitDraftPayload {
@@ -992,6 +1037,29 @@ async function getDepartments(): Promise<DepartmentRow[]> {
     }
 
     return (Array.isArray(data) ? data : []) as DepartmentRow[];
+  } catch {
+    return [];
+  }
+}
+
+async function getPrograms(departmentId?: string | null): Promise<ProgramRow[]> {
+  try {
+    let query = supabase
+      .from('programs')
+      .select('id, name, code, department_id')
+      .eq('is_active', true);
+
+    if (departmentId) {
+      query = query.eq('department_id', departmentId);
+    }
+
+    const { data, error } = await query.order('name', { ascending: true });
+
+    if (error) {
+      return [];
+    }
+
+    return (Array.isArray(data) ? data : []) as ProgramRow[];
   } catch {
     return [];
   }
@@ -1351,6 +1419,7 @@ async function createCoAuthorInvitations(
 export const submitApi = {
   getSubmissionPolicy,
   getDepartments,
+  getPrograms,
   getFacultyMembers,
   searchStudents,
   getMyDraft,

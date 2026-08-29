@@ -64,6 +64,11 @@ export interface ResearchPaper {
   department?: string | null;
   department_id?: string | null;
   program_id?: string | null;
+  program?: {
+    id: string;
+    name: string;
+    code?: string | null;
+  } | null;
   revision_notes?: string | null;
   rejection_reason?: string | null;
   view_count?: number;

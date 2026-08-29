@@ -1,6 +1,7 @@
 import React, { forwardRef, useCallback, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import type { Theme } from '../../theme';
 
@@ -14,6 +15,7 @@ export const BottomSheet = forwardRef<BottomSheetModal, BottomSheetProps>(
   ({ onDismiss, children, snapPoints }, ref) => {
     const { theme } = useTheme();
     const styles = useThemedStyles(makeStyles);
+    const insets = useSafeAreaInsets();
 
     const renderBackdrop = useCallback(
       (props: any) => (
@@ -36,7 +38,13 @@ export const BottomSheet = forwardRef<BottomSheetModal, BottomSheetProps>(
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore"
       >
-        <BottomSheetView style={[styles.sheetContent, !snapPoints && { flex: 0 }]}>
+        <BottomSheetView
+          style={[
+            styles.sheetContent,
+            !snapPoints && { flex: 0 },
+            { paddingBottom: theme.spacing.lg + insets.bottom },
+          ]}
+        >
           {children}
         </BottomSheetView>
       </BottomSheetModal>
@@ -59,7 +67,6 @@ const makeStyles = (t: Theme) =>
     },
     sheetContent: {
       paddingHorizontal: t.spacing.lg,
-      paddingBottom: t.spacing.lg,
       gap: t.spacing.md,
       flex: 1,
     },

@@ -10,7 +10,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { LegendList } from '@legendapp/list/react-native';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
 
-import { researchApi } from '../../api/research';
+import { researchApi, submitApi, type DepartmentRow, type ProgramRow } from '../../api/research';
 import { useAuth } from '../../context/AuthContext';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useRecentSearches } from '../../hooks/useRecentSearches';
@@ -56,8 +56,12 @@ export const BrowseScreen = () => {
   const reducedMotion = useReducedMotion();
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [departments, setDepartments] = useState<DepartmentRow[]>([]);
+  const [programs, setPrograms] = useState<ProgramRow[]>([]);
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [deptFilter, setDeptFilter] = useState('');
+  const [programSel, setProgramSel] = useState<{ id: string; name: string } | null>(null);
   const [yearFrom, setYearFrom] = useState('');
   const [yearTo, setYearTo] = useState('');
   const [tempYearFrom, setTempYearFrom] = useState('');
@@ -66,6 +70,7 @@ export const BrowseScreen = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const yearSheetRef = useRef<BottomSheetModal>(null);
   const fieldSheetRef = useRef<BottomSheetModal>(null);
+  const deptSheetRef = useRef<BottomSheetModal>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -84,13 +89,17 @@ export const BrowseScreen = () => {
     }
 
     try {
-      const [publishedRows, categoryRows] = await Promise.all([
+      const [publishedRows, categoryRows, departmentRows, programRows] = await Promise.all([
         researchApi.getPublishedPapers(undefined, { forceRefresh: silent }),
         researchApi.getCategories({ forceRefresh: silent }),
+        submitApi.getDepartments(),
+        submitApi.getPrograms(),
       ]);
 
       setPapers(publishedRows);
       setCategories(categoryRows);
+      setDepartments(departmentRows);
+      setPrograms(programRows);
       setError('');
     } catch (_error) {
       setError('Unable to load published papers.');
@@ -192,7 +201,7 @@ export const BrowseScreen = () => {
     [categoryColorById, theme],
   );
 
-  const isFiltering = Boolean(query.trim() || categoryFilter);
+  const isFiltering = Boolean(query.trim() || categoryFilter || deptFilter || programSel);
 
   const matched = useMemo(() => {
     let rows = useServerSearch ? (serverResults ?? []) : papers;
@@ -200,8 +209,18 @@ export const BrowseScreen = () => {
     const yFrom = yearFrom ? parseInt(yearFrom, 10) : null;
     const yTo = yearTo ? parseInt(yearTo, 10) : null;
 
+    const normalizedDept = deptFilter.trim().toLowerCase();
+
     return rows.filter((paper) => {
       if (categoryFilter && paper.category !== categoryFilter) {
+        return false;
+      }
+
+      if (normalizedDept && (paper.department || '').trim().toLowerCase() !== normalizedDept) {
+        return false;
+      }
+
+      if (programSel && paper.program_id !== programSel.id) {
         return false;
       }
 
@@ -226,7 +245,7 @@ export const BrowseScreen = () => {
 
       return true;
     });
-  }, [useServerSearch, serverResults, categoryFilter, papers, query, yearFrom, yearTo]);
+  }, [useServerSearch, serverResults, categoryFilter, deptFilter, programSel, papers, query, yearFrom, yearTo]);
 
   const sorted = useMemo(() => {
     if (useServerSearch) return matched;
@@ -290,6 +309,9 @@ export const BrowseScreen = () => {
   const fieldLabel = categoryFilter
     ? (resolveCategoryName(categoryFilter, categoryNameById) ?? 'Field')
     : 'All fields';
+  const deptLabel = programSel
+    ? programSel.name
+    : deptFilter || 'All departments';
   const showClear = Boolean(query.trim());
 
   const listHeaderElement = (
@@ -298,9 +320,11 @@ export const BrowseScreen = () => {
         <BrowseFilterBar
           resultCount={sorted.length}
           fieldLabel={fieldLabel}
+          deptLabel={deptLabel}
           yearLabel={yearLabel}
           viewMode={viewMode}
           onOpenFieldSheet={() => fieldSheetRef.current?.present()}
+          onOpenDeptSheet={() => deptSheetRef.current?.present()}
           onOpenYearSheet={() => {
             setTempYearFrom(yearFrom);
             setTempYearTo(yearTo);
@@ -454,7 +478,7 @@ export const BrowseScreen = () => {
         )}
       </BottomSheet>
 
-      <BottomSheet ref={fieldSheetRef}>
+      <BottomSheet ref={fieldSheetRef} snapPoints={['50%', '90%']}>
         <Text style={styles.sheetTitle}>Field</Text>
         <BottomSheetScrollView
           showsVerticalScrollIndicator={false}
@@ -498,6 +522,94 @@ export const BrowseScreen = () => {
           })}
         </BottomSheetScrollView>
       </BottomSheet>
+
+      <BottomSheet ref={deptSheetRef} snapPoints={['50%', '90%']}>
+        <Text style={styles.sheetTitle}>Department</Text>
+        <Text style={styles.sheetIntro}>
+          Narrow results to a department or a specific program within it.
+        </Text>
+        <BottomSheetScrollView
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          style={styles.sheetScroll}
+        >
+          <PressableScale
+            style={styles.sheetRow}
+            onPress={() => {
+              setDeptFilter('');
+              setProgramSel(null);
+              deptSheetRef.current?.dismiss();
+            }}
+          >
+            <Text
+              style={[
+                styles.sheetRowText,
+                !deptFilter && !programSel ? styles.sheetRowActive : null,
+              ]}
+            >
+              All departments
+            </Text>
+            {!deptFilter && !programSel ? (
+              <Icon icon={Check} size={18} color={theme.colors.brand.primary} />
+            ) : null}
+          </PressableScale>
+          {departments.map((dept) => {
+            const deptPrograms = programs.filter((p) => p.department_id === dept.id);
+            const deptActive = deptFilter === dept.name && !programSel;
+            return (
+              <View key={dept.id}>
+                <PressableScale
+                  style={styles.sheetRow}
+                  onPress={() => {
+                    setDeptFilter(dept.name);
+                    setProgramSel(null);
+                    deptSheetRef.current?.dismiss();
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.sheetRowText,
+                      styles.sheetDeptText,
+                      deptActive ? styles.sheetRowActive : null,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {dept.name}
+                  </Text>
+                  {deptActive ? (
+                    <Icon icon={Check} size={18} color={theme.colors.brand.primary} />
+                  ) : null}
+                </PressableScale>
+                {deptPrograms.map((program) => {
+                  const progActive = programSel?.id === program.id;
+                  return (
+                    <PressableScale
+                      key={program.id}
+                      style={[styles.sheetRow, styles.sheetProgramRow]}
+                      onPress={() => {
+                        setDeptFilter(dept.name);
+                        setProgramSel({ id: program.id, name: program.name });
+                        deptSheetRef.current?.dismiss();
+                      }}
+                    >
+                      <Text
+                        style={[styles.sheetRowText, progActive ? styles.sheetRowActive : null]}
+                        numberOfLines={1}
+                      >
+                        {program.code ? `${program.code} — ` : ''}
+                        {program.name}
+                      </Text>
+                      {progActive ? (
+                        <Icon icon={Check} size={18} color={theme.colors.brand.primary} />
+                      ) : null}
+                    </PressableScale>
+                  );
+                })}
+              </View>
+            );
+          })}
+        </BottomSheetScrollView>
+      </BottomSheet>
     </>
   );
 };
@@ -534,6 +646,17 @@ const makeStyles = (theme: Theme) =>
     sheetTitle: {
       ...theme.typography.h3,
       color: theme.colors.text.primary,
+    },
+    sheetIntro: {
+      ...theme.typography.bodySmall,
+      color: theme.colors.text.secondary,
+      marginTop: -theme.spacing.xs,
+    },
+    sheetDeptText: {
+      fontFamily: theme.fontFamilies.ui.semibold,
+    },
+    sheetProgramRow: {
+      paddingLeft: theme.spacing.lg,
     },
     sheetRow: {
       flexDirection: 'row',

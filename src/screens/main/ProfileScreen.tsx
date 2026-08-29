@@ -6,6 +6,7 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import {
   BottomSheet,
+  BottomSheetScrollView,
   BottomSheetTextInput,
   Button,
   ProfileHeader,
@@ -20,7 +21,7 @@ import { Mail, Lock, Moon, LogOut } from 'lucide-react-native';
 
 export const ProfileScreen = () => {
   const { user, signOut } = useAuth();
-  const { preference, setPreference, scheme } = useTheme();
+  const { preference, setPreference, scheme, theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const recoverySheetRef = useRef<BottomSheetModal>(null);
   const passwordSheetRef = useRef<BottomSheetModal>(null);
@@ -188,57 +189,70 @@ export const ProfileScreen = () => {
       </ScrollView>
 
       <BottomSheet ref={recoverySheetRef} snapPoints={['52%']}>
-        <Text style={styles.sheetTitle}>Recovery email</Text>
-        <Text style={styles.sheetDescription}>
-          Use a personal address so you can reset your password if you lose access to your university email.
-        </Text>
-        <Text style={styles.sheetLabel}>Personal email</Text>
-        <BottomSheetTextInput
-          style={styles.sheetInput}
-          value={recoveryEmail}
-          onChangeText={setRecoveryEmail}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="email-address"
-          placeholder="name@example.com"
-          placeholderTextColor={styles.placeholder.color}
-          accessibilityLabel="Recovery email"
-        />
-        {recoveryError ? <Text style={styles.errorText}>{recoveryError}</Text> : null}
-        {recoveryStatus ? <Text style={styles.successText}>{recoveryStatus}</Text> : null}
-        <Button label="Save recovery email" onPress={saveRecoveryEmail} loading={recoveryLoading} />
+        <BottomSheetScrollView
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: theme.spacing.sm }}
+        >
+          <Text style={styles.sheetTitle}>Recovery email</Text>
+          <Text style={styles.sheetDescription}>
+            Use a personal address so you can reset your password if you lose access to your university email.
+          </Text>
+          <Text style={styles.sheetLabel}>Personal email</Text>
+          <BottomSheetTextInput
+            style={styles.sheetInput}
+            value={recoveryEmail}
+            onChangeText={setRecoveryEmail}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+            placeholder="name@example.com"
+            placeholderTextColor={styles.placeholder.color}
+            accessibilityLabel="Recovery email"
+          />
+          {recoveryError ? <Text style={styles.errorText}>{recoveryError}</Text> : null}
+          {recoveryStatus ? <Text style={styles.successText}>{recoveryStatus}</Text> : null}
+          <Button label="Save recovery email" onPress={saveRecoveryEmail} loading={recoveryLoading} />
+        </BottomSheetScrollView>
       </BottomSheet>
 
       <BottomSheet ref={passwordSheetRef} snapPoints={['70%']}>
-        <Text style={styles.sheetTitle}>Change password</Text>
-        <Text style={styles.sheetDescription}>Choose a new password with at least 8 characters.</Text>
-        <Text style={styles.sheetLabel}>Current password</Text>
-        <BottomSheetTextInput
-          style={styles.sheetInput}
-          value={currentPassword}
-          onChangeText={setCurrentPassword}
-          secureTextEntry
-          accessibilityLabel="Current password"
-        />
-        <Text style={styles.sheetLabel}>New password</Text>
-        <BottomSheetTextInput
-          style={styles.sheetInput}
-          value={newPassword}
-          onChangeText={setNewPassword}
-          secureTextEntry
-          accessibilityLabel="New password"
-        />
-        <Text style={styles.sheetLabel}>Confirm new password</Text>
-        <BottomSheetTextInput
-          style={styles.sheetInput}
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry
-          accessibilityLabel="Confirm new password"
-        />
-        {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
-        {passwordStatus ? <Text style={styles.successText}>{passwordStatus}</Text> : null}
-        <Button label="Change password" onPress={savePassword} loading={passwordLoading} />
+        <BottomSheetScrollView
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ gap: theme.spacing.sm }}
+        >
+          <Text style={styles.sheetTitle}>Change password</Text>
+          <Text style={styles.sheetDescription}>Choose a new password with at least 8 characters.</Text>
+          <Text style={styles.sheetLabel}>Current password</Text>
+          <BottomSheetTextInput
+            style={styles.sheetInput}
+            value={currentPassword}
+            onChangeText={setCurrentPassword}
+            secureTextEntry
+            accessibilityLabel="Current password"
+          />
+          <Text style={styles.sheetLabel}>New password</Text>
+          <BottomSheetTextInput
+            style={styles.sheetInput}
+            value={newPassword}
+            onChangeText={setNewPassword}
+            secureTextEntry
+            accessibilityLabel="New password"
+          />
+          <Text style={styles.sheetLabel}>Confirm new password</Text>
+          <BottomSheetTextInput
+            style={styles.sheetInput}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+            accessibilityLabel="Confirm new password"
+          />
+          {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
+          {passwordStatus ? <Text style={styles.successText}>{passwordStatus}</Text> : null}
+          <Button label="Change password" onPress={savePassword} loading={passwordLoading} />
+        </BottomSheetScrollView>
       </BottomSheet>
     </Screen>
   );

@@ -256,7 +256,11 @@ export const ResearchDetailScreen = () => {
           <Text style={styles.title}>{paper.title}</Text>
 
           <Text style={styles.authors}>{authorsLine}</Text>
-          {paper.department ? <Text style={styles.affiliation}>{paper.department}</Text> : null}
+          {paper.program?.name || paper.department ? (
+            <Text style={styles.affiliation}>
+              {[paper.program?.name, paper.department].filter(Boolean).join(' · ')}
+            </Text>
+          ) : null}
 
           <View style={styles.metaRow}>
             <Text style={styles.metaText}>{formatDate(displayDate)}</Text>
