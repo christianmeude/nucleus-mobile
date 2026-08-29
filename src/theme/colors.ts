@@ -64,16 +64,19 @@ export const palette = {
   },
   success: {
     100: '#D1FAE5',
+    400: '#34D399',
     500: '#059669',
     600: '#047857',
   },
   warning: {
     100: '#FEF3C7',
+    400: '#FBBF24',
     500: '#D97706',
     600: '#B45309',
   },
   danger: {
     100: '#FEE2E2',
+    400: '#F87171',
     500: '#DC2626',
     600: '#B91C1C',
   },
@@ -176,12 +179,12 @@ export const dark: ColorScheme = {
     primary: palette.navy[400],
     primaryHover: palette.navy[300],
     primaryPressed: palette.navy[500],
-    primarySoft: 'rgba(46, 91, 201, 0.20)',
+    primarySoft: palette.navy[400] + '33', // 20% opacity
     primarySurface: palette.navy[900],
     accent: palette.gold[400],
     accentHover: palette.gold[300],
-    accentSoft: 'rgba(247, 179, 59, 0.18)',
-    accentSurface: 'rgba(247, 179, 59, 0.10)',
+    accentSoft: palette.gold[400] + '2E', // 18% opacity
+    accentSurface: palette.gold[400] + '1A', // 10% opacity
   },
   text: {
     primary: palette.navy[50],
@@ -204,12 +207,12 @@ export const dark: ColorScheme = {
     focus: palette.navy[300],
   },
   state: {
-    success: '#065F46',
-    successSurface: 'rgba(6, 95, 70, 0.14)',
-    warning: palette.gold[700],
-    warningSurface: 'rgba(130, 102, 30, 0.14)',
-    danger: '#7F1D1D',
-    dangerSurface: 'rgba(127, 29, 29, 0.14)',
+    success: palette.success[400],
+    successSurface: palette.success[400] + '24', // 14% opacity
+    warning: palette.warning[400],
+    warningSurface: palette.warning[400] + '24',
+    danger: palette.danger[400],
+    dangerSurface: palette.danger[400] + '24',
   },
 };
 

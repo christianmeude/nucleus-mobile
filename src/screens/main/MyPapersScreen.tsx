@@ -25,8 +25,11 @@ import {
   Screen,
   SearchField,
   SegmentedControl,
-  Skeleton,
   TopBar,
+  BottomSheet,
+  Button,
+  SheetPresenter,
+  BottomSheetTextInput,
 } from '../../components/ui';
 
 type FilterKey = 'all' | 'active' | 'published' | 'action';
@@ -49,6 +52,12 @@ export const MyPapersScreen = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+
+  // DOI Publication Request State
+  const [publishTarget, setPublishTarget] = useState<ResearchPaper | null>(null);
+  const [doiInput, setDoiInput] = useState('');
+  const [publishSubmitting, setPublishSubmitting] = useState(false);
+  const [publishError, setPublishError] = useState('');
 
   const loadData = useCallback(async (silent = false) => {
     if (!silent && papers.length === 0) {
@@ -109,6 +118,32 @@ export const MyPapersScreen = () => {
     return `${base} · ${needsAttention} need${needsAttention === 1 ? 's' : ''} your attention`;
   }, [papers]);
 
+  const submitPublishRequest = useCallback(async () => {
+    if (!publishTarget) return;
+    
+    // Validate DOI
+    const cleaned = doiInput.trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i, '');
+    if (!/^10\.\d{4,9}\/\S+$/i.test(cleaned)) {
+      setPublishError('Please enter a valid DOI (e.g. 10.1234/example)');
+      return;
+    }
+
+    setPublishError('');
+    setPublishSubmitting(true);
+    try {
+      await researchApi.requestPublish(publishTarget.id, cleaned);
+      setPublishTarget(null);
+      setDoiInput('');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      loadData(true); // silent refresh
+    } catch (err: any) {
+      setPublishError(err.message || 'Failed to submit publication request.');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setPublishSubmitting(false);
+    }
+  }, [publishTarget, doiInput, loadData]);
+
   const handlePaperPress = useCallback((paperId: string) => {
     navigation.navigate('ResearchDetail', { paperId });
   }, [navigation]);
@@ -120,6 +155,7 @@ export const MyPapersScreen = () => {
         variant="papers"
         category={resolveCategoryName(item.category, categoryNameById)}
         onPress={() => handlePaperPress(item.id)}
+        onRequestPublication={() => setPublishTarget(item)}
       />
     </ListEntranceItem>
   ), [categoryNameById, handlePaperPress]);
@@ -205,6 +241,50 @@ export const MyPapersScreen = () => {
       >
         <Icon icon={Plus} size={24} color={theme.colors.text.onBrand} />
       </Pressable>
+
+      <SheetPresenter
+        visible={!!publishTarget}
+        onClose={() => {
+          setPublishTarget(null);
+          setDoiInput('');
+          setPublishError('');
+        }}
+      >
+        <BottomSheet
+          title="Formal publication"
+          onClose={() => {
+            setPublishTarget(null);
+            setDoiInput('');
+            setPublishError('');
+          }}
+        >
+          <View style={styles.sheetContent}>
+            <Text style={styles.sheetDesc}>
+              Your paper is approved for the internal repository. If you have published it externally, enter your journal's DOI to request formal publication.
+            </Text>
+
+            <BottomSheetTextInput
+              placeholder="e.g. 10.1234/example"
+              value={doiInput}
+              onChangeText={setDoiInput}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              containerStyle={styles.sheetInput}
+            />
+
+            {publishError ? (
+              <InlineNotice tone="danger" message={publishError} style={{ marginBottom: 16 }} />
+            ) : null}
+
+            <Button
+              label="Submit for validation"
+              onPress={submitPublishRequest}
+              loading={publishSubmitting}
+            />
+          </View>
+        </BottomSheet>
+      </SheetPresenter>
     </Screen>
   );
 };
@@ -314,5 +394,16 @@ const makeStyles = (t: Theme) =>
     },
     list: {
       gap: t.spacing.md,
+    },
+    sheetContent: {
+      paddingBottom: t.spacing.xl,
+    },
+    sheetDesc: {
+      ...t.typography.body,
+      color: t.colors.text.secondary,
+      marginBottom: t.spacing.lg,
+    },
+    sheetInput: {
+      marginBottom: t.spacing.lg,
     },
   });

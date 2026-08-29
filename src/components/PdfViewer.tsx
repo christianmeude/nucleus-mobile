@@ -277,6 +277,7 @@ interface PdfSurfaceProps {
   onPlaceHighlight?: (pageNumber: number, rect: AnnotationRect) => void;
   onPlaceDraw?: (pageNumber: number, imageDataUrl: string) => void;
   onAnnotationPress?: (id: string) => void;
+  watermarkText?: string;
 }
 
 /** Renders the PDF via a pdf.js-in-WebView surface with its own loading + error handling. */
@@ -294,6 +295,7 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
       onPlaceHighlight,
       onPlaceDraw,
       onAnnotationPress,
+      watermarkText,
     },
     ref,
   ) => {
@@ -425,7 +427,7 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
                 danger: theme.colors.state.danger,
               },
               firstPageOnly,
-              'NU DASMARIÑAS',
+              watermarkText,
             ),
             baseUrl: 'https://localhost/',
           }}
@@ -500,6 +502,8 @@ interface PdfViewerProps {
     imageDataUrl: string;
   }) => Promise<void>;
   onAnnotationPress?: (id: string) => void;
+  /** Watermark to show on pages. Defaults to 'NU DASMARIÑAS'. Pass empty string to hide. */
+  watermarkText?: string;
 }
 
 
@@ -517,6 +521,7 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
       onCreateHighlight,
       onCreateDraw,
       onAnnotationPress,
+      watermarkText,
     },
     ref,
   ) => {
@@ -627,6 +632,7 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
             onLoaded={onFirstLoad}
             firstPageOnly
             scrollEnabled={false}
+            watermarkText={watermarkText}
           />
         </View>
       );
@@ -689,6 +695,7 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
                         setNoteText('');
                         setPendingAnchor({ type: 'note', pageNumber, x: anchor.x, y: anchor.y });
                       }}
+                      watermarkText={watermarkText}
                     />
                     {renderControls(true)}
                     {annotationMode !== 'none' && !pendingAnchor ? (

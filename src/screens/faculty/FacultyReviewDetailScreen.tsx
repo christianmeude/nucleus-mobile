@@ -368,18 +368,18 @@ export const FacultyReviewDetailScreen = () => {
               <Text style={styles.sectionTitle}>Your decision</Text>
               <View style={styles.decisionRow}>
                 <View style={styles.decisionButtonWrapper}>
-                  <Button label="Reject" variant="danger" icon={<Icon icon={CircleX} size={18} color={scheme === 'dark' ? theme.colors.state.danger : theme.colors.text.onBrand} />} onPress={() => openSheet('reject')} />
+                  <Button label="Reject" variant="danger" icon={<Icon icon={CircleX} size={18} color={theme.colors.state.danger} />} onPress={() => openSheet('reject')} />
                 </View>
                 <View style={styles.decisionButtonWrapper}>
                   <Button
                     label="Revision"
-                    variant="accent"
-                    icon={<Icon icon={Pencil} size={18} color={scheme === 'dark' ? theme.colors.state.warning : theme.colors.text.onAccent} />}
+                    variant="warning"
+                    icon={<Icon icon={Pencil} size={18} color={theme.colors.state.warning} />}
                     onPress={() => openSheet('revision')}
                   />
                 </View>
                 <View style={styles.decisionButtonWrapper}>
-                  <Button label="Approve" variant="success" icon={<Icon icon={CircleCheck} size={18} color={scheme === 'dark' ? theme.colors.state.success : theme.colors.text.onBrand} />} onPress={openApprove} />
+                  <Button label="Approve" variant="success" icon={<Icon icon={CircleCheck} size={18} color={theme.colors.state.success} />} onPress={openApprove} />
                 </View>
               </View>
             </View>
@@ -477,19 +477,19 @@ export const FacultyReviewDetailScreen = () => {
 
         {sheet === 'revision' ? (
           <>
-            <View style={[styles.sheetHeader, { backgroundColor: theme.colors.brand.accentSurface }]}>
-              <Icon icon={Pencil} size={24} color={theme.colors.brand.accent} />
-              <Text style={[styles.sheetTitle, { color: theme.colors.brand.accent }]}>Request revision</Text>
+            <View style={[styles.sheetHeader, { backgroundColor: theme.colors.state.warningSurface }]}>
+              <Icon icon={Pencil} size={24} color={theme.colors.state.warning} />
+              <Text style={[styles.sheetTitle, { color: theme.colors.state.warning }]}>Request revision</Text>
             </View>
 
             {confirmStep ? (
               <Card padding="md" style={styles.confirmCard}>
-                <Text style={[styles.confirmAction, { color: theme.colors.brand.accent }]}>Request Revision</Text>
+                <Text style={[styles.confirmAction, { color: theme.colors.state.warning }]}>Request Revision</Text>
                 <Text style={styles.confirmPaper}>{detail?.title}</Text>
                 <Text style={styles.confirmAuthor}>by {detail?.authorName}</Text>
                 <View style={styles.sheetButtons}>
                   <Button label="Cancel" variant="subtle" onPress={() => setConfirmStep(false)} disabled={acting} />
-                  <Button label="Confirm" variant="accent" onPress={() => {
+                  <Button label="Confirm" variant="warning" onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                     runRevision();
                   }} loading={acting} disabled={acting} />
@@ -511,7 +511,7 @@ export const FacultyReviewDetailScreen = () => {
                     multiline
                     editable={!acting}
                     maxLength={1000}
-                    focusColor={theme.colors.brand.accent}
+                    focusColor={theme.colors.state.warning}
                   />
                   <Text style={styles.charCount}>{notes.length} / 1000</Text>
                 </View>
@@ -522,7 +522,7 @@ export const FacultyReviewDetailScreen = () => {
                   <Button label="Cancel" variant="subtle" onPress={closeSheet} disabled={acting} />
                   <Button
                     label="Send back"
-                    variant="accent"
+                    variant="warning"
                     onPress={() => setConfirmStep(true)}
                     disabled={acting || !notes.trim()}
                   />

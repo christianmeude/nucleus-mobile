@@ -41,6 +41,8 @@ import { supabase } from '../../lib/supabase';
 
 type FocusField = 'email' | 'password' | 'forgotEmail' | 'code' | 'newPassword' | null;
 
+const FORGOT_PASSWORD_SNAP_POINTS = ['50%', '90%'];
+
 export const LoginScreen = () => {
   const { signIn } = useAuth();
   const { resetPrivacy } = usePrivacy();
@@ -248,32 +250,13 @@ export const LoginScreen = () => {
   };
 
   const openForgotPassword = () => {
-    Keyboard.dismiss();
     setForgotEmail(email);
     setSheetStep(1);
     setSheetError('');
     setSheetSuccessMsg('');
     setShowForgotPassword(true);
-    // imperative present as well — covers the case where the modal is already mounted
-    setTimeout(() => bottomSheetRef.current?.present(), 120);
+    bottomSheetRef.current?.present();
   };
-
-  useEffect(() => {
-    if (showForgotPassword) {
-      const t = setTimeout(() => bottomSheetRef.current?.present(), 80);
-      return () => clearTimeout(t);
-    } else {
-      bottomSheetRef.current?.dismiss();
-    }
-  }, [showForgotPassword]);
-
-  // belt-and-suspenders: if the effect races the modal mount, retry once
-  useEffect(() => {
-    if (showForgotPassword && !bottomSheetRef.current) {
-      const t = setTimeout(() => bottomSheetRef.current?.present(), 250);
-      return () => clearTimeout(t);
-    }
-  }, [showForgotPassword, sheetStep]);
 
   const isDark = scheme === 'dark';
   const ghostToggleStyle = { top: insets.top + 12, right: theme.spacing.lg } as const;
@@ -377,7 +360,7 @@ export const LoginScreen = () => {
                 <View style={styles.formGroup}>
                   <View style={styles.labelRow}>
                     <Text style={styles.label}>Password</Text>
-                    <Pressable onPress={openForgotPassword}>
+                    <Pressable onPress={openForgotPassword} hitSlop={16}>
                       <Text style={styles.forgotPasswordText}>Forgot?</Text>
                     </Pressable>
                   </View>
@@ -455,7 +438,7 @@ export const LoginScreen = () => {
       <BottomSheet
         ref={bottomSheetRef}
         onDismiss={() => setShowForgotPassword(false)}
-        snapPoints={['50%', '90%']}
+        snapPoints={FORGOT_PASSWORD_SNAP_POINTS}
       >
           <BottomSheetScrollView
             showsVerticalScrollIndicator={false}
@@ -609,7 +592,10 @@ export const LoginScreen = () => {
               )}
               <Pressable
                 style={styles.sheetCancelBtn}
-                onPress={() => setShowForgotPassword(false)}
+                onPress={() => {
+                  setShowForgotPassword(false);
+                  bottomSheetRef.current?.dismiss();
+                }}
                 disabled={sheetLoading}
               >
                 <Text style={styles.sheetCancelBtnText}>Cancel</Text>

@@ -27,6 +27,7 @@ import {
   PressableScale,
   Screen,
   SheetPresenter,
+  PublishedBadge,
 } from '../../components/ui';
 import { PdfViewer, type PdfViewerRef } from '../../components/PdfViewer';
 import { AnnotationPanel } from '../../components/AnnotationPanel';
@@ -231,6 +232,7 @@ export const ResearchDetailScreen = () => {
             ref={pdfRef}
             uri={fileUri}
             variant="fill"
+            watermarkText={isRepositoryPaper ? '' : undefined}
             annotations={showFeedback ? annotations : []}
             onFirstLoad={() => {
               if (viewTracked.current) return;
@@ -254,6 +256,12 @@ export const ResearchDetailScreen = () => {
         >
           {categoryName ? <Text style={styles.eyebrow}>{categoryName}</Text> : null}
 
+          {paper.status === 'published' && (
+            <View style={{ marginBottom: 6 }}>
+              <PublishedBadge />
+            </View>
+          )}
+
           <Text style={styles.title}>{paper.title}</Text>
 
           <Text style={styles.authors}>{authorsLine}</Text>
@@ -269,49 +277,15 @@ export const ResearchDetailScreen = () => {
             <Text style={styles.metaText}>{paper.view_count || 0} views</Text>
           </View>
 
-          {paper.status === 'published' && (
+          {paper.status === 'published' && paper.doi && (
             <View style={styles.doiCard}>
               <View style={styles.doiHeader}>
-                <Icon icon={ShieldCheck} size={16} color={theme.colors.state.success} />
-                <Text style={styles.doiTitle}>DOI Publication</Text>
+                <Icon icon={ShieldCheck} size={16} color={theme.colors.brand.accent} />
+                <Text style={styles.doiTitle}>Formal Publication (DOI)</Text>
               </View>
-              {paper.doi ? (
-                <>
-                  <Text style={styles.doiValue} selectable>
-                    {paper.doi}
-                  </Text>
-                  <Text style={styles.doiLink} selectable>
-                    https://doi.org/{paper.doi}
-                  </Text>
-                  <View style={styles.doiActions}>
-                    <Button
-                      label="Copy DOI"
-                      variant="subtle"
-                      size="sm"
-                      onPress={() => {
-                        // Clipboard handled via web API fallback; RN may need expo-clipboard
-                        // For now, just track the intent
-                      }}
-                    />
-                    <Button
-                      label="Request Validation"
-                      variant="secondary"
-                      size="sm"
-                      onPress={() => setError('DOI validation request submitted — admin will review.')}
-                    />
-                  </View>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.doiEmpty}>No DOI assigned yet</Text>
-                  <Button
-                    label="Request DOI Validation"
-                    variant="secondary"
-                    size="sm"
-                    onPress={() => setError('DOI validation request submitted — admin will review.')}
-                  />
-                </>
-              )}
+              <Text style={styles.doiLink} selectable>
+                https://doi.org/{paper.doi}
+              </Text>
             </View>
           )}
 
@@ -361,7 +335,7 @@ export const ResearchDetailScreen = () => {
                 <View style={styles.previewCardInner}>
                   {fileUri ? (
                     <View style={StyleSheet.absoluteFill} pointerEvents="none">
-                      <PdfViewer uri={fileUri} variant="preview" />
+                      <PdfViewer uri={fileUri} variant="preview" watermarkText={isRepositoryPaper ? '' : undefined} />
                     </View>
                   ) : null}
                   {/* Frost the page behind the button; a soft scrim guarantees the

@@ -35,3 +35,11 @@ _Avoid_: Submission year, creation date
 **Privacy Notice Gate**:
 A client-side UI wrapper around authentication flows (Login and Register) that ensures users have accepted the Data Privacy Policy and RA 10173 terms before proceeding. Acceptance is ephemeral (in-memory per app session) and does not persist to the backend. External links open in the system browser to reduce friction when returning to accept terms.
 _Avoid_: Privacy modal, terms screen
+
+**Internal Repository**:
+An archive of papers that have passed internal faculty review (status 'approved') but have not yet been assigned a DOI via an external publisher.
+_Avoid_: Published repository, local archive
+
+**Formal Publication**:
+The final state of a paper that has been accepted by an external publisher and assigned a DOI, moving its status from 'approved' to 'published'.
+_Avoid_: Official release, external publication

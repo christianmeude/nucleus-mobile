@@ -84,6 +84,8 @@ interface ResearchPaperRow {
   revision_notes?: string | null;
   view_count?: number | null;
   doi?: string | null;
+  publish_requested_at?: string | null;
+  publish_requested_by?: string | null;
   author_id?: string | null;
   department?: string | null;
   department_id?: string | null;
@@ -123,6 +125,8 @@ const PAPER_SELECT = `
   revision_notes,
   view_count,
   doi,
+  publish_requested_at,
+  publish_requested_by,
   author_id,
   department,
   department_id,
@@ -255,6 +259,8 @@ function toResearchPaper(row: ResearchPaperRow): ResearchPaper {
     rejection_reason: row.rejection_reason ?? null,
     view_count: row.view_count ?? undefined,
     doi: row.doi ?? null,
+    publish_requested_at: row.publish_requested_at ?? null,
+    publish_requested_by: row.publish_requested_by ?? null,
     department: row.department ?? null,
     department_id: row.department_id ?? null,
     program_id: row.program_id ?? null,
@@ -547,6 +553,15 @@ function toPaperAnnotation(row: PaperAnnotationRow): PaperAnnotation {
 }
 
 export const researchApi = {
+  requestPublish: async (paperId: string, doi: string): Promise<void> => {
+    const { error } = await supabase.functions.invoke('request-publish', {
+      body: { paperId, doi },
+    });
+    if (error) {
+      throw new Error(error.message || 'Failed to request publication.');
+    }
+  },
+
   fetchAnnotations: async (paperId: string): Promise<PaperAnnotation[]> => {
     // Only fetch for a paper the student is assigned to (enforced by RLS)
     await resolveCurrentStudentProfile();

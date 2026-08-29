@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { ResearchPaper } from '../types/domain';
 import { getPrimaryAuthorName, formatDate, paperDate } from '../utils/format';
-import { PressableCard } from './ui';
+import { PressableCard, PublishedBadge, Button } from './ui';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
 import { PaperProgressMap } from './PaperProgressMap';
@@ -14,6 +14,7 @@ export interface StandardPaperCardProps {
   category?: string | null;
   categoryColor?: string;
   onPress: () => void;
+  onRequestPublication?: () => void;
 }
 
 export const StandardPaperCard = memo(({
@@ -22,6 +23,7 @@ export const StandardPaperCard = memo(({
   category,
   categoryColor,
   onPress,
+  onRequestPublication,
 }: StandardPaperCardProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -59,6 +61,12 @@ export const StandardPaperCard = memo(({
           </View>
         ) : null}
         
+        {paper.status === 'published' && (
+          <View style={{ marginBottom: 2 }}>
+            <PublishedBadge />
+          </View>
+        )}
+
         <Text style={styles.title} numberOfLines={variant === 'browse' ? 2 : 3}>
           {title}
         </Text>
@@ -67,7 +75,21 @@ export const StandardPaperCard = memo(({
           {metaParts.join('   ·   ')}
         </Text>
 
-        {variant === 'papers' ? <PaperProgressMap status={paper.status} variant="list" /> : null}
+        {variant === 'papers' ? (
+          <View style={styles.progressContainer}>
+            <PaperProgressMap status={paper.status} variant="list" />
+            {paper.status === 'approved' && !paper.publish_requested_at && (
+              <View style={styles.actionRow}>
+                <Button label="Request Publication" variant="secondary" size="small" onPress={onRequestPublication} />
+              </View>
+            )}
+            {paper.status === 'approved' && paper.publish_requested_at && (
+              <View style={styles.pendingRow}>
+                <Text style={styles.pendingText}>Publication requested (pending admin review)</Text>
+              </View>
+            )}
+          </View>
+        ) : null}
       </View>
     </PressableCard>
   );
@@ -109,5 +131,23 @@ const makeStyles = (t: Theme) =>
       fontSize: 12,
       color: t.colors.text.disabled,
       fontVariant: ['tabular-nums'],
+    },
+    progressContainer: {
+      gap: 12,
+      marginTop: 4,
+    },
+    actionRow: {
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+    },
+    pendingRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    pendingText: {
+      fontFamily: t.fontFamilies.ui.medium,
+      fontSize: 12,
+      color: t.colors.text.disabled,
+      fontStyle: 'italic',
     },
   });
