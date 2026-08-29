@@ -130,7 +130,7 @@ const makeStyles = (t: Theme) =>
       borderColor: t.colors.border.subtle,
     },
     accentLabel: {
-      color: t.colors.text.onBrand,
+      color: t.colors.text.onAccent,
     },
     dangerBase: {
       backgroundColor: t.colors.state.danger,
