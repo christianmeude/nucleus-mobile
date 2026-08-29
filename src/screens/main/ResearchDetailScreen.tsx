@@ -365,7 +365,7 @@ export const ResearchDetailScreen = () => {
             paper.publish_requested_at ? (
               <View style={styles.doiCard}>
                 <View style={styles.doiHeader}>
-                  <Icon icon={ShieldCheck} size={20} color={theme.colors.state.success} />
+                  <Icon icon={ShieldCheck} size={16} color={theme.colors.state.success} />
                   <Text style={[styles.doiTitle, { color: theme.colors.state.success }]}>Publication requested</Text>
                 </View>
                 <Text style={styles.doiLink}>Pending admin review.</Text>
@@ -378,7 +378,7 @@ export const ResearchDetailScreen = () => {
                 accessibilityLabel="Request formal publication"
               >
                 <View style={styles.doiHeader}>
-                  <Icon icon={ArrowUpRight} size={16} color={theme.colors.brand.accent} />
+                  <Icon icon={ArrowUpRight} size={16} color={theme.colors.brand.primary} />
                   <Text style={styles.doiTitle}>Request formal publication</Text>
                 </View>
                 <Text style={styles.doiLink}>Submit a DOI to list this paper in the public registry.</Text>

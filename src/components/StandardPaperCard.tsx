@@ -152,7 +152,6 @@ const makeStyles = (t: Theme) =>
       marginTop: 8,
       paddingVertical: 6,
       paddingHorizontal: 12,
-      backgroundColor: t.colors.brand.primarySoft,
       borderRadius: t.radii.pill,
       alignSelf: 'center',
     },
