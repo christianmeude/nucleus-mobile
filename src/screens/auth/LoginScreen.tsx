@@ -703,15 +703,15 @@ const makeStyles = (theme: Theme) =>
     },
     sheetTitle: {
       ...theme.typography.h2,
-      color: theme.colors.text.onBrand,
+      color: theme.colors.text.primary,
     },
     sheetSubtitle: {
       ...theme.typography.body,
-      color: 'rgba(255, 255, 255, 0.8)',
+      color: theme.colors.text.secondary,
     },
     sheetLabel: {
       ...theme.typography.label,
-      color: 'rgba(255, 255, 255, 0.8)',
+      color: theme.colors.text.primary,
     },
     sheetFormGroup: {
       gap: theme.spacing.sm,
@@ -719,16 +719,16 @@ const makeStyles = (theme: Theme) =>
     sheetInputWrap: {
       flexDirection: 'row',
       alignItems: 'center',
-      borderWidth: 1.5,
-      borderColor: 'rgba(255, 255, 255, 0.2)',
+      borderWidth: 1,
+      borderColor: theme.colors.border.subtle,
       borderRadius: theme.radii.md,
       borderCurve: 'continuous',
       paddingHorizontal: theme.spacing.md,
-      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+      backgroundColor: theme.colors.surface.sunken,
     },
     sheetInputWrapFocused: {
       borderColor: theme.colors.brand.accent,
-      backgroundColor: 'rgba(255, 255, 255, 0.12)',
+      backgroundColor: theme.colors.surface.raised,
     },
     sheetInputIcon: {
       marginRight: theme.spacing.sm,
@@ -737,7 +737,7 @@ const makeStyles = (theme: Theme) =>
       flex: 1,
       paddingVertical: theme.spacing.sm + 2,
       ...theme.typography.body,
-      color: theme.colors.text.onBrand,
+      color: theme.colors.text.primary,
     },
     sheetErrorBox: {
       flexDirection: 'row',
@@ -777,6 +777,6 @@ const makeStyles = (theme: Theme) =>
     },
     sheetCancelBtnText: {
       ...theme.typography.button,
-      color: 'rgba(255, 255, 255, 0.6)',
+      color: theme.colors.text.secondary,
     },
   });

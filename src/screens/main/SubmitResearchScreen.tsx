@@ -29,7 +29,8 @@ import {
   submitApi,
 } from '../../api/research';
 import { Category, ResearchPaper, SubmissionPolicy } from '../../types/domain';
-import { theme } from '../../theme';
+import { useTheme, useThemedStyles } from '../../context/ThemeContext';
+import { type Theme } from '../../theme';
 import {
   BottomSheet,
   BottomSheetScrollView,
@@ -120,17 +121,20 @@ const FormSection = ({
   number: number;
   title: string;
   children: ReactNode;
-}) => (
-  <View style={styles.card}>
-    <View style={styles.cardHead}>
-      <View style={styles.cardNum}>
-        <Text style={styles.cardNumText}>{number}</Text>
+}) => {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardHead}>
+        <View style={styles.cardNum}>
+          <Text style={styles.cardNumText}>{number}</Text>
+        </View>
+        <Text style={styles.cardHeadText}>{title}</Text>
       </View>
-      <Text style={styles.cardHeadText}>{title}</Text>
+      <View style={styles.cardBody}>{children}</View>
     </View>
-    <View style={styles.cardBody}>{children}</View>
-  </View>
-);
+  );
+};
 
 export const SubmitResearchScreen = () => {
   const navigation = useNavigation<SubmitNav>();
@@ -139,6 +143,8 @@ export const SubmitResearchScreen = () => {
   const resubmitPaperId = route.params?.resubmitPaperId;
   const isResubmit = Boolean(resubmitPaperId);
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const [formData, setFormData] = useState<SubmitDraftFormState>(EMPTY_FORM);
   const [selectedCoAuthors, setSelectedCoAuthors] = useState<StudentSearchResult[]>([]);
@@ -1237,7 +1243,7 @@ export const SubmitResearchScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.surface.base,
