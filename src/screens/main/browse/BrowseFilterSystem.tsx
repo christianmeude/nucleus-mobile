@@ -2,7 +2,7 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { StyleSheet, Text, View, Keyboard, Pressable } from 'react-native';
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Check, SlidersHorizontal } from 'lucide-react-native';
+import { Check, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react-native';
 
 import { BottomSheet, Button, Icon, Input, PressableScale } from '../../../components/ui';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
@@ -41,11 +41,35 @@ export const BrowseFilterSystem = ({
     onChange({ ...filters, categories: Array.from(next) });
   };
 
-  const handleToggleDept = (name: string) => {
-    const next = new Set(filters.departments);
-    if (next.has(name)) next.delete(name);
-    else next.add(name);
-    onChange({ ...filters, departments: Array.from(next) });
+  const [expandedDepts, setExpandedDepts] = useState<Set<string>>(new Set());
+
+  const toggleDeptExpansion = (deptId: string) => {
+    setExpandedDepts((prev) => {
+      const next = new Set(prev);
+      if (next.has(deptId)) next.delete(deptId);
+      else next.add(deptId);
+      return next;
+    });
+  };
+
+  const handleToggleDept = (deptName: string, deptPrograms: ProgramRow[]) => {
+    const isSelected = filters.departments.includes(deptName);
+    const nextDepts = new Set(filters.departments);
+    const nextProgs = new Set(filters.programs);
+    
+    if (isSelected) {
+      nextDepts.delete(deptName);
+      deptPrograms.forEach(p => nextProgs.delete(p.id));
+    } else {
+      nextDepts.add(deptName);
+      deptPrograms.forEach(p => nextProgs.add(p.id));
+    }
+    
+    onChange({
+      ...filters,
+      departments: Array.from(nextDepts),
+      programs: Array.from(nextProgs),
+    });
   };
 
   const handleToggleProgram = (id: string) => {
@@ -102,7 +126,7 @@ export const BrowseFilterSystem = ({
       <BottomSheet ref={sheetRef} snapPoints={['80%', '95%']}>
         <View style={styles.sheetHeader}>
           <Text style={styles.sheetTitle}>Filters</Text>
-          {activeCount > 0 && (
+          <View style={{ opacity: activeCount > 0 ? 1 : 0 }} pointerEvents={activeCount > 0 ? 'auto' : 'none'}>
             <Button 
               label="Clear All" 
               variant="subtle" 
@@ -114,7 +138,7 @@ export const BrowseFilterSystem = ({
                 setYearError('');
               }} 
             />
-          )}
+          </View>
         </View>
 
         <View style={styles.tabsContainer}>
@@ -168,19 +192,28 @@ export const BrowseFilterSystem = ({
               {departments.map((dept) => {
                 const activeDept = filters.departments.includes(dept.name);
                 const deptPrograms = programs.filter((p) => p.department_id === dept.id);
+                const isExpanded = expandedDepts.has(dept.id);
                 return (
                   <View key={dept.id}>
-                    <PressableScale style={styles.row} onPress={() => handleToggleDept(dept.name)}>
-                      <View style={[styles.checkbox, activeDept && styles.checkboxActive]}>
-                        {activeDept && <Icon icon={Check} size={14} color={theme.colors.surface.base} />}
-                      </View>
-                      <Text style={[styles.rowText, activeDept && styles.rowTextActive, { fontFamily: theme.fontFamilies.ui.semibold }]}>
-                        {dept.name}
-                      </Text>
-                    </PressableScale>
+                    <View style={styles.deptRowContainer}>
+                      <PressableScale style={styles.deptRowToggle} onPress={() => handleToggleDept(dept.name, deptPrograms)}>
+                        <View style={[styles.checkbox, activeDept && styles.checkboxActive]}>
+                          {activeDept && <Icon icon={Check} size={14} color={theme.colors.surface.base} />}
+                        </View>
+                        <Text style={[styles.rowText, activeDept && styles.rowTextActive, { fontFamily: theme.fontFamilies.ui.semibold }]}>
+                          {dept.name}
+                        </Text>
+                      </PressableScale>
+
+                      {deptPrograms.length > 0 && (
+                        <PressableScale style={styles.deptRowExpand} onPress={() => toggleDeptExpansion(dept.id)}>
+                          <Icon icon={isExpanded ? ChevronUp : ChevronDown} size={20} color={theme.colors.text.muted} />
+                        </PressableScale>
+                      )}
+                    </View>
 
                     {/* Nested Programs */}
-                    {deptPrograms.map((prog) => {
+                    {isExpanded && deptPrograms.map((prog) => {
                       const activeProg = filters.programs.includes(prog.id);
                       return (
                         <PressableScale key={prog.id} style={styles.nestedRow} onPress={() => handleToggleProgram(prog.id)}>
@@ -321,6 +354,20 @@ const makeStyles = (theme: Theme) =>
       alignItems: 'center',
       gap: 12,
       paddingVertical: 10,
+    },
+    deptRowContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    deptRowToggle: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 10,
+    },
+    deptRowExpand: {
+      padding: 8,
     },
     nestedRow: {
       flexDirection: 'row',
