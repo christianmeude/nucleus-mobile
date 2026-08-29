@@ -676,7 +676,7 @@ const makeStyles = (theme: Theme) =>
       fontFamily: theme.fontFamilies.ui.semibold,
     },
     sheetScroll: {
-      maxHeight: 360,
+      flex: 1,
     },
     yearInputsRow: {
       flexDirection: 'row',
