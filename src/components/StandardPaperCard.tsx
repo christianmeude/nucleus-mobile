@@ -99,7 +99,7 @@ export const StandardPaperCard = memo(({
               <View style={styles.statusRow}>
                 <Icon icon={ShieldCheck} size={14} color={theme.colors.state.success} />
                 <Text style={[styles.statusText, { color: theme.colors.state.success }]}>
-                  Publication requested · pending admin review
+                  Publication requested
                 </Text>
               </View>
             )}

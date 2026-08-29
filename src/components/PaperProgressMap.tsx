@@ -217,9 +217,6 @@ export const PaperProgressMap = memo(({ status, variant = 'list' }: PaperProgres
           );
         })}
       </View>
-      {blockedIndex >= 0 ? (
-        <Text style={[styles.caption, { color: blockedColor }]}>{statusToLabel(status)}</Text>
-      ) : null}
     </View>
   );
 });
@@ -288,11 +285,5 @@ const makeStyles = (t: Theme) =>
     labelActive: {
       fontFamily: t.fontFamilies.ui.semibold,
       color: t.colors.text.primary,
-    },
-    caption: {
-      fontFamily: t.fontFamilies.ui.semibold,
-      fontSize: 11,
-      textAlign: 'center',
-      marginTop: 2,
     },
   });
