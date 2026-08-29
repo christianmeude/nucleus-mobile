@@ -363,19 +363,25 @@ export const ResearchDetailScreen = () => {
 
           {paper.status === 'approved' && isOwner && (
             paper.publish_requested_at ? (
-              <View style={styles.publishStatusRow}>
-                <Icon icon={ShieldCheck} size={13} color={theme.colors.state.success} />
-                <Text style={styles.publishStatusText}>Publication requested · pending admin review</Text>
+              <View style={styles.doiCard}>
+                <View style={styles.doiHeader}>
+                  <Icon icon={ShieldCheck} size={16} color={theme.colors.state.success} />
+                  <Text style={styles.doiTitle}>Publication requested</Text>
+                </View>
+                <Text style={styles.doiLink}>Pending admin review.</Text>
               </View>
             ) : (
               <PressableScale
-                style={styles.publishActionRow}
+                style={styles.doiCard}
                 onPress={() => setPublishTarget(paper)}
                 accessibilityRole="button"
                 accessibilityLabel="Request formal publication"
               >
-                <Text style={styles.publishActionText}>Request formal publication</Text>
-                <Icon icon={ArrowUpRight} size={14} color={theme.colors.text.secondary} />
+                <View style={styles.doiHeader}>
+                  <Icon icon={ArrowUpRight} size={16} color={theme.colors.text.secondary} />
+                  <Text style={styles.doiTitle}>Request formal publication</Text>
+                </View>
+                <Text style={styles.doiLink}>Submit a DOI to list this paper in the public registry.</Text>
               </PressableScale>
             )
           )}
@@ -665,7 +671,6 @@ const makeStyles = (theme: Theme) =>
       borderCurve: 'continuous',
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.border.subtle,
-      backgroundColor: theme.colors.surface.raised,
       gap: theme.spacing.sm,
     },
     doiHeader: {
@@ -695,28 +700,6 @@ const makeStyles = (theme: Theme) =>
       flexDirection: 'row',
       gap: theme.spacing.sm,
       marginTop: theme.spacing.xs,
-    },
-    publishActionRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-      marginTop: theme.spacing.md,
-      alignSelf: 'flex-start',
-    },
-    publishActionText: {
-      fontFamily: theme.fontFamilies.ui.semibold,
-      fontSize: 14,
-      color: theme.colors.text.secondary,
-    },
-    publishStatusRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: theme.spacing.xs,
-      marginTop: theme.spacing.md,
-    },
-    publishStatusText: {
-      ...theme.typography.bodySmall,
-      color: theme.colors.text.muted,
     },
     section: {
       marginTop: theme.spacing.xl,
