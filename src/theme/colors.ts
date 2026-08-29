@@ -204,12 +204,12 @@ export const dark: ColorScheme = {
     focus: palette.navy[300],
   },
   state: {
-    success: palette.success[600],
-    successSurface: 'rgba(4, 120, 87, 0.14)',
+    success: '#065F46',
+    successSurface: 'rgba(6, 95, 70, 0.14)',
     warning: palette.gold[700],
     warningSurface: 'rgba(130, 102, 30, 0.14)',
-    danger: palette.danger[600],
-    dangerSurface: 'rgba(185, 28, 28, 0.14)',
+    danger: '#7F1D1D',
+    dangerSurface: 'rgba(127, 29, 29, 0.14)',
   },
 };
 

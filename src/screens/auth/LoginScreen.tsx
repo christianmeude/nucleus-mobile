@@ -246,21 +246,32 @@ export const LoginScreen = () => {
   };
 
   const openForgotPassword = () => {
+    Keyboard.dismiss();
     setForgotEmail(email);
     setSheetStep(1);
     setSheetError('');
     setSheetSuccessMsg('');
     setShowForgotPassword(true);
+    // imperative present as well — covers the case where the modal is already mounted
+    setTimeout(() => bottomSheetRef.current?.present(), 120);
   };
 
   useEffect(() => {
     if (showForgotPassword) {
-      // conditional BottomSheet mounts closed — explicitly present it on next tick
-      requestAnimationFrame(() => bottomSheetRef.current?.present());
+      const t = setTimeout(() => bottomSheetRef.current?.present(), 80);
+      return () => clearTimeout(t);
     } else {
       bottomSheetRef.current?.dismiss();
     }
   }, [showForgotPassword]);
+
+  // belt-and-suspenders: if the effect races the modal mount, retry once
+  useEffect(() => {
+    if (showForgotPassword && !bottomSheetRef.current) {
+      const t = setTimeout(() => bottomSheetRef.current?.present(), 250);
+      return () => clearTimeout(t);
+    }
+  }, [showForgotPassword, sheetStep]);
 
   return (
     <View style={styles.root}>

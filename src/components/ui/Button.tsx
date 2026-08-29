@@ -125,7 +125,7 @@ const makeStyles = (t: Theme) =>
       borderColor: t.colors.border.subtle,
     },
     accentPressed: {
-      backgroundColor: palette.gold[800],
+      backgroundColor: '#342908',
       borderWidth: 1,
       borderColor: t.colors.border.subtle,
     },
@@ -138,7 +138,7 @@ const makeStyles = (t: Theme) =>
       borderColor: t.colors.border.subtle,
     },
     dangerPressed: {
-      backgroundColor: palette.danger[500],
+      backgroundColor: '#450A0A',
       borderWidth: 1,
       borderColor: t.colors.border.subtle,
     },
@@ -151,7 +151,7 @@ const makeStyles = (t: Theme) =>
       borderColor: t.colors.border.subtle,
     },
     successPressed: {
-      backgroundColor: palette.success[500],
+      backgroundColor: '#022C22',
       borderWidth: 1,
       borderColor: t.colors.border.subtle,
     },
