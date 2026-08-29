@@ -1,6 +1,6 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
-import { type Theme } from '../../theme';
+import { palette, type Theme } from '../../theme';
 
 type ButtonVariant = 'primary' | 'secondary' | 'subtle' | 'accent' | 'danger' | 'success';
 type ButtonSize = 'md' | 'sm';
@@ -120,28 +120,40 @@ const makeStyles = (t: Theme) =>
       color: t.colors.brand.primary,
     },
     accentBase: {
-      backgroundColor: t.colors.brand.accent,
+      backgroundColor: t.colors.state.warning,
+      borderWidth: 1,
+      borderColor: t.colors.border.subtle,
     },
     accentPressed: {
-      backgroundColor: t.colors.brand.accent,
+      backgroundColor: palette.gold[700],
+      borderWidth: 1,
+      borderColor: t.colors.border.subtle,
     },
     accentLabel: {
       color: t.colors.text.onBrand,
     },
     dangerBase: {
       backgroundColor: t.colors.state.danger,
+      borderWidth: 1,
+      borderColor: t.colors.border.subtle,
     },
     dangerPressed: {
-      backgroundColor: t.colors.state.danger,
+      backgroundColor: palette.danger[500],
+      borderWidth: 1,
+      borderColor: t.colors.border.subtle,
     },
     dangerLabel: {
       color: t.colors.text.onBrand,
     },
     successBase: {
       backgroundColor: t.colors.state.success,
+      borderWidth: 1,
+      borderColor: t.colors.border.subtle,
     },
     successPressed: {
-      backgroundColor: t.colors.state.success,
+      backgroundColor: palette.success[500],
+      borderWidth: 1,
+      borderColor: t.colors.border.subtle,
     },
     successLabel: {
       color: t.colors.text.onBrand,

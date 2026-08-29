@@ -12,6 +12,8 @@ export const ACTIVE_STATUSES = new Set<PaperStatus>([
 ]);
 
 export const ACTION_STATUSES = new Set<PaperStatus>(['revision_required', 'rejected']);
+export const REVISE_REQUIRED_STATUSES = new Set<PaperStatus>(['revision_required']);
+export const REJECTED_STATUSES = new Set<PaperStatus>(['rejected']);
 export const PUBLISHED_STATUSES = new Set<PaperStatus>(['approved', 'published']);
 
 const statusToTone = (status?: PaperStatus): ChipTone => {

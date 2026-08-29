@@ -694,7 +694,7 @@ export const facultyApi = {
           .from('research_papers')
           .select(FACULTY_PAPER_SELECT)
           .eq('faculty_id', profile.id)
-          .in('status', ['pending_faculty', 'revision_required'])
+          .in('status', ['pending_faculty'])
           .order('submission_date', { ascending: true })
           .order('created_at', { ascending: true })
           .limit(1)

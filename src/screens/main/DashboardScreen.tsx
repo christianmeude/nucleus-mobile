@@ -22,7 +22,7 @@ import {
 import { StandardPaperCard } from '../../components/StandardPaperCard';
 import { NotificationCard } from '../../components/NotificationCard';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
-import { ACTION_STATUSES, ACTIVE_STATUSES } from '../../components/PaperStatusChip';
+import { REVISE_REQUIRED_STATUSES, ACTIVE_STATUSES } from '../../components/PaperStatusChip';
 
 const ASSEMBLE = { distance: 30, duration: 460, fromScale: 0.94 };
 const ASSEMBLE_STAGGER = 100;
@@ -85,15 +85,19 @@ export const DashboardScreen = () => {
   const categoryNameById = useMemo(() => buildCategoryNameById(categories), [categories]);
 
   const upNextPaper = useMemo(() => {
-    return (
-      papers.find((p) => ACTION_STATUSES.has(p.status)) ||
-      papers.find((p) => ACTIVE_STATUSES.has(p.status)) ||
-      null
-    );
+    const reviseRequired = papers
+      .filter((p) => REVISE_REQUIRED_STATUSES.has(p.status))
+      .sort((a, b) => {
+        const aTime = new Date(a.submission_date || a.created_at || 0).getTime();
+        const bTime = new Date(b.submission_date || b.created_at || 0).getTime();
+        return aTime - bTime;
+      });
+    if (reviseRequired.length > 0) return reviseRequired[0];
+    return papers.find((p) => ACTIVE_STATUSES.has(p.status)) || null;
   }, [papers]);
 
   const subLine = useMemo(() => {
-    const reviseCount = papers.filter((p) => ACTION_STATUSES.has(p.status)).length;
+    const reviseCount = papers.filter((p) => REVISE_REQUIRED_STATUSES.has(p.status)).length;
     const reviewCount = papers.filter((p) => ACTIVE_STATUSES.has(p.status)).length;
     if (reviseCount > 0) {
       return {
