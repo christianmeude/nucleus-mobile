@@ -40,3 +40,13 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# local backups / dumps
+database_backup.json
+supabase/database_backup.json
+
+# agent / tool caches
+.codex/
+.impeccable/config.local.json
+.design-sync/ds-bundle/
+.impeccable/critique/
