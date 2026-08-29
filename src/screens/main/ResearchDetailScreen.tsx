@@ -375,7 +375,7 @@ export const ResearchDetailScreen = () => {
                 accessibilityLabel="Request formal publication"
               >
                 <Text style={styles.publishActionText}>Request formal publication</Text>
-                <Icon icon={ArrowUpRight} size={14} color={theme.colors.brand.primary} />
+                <Icon icon={ArrowUpRight} size={14} color={theme.colors.text.secondary} />
               </PressableScale>
             )
           )}
@@ -706,7 +706,7 @@ const makeStyles = (theme: Theme) =>
     publishActionText: {
       fontFamily: theme.fontFamilies.ui.semibold,
       fontSize: 14,
-      color: theme.colors.brand.primary,
+      color: theme.colors.text.secondary,
     },
     publishStatusRow: {
       flexDirection: 'row',
