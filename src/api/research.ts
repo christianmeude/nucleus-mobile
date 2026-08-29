@@ -83,7 +83,6 @@ interface ResearchPaperRow {
   rejection_reason?: string | null;
   revision_notes?: string | null;
   view_count?: number | null;
-  download_count?: number | null;
   author_id?: string | null;
   department?: string | null;
   department_id?: string | null;
@@ -122,7 +121,6 @@ const PAPER_SELECT = `
   rejection_reason,
   revision_notes,
   view_count,
-  download_count,
   author_id,
   department,
   department_id,
@@ -254,7 +252,6 @@ function toResearchPaper(row: ResearchPaperRow): ResearchPaper {
     revision_notes: row.revision_notes ?? null,
     rejection_reason: row.rejection_reason ?? null,
     view_count: row.view_count ?? undefined,
-    download_count: row.download_count ?? undefined,
     department: row.department ?? null,
     department_id: row.department_id ?? null,
     program_id: row.program_id ?? null,
@@ -801,49 +798,6 @@ export const researchApi = {
       void insertError;
     } catch (error) {
       console.warn('[trackView] Error tracking view:', error);
-    }
-  },
-
-  trackDownload: async (paperId: string) => {
-    const profile = await resolveCurrentStudentProfile();
-
-    try {
-      const { data: paperRow, error: paperError } = await supabase
-        .from('research_papers')
-        .select('allow_download')
-        .eq('id', paperId)
-        .maybeSingle();
-
-      if (paperError) {
-        throw new Error(paperError.message || 'Unable to verify download permissions.');
-      }
-
-      if (!paperRow) {
-        throw new Error('Paper not found.');
-      }
-
-      if (!(paperRow as any).allow_download) {
-        throw new Error('Downloads are not allowed for this paper.');
-      }
-
-      const { error: rpcError } = await supabase.rpc('increment_download_count', {
-        row_id: paperId,
-      });
-
-      if (rpcError) {
-        throw new Error(rpcError.message || 'Failed to increment download count.');
-      }
-
-      const { error: insertError } = await supabase.from('paper_downloads').insert({
-        paper_id: paperId,
-        user_id: profile.id,
-        downloaded_at: new Date().toISOString(),
-      });
-
-      void insertError;
-    } catch (error) {
-      console.warn('[trackDownload] Error tracking download:', error);
-      throw error;
     }
   },
 

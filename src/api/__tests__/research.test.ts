@@ -397,53 +397,6 @@ describe('researchApi.trackView', () => {
   });
 });
 
-describe('researchApi.trackDownload', () => {
-  it('increments the download count when downloads are allowed', async () => {
-    queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
-    mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ data: { allow_download: true } }))
-    );
-    mockSupabase.rpc.mockResolvedValueOnce({ error: null });
-    const insertBuilder = createQueryBuilder(queryResult());
-    mockSupabase.from.mockReturnValueOnce(insertBuilder);
-
-    await researchApi.trackDownload('p1');
-
-    expect(mockSupabase.rpc).toHaveBeenCalledWith('increment_download_count', { row_id: 'p1' });
-    expect(insertBuilder.insert).toHaveBeenCalledWith(
-      expect.objectContaining({ paper_id: 'p1', user_id: 'student-1' })
-    );
-  });
-
-  it('rejects when downloads are not allowed for the paper', async () => {
-    queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
-    mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ data: { allow_download: false } }))
-    );
-
-    await expect(researchApi.trackDownload('p1')).rejects.toThrow(
-      'Downloads are not allowed for this paper.'
-    );
-  });
-
-  it('propagates a Supabase error from the RPC call', async () => {
-    queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
-    mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ data: { allow_download: true } }))
-    );
-    mockSupabase.rpc.mockResolvedValueOnce({ error: { message: 'rpc down' } });
-
-    await expect(researchApi.trackDownload('p1')).rejects.toThrow('rpc down');
-  });
-
-  it('throws when the paper is not found', async () => {
-    queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
-    mockSupabase.from.mockReturnValueOnce(createQueryBuilder(queryResult({ data: null })));
-
-    await expect(researchApi.trackDownload('missing')).rejects.toThrow('Paper not found.');
-  });
-});
-
 describe('researchApi.getProfileData', () => {
   it('computes stats from the caller papers', async () => {
     // First profile lookup drives getMyPapers(); second drives the standalone

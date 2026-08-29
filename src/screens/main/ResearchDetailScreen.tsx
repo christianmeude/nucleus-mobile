@@ -264,19 +264,11 @@ export const ResearchDetailScreen = () => {
 
           <View style={styles.metaRow}>
             <Text style={styles.metaText}>{formatDate(displayDate)}</Text>
-            <Text style={styles.metaSep}>/</Text>
+            <Text style={styles.metaSep}>·</Text>
             <Text style={styles.metaText}>{paper.view_count || 0} views</Text>
-            <Text style={styles.metaSep}>/</Text>
-            <Text style={styles.metaText}>{paper.download_count || 0} downloads</Text>
           </View>
 
-          {/* Download is disabled pending backend allow_download support (Issue #8). */}
           <View style={styles.readRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ ...theme.typography.bodySmall, color: theme.colors.text.muted, fontStyle: 'italic' }}>
-                Download unavailable
-              </Text>
-            </View>
             {annotations.length > 0 && showFeedback ? (
               <PressableScale
                 style={styles.feedbackBtn}

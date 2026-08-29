@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Icon } from './ui/Icon';
-import { Eye, Download } from 'lucide-react-native';
+import { Eye } from 'lucide-react-native';
 import { PressableCard, Surface } from './ui';
 import { ResearchPaper } from '../types/domain';
 import { formatDate, getPrimaryAuthorName, paperDate, statusToLabel } from '../utils/format';
@@ -78,11 +78,7 @@ export const ResearchCard = memo(({
         >
           <View style={styles.engagementItem}>
             <Icon icon={Eye} size={14} color={theme.colors.text.muted} />
-            <Text style={styles.meta}>{paper.view_count || 0}</Text>
-          </View>
-          <View style={styles.engagementItem}>
-            <Icon icon={Download} size={14} color={theme.colors.text.muted} />
-            <Text style={styles.meta}>{paper.download_count || 0}</Text>
+            <Text style={styles.meta}>{paper.view_count || 0} views</Text>
           </View>
         </View>
       ) : null}
