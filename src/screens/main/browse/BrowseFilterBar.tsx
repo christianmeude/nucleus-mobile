@@ -18,6 +18,8 @@ export interface BrowseFilterBarProps {
   onOpenDeptSheet: () => void;
   onOpenYearSheet: () => void;
   onChangeViewMode: (mode: ViewMode) => void;
+  onClearFilters: () => void;
+  hasActiveFilters: boolean;
 }
 
 export const BrowseFilterBar = ({
@@ -30,6 +32,8 @@ export const BrowseFilterBar = ({
   onOpenDeptSheet,
   onOpenYearSheet,
   onChangeViewMode,
+  onClearFilters,
+  hasActiveFilters,
 }: BrowseFilterBarProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -40,88 +44,72 @@ export const BrowseFilterBar = ({
 
   return (
     <View style={styles.subbar}>
-      <Text style={styles.resultCount}>
-        {resultCount} {resultCount === 1 ? 'Paper' : 'Papers'}
-      </Text>
-      <View style={styles.pillsRow}>
-        <PressableScale
-          style={[styles.pill, fieldActive && styles.pillActive]}
-          onPress={onOpenFieldSheet}
-          accessibilityRole="button"
-          accessibilityLabel={`Field: ${fieldLabel}`}
-          hitSlop={8}
-        >
-          <Text
-            style={[styles.pillText, fieldActive && styles.pillTextActive]}
-            numberOfLines={1}
-          >
+      <View style={styles.headerRow}>
+        <Text style={styles.resultCount}>
+          {resultCount} {resultCount === 1 ? 'Paper' : 'Papers'}
+        </Text>
+        
+        <View style={styles.headerActions}>
+          {hasActiveFilters && (
+            <PressableScale onPress={onClearFilters} style={styles.clearBtn}>
+              <Text style={styles.clearText}>Clear</Text>
+            </PressableScale>
+          )}
+
+          <View style={styles.viewToggle}>
+            <PressableScale
+              style={[styles.vt, viewMode === 'list' && styles.vtActive]}
+              onPress={() => onChangeViewMode('list')}
+              accessibilityRole="button"
+              accessibilityLabel="List view"
+            >
+              <Icon
+                icon={List}
+                size={16}
+                color={viewMode === 'list' ? theme.colors.brand.primary : theme.colors.text.muted}
+              />
+            </PressableScale>
+            <PressableScale
+              style={[styles.vt, viewMode === 'grid' && styles.vtActive]}
+              onPress={() => onChangeViewMode('grid')}
+              accessibilityRole="button"
+              accessibilityLabel="Grid view"
+            >
+              <Icon
+                icon={LayoutGrid}
+                size={14}
+                color={viewMode === 'grid' ? theme.colors.brand.primary : theme.colors.text.muted}
+              />
+            </PressableScale>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.filterBar}>
+        <PressableScale style={styles.filterSegment} onPress={onOpenFieldSheet}>
+          <Text style={[styles.segmentText, fieldActive && styles.segmentTextActive]} numberOfLines={1}>
             {fieldLabel}
           </Text>
-          <Icon
-            icon={ChevronDown}
-            size={14}
-            color={fieldActive ? theme.colors.brand.primary : theme.colors.text.secondary}
-          />
+          <Icon icon={ChevronDown} size={14} color={fieldActive ? theme.colors.brand.primary : theme.colors.text.disabled} />
         </PressableScale>
-        <PressableScale
-          style={[styles.pill, deptActive && styles.pillActive]}
-          onPress={onOpenDeptSheet}
-          accessibilityRole="button"
-          accessibilityLabel={`Department or program: ${deptLabel}`}
-          hitSlop={8}
-        >
-          <Text
-            style={[styles.pillText, deptActive && styles.pillTextActive]}
-            numberOfLines={1}
-          >
+        
+        <View style={styles.divider} />
+        
+        <PressableScale style={styles.filterSegment} onPress={onOpenDeptSheet}>
+          <Text style={[styles.segmentText, deptActive && styles.segmentTextActive]} numberOfLines={1}>
             {deptLabel}
           </Text>
-          <Icon
-            icon={ChevronDown}
-            size={14}
-            color={deptActive ? theme.colors.brand.primary : theme.colors.text.secondary}
-          />
+          <Icon icon={ChevronDown} size={14} color={deptActive ? theme.colors.brand.primary : theme.colors.text.disabled} />
         </PressableScale>
-        <PressableScale
-          style={[styles.pill, yearActive && styles.pillActive]}
-          onPress={onOpenYearSheet}
-          accessibilityRole="button"
-          accessibilityLabel={`Year: ${yearLabel}`}
-          hitSlop={8}
-        >
-          <Text style={[styles.pillText, yearActive && styles.pillTextActive]}>{yearLabel}</Text>
-          <Icon
-            icon={ChevronDown}
-            size={14}
-            color={yearActive ? theme.colors.brand.primary : theme.colors.text.secondary}
-          />
+        
+        <View style={styles.divider} />
+        
+        <PressableScale style={styles.filterSegment} onPress={onOpenYearSheet}>
+          <Text style={[styles.segmentText, yearActive && styles.segmentTextActive]} numberOfLines={1}>
+            {yearLabel}
+          </Text>
+          <Icon icon={ChevronDown} size={14} color={yearActive ? theme.colors.brand.primary : theme.colors.text.disabled} />
         </PressableScale>
-        <View style={styles.viewToggle}>
-          <PressableScale
-            style={[styles.vt, viewMode === 'list' && styles.vtActive]}
-            onPress={() => onChangeViewMode('list')}
-            accessibilityRole="button"
-            accessibilityLabel="List view"
-          >
-            <Icon
-              icon={List}
-              size={17}
-              color={viewMode === 'list' ? theme.colors.brand.primary : theme.colors.text.muted}
-            />
-          </PressableScale>
-          <PressableScale
-            style={[styles.vt, viewMode === 'grid' && styles.vtActive]}
-            onPress={() => onChangeViewMode('grid')}
-            accessibilityRole="button"
-            accessibilityLabel="Grid view"
-          >
-            <Icon
-              icon={LayoutGrid}
-              size={15}
-              color={viewMode === 'grid' ? theme.colors.brand.primary : theme.colors.text.muted}
-            />
-          </PressableScale>
-        </View>
       </View>
     </View>
   );
@@ -132,7 +120,13 @@ export const makeStyles = (theme: Theme) =>
     subbar: {
       flexDirection: 'column',
       alignItems: 'stretch',
-      gap: theme.spacing.sm,
+      gap: theme.spacing.md,
+      marginBottom: theme.spacing.sm,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
     },
     resultCount: {
       fontFamily: theme.fontFamilies.ui.semibold,
@@ -141,37 +135,53 @@ export const makeStyles = (theme: Theme) =>
       textTransform: 'uppercase',
       color: theme.colors.text.disabled,
     },
-    pillsRow: {
+    headerActions: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: theme.spacing.sm,
-      flexWrap: 'wrap',
+      gap: theme.spacing.md,
     },
-    pill: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-      paddingHorizontal: 10,
-      paddingVertical: 6,
-      borderRadius: theme.radii.pill,
-      borderCurve: 'continuous',
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.border.subtle,
-      backgroundColor: theme.colors.surface.raised,
-      maxWidth: 128,
+    clearBtn: {
+      paddingHorizontal: 8,
+      paddingVertical: 4,
     },
-    pillActive: {
-      backgroundColor: theme.colors.brand.primarySoft,
-      borderColor: theme.colors.brand.primary,
-    },
-    pillText: {
+    clearText: {
       fontFamily: theme.fontFamilies.ui.medium,
       fontSize: 13,
       color: theme.colors.text.secondary,
+    },
+    filterBar: {
+      flexDirection: 'row',
+      alignItems: 'stretch',
+      height: 40,
+      borderRadius: theme.radii.lg,
+      borderCurve: 'continuous',
+      borderWidth: 1,
+      borderColor: theme.colors.border.subtle,
+      backgroundColor: theme.colors.surface.base,
+      overflow: 'hidden',
+    },
+    filterSegment: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 8,
+      gap: 4,
+    },
+    segmentText: {
+      fontFamily: theme.fontFamilies.ui.medium,
+      fontSize: 13,
+      color: theme.colors.text.primary,
       flexShrink: 1,
     },
-    pillTextActive: {
+    segmentTextActive: {
       color: theme.colors.brand.primary,
+      fontFamily: theme.fontFamilies.ui.semibold,
+    },
+    divider: {
+      width: 1,
+      backgroundColor: theme.colors.border.subtle,
+      marginVertical: 8,
     },
     viewToggle: {
       flexDirection: 'row',
@@ -191,5 +201,6 @@ export const makeStyles = (theme: Theme) =>
     },
     vtActive: {
       backgroundColor: theme.colors.surface.raised,
+      ...theme.shadows.level1,
     },
   });

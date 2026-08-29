@@ -314,6 +314,16 @@ export const BrowseScreen = () => {
     : deptFilter || 'All departments';
   const showClear = Boolean(query.trim());
 
+  const hasActiveFilters = !!(categoryFilter || deptFilter || programSel || yearFrom || yearTo);
+
+  const handleClearFilters = useCallback(() => {
+    setCategoryFilter('');
+    setDeptFilter('');
+    setProgramSel(null);
+    setYearFrom('');
+    setYearTo('');
+  }, []);
+
   const listHeaderElement = (
     <>
       <View style={styles.listHeader}>
@@ -332,6 +342,8 @@ export const BrowseScreen = () => {
             yearSheetRef.current?.present();
           }}
           onChangeViewMode={setViewMode}
+          onClearFilters={handleClearFilters}
+          hasActiveFilters={hasActiveFilters}
         />
 
         {error ? <InlineNotice tone="danger" message={error} /> : null}

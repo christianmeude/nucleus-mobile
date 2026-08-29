@@ -27,10 +27,9 @@ import {
   SegmentedControl,
   Skeleton,
   TopBar,
-  BottomSheet,
   Button,
   SheetPresenter,
-  BottomSheetTextInput,
+  Input,
 } from '../../components/ui';
 
 type FilterKey = 'all' | 'active' | 'published' | 'action';
@@ -169,124 +168,123 @@ export const MyPapersScreen = () => {
   const keyExtractor = useCallback((item: ResearchPaper) => item.id, []);
 
   return (
-    <Screen gutter={0} edges={{ bottom: false }}>
-      <View style={styles.header}>
-        <TopBar variant="compact">
-          <View style={styles.titleWrap}>
-            <Text style={styles.title}>My Papers</Text>
-            <Text style={styles.subtitle}>{subtitle}</Text>
-          </View>
-        </TopBar>
+    <SheetPresenter
+      open={!!publishTarget}
+      onClose={() => {
+        setPublishTarget(null);
+        setDoiInput('');
+        setPublishError('');
+      }}
+      sheet={
+        <View style={styles.sheetContent}>
+          <Text style={styles.sheetTitle}>Formal publication</Text>
+          <Text style={styles.sheetDesc}>
+            Your paper is approved for the internal repository. If you have published it externally, enter your journal's DOI to request formal publication.
+          </Text>
 
-        <SearchField
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Search your papers"
-          accessibilityLabel="Search papers"
-          accessibilityHint="Filters your papers by title, abstract, or keywords"
-        />
-
-        <SegmentedControl
-          options={[
-            { key: 'all', label: 'All' },
-            { key: 'active', label: 'In Review' },
-            { key: 'action', label: 'Needs Revision' },
-            { key: 'published', label: 'Approved' },
-          ]}
-          value={activeFilter}
-          onValueChange={(k) => setActiveFilter(k as FilterKey)}
-        />
-      </View>
-
-      <LegendList
-        recycleItems={true}
-        drawDistance={1500}
-        maintainScrollAtEnd={false}
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={theme.colors.brand.primary}
-            colors={[theme.colors.brand.primary]}
+          <Input
+            placeholder="e.g. 10.1234/example"
+            value={doiInput}
+            onChangeText={setDoiInput}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="url"
+            containerStyle={styles.sheetInput}
           />
-        }
-        ListHeaderComponent={() => (
-          <View style={styles.listHeader}>
 
-            {error ? <InlineNotice tone="danger" message={error} /> : null}
+          {publishError ? (
+            <View style={{ marginBottom: 16 }}>
+              <InlineNotice tone="danger" message={publishError} />
+            </View>
+          ) : null}
 
-            {loading ? (
-              <View style={styles.skeletonList}>
-                <Skeleton height={104} />
-                <Skeleton height={104} />
-                <Skeleton height={104} />
-              </View>
-            ) : filtered.length === 0 ? (
-              <EmptyState context={papers.length === 0 ? 'no-papers' : 'no-results'} />
-            ) : null}
-          </View>
-        )}
-        data={loading || filtered.length === 0 ? [] : filtered}
-        keyExtractor={keyExtractor}
-        estimatedItemSize={104}
-        renderItem={renderPaperItem}
-      />
-      
-      <Pressable
-        style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
-        onPress={() => navigation.getParent()?.navigate('SubmitResearch')}
-        accessibilityRole="button"
-        accessibilityLabel="Submit research"
-      >
-        <Icon icon={Plus} size={24} color={theme.colors.text.onBrand} />
-      </Pressable>
+          <Button
+            label="Submit for validation"
+            onPress={submitPublishRequest}
+            loading={publishSubmitting}
+          />
+        </View>
+      }
+    >
+      <Screen gutter={0} edges={{ bottom: false }}>
+        <View style={styles.header}>
+          <TopBar variant="compact">
+            <View style={styles.titleWrap}>
+              <Text style={styles.title}>My Papers</Text>
+              <Text style={styles.subtitle}>{subtitle}</Text>
+            </View>
+          </TopBar>
 
-      <SheetPresenter
-        visible={!!publishTarget}
-        onClose={() => {
-          setPublishTarget(null);
-          setDoiInput('');
-          setPublishError('');
-        }}
-      >
-        <BottomSheet
-          title="Formal publication"
-          onClose={() => {
-            setPublishTarget(null);
-            setDoiInput('');
-            setPublishError('');
-          }}
+          <SearchField
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search your papers"
+            accessibilityLabel="Search your papers"
+            accessibilityHint="Filters your papers by title, abstract, or keywords"
+          />
+
+          <SegmentedControl
+            options={[
+              { key: 'all', label: 'All' },
+              { key: 'active', label: 'In Review' },
+              { key: 'action', label: 'Needs Revision' },
+              { key: 'published', label: 'Approved' },
+            ]}
+            value={activeFilter}
+            onValueChange={(k) => setActiveFilter(k as FilterKey)}
+          />
+        </View>
+
+        <LegendList
+          recycleItems={true}
+          drawDistance={1500}
+          maintainScrollAtEnd={false}
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={theme.colors.brand.primary}
+              colors={[theme.colors.brand.primary]}
+            />
+          }
+          ListHeaderComponent={() => (
+            <View style={styles.listHeader}>
+
+              {error ? <InlineNotice tone="danger" message={error} /> : null}
+
+              {loading ? (
+                <View style={styles.skeletonList}>
+                  <Skeleton height={140} radius="lg" />
+                  <Skeleton height={140} radius="lg" />
+                </View>
+              ) : null}
+
+              {!loading && filtered.length === 0 ? (
+                <EmptyState
+                  title="No papers found"
+                  message={query ? "Try adjusting your search terms." : "You haven't submitted any papers yet."}
+                />
+              ) : null}
+            </View>
+          )}
+          data={loading || filtered.length === 0 ? [] : filtered}
+          keyExtractor={keyExtractor}
+          estimatedItemSize={220}
+          renderItem={renderPaperItem}
+        />
+        
+        <Pressable
+          style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
+          onPress={() => navigation.getParent()?.navigate('SubmitResearch')}
+          accessibilityRole="button"
+          accessibilityLabel="Submit research"
         >
-          <View style={styles.sheetContent}>
-            <Text style={styles.sheetDesc}>
-              Your paper is approved for the internal repository. If you have published it externally, enter your journal's DOI to request formal publication.
-            </Text>
-
-            <BottomSheetTextInput
-              placeholder="e.g. 10.1234/example"
-              value={doiInput}
-              onChangeText={setDoiInput}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="url"
-              containerStyle={styles.sheetInput}
-            />
-
-            {publishError ? (
-              <InlineNotice tone="danger" message={publishError} style={{ marginBottom: 16 }} />
-            ) : null}
-
-            <Button
-              label="Submit for validation"
-              onPress={submitPublishRequest}
-              loading={publishSubmitting}
-            />
-          </View>
-        </BottomSheet>
-      </SheetPresenter>
-    </Screen>
+          <Icon icon={Plus} size={24} color={theme.colors.text.onBrand} />
+        </Pressable>
+      </Screen>
+    </SheetPresenter>
   );
 };
 
@@ -398,6 +396,13 @@ const makeStyles = (t: Theme) =>
     },
     sheetContent: {
       paddingBottom: t.spacing.xl,
+      paddingHorizontal: t.spacing.lg,
+      paddingTop: t.spacing.md,
+    },
+    sheetTitle: {
+      ...t.typography.h3,
+      color: t.colors.text.primary,
+      marginBottom: t.spacing.xs,
     },
     sheetDesc: {
       ...t.typography.body,

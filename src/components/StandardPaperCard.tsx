@@ -78,9 +78,9 @@ export const StandardPaperCard = memo(({
         {variant === 'papers' ? (
           <View style={styles.progressContainer}>
             <PaperProgressMap status={paper.status} variant="list" />
-            {paper.status === 'approved' && !paper.publish_requested_at && (
+            {paper.status === 'approved' && !paper.publish_requested_at && !!onRequestPublication && (
               <View style={styles.actionRow}>
-                <Button label="Request Publication" variant="secondary" size="small" onPress={onRequestPublication} />
+                <Button label="Request Publication" variant="secondary" size="sm" onPress={onRequestPublication} />
               </View>
             )}
             {paper.status === 'approved' && paper.publish_requested_at && (
