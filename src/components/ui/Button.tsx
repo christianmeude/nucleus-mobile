@@ -26,9 +26,34 @@ export const Button = ({
   accessibilityLabel,
   icon,
 }: ButtonProps) => {
-  const { theme } = useTheme();
+  const { theme, scheme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const isBlocked = disabled || loading;
+  const isDark = scheme === 'dark';
+  const isStateVariant = variant === 'accent' || variant === 'danger' || variant === 'success';
+
+  // Dark notification-tile style: muted surface + colored border/label
+  const darkStateStyle = isDark && isStateVariant
+    ? variant === 'accent'
+      ? { backgroundColor: theme.colors.state.warningSurface, borderColor: 'rgba(130, 102, 30, 0.32)' }
+      : variant === 'danger'
+        ? { backgroundColor: theme.colors.state.dangerSurface, borderColor: 'rgba(127, 29, 29, 0.32)' }
+        : { backgroundColor: theme.colors.state.successSurface, borderColor: 'rgba(6, 95, 70, 0.32)' }
+    : null;
+  const darkStatePressedStyle = isDark && isStateVariant
+    ? variant === 'accent'
+      ? { backgroundColor: 'rgba(130, 102, 30, 0.24)', borderColor: 'rgba(130, 102, 30, 0.45)' }
+      : variant === 'danger'
+        ? { backgroundColor: 'rgba(127, 29, 29, 0.24)', borderColor: 'rgba(127, 29, 29, 0.45)' }
+        : { backgroundColor: 'rgba(6, 95, 70, 0.24)', borderColor: 'rgba(6, 95, 70, 0.45)' }
+    : null;
+  const darkLabelStyle = isDark && isStateVariant
+    ? variant === 'accent'
+      ? { color: theme.colors.state.warning }
+      : variant === 'danger'
+        ? { color: theme.colors.state.danger }
+        : { color: theme.colors.state.success }
+    : null;
 
   return (
     <Pressable
@@ -40,8 +65,10 @@ export const Button = ({
         styles.base,
         styles[size],
         styles[`${variant}Base`],
+        isDark && isStateVariant ? darkStateStyle : null,
         isBlocked ? styles.blocked : null,
         pressed && !isBlocked ? styles[`${variant}Pressed`] : null,
+        pressed && !isBlocked && isDark && isStateVariant ? darkStatePressedStyle : null,
         pressed && !isBlocked ? styles.pressedScale : null,
       ]}
     >
@@ -63,7 +90,7 @@ export const Button = ({
       ) : (
         <>
           {icon}
-          <Text style={[styles.label, styles[`${variant}Label`]]}>{label}</Text>
+          <Text style={[styles.label, styles[`${variant}Label`], darkLabelStyle as any]}>{label}</Text>
         </>
       )}
     </Pressable>

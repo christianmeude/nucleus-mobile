@@ -47,7 +47,7 @@ function titleCase(value?: string | null, fallback = ''): string {
 export const FacultyReviewDetailScreen = () => {
   const route = useRoute<FacultyDetailRoute>();
   const navigation = useNavigation<FacultyNavigation>();
-  const { theme } = useTheme();
+  const { theme, scheme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { paperId } = route.params;
   const [detail, setDetail] = useState<FacultyReviewDetail | null>(null);
@@ -368,18 +368,18 @@ export const FacultyReviewDetailScreen = () => {
               <Text style={styles.sectionTitle}>Your decision</Text>
               <View style={styles.decisionRow}>
                 <View style={styles.decisionButtonWrapper}>
-                  <Button label="Reject" variant="danger" icon={<Icon icon={CircleX} size={18} color={theme.colors.text.onBrand} />} onPress={() => openSheet('reject')} />
+                  <Button label="Reject" variant="danger" icon={<Icon icon={CircleX} size={18} color={scheme === 'dark' ? theme.colors.state.danger : theme.colors.text.onBrand} />} onPress={() => openSheet('reject')} />
                 </View>
                 <View style={styles.decisionButtonWrapper}>
                   <Button
                     label="Revision"
                     variant="accent"
-                    icon={<Icon icon={Pencil} size={18} color={theme.colors.text.onBrand} />}
+                    icon={<Icon icon={Pencil} size={18} color={scheme === 'dark' ? theme.colors.state.warning : theme.colors.text.onAccent} />}
                     onPress={() => openSheet('revision')}
                   />
                 </View>
                 <View style={styles.decisionButtonWrapper}>
-                  <Button label="Approve" variant="success" icon={<Icon icon={CircleCheck} size={18} color={theme.colors.text.onBrand} />} onPress={openApprove} />
+                  <Button label="Approve" variant="success" icon={<Icon icon={CircleCheck} size={18} color={scheme === 'dark' ? theme.colors.state.success : theme.colors.text.onBrand} />} onPress={openApprove} />
                 </View>
               </View>
             </View>
