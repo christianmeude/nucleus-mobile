@@ -42,25 +42,32 @@ export interface BrowseHeaderProps {
   submitSearch: () => void;
   clearSearch: () => void;
   showClear: boolean;
+  filterNode?: React.ReactNode;
 }
 
 export const BrowseHeader = ({
   query,
   setQuery,
   submitSearch,
+  filterNode,
 }: BrowseHeaderProps) => {
   const styles = useThemedStyles(makeStyles);
 
   return (
     <View style={styles.headerBlock}>
-      <SearchField
-        value={query}
-        onChangeText={setQuery}
-        onSubmitEditing={submitSearch}
-        placeholder="Search papers, authors, keywords"
-        accessibilityLabel="Search papers"
-        accessibilityHint="Filters published papers by title, author, or keyword"
-      />
+      <View style={styles.searchRow}>
+        <View style={styles.searchFlex}>
+          <SearchField
+            value={query}
+            onChangeText={setQuery}
+            onSubmitEditing={submitSearch}
+            placeholder="Search papers, authors, keywords"
+            accessibilityLabel="Search papers"
+            accessibilityHint="Filters published papers by title, author, or keyword"
+          />
+        </View>
+        {filterNode}
+      </View>
     </View>
   );
 };
@@ -69,6 +76,14 @@ export const makeStyles = (theme: Theme) =>
   StyleSheet.create({
     headerBlock: {
       position: 'relative',
+    },
+    searchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+    },
+    searchFlex: {
+      flex: 1,
     },
     greeting: {
       position: 'absolute',

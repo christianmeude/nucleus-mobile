@@ -34,7 +34,9 @@ import {
 import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
 
 import { BrowseHeader } from './browse/BrowseHeader';
-import { BrowseFilterBar } from './browse/BrowseFilterBar';
+import { BrowseControls } from './browse/BrowseControls';
+import { BrowseFilterSystem } from './browse/BrowseFilterSystem';
+import { BrowseFilterState, INITIAL_FILTER_STATE, getActiveFilterCount } from './browse/types';
 import { StandardPaperCard } from '../../components/StandardPaperCard';
 import { BrowseGridCell } from './browse/BrowseGridCell';
 import { Button } from '../../components/ui/Button';
@@ -59,18 +61,8 @@ export const BrowseScreen = () => {
   const [departments, setDepartments] = useState<DepartmentRow[]>([]);
   const [programs, setPrograms] = useState<ProgramRow[]>([]);
   const [query, setQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [deptFilter, setDeptFilter] = useState('');
-  const [programSel, setProgramSel] = useState<{ id: string; name: string } | null>(null);
-  const [yearFrom, setYearFrom] = useState('');
-  const [yearTo, setYearTo] = useState('');
-  const [tempYearFrom, setTempYearFrom] = useState('');
-  const [tempYearTo, setTempYearTo] = useState('');
-  const [yearError, setYearError] = useState('');
+  const [filters, setFilters] = useState<BrowseFilterState>(INITIAL_FILTER_STATE);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const yearSheetRef = useRef<BottomSheetModal>(null);
-  const fieldSheetRef = useRef<BottomSheetModal>(null);
-  const deptSheetRef = useRef<BottomSheetModal>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -116,7 +108,7 @@ export const BrowseScreen = () => {
   const paramCategoryId: string | undefined = route.params?.categoryId;
   useEffect(() => {
     if (!paramCategoryId) return;
-    setCategoryFilter(paramCategoryId);
+    setFilters(prev => ({ ...prev, categories: [paramCategoryId] }));
     navigation.setParams({ categoryId: undefined });
   }, [paramCategoryId, navigation]);
 
@@ -147,7 +139,7 @@ export const BrowseScreen = () => {
     let cancelled = false;
     setSearchLoading(true);
     researchApi
-      .searchPapers(debouncedQuery, { yearFrom, yearTo })
+      .searchPapers(debouncedQuery, { yearFrom: filters.yearFrom, yearTo: filters.yearTo })
       .then((rows) => {
         if (cancelled) return;
         setServerResults(rows);
@@ -164,7 +156,7 @@ export const BrowseScreen = () => {
     return () => {
       cancelled = true;
     };
-  }, [useServerSearch, debouncedQuery, yearFrom, yearTo]);
+  }, [useServerSearch, debouncedQuery, filters.yearFrom, filters.yearTo]);
 
   const clearSearch = useCallback(() => {
     setQuery('');
@@ -201,26 +193,25 @@ export const BrowseScreen = () => {
     [categoryColorById, theme],
   );
 
-  const isFiltering = Boolean(query.trim() || categoryFilter || deptFilter || programSel);
+  const hasActiveFilters = getActiveFilterCount(filters) > 0;
+  const isFiltering = Boolean(query.trim()) || hasActiveFilters;
 
   const matched = useMemo(() => {
     let rows = useServerSearch ? (serverResults ?? []) : papers;
 
-    const yFrom = yearFrom ? parseInt(yearFrom, 10) : null;
-    const yTo = yearTo ? parseInt(yearTo, 10) : null;
-
-    const normalizedDept = deptFilter.trim().toLowerCase();
+    const yFrom = filters.yearFrom ? parseInt(filters.yearFrom, 10) : null;
+    const yTo = filters.yearTo ? parseInt(filters.yearTo, 10) : null;
 
     return rows.filter((paper) => {
-      if (categoryFilter && paper.category !== categoryFilter) {
+      if (filters.categories.length > 0 && (!paper.category || !filters.categories.includes(paper.category))) {
         return false;
       }
 
-      if (normalizedDept && (paper.department || '').trim().toLowerCase() !== normalizedDept) {
+      if (filters.departments.length > 0 && (!paper.department || !filters.departments.includes(paper.department))) {
         return false;
       }
 
-      if (programSel && paper.program_id !== programSel.id) {
+      if (filters.programs.length > 0 && (!paper.program_id || !filters.programs.includes(paper.program_id))) {
         return false;
       }
 
@@ -245,7 +236,7 @@ export const BrowseScreen = () => {
 
       return true;
     });
-  }, [useServerSearch, serverResults, categoryFilter, deptFilter, programSel, papers, query, yearFrom, yearTo]);
+  }, [useServerSearch, serverResults, filters, papers, query]);
 
   const sorted = useMemo(() => {
     if (useServerSearch) return matched;
@@ -301,46 +292,18 @@ export const BrowseScreen = () => {
     [viewMode, colorForCategory, categoryNameById, openDetail, reducedMotion],
   );
 
-  let yearLabel = 'All Years';
-  if (yearFrom && yearTo) yearLabel = `${yearFrom} - ${yearTo}`;
-  else if (yearFrom) yearLabel = `From ${yearFrom}`;
-  else if (yearTo) yearLabel = `Up to ${yearTo}`;
-
-  const fieldLabel = categoryFilter
-    ? (resolveCategoryName(categoryFilter, categoryNameById) ?? 'Field')
-    : 'All fields';
-  const deptLabel = programSel
-    ? programSel.name
-    : deptFilter || 'All departments';
   const showClear = Boolean(query.trim());
 
-  const hasActiveFilters = !!(categoryFilter || deptFilter || programSel || yearFrom || yearTo);
-
   const handleClearFilters = useCallback(() => {
-    setCategoryFilter('');
-    setDeptFilter('');
-    setProgramSel(null);
-    setYearFrom('');
-    setYearTo('');
+    setFilters(INITIAL_FILTER_STATE);
   }, []);
 
   const listHeaderElement = (
     <>
       <View style={styles.listHeader}>
-        <BrowseFilterBar
+        <BrowseControls
           resultCount={sorted.length}
-          fieldLabel={fieldLabel}
-          deptLabel={deptLabel}
-          yearLabel={yearLabel}
           viewMode={viewMode}
-          onOpenFieldSheet={() => fieldSheetRef.current?.present()}
-          onOpenDeptSheet={() => deptSheetRef.current?.present()}
-          onOpenYearSheet={() => {
-            setTempYearFrom(yearFrom);
-            setTempYearTo(yearTo);
-            setYearError('');
-            yearSheetRef.current?.present();
-          }}
           onChangeViewMode={setViewMode}
           onClearFilters={handleClearFilters}
           hasActiveFilters={hasActiveFilters}
@@ -392,6 +355,15 @@ export const BrowseScreen = () => {
             submitSearch={submitSearch}
             clearSearch={clearSearch}
             showClear={showClear}
+            filterNode={
+              <BrowseFilterSystem
+                filters={filters}
+                onChange={setFilters}
+                categories={categories}
+                departments={departments}
+                programs={programs}
+              />
+            }
           />
 
           <View style={styles.resultsWrap}>
@@ -422,207 +394,7 @@ export const BrowseScreen = () => {
         </View>
       </Screen>
 
-      <BottomSheet ref={yearSheetRef} onDismiss={() => {
-        setYearError('');
-      }}>
-        <Text style={styles.sheetTitle}>Filter by Year</Text>
-        {!!yearError && (
-          <Text style={{ color: theme.colors.state.danger, marginBottom: 12, ...theme.typography.caption }}>
-            {yearError}
-          </Text>
-        )}
-        <View style={styles.yearInputsRow}>
-          <Input
-            component={BottomSheetTextInput}
-            containerStyle={styles.yearInput}
-            placeholder="From (e.g. 2020)"
-            keyboardType="number-pad"
-            maxLength={4}
-            value={tempYearFrom}
-            onChangeText={setTempYearFrom}
-          />
-          <Input
-            component={BottomSheetTextInput}
-            containerStyle={styles.yearInput}
-            placeholder="To (e.g. 2022)"
-            keyboardType="number-pad"
-            maxLength={4}
-            value={tempYearTo}
-            onChangeText={setTempYearTo}
-          />
-        </View>
-        <View style={{ marginTop: 16 }}>
-          <Button
-            label="Apply Filter"
-            onPress={() => {
-              const fStr = tempYearFrom.trim();
-              const tStr = tempYearTo.trim();
-              const f = parseInt(fStr, 10);
-              const t = parseInt(tStr, 10);
-              
-              if (fStr && tStr && !isNaN(f) && !isNaN(t) && f > t) {
-                setYearError('"From" year cannot be greater than "To" year.');
-                return;
-              }
-              
-              setYearError('');
-              setYearFrom(fStr);
-              setYearTo(tStr);
-              yearSheetRef.current?.dismiss();
-            }}
-          />
-        </View>
-        {(yearFrom || yearTo) && (
-          <View style={{ marginTop: 8 }}>
-            <Button
-              label="Clear Year Filter"
-              variant="subtle"
-              onPress={() => {
-                setYearError('');
-                setYearFrom('');
-                setYearTo('');
-                setTempYearFrom('');
-                setTempYearTo('');
-                yearSheetRef.current?.dismiss();
-              }}
-            />
-          </View>
-        )}
-      </BottomSheet>
-
-      <BottomSheet ref={fieldSheetRef} snapPoints={['50%', '90%']}>
-        <Text style={styles.sheetTitle}>Field</Text>
-        <BottomSheetScrollView
-          showsVerticalScrollIndicator={false}
-          showsHorizontalScrollIndicator={false}
-          style={styles.sheetScroll}
-        >
-          <PressableScale
-            style={styles.sheetRow}
-            onPress={() => {
-              setCategoryFilter('');
-              fieldSheetRef.current?.dismiss();
-            }}
-          >
-            <Text style={[styles.sheetRowText, !categoryFilter ? styles.sheetRowActive : null]}>
-              All fields
-            </Text>
-            {!categoryFilter ? (
-              <Icon icon={Check} size={18} color={theme.colors.brand.primary} />
-            ) : null}
-          </PressableScale>
-          {categories.map((category) => {
-            const active = categoryFilter === category.id;
-            return (
-              <PressableScale
-                key={category.id}
-                style={styles.sheetRow}
-                onPress={() => {
-                  setCategoryFilter(category.id);
-                  fieldSheetRef.current?.dismiss();
-                }}
-              >
-                <Text
-                  style={[styles.sheetRowText, active ? styles.sheetRowActive : null]}
-                  numberOfLines={1}
-                >
-                  {category.name}
-                </Text>
-                {active ? <Icon icon={Check} size={18} color={theme.colors.brand.primary} /> : null}
-              </PressableScale>
-            );
-          })}
-        </BottomSheetScrollView>
-      </BottomSheet>
-
-      <BottomSheet ref={deptSheetRef} snapPoints={['50%', '90%']}>
-        <Text style={styles.sheetTitle}>Department</Text>
-        <Text style={styles.sheetIntro}>
-          Narrow results to a department or a specific program within it.
-        </Text>
-        <BottomSheetScrollView
-          showsVerticalScrollIndicator={false}
-          showsHorizontalScrollIndicator={false}
-          style={styles.sheetScroll}
-        >
-          <PressableScale
-            style={styles.sheetRow}
-            onPress={() => {
-              setDeptFilter('');
-              setProgramSel(null);
-              deptSheetRef.current?.dismiss();
-            }}
-          >
-            <Text
-              style={[
-                styles.sheetRowText,
-                !deptFilter && !programSel ? styles.sheetRowActive : null,
-              ]}
-            >
-              All departments
-            </Text>
-            {!deptFilter && !programSel ? (
-              <Icon icon={Check} size={18} color={theme.colors.brand.primary} />
-            ) : null}
-          </PressableScale>
-          {departments.map((dept) => {
-            const deptPrograms = programs.filter((p) => p.department_id === dept.id);
-            const deptActive = deptFilter === dept.name && !programSel;
-            return (
-              <View key={dept.id}>
-                <PressableScale
-                  style={styles.sheetRow}
-                  onPress={() => {
-                    setDeptFilter(dept.name);
-                    setProgramSel(null);
-                    deptSheetRef.current?.dismiss();
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.sheetRowText,
-                      styles.sheetDeptText,
-                      deptActive ? styles.sheetRowActive : null,
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {dept.name}
-                  </Text>
-                  {deptActive ? (
-                    <Icon icon={Check} size={18} color={theme.colors.brand.primary} />
-                  ) : null}
-                </PressableScale>
-                {deptPrograms.map((program) => {
-                  const progActive = programSel?.id === program.id;
-                  return (
-                    <PressableScale
-                      key={program.id}
-                      style={[styles.sheetRow, styles.sheetProgramRow]}
-                      onPress={() => {
-                        setDeptFilter(dept.name);
-                        setProgramSel({ id: program.id, name: program.name });
-                        deptSheetRef.current?.dismiss();
-                      }}
-                    >
-                      <Text
-                        style={[styles.sheetRowText, progActive ? styles.sheetRowActive : null]}
-                        numberOfLines={1}
-                      >
-                        {program.code ? `${program.code} — ` : ''}
-                        {program.name}
-                      </Text>
-                      {progActive ? (
-                        <Icon icon={Check} size={18} color={theme.colors.brand.primary} />
-                      ) : null}
-                    </PressableScale>
-                  );
-                })}
-              </View>
-            );
-          })}
-        </BottomSheetScrollView>
-      </BottomSheet>
-    </>
+      </>
   );
 };
 
@@ -699,3 +471,4 @@ const makeStyles = (theme: Theme) =>
       flex: 1,
     },
   });
+
