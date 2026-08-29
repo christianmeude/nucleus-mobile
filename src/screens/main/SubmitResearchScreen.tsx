@@ -1441,7 +1441,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
   },
   sheetList: {
-    maxHeight: 320,
+    flex: 1,
   },
   sheetRow: {
     flexDirection: 'row',
