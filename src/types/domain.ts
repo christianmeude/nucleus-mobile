@@ -72,6 +72,7 @@ export interface ResearchPaper {
   revision_notes?: string | null;
   rejection_reason?: string | null;
   view_count?: number;
+  doi?: string | null;
   users?: PaperAuthor | null;
   author?: PaperAuthor | null;
   structured_authors?: StructuredAuthorEntry[];

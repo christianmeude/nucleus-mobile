@@ -83,6 +83,7 @@ interface ResearchPaperRow {
   rejection_reason?: string | null;
   revision_notes?: string | null;
   view_count?: number | null;
+  doi?: string | null;
   author_id?: string | null;
   department?: string | null;
   department_id?: string | null;
@@ -121,6 +122,7 @@ const PAPER_SELECT = `
   rejection_reason,
   revision_notes,
   view_count,
+  doi,
   author_id,
   department,
   department_id,
@@ -252,6 +254,7 @@ function toResearchPaper(row: ResearchPaperRow): ResearchPaper {
     revision_notes: row.revision_notes ?? null,
     rejection_reason: row.rejection_reason ?? null,
     view_count: row.view_count ?? undefined,
+    doi: row.doi ?? null,
     department: row.department ?? null,
     department_id: row.department_id ?? null,
     program_id: row.program_id ?? null,
