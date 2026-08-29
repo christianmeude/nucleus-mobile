@@ -205,11 +205,11 @@ export const dark: ColorScheme = {
   },
   state: {
     success: palette.success[600],
-    successSurface: 'rgba(4, 120, 87, 0.16)',
-    warning: palette.gold[600],
-    warningSurface: 'rgba(174, 136, 41, 0.16)',
+    successSurface: 'rgba(4, 120, 87, 0.14)',
+    warning: palette.gold[700],
+    warningSurface: 'rgba(130, 102, 30, 0.14)',
     danger: palette.danger[600],
-    dangerSurface: 'rgba(185, 28, 28, 0.16)',
+    dangerSurface: 'rgba(185, 28, 28, 0.14)',
   },
 };
 

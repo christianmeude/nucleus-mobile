@@ -125,7 +125,7 @@ const makeStyles = (t: Theme) =>
       borderColor: t.colors.border.subtle,
     },
     accentPressed: {
-      backgroundColor: palette.gold[700],
+      backgroundColor: palette.gold[800],
       borderWidth: 1,
       borderColor: t.colors.border.subtle,
     },
