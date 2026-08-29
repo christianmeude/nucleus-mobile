@@ -36,3 +36,5 @@ export { CollapsibleSection } from './CollapsibleSection';
 export { Icon } from './Icon';
 export { WorkloadChart } from './WorkloadChart';
 export { Input } from './Input';
+export { SearchField } from './SearchField';
+export { SegmentedControl } from './SegmentedControl';

@@ -11,19 +11,20 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { StandardPaperCard } from '../../components/StandardPaperCard';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
-import { Search, Plus } from 'lucide-react-native';
+import { Plus } from 'lucide-react-native';
 
 import {
-  ACTION_STATUSES,
+  REVISE_REQUIRED_STATUSES,
   ACTIVE_STATUSES,
   PUBLISHED_STATUSES,
 } from '../../components/PaperStatusChip';
 import {
-  Chip,
   EmptyState,
   Icon,
   InlineNotice,
   Screen,
+  SearchField,
+  SegmentedControl,
   Skeleton,
   TopBar,
 } from '../../components/ui';
@@ -34,7 +35,7 @@ const isFilterMatch = (status: PaperStatus, filter: FilterKey) => {
   if (filter === 'all') return true;
   if (filter === 'active') return ACTIVE_STATUSES.has(status);
   if (filter === 'published') return PUBLISHED_STATUSES.has(status);
-  return ACTION_STATUSES.has(status);
+  return REVISE_REQUIRED_STATUSES.has(status);
 };
 
 export const MyPapersScreen = () => {
@@ -102,7 +103,7 @@ export const MyPapersScreen = () => {
   const subtitle = useMemo(() => {
     const total = papers.length;
     if (total === 0) return 'No submissions yet';
-    const needsAttention = papers.filter((p) => ACTION_STATUSES.has(p.status)).length;
+    const needsAttention = papers.filter((p) => REVISE_REQUIRED_STATUSES.has(p.status)).length;
     const base = `${total} submission${total === 1 ? '' : 's'}`;
     if (needsAttention === 0) return base;
     return `${base} · ${needsAttention} need${needsAttention === 1 ? 's' : ''} your attention`;
@@ -140,56 +141,24 @@ export const MyPapersScreen = () => {
           </View>
         </TopBar>
 
-        <View style={styles.searchWrap}>
-          <Icon icon={Search} size={18} color={theme.colors.text.muted} />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search your papers"
-            placeholderTextColor={theme.colors.text.disabled}
-            style={styles.searchInput}
-            accessibilityLabel="Search papers"
-            accessibilityHint="Filters your papers by title, abstract, or keywords"
-          />
-          {query ? (
-            <Chip label="Clear" active={false} onPress={() => setQuery('')} variant="filter" />
-          ) : null}
-        </View>
+        <SearchField
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search your papers"
+          accessibilityLabel="Search papers"
+          accessibilityHint="Filters your papers by title, abstract, or keywords"
+        />
 
-        <View style={styles.pillContainer}>
-          {[
-            { key: 'action', label: 'Needs revision' },
-            { key: 'active', label: 'In review' },
-            { key: 'published', label: 'Approved' },
+        <SegmentedControl
+          options={[
             { key: 'all', label: 'All' },
-          ].map((entry) => {
-            const isActive = activeFilter === entry.key;
-            return (
-              <Pressable
-                key={entry.key}
-                style={[
-                  styles.pillSegment,
-                  isActive && { backgroundColor: theme.colors.brand.primary },
-                ]}
-                onPress={() => {
-                  if (!isActive) {
-                    Haptics.selectionAsync();
-                    setActiveFilter(entry.key as FilterKey);
-                  }
-                }}
-              >
-                <Text
-                  style={[
-                    styles.pillSegmentLabel,
-                    isActive && { color: theme.colors.text.onBrand },
-                  ]}
-                >
-                  {entry.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+            { key: 'active', label: 'In Review' },
+            { key: 'action', label: 'Needs Revision' },
+            { key: 'published', label: 'Approved' },
+          ]}
+          value={activeFilter}
+          onValueChange={(k) => setActiveFilter(k as FilterKey)}
+        />
       </View>
 
       <LegendList

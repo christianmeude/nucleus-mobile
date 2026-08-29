@@ -19,10 +19,9 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { Chip, Icon, PressableScale } from '../../../components/ui';
-import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
+import { SearchField } from '../../../components/ui';
+import { useThemedStyles } from '../../../context/ThemeContext';
 import { type Theme } from '../../../theme';
-import { Search } from 'lucide-react-native';
 
 const EXPLORE_DRAG_DISTANCE = 110;
 const EXPLORE_COMMIT_THRESHOLD = 0.4;
@@ -49,34 +48,19 @@ export const BrowseHeader = ({
   query,
   setQuery,
   submitSearch,
-  clearSearch,
-  showClear,
 }: BrowseHeaderProps) => {
-  const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
   return (
     <View style={styles.headerBlock}>
-      <View style={styles.searchWrap}>
-        <Icon icon={Search} size={18} color={theme.colors.text.muted} />
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          onSubmitEditing={submitSearch}
-          returnKeyType="search"
-          placeholder="Search papers, authors, keywords"
-          placeholderTextColor={theme.colors.text.disabled}
-          style={styles.searchInput}
-          accessibilityLabel="Search papers"
-          accessibilityHint="Filters published papers by title, author, or keyword"
-        />
-        <View
-          pointerEvents={showClear ? 'auto' : 'none'}
-          style={showClear ? styles.clearVisible : styles.clearHidden}
-        >
-          <Chip label="Clear" active={false} onPress={clearSearch} variant="filter" />
-        </View>
-      </View>
+      <SearchField
+        value={query}
+        onChangeText={setQuery}
+        onSubmitEditing={submitSearch}
+        placeholder="Search papers, authors, keywords"
+        accessibilityLabel="Search papers"
+        accessibilityHint="Filters published papers by title, author, or keyword"
+      />
     </View>
   );
 };
