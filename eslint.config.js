@@ -45,6 +45,10 @@ module.exports = [
       'react-hooks/purity': 'warn',
       'react-hooks/preserve-manual-memoization': 'warn',
       'react-hooks/immutability': 'warn',
+      'react/display-name': 'warn',
+      'react/no-unescaped-entities': 'warn',
+      'react-hooks/rules-of-hooks': 'warn',
+      'react-hooks/static-components': 'warn',
     },
   },
 ];
