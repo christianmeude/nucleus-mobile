@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, Keyboard } from 'react-native';
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Check, SlidersHorizontal } from 'lucide-react-native';
 
-import { BottomSheet, Button, Icon, Input, PressableScale } from '../../../components/ui';
+import { BottomSheet, Button, Icon, Input, PressableScale, SegmentedControl } from '../../../components/ui';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import { type Theme } from '../../../theme';
 import { Category } from '../../../types/domain';
@@ -28,6 +28,9 @@ export const BrowseFilterSystem = ({
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const sheetRef = useRef<BottomSheetModal>(null);
+
+  type FilterTab = 'fields' | 'departments' | 'year';
+  const [activeTab, setActiveTab] = useState<FilterTab>('fields');
   
   const handleToggleCategory = (id: string) => {
     const next = new Set(filters.categories);
@@ -112,88 +115,104 @@ export const BrowseFilterSystem = ({
           )}
         </View>
 
+        <View style={styles.tabsContainer}>
+          <SegmentedControl
+            value={activeTab}
+            onValueChange={(val) => setActiveTab(val as FilterTab)}
+            options={[
+              { key: 'fields', label: 'FIELDS' },
+              { key: 'departments', label: 'DEPARTMENTS' },
+              { key: 'year', label: 'YEAR RANGE' },
+            ]}
+          />
+        </View>
+
         <BottomSheetScrollView style={styles.sheetScroll} showsVerticalScrollIndicator={false}>
           {/* CATEGORIES / FIELDS */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Fields of Study</Text>
-            {categories.map((cat) => {
-              const active = filters.categories.includes(cat.id);
-              return (
-                <PressableScale key={cat.id} style={styles.row} onPress={() => handleToggleCategory(cat.id)}>
-                  <View style={[styles.checkbox, active && styles.checkboxActive]}>
-                    {active && <Icon icon={Check} size={14} color={theme.colors.surface.base} />}
-                  </View>
-                  <Text style={[styles.rowText, active && styles.rowTextActive]}>{cat.name}</Text>
-                </PressableScale>
-              );
-            })}
-          </View>
+          {activeTab === 'fields' && (
+            <View style={styles.section}>
+              {categories.map((cat) => {
+                const active = filters.categories.includes(cat.id);
+                return (
+                  <PressableScale key={cat.id} style={styles.row} onPress={() => handleToggleCategory(cat.id)}>
+                    <View style={[styles.checkbox, active && styles.checkboxActive]}>
+                      {active && <Icon icon={Check} size={14} color={theme.colors.surface.base} />}
+                    </View>
+                    <Text style={[styles.rowText, active && styles.rowTextActive]}>{cat.name}</Text>
+                  </PressableScale>
+                );
+              })}
+            </View>
+          )}
 
           {/* DEPARTMENTS & PROGRAMS */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Departments</Text>
-            {departments.map((dept) => {
-              const activeDept = filters.departments.includes(dept.name);
-              const deptPrograms = programs.filter((p) => p.department_id === dept.id);
-              return (
-                <View key={dept.id}>
-                  <PressableScale style={styles.row} onPress={() => handleToggleDept(dept.name)}>
-                    <View style={[styles.checkbox, activeDept && styles.checkboxActive]}>
-                      {activeDept && <Icon icon={Check} size={14} color={theme.colors.surface.base} />}
-                    </View>
-                    <Text style={[styles.rowText, activeDept && styles.rowTextActive, { fontFamily: theme.fontFamilies.ui.semibold }]}>
-                      {dept.name}
-                    </Text>
-                  </PressableScale>
+          {activeTab === 'departments' && (
+            <View style={styles.section}>
+              {departments.map((dept) => {
+                const activeDept = filters.departments.includes(dept.name);
+                const deptPrograms = programs.filter((p) => p.department_id === dept.id);
+                return (
+                  <View key={dept.id}>
+                    <PressableScale style={styles.row} onPress={() => handleToggleDept(dept.name)}>
+                      <View style={[styles.checkbox, activeDept && styles.checkboxActive]}>
+                        {activeDept && <Icon icon={Check} size={14} color={theme.colors.surface.base} />}
+                      </View>
+                      <Text style={[styles.rowText, activeDept && styles.rowTextActive, { fontFamily: theme.fontFamilies.ui.semibold }]}>
+                        {dept.name}
+                      </Text>
+                    </PressableScale>
 
-                  {/* Nested Programs */}
-                  {deptPrograms.map((prog) => {
-                    const activeProg = filters.programs.includes(prog.id);
-                    return (
-                      <PressableScale key={prog.id} style={styles.nestedRow} onPress={() => handleToggleProgram(prog.id)}>
-                        <View style={[styles.checkbox, activeProg && styles.checkboxActive]}>
-                          {activeProg && <Icon icon={Check} size={14} color={theme.colors.surface.base} />}
-                        </View>
-                        <Text style={[styles.rowText, activeProg && styles.rowTextActive]}>
-                          {prog.code ? `${prog.code} - ` : ''}{prog.name}
-                        </Text>
-                      </PressableScale>
-                    );
-                  })}
-                </View>
-              );
-            })}
-          </View>
+                    {/* Nested Programs */}
+                    {deptPrograms.map((prog) => {
+                      const activeProg = filters.programs.includes(prog.id);
+                      return (
+                        <PressableScale key={prog.id} style={styles.nestedRow} onPress={() => handleToggleProgram(prog.id)}>
+                          <View style={[styles.checkbox, activeProg && styles.checkboxActive]}>
+                            {activeProg && <Icon icon={Check} size={14} color={theme.colors.surface.base} />}
+                          </View>
+                          <Text style={[styles.rowText, activeProg && styles.rowTextActive]}>
+                            {prog.code ? `${prog.code} - ` : ''}{prog.name}
+                          </Text>
+                        </PressableScale>
+                      );
+                    })}
+                  </View>
+                );
+              })}
+            </View>
+          )}
 
           {/* YEAR FILTER */}
-          <View style={[styles.section, { marginBottom: 64, borderBottomWidth: 0 }]}>
-            <Text style={styles.sectionTitle}>Publication Year</Text>
-            {!!yearError && (
-              <Text style={{ color: theme.colors.state.danger, marginBottom: 12, ...theme.typography.caption }}>
-                {yearError}
-              </Text>
-            )}
-            <View style={styles.yearInputsRow}>
-              <Input
-                containerStyle={styles.yearInput}
-                placeholder="From (e.g. 2020)"
-                keyboardType="number-pad"
-                maxLength={4}
-                value={tempYearFrom}
-                onChangeText={setTempYearFrom}
-                onBlur={applyYear}
-              />
-              <Input
-                containerStyle={styles.yearInput}
-                placeholder="To (e.g. 2022)"
-                keyboardType="number-pad"
-                maxLength={4}
-                value={tempYearTo}
-                onChangeText={setTempYearTo}
-                onBlur={applyYear}
-              />
+          {activeTab === 'year' && (
+            <View style={[styles.section, { marginBottom: 64, borderBottomWidth: 0 }]}>
+              <Text style={styles.sectionTitle}>Publication Year</Text>
+              {!!yearError && (
+                <Text style={{ color: theme.colors.state.danger, marginBottom: 12, ...theme.typography.caption }}>
+                  {yearError}
+                </Text>
+              )}
+              <View style={styles.yearInputsRow}>
+                <Input
+                  containerStyle={styles.yearInput}
+                  placeholder="From (e.g. 2020)"
+                  keyboardType="number-pad"
+                  maxLength={4}
+                  value={tempYearFrom}
+                  onChangeText={setTempYearFrom}
+                  onBlur={applyYear}
+                />
+                <Input
+                  containerStyle={styles.yearInput}
+                  placeholder="To (e.g. 2022)"
+                  keyboardType="number-pad"
+                  maxLength={4}
+                  value={tempYearTo}
+                  onChangeText={setTempYearTo}
+                  onBlur={applyYear}
+                />
+              </View>
             </View>
-          </View>
+          )}
         </BottomSheetScrollView>
       </BottomSheet>
     </>
@@ -232,13 +251,18 @@ const makeStyles = (theme: Theme) =>
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: theme.spacing.xl,
-      paddingBottom: theme.spacing.md,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border.subtle,
+      paddingBottom: theme.spacing.xs, // Reduced padding to pull tabs closer to the title
     },
     sheetTitle: {
       ...theme.typography.h3,
       color: theme.colors.text.primary,
+    },
+    tabsContainer: {
+      paddingHorizontal: theme.spacing.xl,
+      paddingTop: theme.spacing.md,
+      paddingBottom: theme.spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border.subtle,
     },
     sheetScroll: {
       flex: 1,
