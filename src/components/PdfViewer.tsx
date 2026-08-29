@@ -71,8 +71,10 @@ const buildViewerHtml = (
     danger: string;
   },
   firstPageOnly = false,
-  watermarkText = 'NU',
-): string => `<!DOCTYPE html>
+  watermarkText = 'NU DASMARIÑAS',
+): string => {
+  const encodedWatermark = encodeURIComponent(watermarkText);
+  return `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8" />
@@ -80,15 +82,14 @@ const buildViewerHtml = (
 <style>
   html, body { margin: 0; padding: 0; background: ${themeColors.background}; ${firstPageOnly ? 'overflow: hidden;' : ''} }
   #container { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: ${firstPageOnly ? '0' : '8px'}; position: relative; }
-  .watermark { position: fixed; inset: 0; z-index: 6; pointer-events: none; opacity: 1; background-repeat: repeat; background-size: 200px 200px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Ctext x='50%25' y='50%25' font-size='40' font-weight='bold' fill='%23000000' fill-opacity='0.08' text-anchor='middle' dominant-baseline='middle' transform='rotate(-45 100 100)'%3E${watermarkText}%3C/text%3E%3C/svg%3E"); }
+  .page-wrapper::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background-repeat: repeat; background-size: 200px 200px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Ctext x='50%25' y='50%25' font-size='28' font-weight='bold' fill='%23000000' fill-opacity='0.08' text-anchor='middle' dominant-baseline='middle' transform='rotate(-45 100 100)'%3E${encodedWatermark}%3C/text%3E%3C/svg%3E"); }
   .page-wrapper { position: relative; width: 100%; }
-  canvas { width: 100%; height: auto; background: ${themeColors.canvas}; box-shadow: 0 1px 4px ${themeColors.shadow}; display: block; }
-  .ann-overlay { position: absolute; pointer-events: none; display: none; }
+  canvas { width: 100%; height: auto; background: ${themeColors.canvas}; box-shadow: 0 1px 4px ${themeColors.shadow}; display: block; position: relative; z-index: 0; }
+  .ann-overlay { position: absolute; pointer-events: none; display: none; z-index: 2; }
   .ann-pin { border-radius: 50%; border: 2px solid rgba(255,255,255,0.85); width: 16px; height: 16px; transform: translate(-50%,-50%); }
 </style>
 </head>
 <body>
-<div class="watermark"></div>
 <div id="container"></div>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.min.js"></script>
 <script>
@@ -259,6 +260,7 @@ const buildViewerHtml = (
 </script>
 </body>
 </html>`;
+};
 
 interface PdfSurfaceProps {
   uri: string;
@@ -423,7 +425,7 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
                 danger: theme.colors.state.danger,
               },
               firstPageOnly,
-              'NU',
+              'NU DASMARIÑAS',
             ),
             baseUrl: 'https://localhost/',
           }}
