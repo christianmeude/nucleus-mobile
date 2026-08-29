@@ -175,12 +175,12 @@ export const BrowseFilterSystem = ({
               {categories.map((cat) => {
                 const active = filters.categories.includes(cat.id);
                 return (
-                  <PressableScale key={cat.id} style={styles.row} onPress={() => handleToggleCategory(cat.id)}>
+                  <Pressable key={cat.id} style={styles.row} onPress={() => handleToggleCategory(cat.id)}>
                     <View style={[styles.checkbox, active && styles.checkboxActive]}>
                       {active && <Icon icon={Check} size={14} color={theme.colors.surface.base} />}
                     </View>
                     <Text style={[styles.rowText, active && styles.rowTextActive]}>{cat.name}</Text>
-                  </PressableScale>
+                  </Pressable>
                 );
               })}
             </View>
@@ -196,19 +196,19 @@ export const BrowseFilterSystem = ({
                 return (
                   <View key={dept.id}>
                     <View style={styles.deptRowContainer}>
-                      <PressableScale style={styles.deptRowToggle} onPress={() => handleToggleDept(dept.name, deptPrograms)}>
+                      <Pressable style={styles.deptRowToggle} onPress={() => handleToggleDept(dept.name, deptPrograms)}>
                         <View style={[styles.checkbox, activeDept && styles.checkboxActive]}>
                           {activeDept && <Icon icon={Check} size={14} color={theme.colors.surface.base} />}
                         </View>
                         <Text style={[styles.rowText, activeDept && styles.rowTextActive, { fontFamily: theme.fontFamilies.ui.semibold }]}>
                           {dept.name}
                         </Text>
-                      </PressableScale>
+                      </Pressable>
 
                       {deptPrograms.length > 0 && (
-                        <PressableScale style={styles.deptRowExpand} onPress={() => toggleDeptExpansion(dept.id)}>
+                        <Pressable style={styles.deptRowExpand} onPress={() => toggleDeptExpansion(dept.id)}>
                           <Icon icon={isExpanded ? ChevronUp : ChevronDown} size={20} color={theme.colors.text.muted} />
-                        </PressableScale>
+                        </Pressable>
                       )}
                     </View>
 
@@ -216,14 +216,14 @@ export const BrowseFilterSystem = ({
                     {isExpanded && deptPrograms.map((prog) => {
                       const activeProg = filters.programs.includes(prog.id);
                       return (
-                        <PressableScale key={prog.id} style={styles.nestedRow} onPress={() => handleToggleProgram(prog.id)}>
+                        <Pressable key={prog.id} style={styles.nestedRow} onPress={() => handleToggleProgram(prog.id)}>
                           <View style={[styles.checkbox, activeProg && styles.checkboxActive]}>
                             {activeProg && <Icon icon={Check} size={14} color={theme.colors.surface.base} />}
                           </View>
                           <Text style={[styles.rowText, activeProg && styles.rowTextActive]}>
                             {prog.code ? `${prog.code} - ` : ''}{prog.name}
                           </Text>
-                        </PressableScale>
+                        </Pressable>
                       );
                     })}
                   </View>
