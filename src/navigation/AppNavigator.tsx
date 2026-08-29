@@ -1,5 +1,15 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+  runOnJS,
+} from 'react-native-reanimated';
+import { useEffect, useRef, useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
@@ -42,14 +52,67 @@ const StudentTabs = () => {
   );
 };
 
-const FullScreenLoader = () => {
-  const { theme } = useTheme();
+const FullScreenLoader = ({ exiting, onFinished }: { exiting?: boolean; onFinished?: () => void }) => {
   const styles = useThemedStyles(makeStyles);
+  const opacity = useSharedValue(0);
+  const scale = useSharedValue(1);
+  const translateY = useSharedValue(0);
+  const haloScale = useSharedValue(0.9);
+  const haloOpacity = useSharedValue(0.18);
+
+  useEffect(() => {
+    opacity.value = withTiming(1, { duration: 320, easing: Easing.out(Easing.quad) });
+    scale.value = withRepeat(
+      withSequence(
+        withTiming(1.06, { duration: 600, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 600, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      true,
+    );
+    haloScale.value = withRepeat(
+      withSequence(
+        withTiming(1.25, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.9, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      true,
+    );
+    haloOpacity.value = withRepeat(
+      withSequence(
+        withTiming(0, { duration: 1200 }),
+        withTiming(0.18, { duration: 1200 }),
+      ),
+      -1,
+      true,
+    );
+  }, []);
+
+  useEffect(() => {
+    if (exiting) {
+      opacity.value = withTiming(0, { duration: 380, easing: Easing.in(Easing.quad) });
+      translateY.value = withTiming(-160, { duration: 520, easing: Easing.inOut(Easing.cubic) }, (finished) => {
+        if (finished && onFinished) runOnJS(onFinished)();
+      });
+      haloOpacity.value = withTiming(0, { duration: 300 });
+    }
+  }, [exiting]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }, { scale: scale.value }],
+  }));
+  const haloStyle = useAnimatedStyle(() => ({
+    opacity: haloOpacity.value,
+    transform: [{ scale: haloScale.value }],
+  }));
+
   return (
     <View style={styles.loaderContainer}>
-      <Logo size="sm" showWordmark={false} />
-      <ActivityIndicator size="large" color={theme.colors.brand.primary} />
-      <Text style={styles.loaderText}>Restoring session...</Text>
+      <Animated.View style={[styles.halo, haloStyle]} />
+      <Animated.View style={animatedStyle}>
+        <Logo size="lg" showWordmark={false} />
+      </Animated.View>
     </View>
   );
 };
@@ -58,11 +121,29 @@ export const AppNavigator = () => {
   const { user, loading } = useAuth();
   const { theme } = useTheme();
   const { hasOnboarded, loaded: onboardingLoaded, markOnboarded } = useHasOnboarded();
+  const [loaderDismissed, setLoaderDismissed] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+  const startRef = useRef<number>(Date.now());
 
-  // Wait for auth and — for students — the persisted onboarding flag before
-  // deciding what to show, so a returning student never flashes the A4 carousel.
-  if (loading || (user?.role === 'student' && !onboardingLoaded)) {
-    return <FullScreenLoader />;
+  const needsLoader = loading || (user?.role === 'student' && !onboardingLoaded);
+
+  useEffect(() => {
+    if (!needsLoader && !loaderDismissed && !isExiting) {
+      const elapsed = Date.now() - startRef.current;
+      const wait = Math.max(0, 1200 - elapsed);
+      const t = setTimeout(() => setIsExiting(true), wait);
+      return () => clearTimeout(t);
+    }
+    if (needsLoader) {
+      startRef.current = Date.now();
+      setLoaderDismissed(false);
+      setIsExiting(false);
+    }
+  }, [needsLoader, loaderDismissed, isExiting]);
+
+  if (!loaderDismissed) {
+    if (needsLoader) return <FullScreenLoader />;
+    return <FullScreenLoader exiting={isExiting} onFinished={() => setLoaderDismissed(true)} />;
   }
 
   // First-run (A4): a student sees the intro carousel until they finish or skip
@@ -175,8 +256,11 @@ const makeStyles = (t: Theme) =>
       gap: t.spacing.sm,
       backgroundColor: t.colors.surface.base,
     },
-    loaderText: {
-      ...t.typography.body,
-      color: t.colors.text.secondary,
+    halo: {
+      position: 'absolute',
+      width: 180,
+      height: 180,
+      borderRadius: 90,
+      backgroundColor: t.colors.brand.primarySoft,
     },
   });
