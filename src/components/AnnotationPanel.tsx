@@ -128,14 +128,6 @@ export const AnnotationPanel = ({
           <Text style={styles.date}>{formatDate(annotation.createdAt)}</Text>
         </Pressable>
 
-        {annotation.selectedText ? (
-          <View style={styles.quoteBlock}>
-            <Text style={styles.quoteText} numberOfLines={3}>
-              "{annotation.selectedText}"
-            </Text>
-          </View>
-        ) : null}
-
         {annotation.note ? <Text style={styles.note}>{annotation.note}</Text> : null}
         {annotation.annotationType === 'draw' && annotation.drawImageUrl ? (
           <Image

@@ -151,29 +151,6 @@ export const FacultyReviewDetailScreen = () => {
     [paperId, loadAnnotations],
   );
 
-  const handleCreateHighlight = useCallback(
-    async (input: {
-      pageNumber: number;
-      highlightRects: { x: number; y: number; w: number; h: number }[];
-      note: string;
-    }) => {
-      await facultyApi.createHighlightAnnotation({ paperId, ...input });
-      await loadAnnotations();
-    },
-    [paperId, loadAnnotations],
-  );
-
-  const handleCreateDraw = useCallback(
-    async (input: {
-      pageNumber: number;
-      imageDataUrl: string;
-    }) => {
-      await facultyApi.createDrawAnnotation({ paperId, ...input });
-      await loadAnnotations();
-    },
-    [paperId, loadAnnotations],
-  );
-
   const closeSheet = useCallback(() => {
     actionSheetRef.current?.dismiss();
     setTimeout(() => {
@@ -339,8 +316,6 @@ export const FacultyReviewDetailScreen = () => {
                 annotations={overlays}
                 canAnnotate={canReview}
                 onCreateNote={handleCreateNote}
-                onCreateHighlight={handleCreateHighlight}
-                onCreateDraw={handleCreateDraw}
                 onAnnotationPress={(id) => {
                   setSelectedAnnotationId(id);
                   setPanelOpen(true);
@@ -384,42 +359,6 @@ export const FacultyReviewDetailScreen = () => {
                     </Card>
                   </ListEntranceItem>
                 ))}
-              </View>
-            )}
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Reviewer comments</Text>
-            {annotationsError ? (
-              <InlineNotice tone="danger" message={annotationsError} />
-            ) : annotations === null ? (
-              <Skeleton height={80} radius="md" />
-            ) : pagelessAnnotations.length === 0 ? (
-              <Text style={styles.muted}>No general reviewer comments.</Text>
-            ) : (
-              <View style={styles.timeline}>
-                {pagelessAnnotations.map((ann, index) => {
-                  const replies = getReplies(ann.id);
-                  return (
-                    <ListEntranceItem key={ann.id} index={index}>
-                      <Card padding="md">
-                        <Text style={styles.timelineHead}>{ann.reviewerName}</Text>
-                        <Text style={styles.muted}>
-                          {ann.reviewerRole ? `${titleCase(ann.reviewerRole)} · ` : ''}
-                          {formatDate(ann.createdAt)}
-                        </Text>
-                        {ann.note ? <Text style={styles.body}>{ann.note}</Text> : null}
-                        {replies.map((reply) => (
-                          <View key={reply.id} style={styles.annotationReply}>
-                            <Text style={styles.timelineHead}>{reply.reviewerName}</Text>
-                            <Text style={styles.muted}>{formatDate(reply.createdAt)}</Text>
-                            {reply.note ? <Text style={styles.body}>{reply.note}</Text> : null}
-                          </View>
-                        ))}
-                      </Card>
-                    </ListEntranceItem>
-                  );
-                })}
               </View>
             )}
           </View>
