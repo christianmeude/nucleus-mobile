@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { StyleSheet, Text, View, Keyboard } from 'react-native';
+import { StyleSheet, Text, View, Keyboard, Pressable } from 'react-native';
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Check, SlidersHorizontal } from 'lucide-react-native';
@@ -118,31 +118,31 @@ export const BrowseFilterSystem = ({
         </View>
 
         <View style={styles.tabsContainer}>
-          <PressableScale 
+          <Pressable 
             style={[styles.tabBtn, activeTab === 'fields' && styles.tabBtnActive]} 
             onPress={() => setActiveTab('fields')}
           >
             <Text style={[styles.tabText, activeTab === 'fields' && styles.tabTextActive]}>FIELDS</Text>
-          </PressableScale>
+          </Pressable>
 
-          <PressableScale 
+          <Pressable 
             style={[styles.tabBtn, activeTab === 'departments' && styles.tabBtnActive]} 
             onPress={() => setActiveTab('departments')}
           >
             <Text style={[styles.tabText, activeTab === 'departments' && styles.tabTextActive]}>DEPARTMENTS</Text>
-          </PressableScale>
+          </Pressable>
 
-          <PressableScale 
+          <Pressable 
             style={[styles.tabBtn, activeTab === 'year' && styles.tabBtnActive]} 
             onPress={() => setActiveTab('year')}
           >
             <Text style={[styles.tabText, activeTab === 'year' && styles.tabTextActive]}>YEAR RANGE</Text>
-          </PressableScale>
+          </Pressable>
         </View>
 
         <BottomSheetScrollView 
           style={styles.sheetScroll} 
-          contentContainerStyle={{ paddingBottom: insets.bottom + 64 }}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 120, paddingTop: 16 }}
           showsVerticalScrollIndicator={false}
         >
           {/* CATEGORIES / FIELDS */}
