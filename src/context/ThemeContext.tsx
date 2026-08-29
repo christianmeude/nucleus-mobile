@@ -67,7 +67,10 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
   const setPreference = (next: ThemePreference) => {
     setPreferenceState(next);
-    AsyncStorage.setItem(STORAGE_KEY, next).catch(() => {});
+    // Defer persistence off the critical path so the scheme swap isn’t blocked by bridge I/O
+    const persist = () => AsyncStorage.setItem(STORAGE_KEY, next).catch(() => {});
+    if (typeof queueMicrotask !== 'undefined') queueMicrotask(persist);
+    else setTimeout(persist, 0);
   };
 
   const scheme = resolveScheme(preference, systemScheme);

@@ -1,10 +1,13 @@
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { type LucideIcon } from 'lucide-react-native';
 import { ChevronRight } from 'lucide-react-native';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { PressableScale } from './motion/PressableScale';
 import { Icon } from './Icon';
+import Animated, { useAnimatedStyle, withSpring, useSharedValue } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 type SettingsRowTrailing = 'chevron' | 'toggle';
 
@@ -55,15 +58,7 @@ export const SettingsRow = ({
       {trailing === 'chevron' ? (
         <Icon icon={ChevronRight} size={18} color={theme.colors.text.disabled} />
       ) : trailing === 'toggle' ? (
-        <Switch
-          value={value}
-          onValueChange={onValueChange}
-          accessibilityRole="switch"
-          accessibilityState={{ checked: value }}
-          accessibilityLabel={accessibilityLabel ?? label}
-          trackColor={{ false: theme.colors.border.strong, true: theme.colors.brand.primary }}
-          thumbColor={theme.colors.surface.raised}
-        />
+        <ReanimatedToggle value={value} onValueChange={onValueChange} accessibilityLabel={accessibilityLabel ?? label} />
       ) : null}
     </View>
   );
@@ -82,6 +77,60 @@ export const SettingsRow = ({
     </PressableScale>
   );
 };
+
+const ReanimatedToggle = ({
+  value,
+  onValueChange,
+  accessibilityLabel,
+}: {
+  value: boolean;
+  onValueChange?: (v: boolean) => void;
+  accessibilityLabel: string;
+}) => {
+  const { theme } = useTheme();
+  const progress = useSharedValue(value ? 1 : 0);
+  useEffect(() => {
+    progress.value = withSpring(value ? 1 : 0, { damping: 18, stiffness: 260 });
+  }, [value]);
+  const thumbStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: progress.value * 16 }],
+  }));
+  const trackStyle = {
+    backgroundColor: value ? theme.colors.brand.primary : theme.colors.border.strong,
+  };
+  return (
+    <Pressable
+      onPress={() => {
+        Haptics.selectionAsync().catch(() => {});
+        onValueChange?.(!value);
+      }}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
+      accessibilityLabel={accessibilityLabel}
+      hitSlop={8}
+      style={[toggleStyles.track, trackStyle]}
+    >
+      <Animated.View style={[toggleStyles.thumb, { backgroundColor: theme.colors.surface.raised }, thumbStyle]} />
+    </Pressable>
+  );
+};
+
+const toggleStyles = StyleSheet.create({
+  track: {
+    width: 44,
+    height: 28,
+    borderRadius: 14,
+    borderCurve: 'continuous',
+    padding: 4,
+    justifyContent: 'center',
+  },
+  thumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderCurve: 'continuous',
+  },
+});
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({
