@@ -2,7 +2,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { profileStep, recordProfileEvent } from '../../profile/profiler.mjs';
-import { CSS_NAMED_COLORS, collectCssCustomProps, cssLengthToPx, parseAnyColor, resolveLengthPx, resolveVarRefs } from '../../rules/checks.mjs';
+import {
+  CSS_NAMED_COLORS,
+  collectCssCustomProps,
+  cssLengthToPx,
+  parseAnyColor,
+  resolveLengthPx,
+  resolveVarRefs,
+} from '../../rules/checks.mjs';
 
 // ---------------------------------------------------------------------------
 // jsdom CSS-variable border override map
@@ -36,7 +43,8 @@ import { CSS_NAMED_COLORS, collectCssCustomProps, cssLengthToPx, parseAnyColor, 
 //   * The fallback only fills sides that jsdom left empty, so any rule
 //     whose border parses normally still wins via the computed style.
 
-const BORDER_SHORTHAND_RE = /^(\d+(?:\.\d+)?)px\s+(solid|dashed|dotted|double|groove|ridge|inset|outset)\s+(.+)$/i;
+const BORDER_SHORTHAND_RE =
+  /^(\d+(?:\.\d+)?)px\s+(solid|dashed|dotted|double|groove|ridge|inset|outset)\s+(.+)$/i;
 
 // isNeutralColor only understands rgba()/oklch()/lch()/lab()/hsl()/hwb().
 // CSS variables typically hold hex or named colors, so normalize those to
@@ -44,9 +52,15 @@ const BORDER_SHORTHAND_RE = /^(\d+(?:\.\d+)?)px\s+(solid|dashed|dotted|double|gr
 // recognise is passed through unchanged — isNeutralColor then treats it as
 // non-neutral, which is the safer default (matches the oklch-era bugfix).
 const NAMED_COLORS = {
-  white: [255, 255, 255], black: [0, 0, 0], gray: [128, 128, 128],
-  grey: [128, 128, 128], silver: [192, 192, 192], red: [255, 0, 0],
-  green: [0, 128, 0], blue: [0, 0, 255], yellow: [255, 255, 0],
+  white: [255, 255, 255],
+  black: [0, 0, 0],
+  gray: [128, 128, 128],
+  grey: [128, 128, 128],
+  silver: [192, 192, 192],
+  red: [255, 0, 0],
+  green: [0, 128, 0],
+  blue: [0, 0, 255],
+  yellow: [255, 255, 0],
 };
 
 function normalizeColorForCheck(value) {
@@ -77,15 +91,12 @@ function buildBorderOverrideMap(document, window) {
 
   function resolveVar(value, depth = 0) {
     if (!value || depth > 10 || !value.includes('var(')) return value;
-    return value.replace(
-      /var\(\s*(--[\w-]+)\s*(?:,\s*([^)]+))?\s*\)/g,
-      (_, name, fallback) => {
-        const v = rootStyle.getPropertyValue(name).trim();
-        if (v) return resolveVar(v, depth + 1);
-        if (fallback) return resolveVar(fallback.trim(), depth + 1);
-        return '';
-      }
-    );
+    return value.replace(/var\(\s*(--[\w-]+)\s*(?:,\s*([^)]+))?\s*\)/g, (_, name, fallback) => {
+      const v = rootStyle.getPropertyValue(name).trim();
+      if (v) return resolveVar(v, depth + 1);
+      if (fallback) return resolveVar(fallback.trim(), depth + 1);
+      return '';
+    });
   }
 
   function parseShorthand(text) {
@@ -109,7 +120,11 @@ function buildBorderOverrideMap(document, window) {
 
   for (const sheet of document.styleSheets) {
     let rules;
-    try { rules = sheet.cssRules || []; } catch { continue; }
+    try {
+      rules = sheet.cssRules || [];
+    } catch {
+      continue;
+    }
     for (const rule of rules) {
       // CSSStyleRule only; skip @media / @keyframes / @supports wrappers.
       if (rule.type !== 1 || !rule.style || !rule.selectorText) continue;
@@ -156,8 +171,11 @@ function buildBorderOverrideMap(document, window) {
       if (Object.keys(perSide).length === 0) continue;
 
       let matched;
-      try { matched = document.querySelectorAll(rule.selectorText); }
-      catch { continue; }
+      try {
+        matched = document.querySelectorAll(rule.selectorText);
+      } catch {
+        continue;
+      }
 
       for (const el of matched) {
         const existing = map.get(el);
@@ -223,8 +241,17 @@ function unwrapCssAtLayer(source) {
 // ---------------------------------------------------------------------------
 
 const STATIC_INHERITED_PROPS = new Set([
-  'color', 'fontFamily', 'fontSize', 'fontStyle', 'fontWeight', 'fontVariant',
-  'lineHeight', 'letterSpacing', 'textTransform', 'textAlign', 'hyphens',
+  'color',
+  'fontFamily',
+  'fontSize',
+  'fontStyle',
+  'fontWeight',
+  'fontVariant',
+  'lineHeight',
+  'letterSpacing',
+  'textTransform',
+  'textAlign',
+  'hyphens',
   'webkitHyphens',
 ]);
 
@@ -316,14 +343,14 @@ const STATIC_PROP_MAP = {
   'letter-spacing': 'letterSpacing',
   'text-transform': 'textTransform',
   'text-align': 'textAlign',
-  'hyphens': 'hyphens',
+  hyphens: 'hyphens',
   '-webkit-hyphens': 'webkitHyphens',
   'transition-property': 'transitionProperty',
   'transition-timing-function': 'transitionTimingFunction',
   'animation-name': 'animationName',
   'animation-timing-function': 'animationTimingFunction',
-  'width': 'width',
-  'height': 'height',
+  width: 'width',
+  height: 'height',
   'padding-top': 'paddingTop',
   'padding-right': 'paddingRight',
   'padding-bottom': 'paddingBottom',
@@ -332,15 +359,15 @@ const STATIC_PROP_MAP = {
   'margin-right': 'marginRight',
   'margin-bottom': 'marginBottom',
   'margin-left': 'marginLeft',
-  'position': 'position',
-  'visibility': 'visibility',
-  'top': 'top',
-  'right': 'right',
-  'bottom': 'bottom',
-  'left': 'left',
-  'inset': 'inset',
-  'display': 'display',
-  'overflow': 'overflow',
+  position: 'position',
+  visibility: 'visibility',
+  top: 'top',
+  right: 'right',
+  bottom: 'bottom',
+  left: 'left',
+  inset: 'inset',
+  display: 'display',
+  overflow: 'overflow',
   'overflow-x': 'overflowX',
   'overflow-y': 'overflowY',
 };
@@ -365,19 +392,24 @@ const NAMED_COLOR_TOKENS = [...Object.keys(CSS_NAMED_COLORS), ...Object.keys(STA
   .join('|');
 const STATIC_COLOR_TOKEN_RE = new RegExp(
   `(?:rgba?\\([^)]+\\)|oklch\\([^)]+\\)|oklab\\([^)]+\\)|lch\\([^)]+\\)|lab\\([^)]+\\)|hsla?\\([^)]+\\)|hwb\\([^)]+\\)|#[0-9a-f]{3,8}\\b|\\b(?:${NAMED_COLOR_TOKENS})\\b)`,
-  'i'
+  'i',
 );
 
 function splitCssList(value) {
   const parts = [];
-  let depth = 0, quote = '', start = 0;
+  let depth = 0,
+    quote = '',
+    start = 0;
   for (let i = 0; i < value.length; i++) {
     const ch = value[i];
     if (quote) {
       if (ch === quote && value[i - 1] !== '\\') quote = '';
       continue;
     }
-    if (ch === '"' || ch === "'") { quote = ch; continue; }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      continue;
+    }
     if (ch === '(' || ch === '[') depth++;
     else if (ch === ')' || ch === ']') depth = Math.max(0, depth - 1);
     else if (ch === ',' && depth === 0) {
@@ -392,7 +424,9 @@ function splitCssList(value) {
 
 function splitCssTokens(value) {
   const tokens = [];
-  let depth = 0, quote = '', current = '';
+  let depth = 0,
+    quote = '',
+    current = '';
   for (let i = 0; i < value.length; i++) {
     const ch = value[i];
     if (quote) {
@@ -400,11 +434,26 @@ function splitCssTokens(value) {
       if (ch === quote && value[i - 1] !== '\\') quote = '';
       continue;
     }
-    if (ch === '"' || ch === "'") { quote = ch; current += ch; continue; }
-    if (ch === '(') { depth++; current += ch; continue; }
-    if (ch === ')') { depth = Math.max(0, depth - 1); current += ch; continue; }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      current += ch;
+      continue;
+    }
+    if (ch === '(') {
+      depth++;
+      current += ch;
+      continue;
+    }
+    if (ch === ')') {
+      depth = Math.max(0, depth - 1);
+      current += ch;
+      continue;
+    }
     if (/\s/.test(ch) && depth === 0) {
-      if (current) { tokens.push(current); current = ''; }
+      if (current) {
+        tokens.push(current);
+        current = '';
+      }
       continue;
     }
     current += ch;
@@ -429,7 +478,12 @@ function staticColorToCss(c) {
 function parseStaticColor(value) {
   const parsed = parseAnyColor(value);
   if (parsed) return parsed;
-  const named = STATIC_NAMED_COLORS[String(value || '').trim().toLowerCase()];
+  const named =
+    STATIC_NAMED_COLORS[
+      String(value || '')
+        .trim()
+        .toLowerCase()
+    ];
   return named ? { ...named } : null;
 }
 
@@ -461,8 +515,12 @@ function extractStaticColor(value) {
 function normalizeStaticCssValue(prop, value, customProps, parentStyle, currentStyle = null) {
   let resolved = resolveVarRefs(String(value || '').trim(), customProps);
   if (resolved === 'inherit') return parentStyle?.[prop] || STATIC_DEFAULT_STYLE[prop] || '';
-  const isModernBorderColor = /^border[A-Z][a-z]+Color$/.test(prop) && /^(?:oklch|oklab|lch|lab|hsl|hwb)\(/i.test(resolved);
-  if (!isModernBorderColor && (/color$/i.test(prop) || prop === 'color' || prop === 'backgroundColor')) {
+  const isModernBorderColor =
+    /^border[A-Z][a-z]+Color$/.test(prop) && /^(?:oklch|oklab|lch|lab|hsl|hwb)\(/i.test(resolved);
+  if (
+    !isModernBorderColor &&
+    (/color$/i.test(prop) || prop === 'color' || prop === 'backgroundColor')
+  ) {
     const parsed = parseStaticColor(resolved);
     if (parsed) resolved = staticColorToCss(parsed);
   }
@@ -494,7 +552,8 @@ function expandStaticBoxValues(tokens) {
 
 function parseStaticBorder(value) {
   const tokens = splitCssTokens(value);
-  let width = '', color = '';
+  let width = '',
+    color = '';
   for (const token of tokens) {
     if (!width && /^-?[\d.]+(?:px|rem|em|%)$/.test(token)) width = token;
     if (!color) color = extractStaticColor(token);
@@ -523,9 +582,14 @@ function parseStaticTransition(value) {
   const timings = [];
   for (const item of splitCssList(value)) {
     const tokens = splitCssTokens(item);
-    const timing = tokens.find(token => /^(?:ease|linear|step-|cubic-bezier\()/i.test(token));
+    const timing = tokens.find((token) => /^(?:ease|linear|step-|cubic-bezier\()/i.test(token));
     if (timing) timings.push(timing);
-    const prop = tokens.find(token => /^[a-z-]+$/i.test(token) && !/^(?:ease|linear|infinite|alternate|forwards|backwards|both|normal|none)$/.test(token) && !/s$/.test(token));
+    const prop = tokens.find(
+      (token) =>
+        /^[a-z-]+$/i.test(token) &&
+        !/^(?:ease|linear|infinite|alternate|forwards|backwards|both|normal|none)$/.test(token) &&
+        !/s$/.test(token),
+    );
     if (prop) props.push(prop);
   }
   return {
@@ -539,11 +603,14 @@ function parseStaticAnimation(value) {
   const timings = [];
   for (const item of splitCssList(value)) {
     const tokens = splitCssTokens(item);
-    const timing = tokens.find(token => /^(?:ease|linear|step-|cubic-bezier\()/i.test(token));
+    const timing = tokens.find((token) => /^(?:ease|linear|step-|cubic-bezier\()/i.test(token));
     if (timing) timings.push(timing);
-    const name = tokens.find(token =>
-      /^[a-z_-][\w-]*$/i.test(token) &&
-      !/^(?:ease|linear|infinite|alternate|forwards|backwards|both|normal|none|running|paused)$/.test(token)
+    const name = tokens.find(
+      (token) =>
+        /^[a-z_-][\w-]*$/i.test(token) &&
+        !/^(?:ease|linear|infinite|alternate|forwards|backwards|both|normal|none|running|paused)$/.test(
+          token,
+        ),
     );
     if (name) names.push(name);
   }
@@ -562,7 +629,9 @@ function expandStaticDeclaration(prop, value) {
     const out = [];
     const hasImage = /gradient|url\(/i.test(v);
     if (hasImage) out.push(['backgroundImage', v]);
-    const beforeImage = hasImage ? v.split(/(?:repeating-)?(?:linear|radial|conic)-gradient\(|url\(/i)[0] : v;
+    const beforeImage = hasImage
+      ? v.split(/(?:repeating-)?(?:linear|radial|conic)-gradient\(|url\(/i)[0]
+      : v;
     const color = extractStaticColor(hasImage ? beforeImage : v);
     if (color) out.push(['backgroundColor', color]);
     // The `background` shorthand resets every longhand it does not set.
@@ -592,8 +661,8 @@ function expandStaticDeclaration(prop, value) {
     // the width and effectively hides the outline.
     const tokens = splitCssTokens(v);
     const parsed = parseStaticBorder(v);
-    const styleToken = tokens.find(t =>
-      /^(none|hidden|solid|dashed|dotted|double|groove|ridge|inset|outset)$/i.test(t)
+    const styleToken = tokens.find((t) =>
+      /^(none|hidden|solid|dashed|dotted|double|groove|ridge|inset|outset)$/i.test(t),
     );
     const out = [];
     if (parsed.width) out.push(['outlineWidth', parsed.width]);
@@ -698,7 +767,10 @@ function staticSpecificity(selector) {
 
 function applyStaticDeclaration(specified, node, prop, value, meta) {
   let map = specified.get(node);
-  if (!map) { map = new Map(); specified.set(node, map); }
+  if (!map) {
+    map = new Map();
+    specified.set(node, map);
+  }
   for (const [expandedProp, expandedValue] of expandStaticDeclaration(prop, value)) {
     const existing = map.get(expandedProp);
     const next = { ...meta, prop: expandedProp, value: expandedValue };
@@ -724,18 +796,22 @@ function collectStaticCssRules(cssText, csstree) {
   const rules = [];
   let ast;
   try {
-    ast = csstree.parse(cssText, { positions: false, parseValue: true, parseCustomProperty: false });
+    ast = csstree.parse(cssText, {
+      positions: false,
+      parseValue: true,
+      parseCustomProperty: false,
+    });
   } catch {
     return rules;
   }
   let order = 0;
   const walkList = (list, atRuleStack = []) => {
-    list?.forEach?.(node => {
+    list?.forEach?.((node) => {
       if (node.type === 'Rule' && node.block) {
-        if (atRuleStack.some(name => /keyframes$/i.test(name))) return;
+        if (atRuleStack.some((name) => /keyframes$/i.test(name))) return;
         const selectorText = csstree.generate(node.prelude).trim();
         const declarations = [];
-        node.block.children?.forEach?.(child => {
+        node.block.children?.forEach?.((child) => {
           if (child.type !== 'Declaration') return;
           declarations.push({
             prop: child.property,
@@ -757,7 +833,14 @@ function collectStaticCssRules(cssText, csstree) {
             if (!matchSelector || /[>+~]\s*$/.test(matchSelector)) matchSelector = null;
             else matchSelector = matchSelector.replace(/(^|[\s>+~])(?=$|[\s>+~])/g, '$1*');
           }
-          rules.push({ selector, declarations, specificity: staticSpecificity(selector), order: order++, isHover, matchSelector });
+          rules.push({
+            selector,
+            declarations,
+            specificity: staticSpecificity(selector),
+            order: order++,
+            isHover,
+            matchSelector,
+          });
         }
         return;
       }
@@ -792,10 +875,12 @@ class StaticElement {
     return cur ? this._doc.wrap(cur) : null;
   }
   get children() {
-    return (this.node.children || []).filter(child => child.type === 'tag').map(child => this._doc.wrap(child));
+    return (this.node.children || [])
+      .filter((child) => child.type === 'tag')
+      .map((child) => this._doc.wrap(child));
   }
   get childNodes() {
-    return (this.node.children || []).map(child => {
+    return (this.node.children || []).map((child) => {
       if (child.type === 'text') return { nodeType: 3, textContent: child.data || '' };
       if (child.type === 'tag') return this._doc.wrap(child);
       return { nodeType: 8, textContent: child.data || '' };
@@ -823,7 +908,9 @@ class StaticElement {
   }
   querySelectorAll(selector) {
     try {
-      return this._doc.selectAll(selector, this.node.children || []).map(node => this._doc.wrap(node));
+      return this._doc
+        .selectAll(selector, this.node.children || [])
+        .map((node) => this._doc.wrap(node));
     } catch {
       return [];
     }
@@ -878,7 +965,7 @@ class StaticDocument {
   }
   querySelectorAll(selector) {
     try {
-      return this.selectAll(selector, this.root.children || []).map(node => this.wrap(node));
+      return this.selectAll(selector, this.root.children || []).map((node) => this.wrap(node));
     } catch {
       return [];
     }
@@ -957,15 +1044,21 @@ function collectStaticCssText(root, fileDir, profile, filePath, modules) {
     // whole stylesheet invisible to every element-level check.
     const cssPath = path.resolve(fileDir, href.split(/[?#]/)[0]);
     try {
-      const css = profileStep(profile, {
-        engine: 'static-html',
-        phase: 'preprocess',
-        ruleId: 'inline-linked-stylesheet',
-        target: filePath,
-        detail: href,
-      }, () => fs.readFileSync(cssPath, 'utf-8'));
+      const css = profileStep(
+        profile,
+        {
+          engine: 'static-html',
+          phase: 'preprocess',
+          ruleId: 'inline-linked-stylesheet',
+          target: filePath,
+          detail: href,
+        },
+        () => fs.readFileSync(cssPath, 'utf-8'),
+      );
       styleTexts.push(css);
-    } catch { /* skip unreadable */ }
+    } catch {
+      /* skip unreadable */
+    }
   }
   return styleTexts.join('\n');
 }
@@ -980,118 +1073,159 @@ function buildStaticStyleMap(root, staticDoc, cssText, modules, profile, filePat
   const hoverSpecified = new Map();
   const rootCustomProps = collectCssCustomProps(cssText);
   const allNodes = modules.selectAll('*', root.children || []);
-  const rules = profileStep(profile, {
-    engine: 'static-html',
-    phase: 'parse-css',
-    ruleId: 'css-rules',
-    target: filePath,
-  }, () => collectStaticCssRules(cssText, modules.csstree));
+  const rules = profileStep(
+    profile,
+    {
+      engine: 'static-html',
+      phase: 'parse-css',
+      ruleId: 'css-rules',
+      target: filePath,
+    },
+    () => collectStaticCssRules(cssText, modules.csstree),
+  );
 
-  profileStep(profile, {
-    engine: 'static-html',
-    phase: 'selector-match',
-    ruleId: 'css-selectors',
-    target: filePath,
-  }, () => {
-    for (const rule of rules) {
-      // ::before/::after rules can't join the element cascade (pseudo
-      // elements aren't DOM nodes), but one shape matters to the eyebrow
-      // check: the short chromatic "kicker dash" (content box 8-80px wide,
-      // 1-6px tall, accent-colored fill). Mark the base-selector matches
-      // so checkElementHeroEyebrow can see the dash.
-      if (!rule.isHover) {
-        const pm = rule.selector.match(/^(.+?)\s*::?(?:before|after)$/i);
-        if (pm) {
-          const decls = new Map();
-          for (const d of rule.declarations) decls.set(d.prop.toLowerCase(), d.value);
-          const w = cssLengthToPx(resolveVarRefs(decls.get('width') || decls.get('inline-size') || '', rootCustomProps));
-          const h = cssLengthToPx(resolveVarRefs(decls.get('height') || decls.get('block-size') || '', rootCustomProps));
-          if (w != null && h != null && w >= 8 && w <= 80 && h >= 1 && h <= 6) {
-            const bgRaw = String(resolveVarRefs(decls.get('background-color') || decls.get('background') || '', rootCustomProps));
-            const token = bgRaw.match(/(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb|color-mix)\([^)]*(?:\([^)]*\))?[^)]*\)|#[0-9a-f]{3,8}\b/i);
-            const c = parseAnyColor(token ? token[0] : bgRaw);
-            if (c && (c.a ?? 1) >= 0.1 && Math.max(c.r, c.g, c.b) - Math.min(c.r, c.g, c.b) >= 30) {
-              try {
-                for (const node of modules.selectAll(pm[1], root.children || [])) {
-                  staticDoc.setAccentDashPseudo(node);
-                }
-              } catch { /* unsupported base selector */ }
-            }
-          }
-          // Full-cover surface pseudo: the CTA construction where the
-          // element itself stays transparent and a ::before/::after with
-          // position absolute/fixed + inset 0 (or all four sides 0, or
-          // 100% width and height) plus an opaque background paints the
-          // visible surface. Mark base-selector matches so the contrast
-          // checks measure text against the surface the browser renders.
-          const pseudoPos = String(decls.get('position') || '').toLowerCase();
-          if (pseudoPos === 'absolute' || pseudoPos === 'fixed') {
-            const zeroLen = v => v != null && /^0(?:px)?$/.test(String(v).trim());
-            const insetRaw = String(decls.get('inset') || '').trim();
-            const coversBox = (insetRaw !== '' && insetRaw.split(/\s+/).every(t => /^0(?:px)?$/.test(t)))
-              || ['top', 'right', 'bottom', 'left'].every(side => zeroLen(decls.get(side)))
-              || (String(decls.get('width') || '').trim() === '100%'
-                && String(decls.get('height') || '').trim() === '100%');
-            if (coversBox && decls.has('content')) {
-              const surfRaw = String(resolveVarRefs(decls.get('background-color') || decls.get('background') || '', rootCustomProps));
-              const surfToken = surfRaw.match(/(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb|color-mix)\([^)]*(?:\([^)]*\))?[^)]*\)|#[0-9a-f]{3,8}\b/i);
-              const surf = parseAnyColor(surfToken ? surfToken[0] : surfRaw);
-              if (surf && (surf.a ?? 1) >= 0.9 && !/gradient/i.test(surfRaw)) {
+  profileStep(
+    profile,
+    {
+      engine: 'static-html',
+      phase: 'selector-match',
+      ruleId: 'css-selectors',
+      target: filePath,
+    },
+    () => {
+      for (const rule of rules) {
+        // ::before/::after rules can't join the element cascade (pseudo
+        // elements aren't DOM nodes), but one shape matters to the eyebrow
+        // check: the short chromatic "kicker dash" (content box 8-80px wide,
+        // 1-6px tall, accent-colored fill). Mark the base-selector matches
+        // so checkElementHeroEyebrow can see the dash.
+        if (!rule.isHover) {
+          const pm = rule.selector.match(/^(.+?)\s*::?(?:before|after)$/i);
+          if (pm) {
+            const decls = new Map();
+            for (const d of rule.declarations) decls.set(d.prop.toLowerCase(), d.value);
+            const w = cssLengthToPx(
+              resolveVarRefs(decls.get('width') || decls.get('inline-size') || '', rootCustomProps),
+            );
+            const h = cssLengthToPx(
+              resolveVarRefs(decls.get('height') || decls.get('block-size') || '', rootCustomProps),
+            );
+            if (w != null && h != null && w >= 8 && w <= 80 && h >= 1 && h <= 6) {
+              const bgRaw = String(
+                resolveVarRefs(
+                  decls.get('background-color') || decls.get('background') || '',
+                  rootCustomProps,
+                ),
+              );
+              const token = bgRaw.match(
+                /(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb|color-mix)\([^)]*(?:\([^)]*\))?[^)]*\)|#[0-9a-f]{3,8}\b/i,
+              );
+              const c = parseAnyColor(token ? token[0] : bgRaw);
+              if (
+                c &&
+                (c.a ?? 1) >= 0.1 &&
+                Math.max(c.r, c.g, c.b) - Math.min(c.r, c.g, c.b) >= 30
+              ) {
                 try {
                   for (const node of modules.selectAll(pm[1], root.children || [])) {
-                    staticDoc.setPseudoSurface(node, surf);
+                    staticDoc.setAccentDashPseudo(node);
                   }
-                } catch { /* unsupported base selector */ }
+                } catch {
+                  /* unsupported base selector */
+                }
               }
             }
+            // Full-cover surface pseudo: the CTA construction where the
+            // element itself stays transparent and a ::before/::after with
+            // position absolute/fixed + inset 0 (or all four sides 0, or
+            // 100% width and height) plus an opaque background paints the
+            // visible surface. Mark base-selector matches so the contrast
+            // checks measure text against the surface the browser renders.
+            const pseudoPos = String(decls.get('position') || '').toLowerCase();
+            if (pseudoPos === 'absolute' || pseudoPos === 'fixed') {
+              const zeroLen = (v) => v != null && /^0(?:px)?$/.test(String(v).trim());
+              const insetRaw = String(decls.get('inset') || '').trim();
+              const coversBox =
+                (insetRaw !== '' && insetRaw.split(/\s+/).every((t) => /^0(?:px)?$/.test(t))) ||
+                ['top', 'right', 'bottom', 'left'].every((side) => zeroLen(decls.get(side))) ||
+                (String(decls.get('width') || '').trim() === '100%' &&
+                  String(decls.get('height') || '').trim() === '100%');
+              if (coversBox && decls.has('content')) {
+                const surfRaw = String(
+                  resolveVarRefs(
+                    decls.get('background-color') || decls.get('background') || '',
+                    rootCustomProps,
+                  ),
+                );
+                const surfToken = surfRaw.match(
+                  /(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb|color-mix)\([^)]*(?:\([^)]*\))?[^)]*\)|#[0-9a-f]{3,8}\b/i,
+                );
+                const surf = parseAnyColor(surfToken ? surfToken[0] : surfRaw);
+                if (surf && (surf.a ?? 1) >= 0.9 && !/gradient/i.test(surfRaw)) {
+                  try {
+                    for (const node of modules.selectAll(pm[1], root.children || [])) {
+                      staticDoc.setPseudoSurface(node, surf);
+                    }
+                  } catch {
+                    /* unsupported base selector */
+                  }
+                }
+              }
+            }
+            continue;
           }
+        }
+        const matchSelector = rule.isHover ? rule.matchSelector : rule.selector;
+        if (!matchSelector) continue;
+        let matched;
+        try {
+          matched = modules.selectAll(matchSelector, root.children || []);
+        } catch {
+          recordProfileEvent(profile, {
+            engine: 'static-html',
+            phase: 'selector-match',
+            ruleId: 'unsupported-selector',
+            target: filePath,
+            ms: 0,
+            findings: 0,
+            detail: matchSelector,
+          });
           continue;
         }
-      }
-      const matchSelector = rule.isHover ? rule.matchSelector : rule.selector;
-      if (!matchSelector) continue;
-      let matched;
-      try {
-        matched = modules.selectAll(matchSelector, root.children || []);
-      } catch {
-        recordProfileEvent(profile, {
-          engine: 'static-html',
-          phase: 'selector-match',
-          ruleId: 'unsupported-selector',
-          target: filePath,
-          ms: 0,
-          findings: 0,
-          detail: matchSelector,
-        });
-        continue;
-      }
-      for (const node of matched) {
-        for (const decl of rule.declarations) {
-          applyStaticDeclaration(rule.isHover ? hoverSpecified : specified, node, decl.prop, decl.value, {
-            important: decl.important,
-            specificity: rule.specificity,
-            order: rule.order,
-            inline: false,
-          });
+        for (const node of matched) {
+          for (const decl of rule.declarations) {
+            applyStaticDeclaration(
+              rule.isHover ? hoverSpecified : specified,
+              node,
+              decl.prop,
+              decl.value,
+              {
+                important: decl.important,
+                specificity: rule.specificity,
+                order: rule.order,
+                inline: false,
+              },
+            );
+          }
         }
       }
-    }
 
-    let inlineOrder = rules.length + 1;
-    for (const node of allNodes) {
-      const styleText = node.attribs?.style;
-      if (!styleText) continue;
-      for (const decl of parseStaticStyleAttribute(styleText, inlineOrder)) {
-        applyStaticDeclaration(specified, node, decl.prop, decl.value, {
-          important: decl.important,
-          specificity: [1, 0, 0],
-          order: decl.order,
-          inline: true,
-        });
+      let inlineOrder = rules.length + 1;
+      for (const node of allNodes) {
+        const styleText = node.attribs?.style;
+        if (!styleText) continue;
+        for (const decl of parseStaticStyleAttribute(styleText, inlineOrder)) {
+          applyStaticDeclaration(specified, node, decl.prop, decl.value, {
+            important: decl.important,
+            specificity: [1, 0, 0],
+            order: decl.order,
+            inline: true,
+          });
+        }
+        inlineOrder += 1000;
       }
-      inlineOrder += 1000;
-    }
-  });
+    },
+  );
 
   const computeNode = (node, parentStyle = null, parentCustom = new Map()) => {
     const specifiedMap = specified.get(node) || new Map();
@@ -1101,7 +1235,8 @@ function buildStaticStyleMap(root, staticDoc, cssText, modules, profile, filePat
     }
     const values = {};
     for (const prop of Object.keys(STATIC_DEFAULT_STYLE)) {
-      if (STATIC_INHERITED_PROPS.has(prop) && parentStyle?.[prop] != null) values[prop] = parentStyle[prop];
+      if (STATIC_INHERITED_PROPS.has(prop) && parentStyle?.[prop] != null)
+        values[prop] = parentStyle[prop];
       else values[prop] = STATIC_DEFAULT_STYLE[prop];
     }
     for (const [prop, decl] of specifiedMap) {
@@ -1124,7 +1259,13 @@ function buildStaticStyleMap(root, staticDoc, cssText, modules, profile, filePat
         if (!hoverDecl) continue;
         const restingDecl = specifiedMap.get(prop);
         if (!compareStaticPriority(restingDecl, hoverDecl)) continue;
-        const next = normalizeStaticCssValue(prop, hoverDecl.value, customProps, parentStyle, values);
+        const next = normalizeStaticCssValue(
+          prop,
+          hoverDecl.value,
+          customProps,
+          parentStyle,
+          values,
+        );
         if (next === values[prop]) continue;
         if (!hoverValues) hoverValues = { ...values };
         hoverValues[prop] = next;
@@ -1137,16 +1278,20 @@ function buildStaticStyleMap(root, staticDoc, cssText, modules, profile, filePat
     }
   };
 
-  profileStep(profile, {
-    engine: 'static-html',
-    phase: 'cascade',
-    ruleId: 'compute-styles',
-    target: filePath,
-  }, () => {
-    for (const child of root.children || []) {
-      if (child.type === 'tag') computeNode(child);
-    }
-  });
+  profileStep(
+    profile,
+    {
+      engine: 'static-html',
+      phase: 'cascade',
+      ruleId: 'compute-styles',
+      target: filePath,
+    },
+    () => {
+      for (const child of root.children || []) {
+        if (child.type === 'tag') computeNode(child);
+      }
+    },
+  );
 }
 
 export {

@@ -10,7 +10,11 @@ export function slugFromTarget(resolved, { cwd = process.cwd() } = {}) {
 
   if (/^https?:\/\//i.test(trimmed)) {
     let url;
-    try { url = new URL(trimmed); } catch { return null; }
+    try {
+      url = new URL(trimmed);
+    } catch {
+      return null;
+    }
     return kebab(`${url.hostname}${url.pathname}`);
   }
 

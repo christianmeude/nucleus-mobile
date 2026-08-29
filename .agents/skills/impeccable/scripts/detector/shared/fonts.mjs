@@ -3,7 +3,7 @@ const GOOGLE_FONTS_URL_RE = /fonts\.googleapis\.com\/css2?\?[^"'\s)<>]*/gi;
 function normalizeGoogleFontFamilyParam(value) {
   return String(value || '')
     .split('|')
-    .map(part => part.split(':')[0].trim().toLowerCase())
+    .map((part) => part.split(':')[0].trim().toLowerCase())
     .filter(Boolean);
 }
 

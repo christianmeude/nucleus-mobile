@@ -29,7 +29,13 @@ function main(argv) {
     return;
   }
   if (command === 'list') {
-    process.stdout.write(`${JSON.stringify(listSurfaceBriefs(projectRoot).map((brief) => summary(brief, projectRoot)), null, 2)}\n`);
+    process.stdout.write(
+      `${JSON.stringify(
+        listSurfaceBriefs(projectRoot).map((brief) => summary(brief, projectRoot)),
+        null,
+        2,
+      )}\n`,
+    );
     return;
   }
   if (command === 'read') {
@@ -38,11 +44,19 @@ function main(argv) {
       process.stdout.write(result.brief.text);
       return;
     }
-    if (result.candidates.length) process.stderr.write(`${JSON.stringify(result.candidates.map((brief) => summary(brief, projectRoot)), null, 2)}\n`);
+    if (result.candidates.length)
+      process.stderr.write(
+        `${JSON.stringify(
+          result.candidates.map((brief) => summary(brief, projectRoot)),
+          null,
+          2,
+        )}\n`,
+      );
     process.exit(2);
   }
   if (command === 'write') {
-    if (!target || !bodyFile) throw new Error('usage: surface-brief.mjs write <primary-target> <body-file>');
+    if (!target || !bodyFile)
+      throw new Error('usage: surface-brief.mjs write <primary-target> <body-file>');
     const filePath = writeSurfaceBrief({
       projectRoot,
       primaryTarget: target,
@@ -52,7 +66,9 @@ function main(argv) {
     process.stdout.write(`${path.relative(process.cwd(), filePath) || filePath}\n`);
     return;
   }
-  throw new Error('usage: surface-brief.mjs <path|list|read|write> [target] [body-file] [related-target ...]');
+  throw new Error(
+    'usage: surface-brief.mjs <path|list|read|write> [target] [body-file] [related-target ...]',
+  );
 }
 
 function isMainModule() {

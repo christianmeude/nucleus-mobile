@@ -69,13 +69,16 @@ export function buildGenerationPreflight(event, scriptsDir, { cache = null } = {
  * server for that entire window: Accept and Discard POSTs, SSE progress
  * broadcasts, and every other poll stalled behind it.
  */
-export async function runGenerationPreflight(event, {
-  cwd = process.cwd(),
-  scriptsDir,
-  execFileImpl = execFileAsync,
-  timeoutMs = PREFLIGHT_TIMEOUT_MS,
-  cache = sourceResolutionCache,
-} = {}) {
+export async function runGenerationPreflight(
+  event,
+  {
+    cwd = process.cwd(),
+    scriptsDir,
+    execFileImpl = execFileAsync,
+    timeoutMs = PREFLIGHT_TIMEOUT_MS,
+    cache = sourceResolutionCache,
+  } = {},
+) {
   const command = buildGenerationPreflight(event, scriptsDir, { cache });
   if (!command) {
     return { ok: false, skipped: true, reason: 'insufficient_locator' };
@@ -131,9 +134,7 @@ function normalizeTarget(target) {
   const classes = Array.isArray(target.classes)
     ? target.classes.join(' ')
     : String(target.classes || '').trim();
-  const text = typeof target.textContent === 'string'
-    ? target.textContent.trim().slice(0, 80)
-    : '';
+  const text = typeof target.textContent === 'string' ? target.textContent.trim().slice(0, 80) : '';
   return {
     elementId: target.id || target.elementId || undefined,
     classes: classes || undefined,

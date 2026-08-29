@@ -13,11 +13,22 @@ import { fileExists, findConfigFile, hasAnyDependency } from './detect-utils.mjs
 const NEXT_CONFIG_RE = /^next\.config\.(?:js|mjs|cjs|ts|mts|cts)$/;
 
 const ROUTER_ENTRY_CANDIDATES = [
-  'app/layout.tsx', 'app/layout.jsx', 'app/layout.ts', 'app/layout.js',
-  'src/app/layout.tsx', 'src/app/layout.jsx', 'src/app/layout.ts', 'src/app/layout.js',
-  'pages/_app.tsx', 'pages/_app.jsx', 'pages/_app.ts', 'pages/_app.js',
-  'pages/_document.tsx', 'pages/_document.jsx',
-  'src/pages/_app.tsx', 'src/pages/_app.jsx',
+  'app/layout.tsx',
+  'app/layout.jsx',
+  'app/layout.ts',
+  'app/layout.js',
+  'src/app/layout.tsx',
+  'src/app/layout.jsx',
+  'src/app/layout.ts',
+  'src/app/layout.js',
+  'pages/_app.tsx',
+  'pages/_app.jsx',
+  'pages/_app.ts',
+  'pages/_app.js',
+  'pages/_document.tsx',
+  'pages/_document.jsx',
+  'src/pages/_app.tsx',
+  'src/pages/_app.jsx',
 ];
 
 export function detectNextProject(cwd = process.cwd()) {

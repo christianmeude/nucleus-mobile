@@ -25,17 +25,14 @@ export function detectNuxtProject(cwd = process.cwd()) {
   const literalSrcDir = config.match(/\bsrcDir\s*:\s*(['"])([^'"]+)\1/);
   let appDir = '';
   if (literalSrcDir) {
-    const candidate = literalSrcDir[2]
-      .replace(/\\/g, '/')
-      .replace(/^\.\//, '')
-      .replace(/\/+$/, '');
+    const candidate = literalSrcDir[2].replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+$/, '');
     const normalized = path.posix.normalize(candidate);
     if (normalized !== '..' && !normalized.startsWith('../') && !path.isAbsolute(normalized)) {
       appDir = normalized === '.' ? '' : normalized;
     }
   } else if (
-    fs.existsSync(path.join(cwd, 'app', 'app.vue'))
-    || fs.existsSync(path.join(cwd, 'app', 'pages'))
+    fs.existsSync(path.join(cwd, 'app', 'app.vue')) ||
+    fs.existsSync(path.join(cwd, 'app', 'pages'))
   ) {
     appDir = 'app';
   }
@@ -71,7 +68,12 @@ export default defineNuxtPlugin(() => {
 `;
 }
 
-export function applyNuxtLiveAdapter({ cwd = process.cwd(), port, token, project = detectNuxtProject(cwd) }) {
+export function applyNuxtLiveAdapter({
+  cwd = process.cwd(),
+  port,
+  token,
+  project = detectNuxtProject(cwd),
+}) {
   if (!project) return { error: 'nuxt_not_detected' };
   const absFile = path.join(cwd, project.pluginFile);
   const existing = fs.existsSync(absFile) ? fs.readFileSync(absFile, 'utf-8') : null;
@@ -141,14 +143,16 @@ export const nuxt = {
 
     artifacts({ project }) {
       if (!project?.pluginFile) return [];
-      return [{
-        kind: 'created',
-        path: project.pluginFile,
-        marker: NUXT_PLUGIN_MARKER,
-        // Mirrors removeNuxtLiveAdapter: the generated `plugins/` directory
-        // goes when it empties, its parent stays.
-        pruneTo: path.posix.dirname(path.posix.dirname(project.pluginFile)),
-      }];
+      return [
+        {
+          kind: 'created',
+          path: project.pluginFile,
+          marker: NUXT_PLUGIN_MARKER,
+          // Mirrors removeNuxtLiveAdapter: the generated `plugins/` directory
+          // goes when it empties, its parent stays.
+          pruneTo: path.posix.dirname(path.posix.dirname(project.pluginFile)),
+        },
+      ];
     },
   },
 

@@ -99,10 +99,7 @@ export const LIVE_IGNORE_PATTERNS = Object.freeze([
  * matching them would silently inject tracking scripts into third-party
  * code. The user cannot turn these off via config — they are the floor.
  */
-const HARD_EXCLUDES = [
-  '**/node_modules/**',
-  '**/.git/**',
-];
+const HARD_EXCLUDES = ['**/node_modules/**', '**/.git/**'];
 
 export async function injectCli() {
   const args = process.argv.slice(2);
@@ -134,13 +131,27 @@ Output (JSON):
     try {
       cfg = JSON.parse(fs.readFileSync(CONFIG_PATH_GET(), 'utf-8'));
     } catch (err) {
-      console.log(JSON.stringify({ ok: false, error: 'config_invalid', message: err.message, path: CONFIG_PATH_GET() }));
+      console.log(
+        JSON.stringify({
+          ok: false,
+          error: 'config_invalid',
+          message: err.message,
+          path: CONFIG_PATH_GET(),
+        }),
+      );
       return;
     }
     try {
       validateConfig(cfg);
     } catch (err) {
-      console.log(JSON.stringify({ ok: false, error: 'config_invalid', message: err.message, path: CONFIG_PATH_GET() }));
+      console.log(
+        JSON.stringify({
+          ok: false,
+          error: 'config_invalid',
+          message: err.message,
+          path: CONFIG_PATH_GET(),
+        }),
+      );
       return;
     }
     console.log(JSON.stringify({ ok: true, config: cfg, path: CONFIG_PATH_GET() }));
@@ -162,18 +173,24 @@ Output (JSON):
 
   if (args.includes('--remove')) {
     if (isAdapter) {
-      const adapterResult = resolved.framework.inject.remove({ cwd, config, project: resolved.project });
+      const adapterResult = resolved.framework.inject.remove({
+        cwd,
+        config,
+        project: resolved.project,
+      });
       const ok = !(adapterResult && adapterResult.error);
       // Anything the adapter could not reach (its detection may have shifted
       // since the session started) is still on the journal.
       const { healed } = healInjectJournal(cwd);
       clearInjectJournal(cwd);
-      console.log(JSON.stringify({
-        ok,
-        adapter: resolved.framework.name,
-        results: [adapterResult],
-        healed: healed.length ? healed : undefined,
-      }));
+      console.log(
+        JSON.stringify({
+          ok,
+          adapter: resolved.framework.name,
+          results: [adapterResult],
+          healed: healed.length ? healed : undefined,
+        }),
+      );
       if (!ok) process.exitCode = 1;
       return;
     }
@@ -212,11 +229,15 @@ Output (JSON):
   let token = tokenIdx !== -1 ? args[tokenIdx + 1] : undefined;
   if (!token) {
     try {
-      const info = JSON.parse(fs.readFileSync(path.join(cwd, '.impeccable', 'live', 'server.json'), 'utf-8'));
+      const info = JSON.parse(
+        fs.readFileSync(path.join(cwd, '.impeccable', 'live', 'server.json'), 'utf-8'),
+      );
       // A record for a DIFFERENT port is a stale or foreign helper; its token
       // would 401 just the same, so only adopt a matching one.
       if (info?.token && Number(info.port) === port) token = info.token;
-    } catch { /* no running helper recorded; keep legacy tokenless behavior */ }
+    } catch {
+      /* no running helper recorded; keep legacy tokenless behavior */
+    }
   }
 
   // Reconcile before writing anything. Artifacts this run is about to own are
@@ -230,11 +251,15 @@ Output (JSON):
   // reach of the appRoot-relative ignore block above; give that directory its
   // own local excludes so the pointer (absolute host paths) never gets staged.
   try {
-    const rootsManifest = JSON.parse(fs.readFileSync(path.join(cwd, '.impeccable', 'live', 'roots.json'), 'utf-8'));
+    const rootsManifest = JSON.parse(
+      fs.readFileSync(path.join(cwd, '.impeccable', 'live', 'roots.json'), 'utf-8'),
+    );
     if (rootsManifest?.repoRoot && path.resolve(rootsManifest.repoRoot) !== path.resolve(cwd)) {
       ensureLiveGitIgnores(rootsManifest.repoRoot);
     }
-  } catch { /* no manifest: single-root project */ }
+  } catch {
+    /* no manifest: single-root project */
+  }
 
   if (isAdapter) {
     const adapterResult = resolved.framework.inject.apply({
@@ -245,15 +270,22 @@ Output (JSON):
       project: resolved.project,
     });
     const ok = !(adapterResult && adapterResult.error);
-    if (ok) recordInjection(cwd, { framework: resolved.framework.name, port, artifacts: plannedArtifacts });
-    console.log(JSON.stringify({
-      ok,
-      port,
-      adapter: resolved.framework.name,
-      gitIgnore,
-      results: [adapterResult],
-      healed: healed.length ? healed : undefined,
-    }));
+    if (ok)
+      recordInjection(cwd, {
+        framework: resolved.framework.name,
+        port,
+        artifacts: plannedArtifacts,
+      });
+    console.log(
+      JSON.stringify({
+        ok,
+        port,
+        adapter: resolved.framework.name,
+        gitIgnore,
+        results: [adapterResult],
+        healed: healed.length ? healed : undefined,
+      }),
+    );
     if (!ok) process.exitCode = 1;
     return;
   }
@@ -268,7 +300,11 @@ Output (JSON):
     const scriptAttrs = resolveSourceTraits(relFile).injectScriptAttrs;
     const withTag = insertTag(withoutOld, config, port, token, scriptAttrs);
     if (withTag === withoutOld) {
-      return { file: relFile, error: 'insertion_point_not_found', anchor: config.insertBefore || config.insertAfter };
+      return {
+        file: relFile,
+        error: 'insertion_point_not_found',
+        anchor: config.insertBefore || config.insertAfter,
+      };
     }
     const updated = patchCspMeta(withTag, port);
     fs.writeFileSync(absFile, updated, 'utf-8');
@@ -285,13 +321,15 @@ Output (JSON):
     port,
     artifacts: plannedArtifacts.filter((a) => writtenFiles.has(a.path)),
   });
-  console.log(JSON.stringify({
-    ok: anyInserted,
-    port,
-    gitIgnore,
-    results,
-    healed: healed.length ? healed : undefined,
-  }));
+  console.log(
+    JSON.stringify({
+      ok: anyInserted,
+      port,
+      gitIgnore,
+      results,
+      healed: healed.length ? healed : undefined,
+    }),
+  );
   if (!anyInserted) process.exit(1);
 }
 
@@ -303,13 +341,16 @@ export function ensureLiveGitIgnores(cwd = process.cwd(), extraPatterns = []) {
     ...new Set([...LIVE_IGNORE_PATTERNS, ...extraPatterns]),
     IGNORE_MARKER_CLOSE,
   ].join('\n');
-  const markerRe = new RegExp(`${escapeRegExp(IGNORE_MARKER_OPEN)}[\\s\\S]*?${escapeRegExp(IGNORE_MARKER_CLOSE)}`);
+  const markerRe = new RegExp(
+    `${escapeRegExp(IGNORE_MARKER_OPEN)}[\\s\\S]*?${escapeRegExp(IGNORE_MARKER_CLOSE)}`,
+  );
 
   let updated;
   if (markerRe.test(existing)) {
     updated = existing.replace(markerRe, block);
   } else {
-    const prefix = existing.length === 0 ? '' : existing.endsWith('\n') ? existing : existing + '\n';
+    const prefix =
+      existing.length === 0 ? '' : existing.endsWith('\n') ? existing : existing + '\n';
     updated = `${prefix}${prefix.endsWith('\n\n') || prefix === '' ? '' : '\n'}${block}\n`;
   }
 
@@ -469,7 +510,7 @@ function validateConfig(cfg) {
     throw new Error("config.commentSyntax must be 'html' or 'jsx'");
   }
   if (cfg.cspChecked !== undefined && typeof cfg.cspChecked !== 'boolean') {
-    throw new Error("config.cspChecked, if present, must be a boolean");
+    throw new Error('config.cspChecked, if present, must be a boolean');
   }
 }
 

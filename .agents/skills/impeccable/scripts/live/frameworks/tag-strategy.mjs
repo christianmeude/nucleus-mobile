@@ -21,8 +21,12 @@ export const MARKER_CLOSE_TEXT = 'impeccable-live-end';
 /** Markers that identify a file as still carrying our tag-strategy patch. */
 export const TAG_PATCH_MARKERS = Object.freeze([MARKER_OPEN_TEXT, 'data-impeccable-csp-original']);
 
-function commentOpen(syntax) { return syntax === 'jsx' ? '{/*' : '<!--'; }
-function commentClose(syntax) { return syntax === 'jsx' ? '*/}' : '-->'; }
+function commentOpen(syntax) {
+  return syntax === 'jsx' ? '{/*' : '<!--';
+}
+function commentClose(syntax) {
+  return syntax === 'jsx' ? '*/}' : '-->';
+}
 
 /**
  * `scriptAttrs` is a pre-rendered attribute string (trailing space included)
@@ -35,9 +39,23 @@ export function buildTagBlock(syntax, port, token, scriptAttrs = '') {
   const open = commentOpen(syntax);
   const close = commentClose(syntax);
   return (
-    open + ' ' + MARKER_OPEN_TEXT + ' ' + close + '\n' +
-    '<script ' + scriptAttrs + 'src="' + buildLiveScriptSrc(port, token) + '"></script>\n' +
-    open + ' ' + MARKER_CLOSE_TEXT + ' ' + close + '\n'
+    open +
+    ' ' +
+    MARKER_OPEN_TEXT +
+    ' ' +
+    close +
+    '\n' +
+    '<script ' +
+    scriptAttrs +
+    'src="' +
+    buildLiveScriptSrc(port, token) +
+    '"></script>\n' +
+    open +
+    ' ' +
+    MARKER_CLOSE_TEXT +
+    ' ' +
+    close +
+    '\n'
   );
 }
 
@@ -60,7 +78,10 @@ function readLineEndingAt(content, index) {
 
 export function insertTag(content, config, port, token, scriptAttrs = '') {
   const lineEnding = detectLineEnding(content);
-  const block = normalizeLineEndings(buildTagBlock(config.commentSyntax, port, token, scriptAttrs), lineEnding);
+  const block = normalizeLineEndings(
+    buildTagBlock(config.commentSyntax, port, token, scriptAttrs),
+    lineEnding,
+  );
   // insertBefore: match the LAST occurrence. Anchors like `</body>` naturally
   // belong at the end, and the same literal can appear earlier in code blocks
   // within rendered documentation pages.
@@ -206,7 +227,8 @@ export function patchCspMeta(content, port) {
     // `<meta … />` round-trips byte-for-byte.
     const trailingWs = (attrs.match(/[ \t]*$/) || [''])[0];
     const attrsBody = attrs.slice(0, attrs.length - trailingWs.length);
-    const newAttrs = attrsBody.replace(contentAttr.full, newContentAttr) + ' ' + marker + trailingWs;
+    const newAttrs =
+      attrsBody.replace(contentAttr.full, newContentAttr) + ' ' + marker + trailingWs;
     const newTag = tag.full.replace(attrs, newAttrs);
 
     result = result.slice(0, tag.start) + newTag + result.slice(tag.end);
@@ -227,8 +249,11 @@ export function revertCspMeta(content) {
     if (!contentAttr) continue;
 
     let originalValue;
-    try { originalValue = Buffer.from(origAttr.value, 'base64').toString('utf-8'); }
-    catch { continue; }
+    try {
+      originalValue = Buffer.from(origAttr.value, 'base64').toString('utf-8');
+    } catch {
+      continue;
+    }
 
     const newContentAttr = `content=${contentAttr.quote}${originalValue}${contentAttr.quote}`;
     let newAttrs = tag.attrs.replace(contentAttr.full, newContentAttr);

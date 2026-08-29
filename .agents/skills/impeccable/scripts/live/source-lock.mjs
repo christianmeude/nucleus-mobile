@@ -13,11 +13,12 @@ export function sourceLockPath(file, cwd = process.cwd()) {
   return path.join(getLiveDir(cwd), 'locks', digest + '.lock');
 }
 
-export function withSourceLockSync(file, owner, fn, {
-  cwd = process.cwd(),
-  waitMs = 0,
-  retryMs = 5,
-} = {}) {
+export function withSourceLockSync(
+  file,
+  owner,
+  fn,
+  { cwd = process.cwd(), waitMs = 0, retryMs = 5 } = {},
+) {
   const lockPath = sourceLockPath(file, cwd);
   fs.mkdirSync(path.dirname(lockPath), { recursive: true });
   const deadline = Date.now() + Math.max(0, Number(waitMs) || 0);
@@ -31,13 +32,16 @@ export function withSourceLockSync(file, owner, fn, {
     let fd;
     try {
       fd = fs.openSync(lockPath, 'wx');
-      fs.writeFileSync(fd, JSON.stringify({
-        owner,
-        token,
-        pid: process.pid,
-        at: Date.now(),
-        file: path.resolve(cwd, file),
-      }) + '\n');
+      fs.writeFileSync(
+        fd,
+        JSON.stringify({
+          owner,
+          token,
+          pid: process.pid,
+          at: Date.now(),
+          file: path.resolve(cwd, file),
+        }) + '\n',
+      );
       acquired = true;
     } catch (error) {
       if (error?.code !== 'EEXIST') throw error;
@@ -49,7 +53,9 @@ export function withSourceLockSync(file, owner, fn, {
       }
       sleepSync(Math.max(1, Math.min(Number(retryMs) || 5, deadline - Date.now())));
     } finally {
-      try { if (fd !== undefined) fs.closeSync(fd); } catch {}
+      try {
+        if (fd !== undefined) fs.closeSync(fd);
+      } catch {}
     }
   }
 
@@ -65,7 +71,11 @@ function sleepSync(ms) {
 }
 
 function readLock(lockPath) {
-  try { return JSON.parse(fs.readFileSync(lockPath, 'utf-8')); } catch { return null; }
+  try {
+    return JSON.parse(fs.readFileSync(lockPath, 'utf-8'));
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -76,7 +86,9 @@ function readLock(lockPath) {
 function releaseOwnLock(lockPath, token) {
   const held = readLock(lockPath);
   if (held && held.token !== token) return;
-  try { fs.unlinkSync(lockPath); } catch {}
+  try {
+    fs.unlinkSync(lockPath);
+  } catch {}
 }
 
 /**
@@ -97,9 +109,13 @@ function clearStaleLock(lockPath) {
     try {
       const stat = fs.statSync(lockPath);
       if (Date.now() - stat.mtimeMs > UNREADABLE_LOCK_STALE_MS) fs.unlinkSync(lockPath);
-    } catch { /* gone already */ }
+    } catch {
+      /* gone already */
+    }
     return;
   }
   if (typeof held.pid === 'number' && isLiveServerPidReachable(held.pid)) return;
-  try { fs.unlinkSync(lockPath); } catch {}
+  try {
+    fs.unlinkSync(lockPath);
+  } catch {}
 }

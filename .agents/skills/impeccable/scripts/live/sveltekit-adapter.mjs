@@ -14,11 +14,13 @@ import path from 'node:path';
 export const SVELTE_LIVE_ROOT_COMPONENT = 'src/lib/impeccable/ImpeccableLiveRoot.svelte';
 export const SVELTE_LAYOUT_MARKER_OPEN = '<!-- impeccable-live-svelte-start -->';
 export const SVELTE_LAYOUT_MARKER_CLOSE = '<!-- impeccable-live-svelte-end -->';
-export const SVELTE_ROOT_IMPORT = "import ImpeccableLiveRoot from '$lib/impeccable/ImpeccableLiveRoot.svelte';";
+export const SVELTE_ROOT_IMPORT =
+  "import ImpeccableLiveRoot from '$lib/impeccable/ImpeccableLiveRoot.svelte';";
 // Matches the import at ANY revision (or none). [ \t]* bounds only, never
 // \s*: a greedy \s* after the statement swallowed the next line's
 // indentation on removal, leaving a formatting scar in user layouts.
-const SVELTE_ROOT_IMPORT_LINE_RE = /^[ \t]*import ImpeccableLiveRoot from '\$lib\/impeccable\/ImpeccableLiveRoot\.svelte(?:\?[^']*)?';[ \t]*\r?\n?/gm;
+const SVELTE_ROOT_IMPORT_LINE_RE =
+  /^[ \t]*import ImpeccableLiveRoot from '\$lib\/impeccable\/ImpeccableLiveRoot\.svelte(?:\?[^']*)?';[ \t]*\r?\n?/gm;
 
 /**
  * The import specifier carries a token-derived revision query. The adapter
@@ -30,7 +32,11 @@ const SVELTE_ROOT_IMPORT_LINE_RE = /^[ \t]*import ImpeccableLiveRoot from '\$lib
  */
 export function svelteRootImportLine(rev) {
   if (!rev) return SVELTE_ROOT_IMPORT;
-  return "import ImpeccableLiveRoot from '$lib/impeccable/ImpeccableLiveRoot.svelte?impeccable-live=" + rev + "';";
+  return (
+    "import ImpeccableLiveRoot from '$lib/impeccable/ImpeccableLiveRoot.svelte?impeccable-live=" +
+    rev +
+    "';"
+  );
 }
 
 export function svelteAdapterRev(token) {
@@ -41,14 +47,16 @@ export function svelteAdapterRev(token) {
 export function detectSvelteKitProject(cwd = process.cwd(), config = null) {
   const appHtml = findSvelteKitAppHtml(cwd, config);
   if (!appHtml) return null;
-  const hasTemplateMarkers = fileIncludes(path.join(cwd, appHtml), '%sveltekit.body%')
-    && fileIncludes(path.join(cwd, appHtml), '%sveltekit.head%');
+  const hasTemplateMarkers =
+    fileIncludes(path.join(cwd, appHtml), '%sveltekit.body%') &&
+    fileIncludes(path.join(cwd, appHtml), '%sveltekit.head%');
   if (!hasTemplateMarkers) return null;
 
-  const hasSvelteConfig = fs.existsSync(path.join(cwd, 'svelte.config.js'))
-    || fs.existsSync(path.join(cwd, 'svelte.config.mjs'))
-    || fs.existsSync(path.join(cwd, 'svelte.config.cjs'))
-    || fs.existsSync(path.join(cwd, 'svelte.config.ts'));
+  const hasSvelteConfig =
+    fs.existsSync(path.join(cwd, 'svelte.config.js')) ||
+    fs.existsSync(path.join(cwd, 'svelte.config.mjs')) ||
+    fs.existsSync(path.join(cwd, 'svelte.config.cjs')) ||
+    fs.existsSync(path.join(cwd, 'svelte.config.ts'));
   const hasKitPackage = packageHasSvelteKit(cwd);
   if (!hasSvelteConfig && !hasKitPackage) return null;
 
@@ -59,7 +67,12 @@ export function detectSvelteKitProject(cwd = process.cwd(), config = null) {
   };
 }
 
-export function applySvelteKitLiveAdapter({ cwd = process.cwd(), port, token, config = null } = {}) {
+export function applySvelteKitLiveAdapter({
+  cwd = process.cwd(),
+  port,
+  token,
+  config = null,
+} = {}) {
   if (!Number.isFinite(Number(port))) {
     throw new Error('SvelteKit live adapter requires a numeric port');
   }
@@ -159,10 +172,11 @@ export function patchSvelteLayout(content, { rev = null } = {}) {
 export function unpatchSvelteLayout(content) {
   let out = String(content || '');
   const blockRe = new RegExp(
-    '([ \\t]*)' + escapeRegExp(SVELTE_LAYOUT_MARKER_OPEN)
-    + '\\n<ImpeccableLiveRoot\\s*/>\\n'
-    + escapeRegExp(SVELTE_LAYOUT_MARKER_CLOSE)
-    + '\\n?',
+    '([ \\t]*)' +
+      escapeRegExp(SVELTE_LAYOUT_MARKER_OPEN) +
+      '\\n<ImpeccableLiveRoot\\s*/>\\n' +
+      escapeRegExp(SVELTE_LAYOUT_MARKER_CLOSE) +
+      '\\n?',
     'g',
   );
   out = out.replace(blockRe, '$1');
@@ -179,8 +193,11 @@ export function ensureSvelteLiveRootComponent(cwd, port, token) {
 }
 
 export function buildSvelteLiveRootComponent(port, token) {
-  const liveUrl = 'http://localhost:' + Number(port) + '/live.js'
-    + (token ? '?token=' + encodeURIComponent(token) : '');
+  const liveUrl =
+    'http://localhost:' +
+    Number(port) +
+    '/live.js' +
+    (token ? '?token=' + encodeURIComponent(token) : '');
   return `<script>
   import { onMount } from 'svelte';
 
@@ -260,10 +277,7 @@ function findSvelteKitAppHtml(cwd, config) {
 }
 
 function findSvelteKitLayout(cwd) {
-  const candidates = [
-    'src/routes/+layout.svelte',
-    'src/routes/(app)/+layout.svelte',
-  ];
+  const candidates = ['src/routes/+layout.svelte', 'src/routes/(app)/+layout.svelte'];
   for (const rel of candidates) {
     if (fs.existsSync(path.join(cwd, rel))) return rel;
   }

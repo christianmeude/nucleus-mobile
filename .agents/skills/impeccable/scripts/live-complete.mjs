@@ -17,9 +17,13 @@ function parseArgs(argv) {
     if (arg === '--id') out.id = argv[++i];
     else if (arg.startsWith('--id=')) out.id = arg.slice('--id='.length);
     else if (arg === '--discarded' || arg === '--discard') out.status = 'discarded';
-    else if (arg === '--error') { out.status = 'agent_error'; out.message = argv[++i] || 'unknown error'; }
-    else if (arg.startsWith('--error=')) { out.status = 'agent_error'; out.message = arg.slice('--error='.length); }
-    else if (arg === '--force') out.force = true;
+    else if (arg === '--error') {
+      out.status = 'agent_error';
+      out.message = argv[++i] || 'unknown error';
+    } else if (arg.startsWith('--error=')) {
+      out.status = 'agent_error';
+      out.message = arg.slice('--error='.length);
+    } else if (arg === '--force') out.force = true;
     else if (arg === '--help' || arg === '-h') out.help = true;
   }
   return out;
@@ -28,7 +32,9 @@ function parseArgs(argv) {
 export async function completeCli() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help || !args.id) {
-    console.log(`Usage: node live-complete.mjs --id SESSION_ID [--discarded|--error MESSAGE] [--force]\n\nAppend the final durable session acknowledgement. Use after accept/discard cleanup is verified.\nCompletion is refused while the session's source file still carries live-mode leftovers\n(markers, data-p-* attributes, unbaked --p-* vars); fix the file or pass --force.`);
+    console.log(
+      `Usage: node live-complete.mjs --id SESSION_ID [--discarded|--error MESSAGE] [--force]\n\nAppend the final durable session acknowledgement. Use after accept/discard cleanup is verified.\nCompletion is refused while the session's source file still carries live-mode leftovers\n(markers, data-p-* attributes, unbaked --p-* vars); fix the file or pass --force.`,
+    );
     process.exit(args.help ? 0 : 1);
   }
 
@@ -41,18 +47,32 @@ export async function completeCli() {
     const sourceFile = snapshot?.sourceFile;
     const absSource = sourceFile ? path.resolve(process.cwd(), sourceFile) : null;
     const relSource = absSource ? path.relative(process.cwd(), absSource) : null;
-    const insideProject = relSource !== null && relSource !== '' && !relSource.startsWith('..') && !path.isAbsolute(relSource);
-    if (insideProject && !relSource.startsWith('node_modules' + path.sep) && !relSource.startsWith('node_modules/')) {
+    const insideProject =
+      relSource !== null &&
+      relSource !== '' &&
+      !relSource.startsWith('..') &&
+      !path.isAbsolute(relSource);
+    if (
+      insideProject &&
+      !relSource.startsWith('node_modules' + path.sep) &&
+      !relSource.startsWith('node_modules/')
+    ) {
       const verify = verifyAcceptedFile(fs, absSource);
       if (!verify.clean) {
-        console.log(JSON.stringify({
-          ok: false,
-          error: 'source_dirty',
-          id: args.id,
-          file: sourceFile,
-          findings: verify.findings,
-          hint: 'The accepted source still carries live-mode leftovers. Finish the carbonize cleanup (bake params, remove markers and data-p-* attributes), then run live-complete again. Use --force only if a finding is a false positive.',
-        }, null, 2));
+        console.log(
+          JSON.stringify(
+            {
+              ok: false,
+              error: 'source_dirty',
+              id: args.id,
+              file: sourceFile,
+              findings: verify.findings,
+              hint: 'The accepted source still carries live-mode leftovers. Finish the carbonize cleanup (bake params, remove markers and data-p-* attributes), then run live-complete again. Use --force only if a finding is a false positive.',
+            },
+            null,
+            2,
+          ),
+        );
         process.exit(1);
       }
     }
@@ -63,16 +83,23 @@ export async function completeCli() {
   if (serverResult?.ok) {
     const store = createLiveSessionStore({ cwd: process.cwd(), sessionId: args.id });
     const snapshot = store.getSnapshot(args.id, { includeCompleted: true });
-    console.log(JSON.stringify({ ok: true, id: args.id, phase: snapshot?.phase || args.status, snapshot }, null, 2));
+    console.log(
+      JSON.stringify(
+        { ok: true, id: args.id, phase: snapshot?.phase || args.status, snapshot },
+        null,
+        2,
+      ),
+    );
     return;
   }
 
   const store = createLiveSessionStore({ cwd: process.cwd(), sessionId: args.id });
-  const event = args.status === 'discarded'
-    ? { type: 'discarded', id: args.id }
-    : args.status === 'agent_error'
-      ? { type: 'agent_error', id: args.id, message: args.message || 'unknown error' }
-      : { type: 'complete', id: args.id };
+  const event =
+    args.status === 'discarded'
+      ? { type: 'discarded', id: args.id }
+      : args.status === 'agent_error'
+        ? { type: 'agent_error', id: args.id, message: args.message || 'unknown error' }
+        : { type: 'complete', id: args.id };
   const snapshot = store.appendEvent(event);
   console.log(JSON.stringify({ ok: true, id: args.id, phase: snapshot.phase, snapshot }, null, 2));
 }
@@ -82,11 +109,12 @@ function readServerInfo() {
 }
 
 async function completeThroughServer(info, args) {
-  const type = args.status === 'discarded'
-    ? 'discarded'
-    : args.status === 'agent_error'
-      ? 'error'
-      : 'complete';
+  const type =
+    args.status === 'discarded'
+      ? 'discarded'
+      : args.status === 'agent_error'
+        ? 'error'
+        : 'complete';
   try {
     const res = await fetch(`http://localhost:${info.port}/poll`, {
       method: 'POST',

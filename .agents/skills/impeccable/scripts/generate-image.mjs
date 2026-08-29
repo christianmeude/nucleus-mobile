@@ -44,7 +44,7 @@ function hash32(str) {
 }
 
 function hslToRgb(hDeg, s, l) {
-  const h = ((hDeg % 360) + 360) % 360 / 360;
+  const h = (((hDeg % 360) + 360) % 360) / 360;
   const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
   const p = 2 * l - q;
   const hue = (t) => {
@@ -59,16 +59,15 @@ function hslToRgb(hDeg, s, l) {
   return [hue(h + 1 / 3), hue(h), hue(h - 1 / 3)].map((c) => Math.round(c * 255));
 }
 
-const toHex = ([r, g, b]) =>
-  '#' + [r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('');
+const toHex = ([r, g, b]) => '#' + [r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('');
 
 // Two or three deterministic swatches derived from the prompt hash. The band
 // count itself is prompt-derived, so different prompts differ in palette.
 function palette(prompt) {
   const h = hash32(prompt);
   const base = h % 360;
-  const bands = 2 + (h >>> 9) % 2; // 2 or 3
-  const spread = 40 + (h >>> 3) % 120;
+  const bands = 2 + ((h >>> 9) % 2); // 2 or 3
+  const spread = 40 + ((h >>> 3) % 120);
   const out = [];
   for (let i = 0; i < bands; i++) {
     const hue = base + i * spread;
@@ -81,7 +80,10 @@ function palette(prompt) {
 function svgFake(prompt, [w, h]) {
   const colors = palette(prompt).map(toHex);
   const stops = colors
-    .map((c, i) => `<stop offset="${Math.round((i / (colors.length - 1)) * 100)}%" stop-color="${c}"/>`)
+    .map(
+      (c, i) =>
+        `<stop offset="${Math.round((i / (colors.length - 1)) * 100)}%" stop-color="${c}"/>`,
+    )
     .join('');
   // Greedy word wrap tuned to the canvas width so the prompt stays legible.
   const perLine = Math.max(12, Math.floor(w / 26));
@@ -98,11 +100,15 @@ function svgFake(prompt, [w, h]) {
     if (lines.length >= 10) break;
   }
   if (cur && lines.length < 11) lines.push(cur);
-  const escape = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const escape = (s) =>
+    String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
   const fontSize = Math.round(w / 24);
   const startY = h / 2 - ((lines.length - 1) * fontSize * 1.3) / 2;
   const text = lines
-    .map((line, i) => `<text x="${w / 2}" y="${Math.round(startY + i * fontSize * 1.3)}" font-family="Helvetica, Arial, sans-serif" font-size="${fontSize}" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">${escape(line)}</text>`)
+    .map(
+      (line, i) =>
+        `<text x="${w / 2}" y="${Math.round(startY + i * fontSize * 1.3)}" font-family="Helvetica, Arial, sans-serif" font-size="${fontSize}" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">${escape(line)}</text>`,
+    )
     .join('');
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
@@ -123,7 +129,7 @@ function crc32(buf) {
   let c = 0xffffffff;
   for (let i = 0; i < buf.length; i++) {
     c ^= buf[i];
-    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
   }
   return (c ^ 0xffffffff) >>> 0;
 }
@@ -158,8 +164,8 @@ function pngFake(prompt, [w, h]) {
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(w, 0);
   ihdr.writeUInt32BE(h, 4);
-  ihdr[8] = 8;  // bit depth
-  ihdr[9] = 2;  // color type: truecolor RGB
+  ihdr[8] = 8; // bit depth
+  ihdr[9] = 2; // color type: truecolor RGB
   const idat = zlib.deflateSync(raw, { level: 9 });
   const textData = Buffer.concat([
     Buffer.from('Comment', 'latin1'),
@@ -200,7 +206,9 @@ if (process.env.IMPECCABLE_IMAGE_GEN_FAKE) {
 
 const key = process.env.OPENAI_API_KEY;
 if (!key) {
-  console.error('generate-image: OPENAI_API_KEY is not set; use the harness-native image tool instead.');
+  console.error(
+    'generate-image: OPENAI_API_KEY is not set; use the harness-native image tool instead.',
+  );
   process.exit(1);
 }
 const promptFile = arg('prompt-file');
@@ -219,7 +227,9 @@ const response = await fetch('https://api.openai.com/v1/images/generations', {
   body: JSON.stringify({ model: 'gpt-image-2', prompt, size, quality, n: 1 }),
 });
 if (!response.ok) {
-  console.error(`generate-image: API error ${response.status}: ${(await response.text()).slice(0, 300)}`);
+  console.error(
+    `generate-image: API error ${response.status}: ${(await response.text()).slice(0, 300)}`,
+  );
   process.exit(1);
 }
 const json = await response.json();
@@ -234,7 +244,27 @@ fs.writeFileSync(out, Buffer.from(b64, 'base64'));
 // plus a sidecar for anything that indexes rather than opens the image.
 try {
   const { spawnSync } = await import('node:child_process');
-  spawnSync(process.execPath, [new URL('./embed-prompt.mjs', import.meta.url).pathname, out, '--prompt', prompt], { stdio: 'ignore' });
-  fs.writeFileSync(`${out}.json`, JSON.stringify({ prompt, createdAt: new Date().toISOString(), tool: 'generate-image.mjs', model: 'gpt-image-2' }, null, 2));
-} catch { /* embedding is best-effort */ }
-console.log(`IMAGE: ${out} (${size}, ${quality}, gpt-image-2, billed to your OpenAI key); prompt embedded + sidecar at ${out}.json`);
+  spawnSync(
+    process.execPath,
+    [new URL('./embed-prompt.mjs', import.meta.url).pathname, out, '--prompt', prompt],
+    { stdio: 'ignore' },
+  );
+  fs.writeFileSync(
+    `${out}.json`,
+    JSON.stringify(
+      {
+        prompt,
+        createdAt: new Date().toISOString(),
+        tool: 'generate-image.mjs',
+        model: 'gpt-image-2',
+      },
+      null,
+      2,
+    ),
+  );
+} catch {
+  /* embedding is best-effort */
+}
+console.log(
+  `IMAGE: ${out} (${size}, ${quality}, gpt-image-2, billed to your OpenAI key); prompt embedded + sidecar at ${out}.json`,
+);

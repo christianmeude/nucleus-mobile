@@ -1,6 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { getLegacyLiveSessionsDir, getLiveSessionsDir, safeSessionId } from '../lib/impeccable-paths.mjs';
+import {
+  getLegacyLiveSessionsDir,
+  getLiveSessionsDir,
+  safeSessionId,
+} from '../lib/impeccable-paths.mjs';
 import { COMPLETED_SESSION_PHASES, GENERATION_FENCED_SESSION_PHASES } from './vocabulary.mjs';
 
 const COMPLETED_PHASES = new Set(COMPLETED_SESSION_PHASES);
@@ -55,7 +59,12 @@ export function createLiveSessionStore({ cwd = process.cwd(), sessionId } = {}) 
     const mtimeMs = stat ? stat.mtimeMs : -1;
 
     const cached = derived.get(id);
-    if (cached && cached.journalPath === journalPath && cached.size === size && cached.mtimeMs === mtimeMs) {
+    if (
+      cached &&
+      cached.journalPath === journalPath &&
+      cached.size === size &&
+      cached.mtimeMs === mtimeMs
+    ) {
       return cached;
     }
 
@@ -69,7 +78,13 @@ export function createLiveSessionStore({ cwd = process.cwd(), sessionId } = {}) 
     }
 
     const rebuilt = rebuildSnapshotFromJournal(journalPath, id);
-    const entry = { snapshot: rebuilt.snapshot, nextSeq: rebuilt.nextSeq, journalPath, size, mtimeMs };
+    const entry = {
+      snapshot: rebuilt.snapshot,
+      nextSeq: rebuilt.nextSeq,
+      journalPath,
+      size,
+      mtimeMs,
+    };
     derived.set(id, entry);
     return entry;
   }
@@ -128,8 +143,10 @@ export function createLiveSessionStore({ cwd = process.cwd(), sessionId } = {}) 
      */
     has(id) {
       if (!id || typeof id !== 'string') return false;
-      return fs.existsSync(getJournalPath(rootDir, id))
-        || fs.existsSync(getJournalPath(legacyRootDir, id));
+      return (
+        fs.existsSync(getJournalPath(rootDir, id)) ||
+        fs.existsSync(getJournalPath(legacyRootDir, id))
+      );
     },
     /**
      * Read-only. `live-status` and `live-resume` call this against a session a
@@ -338,7 +355,11 @@ function applyEvent(snapshot, entry) {
       next.mountedVariants = [];
       next.mountFailures = [];
       next.renderState = null;
-      if (event.screenshotPath) upsertArtifact(next.annotationArtifacts, { type: 'screenshot', path: event.screenshotPath });
+      if (event.screenshotPath)
+        upsertArtifact(next.annotationArtifacts, {
+          type: 'screenshot',
+          path: event.screenshotPath,
+        });
       break;
     case 'variant_plan':
       if (!next.generationCanceled && !GENERATION_FENCED_PHASES.has(next.phase)) {
@@ -364,8 +385,14 @@ function applyEvent(snapshot, entry) {
       break;
     case 'variants_ready':
     case 'agent_done':
-      if ((next.generationCanceled || GENERATION_FENCED_PHASES.has(next.phase))
-          && !(event.type === 'agent_done' && event.carbonize === true && next.phase === 'accept_requested')) {
+      if (
+        (next.generationCanceled || GENERATION_FENCED_PHASES.has(next.phase)) &&
+        !(
+          event.type === 'agent_done' &&
+          event.carbonize === true &&
+          next.phase === 'accept_requested'
+        )
+      ) {
         next.diagnostics.push({
           error: 'late_generation_event_ignored',
           type: event.type,
@@ -382,14 +409,16 @@ function applyEvent(snapshot, entry) {
       next.sourceFile = event.sourceFile ?? event.file ?? next.sourceFile;
       next.previewFile = event.previewFile ?? next.previewFile;
       next.previewMode = event.previewMode ?? next.previewMode;
-      next.arrivedVariants = event.arrivedVariants ?? (next.expectedVariants || next.arrivedVariants || 0);
+      next.arrivedVariants =
+        event.arrivedVariants ?? (next.expectedVariants || next.arrivedVariants || 0);
       next.pendingEventSeq = null;
       next.pendingEvent = null;
       if (event.carbonize === true) {
         next.diagnostics.push({
           error: 'carbonize_cleanup_required',
           file: event.file || null,
-          message: 'Accepted variant still has carbonize markers that must be folded into source CSS.',
+          message:
+            'Accepted variant still has carbonize markers that must be folded into source CSS.',
         });
       }
       next.renderState = deriveRenderState(next);
@@ -397,7 +426,11 @@ function applyEvent(snapshot, entry) {
     case 'variant_mounted': {
       const variant = Number(event.variant);
       if (!Number.isInteger(variant) || variant < 1) {
-        next.diagnostics.push({ error: 'malformed_mount_ack', type: event.type, variant: event.variant ?? null });
+        next.diagnostics.push({
+          error: 'malformed_mount_ack',
+          type: event.type,
+          variant: event.variant ?? null,
+        });
         break;
       }
       if (!next.mountedVariants.includes(variant)) {
@@ -409,7 +442,11 @@ function applyEvent(snapshot, entry) {
     case 'variant_mount_failed': {
       const variant = Number(event.variant);
       if (!Number.isInteger(variant) || variant < 1) {
-        next.diagnostics.push({ error: 'malformed_mount_ack', type: event.type, variant: event.variant ?? null });
+        next.diagnostics.push({
+          error: 'malformed_mount_ack',
+          type: event.type,
+          variant: event.variant ?? null,
+        });
         break;
       }
       next.mountFailures = [
@@ -433,20 +470,25 @@ function applyEvent(snapshot, entry) {
     }
     case 'checkpoint':
       if (next.generationCanceled || GENERATION_FENCED_PHASES.has(next.phase)) {
-        next.diagnostics.push({ error: 'checkpoint_after_terminal_ignored', phase: event.phase ?? null, revision: event.revision ?? null });
+        next.diagnostics.push({
+          error: 'checkpoint_after_terminal_ignored',
+          phase: event.phase ?? null,
+          revision: event.revision ?? null,
+        });
         break;
       }
       {
-        const revisionDomain = event.revisionDomain === 'publication'
-          || (event.reason === 'variants_progress' && !event.owner)
-          ? 'publication'
-          : 'browser';
-        const revisionField = revisionDomain === 'publication'
-          ? 'publicationCheckpointRevision'
-          : 'browserCheckpointRevision';
-        const currentRevision = next[revisionField]
-          ?? (revisionDomain === 'browser' ? next.checkpointRevision : 0)
-          ?? 0;
+        const revisionDomain =
+          event.revisionDomain === 'publication' ||
+          (event.reason === 'variants_progress' && !event.owner)
+            ? 'publication'
+            : 'browser';
+        const revisionField =
+          revisionDomain === 'publication'
+            ? 'publicationCheckpointRevision'
+            : 'browserCheckpointRevision';
+        const currentRevision =
+          next[revisionField] ?? (revisionDomain === 'browser' ? next.checkpointRevision : 0) ?? 0;
         if ((event.revision ?? 0) >= currentRevision) {
           next.phase = event.phase ?? next.phase;
           next[revisionField] = event.revision ?? currentRevision;
@@ -455,13 +497,19 @@ function applyEvent(snapshot, entry) {
             next.activeOwner = event.owner ?? next.activeOwner;
           }
           next.arrivedVariants = event.arrivedVariants ?? next.arrivedVariants;
-          if (revisionDomain === 'browser') next.visibleVariant = event.visibleVariant ?? next.visibleVariant;
+          if (revisionDomain === 'browser')
+            next.visibleVariant = event.visibleVariant ?? next.visibleVariant;
           next.sourceFile = event.sourceFile ?? next.sourceFile;
           next.previewFile = event.previewFile ?? next.previewFile;
           next.previewMode = event.previewMode ?? next.previewMode;
-          if (revisionDomain === 'browser' && event.paramValues) next.paramValues = { ...event.paramValues };
+          if (revisionDomain === 'browser' && event.paramValues)
+            next.paramValues = { ...event.paramValues };
         } else {
-          next.diagnostics.push({ error: 'stale_checkpoint_ignored', revision: event.revision, revisionDomain });
+          next.diagnostics.push({
+            error: 'stale_checkpoint_ignored',
+            revision: event.revision,
+            revisionDomain,
+          });
         }
       }
       break;
@@ -526,13 +574,20 @@ function applyEvent(snapshot, entry) {
       break;
     case 'agent_error':
       if (next.generationCanceled && event.sourceEventType === 'generate') {
-        next.diagnostics.push({ error: 'late_generation_event_ignored', type: event.type, phase: next.phase });
+        next.diagnostics.push({
+          error: 'late_generation_event_ignored',
+          type: event.type,
+          phase: next.phase,
+        });
         break;
       }
       next.phase = 'agent_error';
       next.pendingEventSeq = null;
       next.pendingEvent = null;
-      next.diagnostics.push({ error: 'agent_error', message: event.message || 'unknown agent error' });
+      next.diagnostics.push({
+        error: 'agent_error',
+        message: event.message || 'unknown agent error',
+      });
       break;
     default:
       next.diagnostics.push({ error: 'unknown_event_type', type: event.type });
@@ -548,7 +603,11 @@ function toPendingEvent(event) {
 }
 
 function upsertArtifact(artifacts, artifact) {
-  if (!artifacts.some((existing) => existing.path === artifact.path && existing.type === artifact.type)) {
+  if (
+    !artifacts.some(
+      (existing) => existing.path === artifact.path && existing.type === artifact.type,
+    )
+  ) {
     artifacts.push(artifact);
   }
 }
