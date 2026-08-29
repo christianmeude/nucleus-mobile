@@ -42,7 +42,7 @@ import {
 } from '../../utils/format';
 import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
 import { PUBLISHED_STATUSES } from '../../components/PaperStatusChip';
-import { File, MessageCircle, Bookmark, FileText, Link2, ShieldCheck } from 'lucide-react-native';
+import { File, MessageCircle, Bookmark, FileText, Link2, ShieldCheck, ArrowUpRight } from 'lucide-react-native';
 
 
 type DetailRouteProp = RouteProp<RootStackParamList, 'ResearchDetail'>;
@@ -361,25 +361,23 @@ export const ResearchDetailScreen = () => {
             </View>
           )}
 
-          {paper.status === 'approved' && !paper.publish_requested_at && isOwner && (
-            <View style={styles.doiCard}>
-              <View style={styles.doiHeader}>
-                <Icon icon={ShieldCheck} size={16} color={theme.colors.brand.primary} />
-                <Text style={styles.doiTitle}>Ready for Publication</Text>
+          {paper.status === 'approved' && isOwner && (
+            paper.publish_requested_at ? (
+              <View style={styles.publishStatusRow}>
+                <Icon icon={ShieldCheck} size={13} color={theme.colors.state.success} />
+                <Text style={styles.publishStatusText}>Publication requested · pending admin review</Text>
               </View>
-              <View style={{ marginTop: theme.spacing.sm }}>
-                <Button label="Request Publication" variant="soft" size="sm" onPress={() => setPublishTarget(paper)} />
-              </View>
-            </View>
-          )}
-          {paper.status === 'approved' && paper.publish_requested_at && isOwner && (
-            <View style={styles.doiCard}>
-              <View style={styles.doiHeader}>
-                <Icon icon={ShieldCheck} size={16} color={theme.colors.state.success} />
-                <Text style={styles.doiTitle}>Publication Requested</Text>
-              </View>
-              <Text style={styles.doiLink}>Pending admin review.</Text>
-            </View>
+            ) : (
+              <PressableScale
+                style={styles.publishActionRow}
+                onPress={() => setPublishTarget(paper)}
+                accessibilityRole="button"
+                accessibilityLabel="Request formal publication"
+              >
+                <Text style={styles.publishActionText}>Request formal publication</Text>
+                <Icon icon={ArrowUpRight} size={14} color={theme.colors.brand.primary} />
+              </PressableScale>
+            )
           )}
 
           <View style={styles.readRow}>
@@ -697,6 +695,28 @@ const makeStyles = (theme: Theme) =>
       flexDirection: 'row',
       gap: theme.spacing.sm,
       marginTop: theme.spacing.xs,
+    },
+    publishActionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      marginTop: theme.spacing.md,
+      alignSelf: 'flex-start',
+    },
+    publishActionText: {
+      fontFamily: theme.fontFamilies.ui.semibold,
+      fontSize: 14,
+      color: theme.colors.brand.primary,
+    },
+    publishStatusRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.xs,
+      marginTop: theme.spacing.md,
+    },
+    publishStatusText: {
+      ...theme.typography.bodySmall,
+      color: theme.colors.text.muted,
     },
     section: {
       marginTop: theme.spacing.xl,
