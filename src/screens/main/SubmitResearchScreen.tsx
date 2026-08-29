@@ -1194,7 +1194,7 @@ export const SubmitResearchScreen = () => {
       </BottomSheet>
 
       {/* Checklist confirmation */}
-      <BottomSheet ref={checklistSheetRef}>
+      <BottomSheet ref={checklistSheetRef} snapPoints={['50%', '75%']}>
         <Text style={styles.sheetTitle}>Submission checklist</Text>
         <Text style={styles.sheetIntro}>Confirm all required items before final submission.</Text>
         <View style={styles.checklist}>

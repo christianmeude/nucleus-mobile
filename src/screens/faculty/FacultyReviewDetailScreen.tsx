@@ -448,7 +448,7 @@ export const FacultyReviewDetailScreen = () => {
         </Animated.ScrollView>
       </Screen>
 
-      <BottomSheet ref={actionSheetRef} onDismiss={() => setSheet(null)}>
+      <BottomSheet ref={actionSheetRef} onDismiss={() => setSheet(null)} snapPoints={['65%', '92%']}>
         {sheet === 'approve' ? (
           <>
             <View style={[styles.sheetHeader, { backgroundColor: theme.colors.state.successSurface }]}>
