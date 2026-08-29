@@ -1,6 +1,14 @@
 import { Icon } from '../../components/ui/Icon';
 import { useCallback, useMemo, useEffect, useRef, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
 import Animated from 'react-native-reanimated';
 import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -12,28 +20,24 @@ import { EmptyState, InlineNotice, Screen, Skeleton, TopBar } from '../../compon
 import { FacultyPaperCard } from '../../components/FacultyPaperCard';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
 import { facultyApi, type FacultyAssignedPaper } from '../../api/faculty';
-import {
-  FACULTY_QUEUE_FILTERS,
-  type FacultyQueueFilter,
-} from './facultyStatus';
+import { FACULTY_QUEUE_FILTERS, type FacultyQueueFilter } from './facultyStatus';
 import { FacultyTabsParamList, FacultyTabNavigationProp } from '../../navigation/types';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { Search, X, ChevronLeft, ChevronRight } from 'lucide-react-native';
 
-
 export const FacultyReviewScreen = () => {
   const navigation = useNavigation<FacultyTabNavigationProp>();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  
+
   const [papers, setPapers] = useState<FacultyAssignedPaper[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  
+
   const route = useRoute<RouteProp<FacultyTabsParamList, 'FacultyReview'>>();
   const [filter, setFilter] = useState<FacultyQueueFilter>(
-    (route.params?.initialFilter as FacultyQueueFilter) ?? 'needs_review'
+    (route.params?.initialFilter as FacultyQueueFilter) ?? 'needs_review',
   );
   const [search, setSearch] = useState('');
 
@@ -41,13 +45,16 @@ export const FacultyReviewScreen = () => {
   const [showRightHint, setShowRightHint] = useState(true);
   const [showLeftHint, setShowLeftHint] = useState(false);
 
-  const handlePillScroll = useCallback((event: any) => {
-    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-    const canScrollRight = contentOffset.x < contentSize.width - layoutMeasurement.width - 15;
-    const canScrollLeft = contentOffset.x > 15;
-    if (canScrollRight !== showRightHint) setShowRightHint(canScrollRight);
-    if (canScrollLeft !== showLeftHint) setShowLeftHint(canScrollLeft);
-  }, [showRightHint, showLeftHint]);
+  const handlePillScroll = useCallback(
+    (event: any) => {
+      const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+      const canScrollRight = contentOffset.x < contentSize.width - layoutMeasurement.width - 15;
+      const canScrollLeft = contentOffset.x > 15;
+      if (canScrollRight !== showRightHint) setShowRightHint(canScrollRight);
+      if (canScrollLeft !== showLeftHint) setShowLeftHint(canScrollLeft);
+    },
+    [showRightHint, showLeftHint],
+  );
 
   const subtitle = useMemo(() => {
     if (!papers) return 'Loading queue...';
@@ -68,34 +75,37 @@ export const FacultyReviewScreen = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const load = useCallback(async (pageNum = 0, currentFilter = filter, currentSearch = debouncedSearch) => {
-    try {
-      if (pageNum === 0) {
-        setError(null);
-        if (!refreshing && pageNum === 0 && !papers) setPapers(null); // Show skeleton only if no existing papers
-      } else {
-        setLoadingMore(true);
-      }
+  const load = useCallback(
+    async (pageNum = 0, currentFilter = filter, currentSearch = debouncedSearch) => {
+      try {
+        if (pageNum === 0) {
+          setError(null);
+          if (!refreshing && pageNum === 0 && !papers) setPapers(null); // Show skeleton only if no existing papers
+        } else {
+          setLoadingMore(true);
+        }
 
-      const limit = 20;
-      const data = await facultyApi.getReviewQueue(pageNum, limit, currentFilter, currentSearch, {
-        forceRefresh: refreshing,
-      });
-      
-      if (pageNum === 0) {
-        setPapers(data);
-      } else {
-        setPapers((prev) => (prev ? [...prev, ...data] : data));
-      }
+        const limit = 20;
+        const data = await facultyApi.getReviewQueue(pageNum, limit, currentFilter, currentSearch, {
+          forceRefresh: refreshing,
+        });
 
-      setHasMore(data.length === limit);
-      setPage(pageNum);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to load assigned papers.');
-    } finally {
-      setLoadingMore(false);
-    }
-  }, [refreshing, filter, debouncedSearch, papers]);
+        if (pageNum === 0) {
+          setPapers(data);
+        } else {
+          setPapers((prev) => (prev ? [...prev, ...data] : data));
+        }
+
+        setHasMore(data.length === limit);
+        setPage(pageNum);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unable to load assigned papers.');
+      } finally {
+        setLoadingMore(false);
+      }
+    },
+    [refreshing, filter, debouncedSearch, papers],
+  );
 
   // Load when filter or debounced search changes
   useEffect(() => {
@@ -114,28 +124,36 @@ export const FacultyReviewScreen = () => {
     load(page + 1, filter, debouncedSearch);
   }, [hasMore, loadingMore, papers, load, page, filter, debouncedSearch]);
 
-  const handlePaperPress = useCallback((paperId: string) => {
-    navigation.navigate('FacultyReviewDetail', { paperId });
-  }, [navigation]);
+  const handlePaperPress = useCallback(
+    (paperId: string) => {
+      navigation.navigate('FacultyReviewDetail', { paperId });
+    },
+    [navigation],
+  );
 
-  const renderPaperItem = useCallback(({ item: rawItem, index }: { item: any; index: number }) => {
-    const item = rawItem as FacultyAssignedPaper;
-    return (
-      <ListEntranceItem index={index}>
-        <FacultyPaperCard
-          paper={item}
-          index={index}
-          onPress={() => handlePaperPress(item.id)}
-        />
-      </ListEntranceItem>
-    );
-  }, [handlePaperPress]);
+  const renderPaperItem = useCallback(
+    ({ item: rawItem, index }: { item: any; index: number }) => {
+      const item = rawItem as FacultyAssignedPaper;
+      return (
+        <ListEntranceItem index={index}>
+          <FacultyPaperCard paper={item} index={index} onPress={() => handlePaperPress(item.id)} />
+        </ListEntranceItem>
+      );
+    },
+    [handlePaperPress],
+  );
 
   const keyExtractor = useCallback((item: any) => item.id, []);
 
-  const renderFooter = useCallback(() => (
-    loadingMore ? <View style={{ padding: 16 }}><Skeleton height={84} radius="lg" /></View> : null
-  ), [loadingMore]);
+  const renderFooter = useCallback(
+    () =>
+      loadingMore ? (
+        <View style={{ padding: 16 }}>
+          <Skeleton height={84} radius="lg" />
+        </View>
+      ) : null,
+    [loadingMore],
+  );
 
   return (
     <Screen gutter={0} edges={{ bottom: false }}>

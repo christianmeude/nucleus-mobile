@@ -33,7 +33,7 @@ export const BrowseFilterSystem = ({
 
   type FilterTab = 'fields' | 'departments' | 'year';
   const [activeTab, setActiveTab] = useState<FilterTab>('fields');
-  
+
   const handleToggleCategory = (id: string) => {
     const next = new Set(filters.categories);
     if (next.has(id)) next.delete(id);
@@ -56,15 +56,15 @@ export const BrowseFilterSystem = ({
     const isSelected = filters.departments.includes(deptName);
     const nextDepts = new Set(filters.departments);
     const nextProgs = new Set(filters.programs);
-    
+
     if (isSelected) {
       nextDepts.delete(deptName);
-      deptPrograms.forEach(p => nextProgs.delete(p.id));
+      deptPrograms.forEach((p) => nextProgs.delete(p.id));
     } else {
       nextDepts.add(deptName);
-      deptPrograms.forEach(p => nextProgs.add(p.id));
+      deptPrograms.forEach((p) => nextProgs.add(p.id));
     }
-    
+
     onChange({
       ...filters,
       departments: Array.from(nextDepts),
@@ -93,7 +93,7 @@ export const BrowseFilterSystem = ({
     const tStr = tempYearTo.trim();
     const f = parseInt(fStr, 10);
     const t = parseInt(tStr, 10);
-    
+
     if (fStr && tStr && !isNaN(f) && !isNaN(t) && f > t) {
       setYearError('"From" year cannot be greater than "To" year.');
       return;
@@ -113,10 +113,10 @@ export const BrowseFilterSystem = ({
         accessibilityRole="button"
         accessibilityLabel="Open filters"
       >
-        <Icon 
-          icon={SlidersHorizontal} 
-          size={16} 
-          color={activeCount > 0 ? theme.colors.brand.primary : theme.colors.text.secondary} 
+        <Icon
+          icon={SlidersHorizontal}
+          size={16}
+          color={activeCount > 0 ? theme.colors.brand.primary : theme.colors.text.secondary}
         />
         <Text style={[styles.triggerText, activeCount > 0 && styles.triggerTextActive]}>
           Filters {activeCount > 0 ? `(${activeCount})` : ''}
@@ -126,46 +126,55 @@ export const BrowseFilterSystem = ({
       <BottomSheet ref={sheetRef} snapPoints={['80%', '95%']}>
         <View style={styles.sheetHeader}>
           <Text style={styles.sheetTitle}>Filters</Text>
-          <View style={{ opacity: activeCount > 0 ? 1 : 0 }} pointerEvents={activeCount > 0 ? 'auto' : 'none'}>
-            <Button 
-              label="Clear All" 
-              variant="subtle" 
-              size="sm" 
+          <View
+            style={{ opacity: activeCount > 0 ? 1 : 0 }}
+            pointerEvents={activeCount > 0 ? 'auto' : 'none'}
+          >
+            <Button
+              label="Clear All"
+              variant="subtle"
+              size="sm"
               onPress={() => {
                 onChange(INITIAL_FILTER_STATE);
                 setTempYearFrom('');
                 setTempYearTo('');
                 setYearError('');
-              }} 
+              }}
             />
           </View>
         </View>
 
         <View style={styles.tabsContainer}>
-          <Pressable 
-            style={[styles.tabBtn, activeTab === 'fields' && styles.tabBtnActive]} 
+          <Pressable
+            style={[styles.tabBtn, activeTab === 'fields' && styles.tabBtnActive]}
             onPress={() => setActiveTab('fields')}
           >
-            <Text style={[styles.tabText, activeTab === 'fields' && styles.tabTextActive]}>FIELDS</Text>
+            <Text style={[styles.tabText, activeTab === 'fields' && styles.tabTextActive]}>
+              FIELDS
+            </Text>
           </Pressable>
 
-          <Pressable 
-            style={[styles.tabBtn, activeTab === 'departments' && styles.tabBtnActive]} 
+          <Pressable
+            style={[styles.tabBtn, activeTab === 'departments' && styles.tabBtnActive]}
             onPress={() => setActiveTab('departments')}
           >
-            <Text style={[styles.tabText, activeTab === 'departments' && styles.tabTextActive]}>DEPARTMENTS</Text>
+            <Text style={[styles.tabText, activeTab === 'departments' && styles.tabTextActive]}>
+              DEPARTMENTS
+            </Text>
           </Pressable>
 
-          <Pressable 
-            style={[styles.tabBtn, activeTab === 'year' && styles.tabBtnActive]} 
+          <Pressable
+            style={[styles.tabBtn, activeTab === 'year' && styles.tabBtnActive]}
             onPress={() => setActiveTab('year')}
           >
-            <Text style={[styles.tabText, activeTab === 'year' && styles.tabTextActive]}>YEAR RANGE</Text>
+            <Text style={[styles.tabText, activeTab === 'year' && styles.tabTextActive]}>
+              YEAR RANGE
+            </Text>
           </Pressable>
         </View>
 
-        <BottomSheetScrollView 
-          style={styles.sheetScroll} 
+        <BottomSheetScrollView
+          style={styles.sheetScroll}
           contentContainerStyle={{ paddingBottom: insets.bottom + 120, paddingTop: 16 }}
           showsVerticalScrollIndicator={false}
         >
@@ -175,7 +184,11 @@ export const BrowseFilterSystem = ({
               {categories.map((cat) => {
                 const active = filters.categories.includes(cat.id);
                 return (
-                  <Pressable key={cat.id} style={styles.row} onPress={() => handleToggleCategory(cat.id)}>
+                  <Pressable
+                    key={cat.id}
+                    style={styles.row}
+                    onPress={() => handleToggleCategory(cat.id)}
+                  >
                     <View style={[styles.checkbox, active && styles.checkboxActive]}>
                       {active && <Icon icon={Check} size={14} color={theme.colors.surface.base} />}
                     </View>
@@ -196,36 +209,62 @@ export const BrowseFilterSystem = ({
                 return (
                   <View key={dept.id}>
                     <View style={styles.deptRowContainer}>
-                      <Pressable style={styles.deptRowToggle} onPress={() => handleToggleDept(dept.name, deptPrograms)}>
+                      <Pressable
+                        style={styles.deptRowToggle}
+                        onPress={() => handleToggleDept(dept.name, deptPrograms)}
+                      >
                         <View style={[styles.checkbox, activeDept && styles.checkboxActive]}>
-                          {activeDept && <Icon icon={Check} size={14} color={theme.colors.surface.base} />}
+                          {activeDept && (
+                            <Icon icon={Check} size={14} color={theme.colors.surface.base} />
+                          )}
                         </View>
-                        <Text style={[styles.rowText, activeDept && styles.rowTextActive, { fontFamily: theme.fontFamilies.ui.semibold }]}>
+                        <Text
+                          style={[
+                            styles.rowText,
+                            activeDept && styles.rowTextActive,
+                            { fontFamily: theme.fontFamilies.ui.semibold },
+                          ]}
+                        >
                           {dept.name}
                         </Text>
                       </Pressable>
 
                       {deptPrograms.length > 0 && (
-                        <Pressable style={styles.deptRowExpand} onPress={() => toggleDeptExpansion(dept.id)}>
-                          <Icon icon={isExpanded ? ChevronUp : ChevronDown} size={20} color={theme.colors.text.muted} />
+                        <Pressable
+                          style={styles.deptRowExpand}
+                          onPress={() => toggleDeptExpansion(dept.id)}
+                        >
+                          <Icon
+                            icon={isExpanded ? ChevronUp : ChevronDown}
+                            size={20}
+                            color={theme.colors.text.muted}
+                          />
                         </Pressable>
                       )}
                     </View>
 
                     {/* Nested Programs */}
-                    {isExpanded && deptPrograms.map((prog) => {
-                      const activeProg = filters.programs.includes(prog.id);
-                      return (
-                        <Pressable key={prog.id} style={styles.nestedRow} onPress={() => handleToggleProgram(prog.id)}>
-                          <View style={[styles.checkbox, activeProg && styles.checkboxActive]}>
-                            {activeProg && <Icon icon={Check} size={14} color={theme.colors.surface.base} />}
-                          </View>
-                          <Text style={[styles.rowText, activeProg && styles.rowTextActive]}>
-                            {prog.code ? `${prog.code} - ` : ''}{prog.name}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
+                    {isExpanded &&
+                      deptPrograms.map((prog) => {
+                        const activeProg = filters.programs.includes(prog.id);
+                        return (
+                          <Pressable
+                            key={prog.id}
+                            style={styles.nestedRow}
+                            onPress={() => handleToggleProgram(prog.id)}
+                          >
+                            <View style={[styles.checkbox, activeProg && styles.checkboxActive]}>
+                              {activeProg && (
+                                <Icon icon={Check} size={14} color={theme.colors.surface.base} />
+                              )}
+                            </View>
+                            <Text style={[styles.rowText, activeProg && styles.rowTextActive]}>
+                              {prog.code ? `${prog.code} - ` : ''}
+                              {prog.name}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
                   </View>
                 );
               })}
@@ -237,7 +276,13 @@ export const BrowseFilterSystem = ({
             <View style={[styles.section, { marginBottom: 64, borderBottomWidth: 0 }]}>
               <Text style={styles.sectionTitle}>Publication Year</Text>
               {!!yearError && (
-                <Text style={{ color: theme.colors.state.danger, marginBottom: 12, ...theme.typography.caption }}>
+                <Text
+                  style={{
+                    color: theme.colors.state.danger,
+                    marginBottom: 12,
+                    ...theme.typography.caption,
+                  }}
+                >
                   {yearError}
                 </Text>
               )}

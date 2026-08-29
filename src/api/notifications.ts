@@ -64,7 +64,9 @@ async function loadNotifications(limit = 100) {
     throw new Error(error.message || 'Unable to load notifications.');
   }
 
-  return (Array.isArray(data) ? (data as unknown as NotificationRow[]) : []).map(toNotificationItem);
+  return (Array.isArray(data) ? (data as unknown as NotificationRow[]) : []).map(
+    toNotificationItem,
+  );
 }
 
 async function loadUnreadCount() {

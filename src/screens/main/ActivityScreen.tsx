@@ -12,7 +12,6 @@ import { NotificationsList } from '../../components/NotificationsList';
 import { InvitationsList } from '../../components/InvitationsList';
 import { ChevronLeft } from 'lucide-react-native';
 
-
 type ActivityTab = 'notifications' | 'invites';
 
 /**

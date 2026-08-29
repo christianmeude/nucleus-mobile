@@ -16,7 +16,6 @@ import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
 import { Check, Pencil, X } from 'lucide-react-native';
 
-
 type NodeState = 'done' | 'pending' | 'upcoming' | 'warning' | 'danger' | 'complete';
 
 /** Reviewer hierarchy, in order. Not every paper touches every level (e.g. an
@@ -76,7 +75,7 @@ const AnimatedPendingMarker = () => {
     progress.value = withRepeat(
       withTiming(1, { duration: 1500, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }),
       -1,
-      false
+      false,
     );
     return () => {
       cancelAnimation(progress);
@@ -129,7 +128,7 @@ export const PaperProgressMap = memo(({ status, variant = 'list' }: PaperProgres
   const blockedIndex = isRejected || isRevision ? 0 : -1;
   const currentIndex = stageIndexForStatus(status);
   const filledThrough = isComplete ? 4 : blockedIndex >= 0 ? blockedIndex : currentIndex;
-  
+
   const barColor = isComplete ? theme.colors.state.success : theme.colors.brand.primary;
   const blockedColor = isRejected ? theme.colors.state.danger : theme.colors.state.warning;
   const iconColor = theme.colors.text.onBrand;
@@ -159,11 +158,14 @@ export const PaperProgressMap = memo(({ status, variant = 'list' }: PaperProgres
                   style={[
                     styles.halfConnector,
                     index > 0
-                      ? { backgroundColor: index <= filledThrough ? barColor : theme.colors.border.subtle }
+                      ? {
+                          backgroundColor:
+                            index <= filledThrough ? barColor : theme.colors.border.subtle,
+                        }
                       : { backgroundColor: 'transparent' },
                   ]}
                 />
-                
+
                 {state === 'pending' ? (
                   variant === 'detail' ? (
                     <AnimatedPendingMarker />
@@ -188,9 +190,7 @@ export const PaperProgressMap = memo(({ status, variant = 'list' }: PaperProgres
                       {state === 'warning' ? (
                         <Icon icon={Pencil} size={9} color={iconColor} />
                       ) : null}
-                      {state === 'danger' ? (
-                        <Icon icon={X} size={9} color={iconColor} />
-                      ) : null}
+                      {state === 'danger' ? <Icon icon={X} size={9} color={iconColor} /> : null}
                     </View>
                   </View>
                 )}
@@ -199,7 +199,10 @@ export const PaperProgressMap = memo(({ status, variant = 'list' }: PaperProgres
                   style={[
                     styles.halfConnector,
                     index < STAGES.length - 1
-                      ? { backgroundColor: index < filledThrough ? barColor : theme.colors.border.subtle }
+                      ? {
+                          backgroundColor:
+                            index < filledThrough ? barColor : theme.colors.border.subtle,
+                        }
                       : { backgroundColor: 'transparent' },
                   ]}
                 />

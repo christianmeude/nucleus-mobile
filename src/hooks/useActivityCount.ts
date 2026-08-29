@@ -35,8 +35,7 @@ export function useActivityCount(): number {
     ]);
 
     const unread = unreadResult.status === 'fulfilled' ? unreadResult.value : 0;
-    const pending =
-      invitesResult.status === 'fulfilled' ? invitesResult.value.pendingCount : 0;
+    const pending = invitesResult.status === 'fulfilled' ? invitesResult.value.pendingCount : 0;
 
     setCount(unread + pending);
   }, [isFaculty]);
@@ -44,7 +43,7 @@ export function useActivityCount(): number {
   useFocusEffect(
     useCallback(() => {
       refresh();
-    }, [refresh])
+    }, [refresh]),
   );
 
   return count;

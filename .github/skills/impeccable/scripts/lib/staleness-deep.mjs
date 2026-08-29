@@ -90,26 +90,27 @@ export function checkDesignDrift({ designPath, projectRoot, threshold = 25 }) {
   const dirs = VISUAL_SOURCE_DIRS.filter((dir) => fs.existsSync(path.join(projectRoot, dir)));
   if (!dirs.length) return [];
 
-  const log = git(
-    ['log', '--oneline', `${lastDesignCommit}..HEAD`, '--', ...dirs],
-    projectRoot,
-  );
+  const log = git(['log', '--oneline', `${lastDesignCommit}..HEAD`, '--', ...dirs], projectRoot);
   if (log === null) return [];
   const commits = log ? log.split('\n').filter(Boolean).length : 0;
   if (commits < threshold) return [];
 
   const when = git(['log', '-1', '--format=%ad', '--date=short', '--', relDesign], projectRoot);
-  return [finding({
-    id: 'design-md-drift',
-    artifact: 'DESIGN.md',
-    filePath: relDesign,
-    severity: 'route',
-    summary: `${commits} commits have touched ${dirs.join(', ')} since ${relDesign} was last edited`
-      + `${when ? ` (${when})` : ''}. This counts commits, not contradictions: it says the document is worth `
-      + 're-reading, not that it is wrong.',
-    fix: 'Read DESIGN.md against the current tokens and components before trusting it as authority. '
-      + 'If it has genuinely drifted, `document` regenerates it from the code.',
-  })];
+  return [
+    finding({
+      id: 'design-md-drift',
+      artifact: 'DESIGN.md',
+      filePath: relDesign,
+      severity: 'route',
+      summary:
+        `${commits} commits have touched ${dirs.join(', ')} since ${relDesign} was last edited` +
+        `${when ? ` (${when})` : ''}. This counts commits, not contradictions: it says the document is worth ` +
+        're-reading, not that it is wrong.',
+      fix:
+        'Read DESIGN.md against the current tokens and components before trusting it as authority. ' +
+        'If it has genuinely drifted, `document` regenerates it from the code.',
+    }),
+  ];
 }
 
 /**
@@ -129,9 +130,10 @@ function hasCoverageValue(value) {
   return false;
 }
 
-const SEED_DESIGN_MARKERS = ['/', '$'].map((prefix) =>
-  '<!-- SEED: established with the user before implementation; '
-    + `re-run ${prefix}impeccable document once there's code to capture the actual tokens and components. -->`
+const SEED_DESIGN_MARKERS = ['/', '$'].map(
+  (prefix) =>
+    '<!-- SEED: established with the user before implementation; ' +
+    `re-run ${prefix}impeccable document once there's code to capture the actual tokens and components. -->`,
 );
 
 export function checkDesignCoverage({ design, designPath, parseDesignMd }) {
@@ -146,20 +148,25 @@ export function checkDesignCoverage({ design, designPath, parseDesignMd }) {
   const requiredSections = isSeed
     ? ['colors', 'typography']
     : ['colors', 'typography', 'components'];
-  const missing = requiredSections
-    .filter((section) => !model[section] && !hasCoverageValue(model.frontmatter?.[section]));
+  const missing = requiredSections.filter(
+    (section) => !model[section] && !hasCoverageValue(model.frontmatter?.[section]),
+  );
   if (!missing.length) return [];
-  return [finding({
-    id: 'design-md-coverage',
-    artifact: 'DESIGN.md',
-    filePath: designPath,
-    severity: 'mention',
-    summary: `${designPath || 'DESIGN.md'} has no ${missing.join(', ')} section. `
-      + 'Agents generating new screens get no normative guidance for those, and the live design panel renders '
-      + 'generic approximations in their place.',
-    fix: 'Ask whether the section never applied or was never written. `document` fills it from the code if the '
-      + 'project has the answer in its CSS.',
-  })];
+  return [
+    finding({
+      id: 'design-md-coverage',
+      artifact: 'DESIGN.md',
+      filePath: designPath,
+      severity: 'mention',
+      summary:
+        `${designPath || 'DESIGN.md'} has no ${missing.join(', ')} section. ` +
+        'Agents generating new screens get no normative guidance for those, and the live design panel renders ' +
+        'generic approximations in their place.',
+      fix:
+        'Ask whether the section never applied or was never written. `document` fills it from the code if the ' +
+        'project has the answer in its CSS.',
+    }),
+  ];
 }
 
 // ─── detector ignore lists ─────────────────────────────────────────────────
@@ -182,37 +189,50 @@ export function checkDetectorIgnores({ projectRoot, knownRuleIds = null }) {
 
     if (knownRuleIds && Array.isArray(detector.ignoreRules)) {
       const unknown = detector.ignoreRules
-        .map((rule) => String(rule || '').trim().toLowerCase())
+        .map((rule) =>
+          String(rule || '')
+            .trim()
+            .toLowerCase(),
+        )
         .filter((rule) => rule && rule !== '*' && !knownRuleIds.has(rule));
       if (unknown.length) {
-        findings.push(finding({
-          id: 'detector-ignore-rules-unknown',
-          artifact: 'config.json',
-          filePath: rel,
-          severity: 'mention',
-          summary: `${rel} ignores rule id(s) the detector does not have: `
-            + `${unknown.map((rule) => `\`${rule}\``).join(', ')}. Either the rule was renamed or removed, or the `
-            + 'id was mistyped and has never suppressed anything.',
-          fix: 'Report the exact ids. Removing them is safe; keeping a dead ignore hides that the rule is gone.',
-        }));
+        findings.push(
+          finding({
+            id: 'detector-ignore-rules-unknown',
+            artifact: 'config.json',
+            filePath: rel,
+            severity: 'mention',
+            summary:
+              `${rel} ignores rule id(s) the detector does not have: ` +
+              `${unknown.map((rule) => `\`${rule}\``).join(', ')}. Either the rule was renamed or removed, or the ` +
+              'id was mistyped and has never suppressed anything.',
+            fix: 'Report the exact ids. Removing them is safe; keeping a dead ignore hides that the rule is gone.',
+          }),
+        );
       }
     }
 
     if (Array.isArray(detector.ignoreFiles)) {
       const missing = detector.ignoreFiles
         .map((entry) => String(entry || '').trim())
-        .filter((entry) => entry && !entry.includes('*') && !fs.existsSync(path.join(projectRoot, entry)));
+        .filter(
+          (entry) => entry && !entry.includes('*') && !fs.existsSync(path.join(projectRoot, entry)),
+        );
       if (missing.length) {
-        findings.push(finding({
-          id: 'detector-ignore-files-missing',
-          artifact: 'config.json',
-          filePath: rel,
-          severity: 'mention',
-          summary: `${rel} ignores file path(s) that no longer exist: `
-            + `${missing.map((entry) => `\`${entry}\``).join(', ')}.`,
-          fix: 'Ask whether the file moved (repoint the entry) or was deleted (drop it). '
-            + 'A stale entry silently stops covering the file that replaced it.',
-        }));
+        findings.push(
+          finding({
+            id: 'detector-ignore-files-missing',
+            artifact: 'config.json',
+            filePath: rel,
+            severity: 'mention',
+            summary:
+              `${rel} ignores file path(s) that no longer exist: ` +
+              `${missing.map((entry) => `\`${entry}\``).join(', ')}.`,
+            fix:
+              'Ask whether the file moved (repoint the entry) or was deleted (drop it). ' +
+              'A stale entry silently stops covering the file that replaced it.',
+          }),
+        );
       }
     }
   }
@@ -299,7 +319,9 @@ export function checkHookInstallation({ projectRoot, repoRoot, providerId }) {
   const manifests = HOOK_MANIFESTS_BY_PROVIDER[providerId] || [];
   if (!manifests.length) return findings;
 
-  const roots = [...new Set([projectRoot, repoRoot].filter(Boolean).map((root) => path.resolve(root)))];
+  const roots = [
+    ...new Set([projectRoot, repoRoot].filter(Boolean).map((root) => path.resolve(root))),
+  ];
   let installedAt = null;
 
   for (const root of roots) {
@@ -320,16 +342,19 @@ export function checkHookInstallation({ projectRoot, repoRoot, providerId }) {
         return !fs.existsSync(abs);
       });
       if (broken.length) {
-        findings.push(finding({
-          id: 'hook-script-missing',
-          artifact: 'hook manifest',
-          filePath: installedAt,
-          severity: 'mention',
-          summary: `${installedAt} installs the design hook, but its script path does not exist: `
-            + `${broken.map((command) => `\`${command}\``).join(', ')}. The hook runs as a no-op, so UI edits `
-            + 'have been going unscanned while the project looks covered.',
-          fix: `Reinstall with \`impeccable hooks on\`, which rewrites the manifest against the skill's current location.`,
-        }));
+        findings.push(
+          finding({
+            id: 'hook-script-missing',
+            artifact: 'hook manifest',
+            filePath: installedAt,
+            severity: 'mention',
+            summary:
+              `${installedAt} installs the design hook, but its script path does not exist: ` +
+              `${broken.map((command) => `\`${command}\``).join(', ')}. The hook runs as a no-op, so UI edits ` +
+              'have been going unscanned while the project looks covered.',
+            fix: `Reinstall with \`impeccable hooks on\`, which rewrites the manifest against the skill's current location.`,
+          }),
+        );
       }
     }
   }
@@ -339,16 +364,20 @@ export function checkHookInstallation({ projectRoot, repoRoot, providerId }) {
       for (const name of ['config.json', 'config.local.json']) {
         const raw = readJson(path.join(root, '.impeccable', name));
         if (raw?.hook && raw.hook.enabled === false) {
-          findings.push(finding({
-            id: 'hook-enabled-conflict',
-            artifact: 'config.json',
-            filePath: toRelative(path.join(root, '.impeccable', name), projectRoot || root),
-            severity: 'mention',
-            summary: `${installedAt} installs the design hook while this config sets \`hook.enabled: false\`, `
-              + 'so the hook fires and then declines to scan.',
-            fix: 'Ask which was intended: `impeccable hooks on` to enable, or `impeccable hooks off` to uninstall '
-              + 'the manifest entry as well.',
-          }));
+          findings.push(
+            finding({
+              id: 'hook-enabled-conflict',
+              artifact: 'config.json',
+              filePath: toRelative(path.join(root, '.impeccable', name), projectRoot || root),
+              severity: 'mention',
+              summary:
+                `${installedAt} installs the design hook while this config sets \`hook.enabled: false\`, ` +
+                'so the hook fires and then declines to scan.',
+              fix:
+                'Ask which was intended: `impeccable hooks on` to enable, or `impeccable hooks off` to uninstall ' +
+                'the manifest entry as well.',
+            }),
+          );
           return findings;
         }
       }
@@ -364,16 +393,20 @@ export function checkLegacyLiveState({ projectRoot }) {
   if (!projectRoot) return [];
   const present = LEGACY_LIVE_PATHS.filter((rel) => fs.existsSync(path.join(projectRoot, rel)));
   if (!present.length) return [];
-  return [finding({
-    id: 'legacy-live-state',
-    artifact: 'live state',
-    filePath: present.join(', '),
-    severity: 'auto',
-    summary: `Live-mode state sits in retired location(s): ${present.map((rel) => `\`${rel}\``).join(', ')}. `
-      + 'Current live mode writes under `.impeccable/live/`.',
-    fix: 'These are read only through backward-compatible fallbacks and are safe to delete once no live session '
-      + 'is running. No user decision is needed.',
-  })];
+  return [
+    finding({
+      id: 'legacy-live-state',
+      artifact: 'live state',
+      filePath: present.join(', '),
+      severity: 'auto',
+      summary:
+        `Live-mode state sits in retired location(s): ${present.map((rel) => `\`${rel}\``).join(', ')}. ` +
+        'Current live mode writes under `.impeccable/live/`.',
+      fix:
+        'These are read only through backward-compatible fallbacks and are safe to delete once no live session ' +
+        'is running. No user decision is needed.',
+    }),
+  ];
 }
 
 // ─── monorepo sweep ────────────────────────────────────────────────────────
@@ -386,7 +419,13 @@ export function checkLegacyLiveState({ projectRoot }) {
  *
  * `candidates` comes from context.mjs's discovery so the walk is not repeated.
  */
-export function checkWorkspaces({ repoRoot, candidates = [], checkNativePlatformEvidence, extractPlatform, readFile }) {
+export function checkWorkspaces({
+  repoRoot,
+  candidates = [],
+  checkNativePlatformEvidence,
+  extractPlatform,
+  readFile,
+}) {
   if (!repoRoot || !candidates.length) return { findings: [], workspaces: [] };
   const findings = [];
   const workspaces = [];
@@ -415,37 +454,44 @@ export function checkWorkspaces({ repoRoot, candidates = [], checkNativePlatform
       productPath: candidate.productPath,
     });
     for (const entry of native) {
-      findings.push(finding({
-        id: 'workspace-platform-native-evidence',
-        artifact: 'PRODUCT.md',
-        filePath: candidate.productPath || `${candidate.path}/PRODUCT.md`,
-        severity: 'mention',
-        summary: `Workspace \`${candidate.path}\` ${
-          candidate.productStatus === 'inherited'
-            ? 'inherits the repo-root PRODUCT.md'
-            : 'has a PRODUCT.md'
-        } that resolves to web, but the workspace itself carries native build files. ${entry.summary}`,
-        fix: candidate.productStatus === 'inherited'
-          ? `Give \`${candidate.path}\` its own PRODUCT.md with the right \`## Platform\`. `
-            + 'An inherited record cannot describe two platforms at once.'
-          : entry.fix,
-      }));
+      findings.push(
+        finding({
+          id: 'workspace-platform-native-evidence',
+          artifact: 'PRODUCT.md',
+          filePath: candidate.productPath || `${candidate.path}/PRODUCT.md`,
+          severity: 'mention',
+          summary: `Workspace \`${candidate.path}\` ${
+            candidate.productStatus === 'inherited'
+              ? 'inherits the repo-root PRODUCT.md'
+              : 'has a PRODUCT.md'
+          } that resolves to web, but the workspace itself carries native build files. ${entry.summary}`,
+          fix:
+            candidate.productStatus === 'inherited'
+              ? `Give \`${candidate.path}\` its own PRODUCT.md with the right \`## Platform\`. ` +
+                'An inherited record cannot describe two platforms at once.'
+              : entry.fix,
+        }),
+      );
     }
   }
 
   const inherited = workspaces.filter((entry) => entry.productStatus === 'inherited');
   if (inherited.length) {
-    findings.push(finding({
-      id: 'workspace-context-inherited',
-      artifact: 'PRODUCT.md',
-      filePath: null,
-      severity: 'mention',
-      summary: `${inherited.length} of ${workspaces.length} workspace(s) inherit the repo-root PRODUCT.md: `
-        + `${inherited.map((entry) => `\`${entry.path}\``).join(', ')}. Inheritance is intended; whether one `
-        + 'record truthfully describes these apps is not something this check can tell.',
-      fix: 'Ask the user whether the inherited record describes each app. Where it does not, `init` in that '
-        + 'workspace writes a child PRODUCT.md that overrides it.',
-    }));
+    findings.push(
+      finding({
+        id: 'workspace-context-inherited',
+        artifact: 'PRODUCT.md',
+        filePath: null,
+        severity: 'mention',
+        summary:
+          `${inherited.length} of ${workspaces.length} workspace(s) inherit the repo-root PRODUCT.md: ` +
+          `${inherited.map((entry) => `\`${entry.path}\``).join(', ')}. Inheritance is intended; whether one ` +
+          'record truthfully describes these apps is not something this check can tell.',
+        fix:
+          'Ask the user whether the inherited record describes each app. Where it does not, `init` in that ' +
+          'workspace writes a child PRODUCT.md that overrides it.',
+      }),
+    );
   }
 
   return { findings, workspaces };
@@ -459,7 +505,9 @@ export function checkWorkspaces({ repoRoot, candidates = [], checkNativePlatform
  * Null means "cannot check", which the ignore-rule check treats as skip rather
  * than as every id being unknown.
  */
-export async function loadKnownRuleIds(scriptsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')) {
+export async function loadKnownRuleIds(
+  scriptsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
+) {
   // Same two locations detect.mjs resolves: the bundled copy in an installed
   // skill, then the source-repo engine when running from a checkout.
   const candidates = [

@@ -32,13 +32,15 @@ export async function statusCli() {
   const sessions = server?.activeSessions || activeSessions;
   const renderFailure = sessions.find((session) => session?.renderState === 'failed') || null;
   const payload = {
-    liveServer: server ? {
-      status: server.status,
-      port: server.port,
-      connectedClients: server.connectedClients,
-      agentPolling: server.agentPolling,
-      pendingEvents: server.pendingEvents,
-    } : null,
+    liveServer: server
+      ? {
+          status: server.status,
+          port: server.port,
+          connectedClients: server.connectedClients,
+          agentPolling: server.agentPolling,
+          pendingEvents: server.pendingEvents,
+        }
+      : null,
     activeSessions: sessions,
     render: sessions.map((session) => ({ id: session?.id ?? null, ...renderSummary(session) })),
     recoveryHint: recoveryHint({ server, manualApply, renderFailure }),

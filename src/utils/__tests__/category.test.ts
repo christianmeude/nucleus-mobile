@@ -59,6 +59,8 @@ describe('resolveCategoryName', () => {
   });
 
   it('guards an unresolved UUID from display (Issue #5)', () => {
-    expect(resolveCategoryName('123e4567-e89b-12d3-a456-426614174000', categoryNameById)).toBeNull();
+    expect(
+      resolveCategoryName('123e4567-e89b-12d3-a456-426614174000', categoryNameById),
+    ).toBeNull();
   });
 });

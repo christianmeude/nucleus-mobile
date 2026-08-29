@@ -19,8 +19,15 @@ export const PublishedBadge = () => {
       end={{ x: 1, y: 1 }}
       style={[styles.badge, isDark && styles.badgeDark]}
     >
-      <CheckCircle size={10} color={isDark ? '#d4af37' : theme.colors.text.onBrand} strokeWidth={3} style={styles.icon} />
-      <Text style={[styles.label, { color: isDark ? '#d4af37' : theme.colors.text.onBrand }]}>PUBLISHED</Text>
+      <CheckCircle
+        size={10}
+        color={isDark ? '#d4af37' : theme.colors.text.onBrand}
+        strokeWidth={3}
+        style={styles.icon}
+      />
+      <Text style={[styles.label, { color: isDark ? '#d4af37' : theme.colors.text.onBrand }]}>
+        PUBLISHED
+      </Text>
     </LinearGradient>
   );
 };

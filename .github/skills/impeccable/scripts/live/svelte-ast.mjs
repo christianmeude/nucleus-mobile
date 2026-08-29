@@ -85,7 +85,15 @@ export function collectRootIdentifiers(node, out = new Set()) {
     }
     default: {
       for (const key of Object.keys(node)) {
-        if (key === 'type' || key === 'start' || key === 'end' || key === 'loc' || key === 'range' || key === 'parent') continue;
+        if (
+          key === 'type' ||
+          key === 'start' ||
+          key === 'end' ||
+          key === 'loc' ||
+          key === 'range' ||
+          key === 'parent'
+        )
+          continue;
         collectRootIdentifiers(node[key], out);
       }
       return out;
@@ -128,7 +136,7 @@ class Analysis {
   constructor(source) {
     this.source = source;
     this.replacements = []; // { start, end, prop } source ranges to swap
-    this.contract = [];     // [{ prop, expr, kind, ... }]
+    this.contract = []; // [{ prop, expr, kind, ... }]
     this.byExpr = new Map(); // expr text -> contract entry
     this.usedNames = new Set();
     this.unsupported = null;
@@ -156,20 +164,59 @@ class Analysis {
 // A derived prop name lands in `let { <name> } = $props()`; a reserved word
 // there is a syntax error the session only hits at import time.
 const RESERVED_PROP_NAMES = new Set([
-  'await', 'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger',
-  'default', 'delete', 'do', 'else', 'enum', 'export', 'extends', 'false',
-  'finally', 'for', 'function', 'if', 'implements', 'import', 'in',
-  'instanceof', 'interface', 'let', 'new', 'null', 'package', 'private',
-  'protected', 'public', 'return', 'static', 'super', 'switch', 'this',
-  'throw', 'true', 'try', 'typeof', 'undefined', 'var', 'void', 'while',
-  'with', 'yield',
+  'await',
+  'break',
+  'case',
+  'catch',
+  'class',
+  'const',
+  'continue',
+  'debugger',
+  'default',
+  'delete',
+  'do',
+  'else',
+  'enum',
+  'export',
+  'extends',
+  'false',
+  'finally',
+  'for',
+  'function',
+  'if',
+  'implements',
+  'import',
+  'in',
+  'instanceof',
+  'interface',
+  'let',
+  'new',
+  'null',
+  'package',
+  'private',
+  'protected',
+  'public',
+  'return',
+  'static',
+  'super',
+  'switch',
+  'this',
+  'throw',
+  'true',
+  'try',
+  'typeof',
+  'undefined',
+  'var',
+  'void',
+  'while',
+  'with',
+  'yield',
 ]);
 
 export function derivePropName(expr) {
   const tail = String(expr).match(/(?:\.|\[["']?)([A-Za-z_$][\w$]*)["']?\]?\s*$/);
-  const candidate = (tail && tail[1])
-    || (String(expr).match(/^([A-Za-z_$][\w$]*)$/) || [])[1]
-    || 'value';
+  const candidate =
+    (tail && tail[1]) || (String(expr).match(/^([A-Za-z_$][\w$]*)$/) || [])[1] || 'value';
   return RESERVED_PROP_NAMES.has(candidate) ? `${candidate}Value` : candidate;
 }
 
@@ -182,11 +229,35 @@ function exprText(source, node) {
 // bound: `{Math.round(x)}` must not mint a prop named `round`, and
 // `{fmt(stage.label)}` must not pass as global-only.
 const GLOBAL_IDENTIFIERS = new Set([
-  'Math', 'JSON', 'Date', 'Intl', 'Number', 'String', 'Boolean', 'Array',
-  'Object', 'Map', 'Set', 'Promise', 'RegExp', 'NaN', 'Infinity', 'undefined',
-  'isNaN', 'isFinite', 'parseInt', 'parseFloat', 'encodeURIComponent',
-  'decodeURIComponent', 'console', 'window', 'document', 'navigator',
-  'location', 'structuredClone', 'crypto',
+  'Math',
+  'JSON',
+  'Date',
+  'Intl',
+  'Number',
+  'String',
+  'Boolean',
+  'Array',
+  'Object',
+  'Map',
+  'Set',
+  'Promise',
+  'RegExp',
+  'NaN',
+  'Infinity',
+  'undefined',
+  'isNaN',
+  'isFinite',
+  'parseInt',
+  'parseFloat',
+  'encodeURIComponent',
+  'decodeURIComponent',
+  'console',
+  'window',
+  'document',
+  'navigator',
+  'location',
+  'structuredClone',
+  'crypto',
 ]);
 
 function classifyRoots(node, scopes) {
@@ -217,7 +288,9 @@ function isFree(node, scopes) {
 function failOnMixedExpression(node, scopes, analysis, source) {
   const { bound, free } = classifyRoots(node, scopes);
   if (bound > 0 && free > 0) {
-    analysis.fail(`expression mixing loop and outer identifiers ({${exprText(source, node).slice(0, 60)}}) requires source-preview mode`);
+    analysis.fail(
+      `expression mixing loop and outer identifiers ({${exprText(source, node).slice(0, 60)}}) requires source-preview mode`,
+    );
     return true;
   }
   return false;
@@ -254,7 +327,11 @@ function analyzeNode(node, analysis, scopes) {
         const text = exprText(analysis.source, node.expression);
         const entry = analysis.propFor(text, 'text');
         // node.start/end include the braces; keep them, swap the inside.
-        analysis.replacements.push({ start: node.expression.start, end: node.expression.end, prop: entry.prop });
+        analysis.replacements.push({
+          start: node.expression.start,
+          end: node.expression.end,
+          prop: entry.prop,
+        });
       }
       return;
     }
@@ -263,7 +340,11 @@ function analyzeNode(node, analysis, scopes) {
       if (isFree(node.expression, scopes)) {
         const text = exprText(analysis.source, node.expression);
         const entry = analysis.propFor(text, 'raw');
-        analysis.replacements.push({ start: node.expression.start, end: node.expression.end, prop: entry.prop });
+        analysis.replacements.push({
+          start: node.expression.start,
+          end: node.expression.end,
+          prop: entry.prop,
+        });
       }
       return;
     }
@@ -272,11 +353,16 @@ function analyzeNode(node, analysis, scopes) {
       // travels with the markup and stays valid only if its inputs do.
       if (node.declaration) {
         for (const decl of node.declaration.declarations || []) {
-          if (decl.init && failOnMixedExpression(decl.init, scopes, analysis, analysis.source)) return;
+          if (decl.init && failOnMixedExpression(decl.init, scopes, analysis, analysis.source))
+            return;
           if (decl.init && isFree(decl.init, scopes)) {
             const text = exprText(analysis.source, decl.init);
             const entry = analysis.propFor(text, 'text');
-            analysis.replacements.push({ start: decl.init.start, end: decl.init.end, prop: entry.prop });
+            analysis.replacements.push({
+              start: decl.init.start,
+              end: decl.init.end,
+              prop: entry.prop,
+            });
           }
         }
       }
@@ -311,7 +397,11 @@ function analyzeNode(node, analysis, scopes) {
           }
         }
         const entry = analysis.propFor(text, 'collection', { item });
-        analysis.replacements.push({ start: node.expression.start, end: node.expression.end, prop: entry.prop });
+        analysis.replacements.push({
+          start: node.expression.start,
+          end: node.expression.end,
+          prop: entry.prop,
+        });
       }
       const bound = new Set();
       if (node.context) collectPatternNames(node.context, bound);
@@ -330,7 +420,11 @@ function analyzeNode(node, analysis, scopes) {
         const entry = analysis.propFor(text, 'condition', {
           probe: describeElementProbe(node.consequent),
         });
-        analysis.replacements.push({ start: node.test.start, end: node.test.end, prop: entry.prop });
+        analysis.replacements.push({
+          start: node.test.start,
+          end: node.test.end,
+          prop: entry.prop,
+        });
       }
       analyzeFragment(node.consequent, analysis, scopes);
       if (node.alternate) analyzeFragment(node.alternate, analysis, scopes);
@@ -341,7 +435,11 @@ function analyzeNode(node, analysis, scopes) {
       if (isFree(node.expression, scopes)) {
         const text = exprText(analysis.source, node.expression);
         const entry = analysis.propFor(text, 'text');
-        analysis.replacements.push({ start: node.expression.start, end: node.expression.end, prop: entry.prop });
+        analysis.replacements.push({
+          start: node.expression.start,
+          end: node.expression.end,
+          prop: entry.prop,
+        });
       }
       analyzeFragment(node.fragment, analysis, scopes);
       return;
@@ -412,7 +510,11 @@ function analyzeAttributes(node, analysis, scopes) {
           const text = exprText(analysis.source, part.expression);
           const kind = HANDLER_ATTR_RE.test(attr.name) ? 'handler' : 'text';
           const entry = analysis.propFor(text, kind);
-          analysis.replacements.push({ start: part.expression.start, end: part.expression.end, prop: entry.prop });
+          analysis.replacements.push({
+            start: part.expression.start,
+            end: part.expression.end,
+            prop: entry.prop,
+          });
         }
         break;
       }
@@ -433,15 +535,21 @@ function analyzeAttributes(node, analysis, scopes) {
       case 'StyleDirective': {
         // Unlike ClassDirective, a style directive stores its value in
         // attribute shape: `true` for the shorthand, else an array of parts.
-        const parts = attr.value === true ? [] : (Array.isArray(attr.value) ? attr.value : [attr.value]);
+        const parts =
+          attr.value === true ? [] : Array.isArray(attr.value) ? attr.value : [attr.value];
         for (const part of parts) {
-          if (part?.type === 'ExpressionTag'
-              && failOnMixedExpression(part.expression, scopes, analysis, analysis.source)) {
+          if (
+            part?.type === 'ExpressionTag' &&
+            failOnMixedExpression(part.expression, scopes, analysis, analysis.source)
+          ) {
             return;
           }
         }
-        const dynamic = parts.some((part) => part?.type === 'ExpressionTag' && isFree(part.expression, scopes));
-        const shorthandFree = attr.value === true && isFree({ type: 'Identifier', name: attr.name }, scopes);
+        const dynamic = parts.some(
+          (part) => part?.type === 'ExpressionTag' && isFree(part.expression, scopes),
+        );
+        const shorthandFree =
+          attr.value === true && isFree({ type: 'Identifier', name: attr.name }, scopes);
         if (dynamic || shorthandFree) {
           // style:opacity={x} carries a css VALUE, not a boolean, and the
           // computed value on the live element is not reliably recoverable in
@@ -547,21 +655,30 @@ function describeEachItem(node, source) {
           if (!kind) return;
           touches = true;
           if (kind === 'index') return; // the runtime each provides it
-          if (kind === 'item') { lossy = true; return; } // bare item reference
-          if (ctx.callee) { crashy = true; return; } // field() on a hydrated string
+          if (kind === 'item') {
+            lossy = true;
+            return;
+          } // bare item reference
+          if (ctx.callee) {
+            crashy = true;
+            return;
+          } // field() on a hydrated string
           keys.add(node.name); // destructured context field
           return;
         }
         case 'MemberExpression': {
           if (
-            !node.computed
-            && node.object?.type === 'Identifier'
-            && boundAs(node.object.name, scopeInfos) === 'item'
-            && node.property?.type === 'Identifier'
+            !node.computed &&
+            node.object?.type === 'Identifier' &&
+            boundAs(node.object.name, scopeInfos) === 'item' &&
+            node.property?.type === 'Identifier'
           ) {
             touches = true;
             // item.a.b or item.method(): a shallow string field throws here.
-            if (ctx.memberObject || ctx.callee) { crashy = true; return; }
+            if (ctx.memberObject || ctx.callee) {
+              crashy = true;
+              return;
+            }
             keys.add(node.property.name);
             return;
           }
@@ -577,7 +694,10 @@ function describeEachItem(node, source) {
         case 'FunctionExpression': {
           // Closures cannot hydrate; only lossy when they capture the item.
           const roots = collectRootIdentifiers(node);
-          if ([...roots].some((name) => boundAs(name, scopeInfos))) { touches = true; lossy = true; }
+          if ([...roots].some((name) => boundAs(name, scopeInfos))) {
+            touches = true;
+            lossy = true;
+          }
           return;
         }
         case 'Property':
@@ -586,7 +706,15 @@ function describeEachItem(node, source) {
           return;
         default: {
           for (const key of Object.keys(node)) {
-            if (key === 'type' || key === 'start' || key === 'end' || key === 'loc' || key === 'range' || key === 'parent') continue;
+            if (
+              key === 'type' ||
+              key === 'start' ||
+              key === 'end' ||
+              key === 'loc' ||
+              key === 'range' ||
+              key === 'parent'
+            )
+              continue;
             visit(node[key], {});
           }
         }
@@ -622,7 +750,10 @@ function describeEachItem(node, source) {
     for (const child of fragment?.nodes || []) {
       if (child.type === 'ExpressionTag') {
         const slot = slotKeysOf(child.expression, scopeInfos);
-        if (slot.crashy || slot.lossy) { nestedUnsupported = true; continue; }
+        if (slot.crashy || slot.lossy) {
+          nestedUnsupported = true;
+          continue;
+        }
         if (slot.skip) continue;
         textSlots.push({ key: slot.key, expr: exprText(source, child.expression) });
       } else if (child.type === 'RegularElement' || child.type === 'SvelteElement') {
@@ -639,7 +770,10 @@ function describeEachItem(node, source) {
           const exprParts = parts.filter((part) => part?.type === 'ExpressionTag');
           for (const part of exprParts) {
             const slot = slotKeysOf(part.expression, scopeInfos);
-            if (slot.crashy) { nestedUnsupported = true; continue; }
+            if (slot.crashy) {
+              nestedUnsupported = true;
+              continue;
+            }
             if (slot.skip || slot.lossy) continue;
             if (parts.length !== 1) continue; // mixed static+dynamic value
             attrSlots.push({
@@ -710,11 +844,11 @@ function classifyEachKey(node) {
   }
   if (key.type === 'Identifier' && bound.has(key.name)) return {};
   if (
-    key.type === 'MemberExpression'
-    && !key.computed
-    && key.object?.type === 'Identifier'
-    && bound.has(key.object.name)
-    && key.property?.type === 'Identifier'
+    key.type === 'MemberExpression' &&
+    !key.computed &&
+    key.object?.type === 'Identifier' &&
+    bound.has(key.object.name) &&
+    key.property?.type === 'Identifier'
   ) {
     return { keyField: key.property.name };
   }
@@ -767,7 +901,11 @@ export function analyzeSvelteMarkup(markup, parse) {
   }
   for (const entry of analysis.contract) {
     if (entry.kind === 'collection' && entry.item?.nestedUnsupported) {
-      return { ok: false, reason: 'per-item content (nested blocks or expressions) this preview cannot hydrate requires source-preview mode' };
+      return {
+        ok: false,
+        reason:
+          'per-item content (nested blocks or expressions) this preview cannot hydrate requires source-preview mode',
+      };
     }
   }
 
@@ -830,7 +968,8 @@ export function restoreSvelteMarkup(markup, contract, parse) {
     const nextScopes = [...scopes, fragmentScope];
     for (const node of fragment?.nodes || []) {
       if (node.type === 'ConstTag' && node.declaration) {
-        for (const decl of node.declaration.declarations || []) collectPatternNames(decl.id, fragmentScope);
+        for (const decl of node.declaration.declarations || [])
+          collectPatternNames(decl.id, fragmentScope);
       }
     }
     for (const node of fragment?.nodes || []) {
@@ -897,7 +1036,10 @@ export function restoreSvelteMarkup(markup, contract, parse) {
 function collectFreeIdentifierRanges(node, scopes, emit) {
   const visit = (n, localBound) => {
     if (!n || typeof n !== 'object') return;
-    if (Array.isArray(n)) { for (const item of n) visit(item, localBound); return; }
+    if (Array.isArray(n)) {
+      for (const item of n) visit(item, localBound);
+      return;
+    }
     switch (n.type) {
       case 'Identifier': {
         const bound = localBound.has(n.name) || scopes.some((s) => s.has(n.name));
@@ -921,7 +1063,15 @@ function collectFreeIdentifierRanges(node, scopes, emit) {
       }
       default:
         for (const key of Object.keys(n)) {
-          if (key === 'type' || key === 'start' || key === 'end' || key === 'loc' || key === 'range' || key === 'parent') continue;
+          if (
+            key === 'type' ||
+            key === 'start' ||
+            key === 'end' ||
+            key === 'loc' ||
+            key === 'range' ||
+            key === 'parent'
+          )
+            continue;
           visit(n[key], localBound);
         }
     }
@@ -951,9 +1101,7 @@ export function buildPropsScriptV2(contract) {
     collection: 'Array<Record<string, unknown>>',
     handler: '() => void',
   };
-  const names = contract
-    .map((c) => `${c.prop} = ${defaults[c.kind] ?? "''"}`)
-    .join(', ');
+  const names = contract.map((c) => `${c.prop} = ${defaults[c.kind] ?? "''"}`).join(', ');
   const typeFields = contract
     .map((c) => `    ${c.prop}?: ${types[c.kind] ?? 'string'};`)
     .join('\n');

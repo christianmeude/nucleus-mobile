@@ -38,7 +38,6 @@ const PDFJS_VERSION = '3.11.174';
 import { AnnotationType, AnnotationRect, AnnotationPoint } from '../utils/annotation';
 import { MousePointer2, Eye, Maximize, X } from 'lucide-react-native';
 
-
 /**
  * A positioned annotation overlay to render on top of a PDF page.
  * Pass an array of these to PdfViewer.annotations (faculty review only; student screen omits).
@@ -497,16 +496,11 @@ interface PdfViewerProps {
     highlightRects: AnnotationRect[];
     note: string;
   }) => Promise<void>;
-  onCreateDraw?: (input: {
-    pageNumber: number;
-    imageDataUrl: string;
-  }) => Promise<void>;
+  onCreateDraw?: (input: { pageNumber: number; imageDataUrl: string }) => Promise<void>;
   onAnnotationPress?: (id: string) => void;
   /** Watermark to show on pages. Defaults to 'NU DASMARIÑAS'. Pass empty string to hide. */
   watermarkText?: string;
 }
-
-
 
 export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
   (
@@ -544,7 +538,8 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
 
     const fill = variant === 'fill';
     const hasPositionedAnnotations = (annotations ?? []).some((a) => a.pageNumber !== null);
-    const annotateEnabled = canAnnotate && (!!onCreateNote || !!onCreateHighlight || !!onCreateDraw);
+    const annotateEnabled =
+      canAnnotate && (!!onCreateNote || !!onCreateHighlight || !!onCreateDraw);
     // While placing, keep existing pins visible so the reviewer can position relative to them.
     const overlaysVisible = showAnnotations || annotationMode !== 'none';
 
@@ -593,7 +588,10 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
             }}
             accessibilityRole="button"
             accessibilityLabel={annotationMode === 'note' ? 'Cancel adding a note' : 'Add a note'}
-            style={[styles.controlButton, annotationMode === 'note' ? styles.controlButtonActive : null]}
+            style={[
+              styles.controlButton,
+              annotationMode === 'note' ? styles.controlButtonActive : null,
+            ]}
           >
             <Icon icon={MousePointer2} size={18} color={theme.colors.text.onBrand} />
           </Pressable>

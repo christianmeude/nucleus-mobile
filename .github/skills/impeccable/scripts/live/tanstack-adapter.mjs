@@ -35,11 +35,7 @@ const ROOT_ROUTE_CANDIDATES = [
   'app/routes/__root.jsx',
 ];
 
-const START_PACKAGES = [
-  '@tanstack/react-start',
-  '@tanstack/solid-start',
-  '@tanstack/start',
-];
+const START_PACKAGES = ['@tanstack/react-start', '@tanstack/solid-start', '@tanstack/start'];
 
 export function detectTanStackStartProject(cwd = process.cwd()) {
   if (!packageHasTanStackStart(cwd)) return null;
@@ -54,7 +50,12 @@ export function detectTanStackStartProject(cwd = process.cwd()) {
   return { rootRoute, componentFile, componentImport, ext };
 }
 
-export function applyTanStackLiveAdapter({ cwd = process.cwd(), port, token, project = detectTanStackStartProject(cwd) } = {}) {
+export function applyTanStackLiveAdapter({
+  cwd = process.cwd(),
+  port,
+  token,
+  project = detectTanStackStartProject(cwd),
+} = {}) {
   if (!project) return { error: 'tanstack_not_detected' };
   if (!Number.isFinite(Number(port))) {
     throw new Error('TanStack Start live adapter requires a numeric port');
@@ -91,7 +92,10 @@ export function applyTanStackLiveAdapter({ cwd = process.cwd(), port, token, pro
   };
 }
 
-export function removeTanStackLiveAdapter({ cwd = process.cwd(), project = detectTanStackStartProject(cwd) } = {}) {
+export function removeTanStackLiveAdapter({
+  cwd = process.cwd(),
+  project = detectTanStackStartProject(cwd),
+} = {}) {
   if (!project) return { error: 'tanstack_not_detected' };
   let removed = false;
 
@@ -130,9 +134,9 @@ export function patchTanStackRoot(content, componentImport) {
 
   if (!out.includes(TANSTACK_MARKER_OPEN)) {
     const block =
-      `${TANSTACK_MARKER_OPEN}\n`
-      + `        <ImpeccableLiveRoot />\n`
-      + `        ${TANSTACK_MARKER_CLOSE}\n        `;
+      `${TANSTACK_MARKER_OPEN}\n` +
+      `        <ImpeccableLiveRoot />\n` +
+      `        ${TANSTACK_MARKER_CLOSE}\n        `;
     // Anchor before <Scripts …/> (the stable TanStack Start document marker);
     // fall back to before </body>.
     const scriptsMatch = out.match(/<Scripts\b/);
@@ -156,18 +160,15 @@ export function unpatchTanStackRoot(content) {
   // leading indent before the open marker intact hands it back to the anchor
   // (e.g. `<Scripts />`) so the file round-trips byte-for-byte.
   const blockRe = new RegExp(
-    escapeRegExp(TANSTACK_MARKER_OPEN)
-    + '\\s*<ImpeccableLiveRoot\\s*/>\\s*'
-    + escapeRegExp(TANSTACK_MARKER_CLOSE)
-    + '\\r?\\n?[ \\t]*',
+    escapeRegExp(TANSTACK_MARKER_OPEN) +
+      '\\s*<ImpeccableLiveRoot\\s*/>\\s*' +
+      escapeRegExp(TANSTACK_MARKER_CLOSE) +
+      '\\r?\\n?[ \\t]*',
     'g',
   );
   out = out.replace(blockRe, '');
   // Remove only the managed import line — not any following blank line.
-  out = out.replace(
-    new RegExp("^import ImpeccableLiveRoot from '[^']*';[ \\t]*\\r?\\n", 'gm'),
-    '',
-  );
+  out = out.replace(new RegExp("^import ImpeccableLiveRoot from '[^']*';[ \\t]*\\r?\\n", 'gm'), '');
   return out;
 }
 
@@ -242,10 +243,12 @@ function packageHasTanStackStart(cwd) {
 }
 
 function relativeImportSpecifier(fromFile, toFile) {
-  const rel = path.posix.relative(
-    path.posix.dirname(fromFile.split(path.sep).join('/')),
-    toFile.split(path.sep).join('/'),
-  ).replace(/\.(tsx|ts|jsx|js)$/, '');
+  const rel = path.posix
+    .relative(
+      path.posix.dirname(fromFile.split(path.sep).join('/')),
+      toFile.split(path.sep).join('/'),
+    )
+    .replace(/\.(tsx|ts|jsx|js)$/, '');
   return rel.startsWith('.') ? rel : `./${rel}`;
 }
 

@@ -22,7 +22,8 @@ interface InvitationResearchRow {
   title?: string | null;
 }
 
-type InvitationResearchRelation = InvitationResearchRow | InvitationResearchRow[] | null | undefined;
+type InvitationResearchRelation =
+  InvitationResearchRow | InvitationResearchRow[] | null | undefined;
 
 interface InvitationRow {
   id: string;
@@ -177,16 +178,19 @@ async function loadInvitations(status?: string): Promise<InvitationPayload> {
 
   const rows = Array.isArray(data) ? (data as unknown as InvitationRow[]) : [];
   const inviterIds = Array.from(
-    new Set(rows.map((row) => row.inviter_id).filter((id): id is string => Boolean(id)))
+    new Set(rows.map((row) => row.inviter_id).filter((id): id is string => Boolean(id))),
   );
   const inviterMap = new Map<string, InvitationUserRow | null>();
 
   if (inviterIds.length > 0) {
     await Promise.all(
       inviterIds.map(async (inviterId) => {
-        const { data: inviterData, error: inviterError } = await supabase.rpc('get_user_basic_info', {
-          user_id: inviterId,
-        });
+        const { data: inviterData, error: inviterError } = await supabase.rpc(
+          'get_user_basic_info',
+          {
+            user_id: inviterId,
+          },
+        );
 
         if (inviterError) {
           throw new Error(inviterError.message || 'Unable to load inviter profile.');
@@ -196,7 +200,7 @@ async function loadInvitations(status?: string): Promise<InvitationPayload> {
           ? (inviterData as unknown as InvitationUserRow[])
           : [];
         inviterMap.set(inviterId, inviterRows[0] ?? null);
-      })
+      }),
     );
   }
 
@@ -268,17 +272,15 @@ async function respondToInvitation(token: string, status: 'accepted' | 'declined
         const maxOrder = typeof maxRow?.author_order === 'number' ? maxRow.author_order : 0;
         const nextOrder = maxOrder + 1;
 
-        const { error: upsertError } = await supabase
-          .from('research_authors')
-          .upsert(
-            {
-              research_id: researchId,
-              user_id: profile.id,
-              is_primary: false,
-              author_order: nextOrder,
-            },
-            { onConflict: 'research_id,user_id' }
-          );
+        const { error: upsertError } = await supabase.from('research_authors').upsert(
+          {
+            research_id: researchId,
+            user_id: profile.id,
+            is_primary: false,
+            author_order: nextOrder,
+          },
+          { onConflict: 'research_id,user_id' },
+        );
 
         if (upsertError) {
           throw new Error(upsertError.message || 'Unable to add co-author entry.');

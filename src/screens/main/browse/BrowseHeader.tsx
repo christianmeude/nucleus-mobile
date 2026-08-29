@@ -45,12 +45,7 @@ export interface BrowseHeaderProps {
   filterNode?: React.ReactNode;
 }
 
-export const BrowseHeader = ({
-  query,
-  setQuery,
-  submitSearch,
-  filterNode,
-}: BrowseHeaderProps) => {
+export const BrowseHeader = ({ query, setQuery, submitSearch, filterNode }: BrowseHeaderProps) => {
   const styles = useThemedStyles(makeStyles);
 
   return (

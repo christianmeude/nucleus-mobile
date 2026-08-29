@@ -37,21 +37,18 @@ export const useRecentSearches = () => {
     });
   }, []);
 
-  const addRecent = useCallback(
-    (term: string) => {
-      const trimmed = term.trim();
-      if (!trimmed) return;
-      setRecent((prev) => {
-        const next = [
-          trimmed,
-          ...prev.filter((item) => item.toLowerCase() !== trimmed.toLowerCase()),
-        ].slice(0, MAX_RECENT);
-        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(() => {});
-        return next;
-      });
-    },
-    [],
-  );
+  const addRecent = useCallback((term: string) => {
+    const trimmed = term.trim();
+    if (!trimmed) return;
+    setRecent((prev) => {
+      const next = [
+        trimmed,
+        ...prev.filter((item) => item.toLowerCase() !== trimmed.toLowerCase()),
+      ].slice(0, MAX_RECENT);
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
 
   const clearRecent = useCallback(() => write([]), [write]);
 

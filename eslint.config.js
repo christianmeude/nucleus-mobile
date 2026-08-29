@@ -25,7 +25,6 @@ module.exports = [
     // Initial adoption baseline: keep lint green on the existing codebase, then
     // ratchet these back up as debt is cleaned. See docs/CONVENTIONS.md.
     rules: {
-
       // React Compiler-adjacent rules new in eslint-config-expo 57. They fire on
       // idiomatic RN animation/ref patterns (incl. Reanimated shared-value
       // `.value` mutation) and on frozen files we cannot edit, so surface them

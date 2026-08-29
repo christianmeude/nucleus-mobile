@@ -5,7 +5,6 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useThemedStyles, useTheme } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 
-
 export type EmptyStateContext =
   'all-caught-up' | 'no-results' | 'no-papers' | 'no-notifications' | 'default';
 

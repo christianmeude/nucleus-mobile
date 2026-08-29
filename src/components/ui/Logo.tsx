@@ -31,7 +31,13 @@ export const Logo = ({ size = 'md', showWordmark = true, wordmarkStyle }: LogoPr
         accessibilityIgnoresInvertColors
       />
       {showWordmark ? (
-        <Animated.Text style={[styles.wordmark, { fontSize: token.wordmark, letterSpacing: token.tracking }, wordmarkStyle]}>
+        <Animated.Text
+          style={[
+            styles.wordmark,
+            { fontSize: token.wordmark, letterSpacing: token.tracking },
+            wordmarkStyle,
+          ]}
+        >
           NUCLEUS
         </Animated.Text>
       ) : null}

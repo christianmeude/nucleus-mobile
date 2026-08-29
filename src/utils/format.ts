@@ -113,9 +113,7 @@ export const getPrimaryAuthorName = (paper: ResearchPaper) => {
   if (paper.users?.fullName) return paper.users.fullName;
   if (paper.users?.name) return paper.users.name;
 
-  const structured = Array.isArray(paper.structured_authors)
-    ? paper.structured_authors
-    : [];
+  const structured = Array.isArray(paper.structured_authors) ? paper.structured_authors : [];
   const primary = structured.find((entry) => entry?.is_primary);
 
   if (primary?.author?.fullName) return primary.author.fullName;
@@ -129,12 +127,9 @@ export const getPrimaryAuthorName = (paper: ResearchPaper) => {
 };
 
 export const countCoAuthors = (paper: ResearchPaper) => {
-  const structured = Array.isArray(paper.structured_authors)
-    ? paper.structured_authors
-    : [];
+  const structured = Array.isArray(paper.structured_authors) ? paper.structured_authors : [];
 
-  const coAuthorsFromStructured = structured.filter((entry) => !entry?.is_primary)
-    .length;
+  const coAuthorsFromStructured = structured.filter((entry) => !entry?.is_primary).length;
 
   const extraNotes = paper.external_author_notes;
   if (!extraNotes) return coAuthorsFromStructured;
@@ -168,9 +163,7 @@ export const normalizeAuthorEntries = (paper: ResearchPaper): StructuredAuthorEn
 };
 
 export const listCoAuthorNames = (paper: ResearchPaper): string => {
-  const structured = Array.isArray(paper.structured_authors)
-    ? paper.structured_authors
-    : [];
+  const structured = Array.isArray(paper.structured_authors) ? paper.structured_authors : [];
   const names = structured
     .filter((e) => !e?.is_primary)
     .map((e) => e?.author?.fullName || e?.author?.name)

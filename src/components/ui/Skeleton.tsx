@@ -15,7 +15,10 @@ export const Skeleton = ({ height = 14, width = '100%', radius = 'sm' }: Skeleto
   const styles = useThemedStyles(makeStyles);
   const reduceMotion = useReduceMotion();
   const opacity = useRef(new Animated.Value(1)).current;
-  const baseStyle = [styles.block, { height, width, borderRadius: theme.radii[radius], borderCurve: 'continuous' as const }];
+  const baseStyle = [
+    styles.block,
+    { height, width, borderRadius: theme.radii[radius], borderCurve: 'continuous' as const },
+  ];
 
   useEffect(() => {
     if (reduceMotion) {

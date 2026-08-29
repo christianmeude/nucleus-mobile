@@ -1,5 +1,13 @@
 import { useCallback, useMemo, useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, TextInput, View, Pressable } from 'react-native';
+import {
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  Pressable,
+} from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
 
 import * as Haptics from 'expo-haptics';
@@ -59,31 +67,34 @@ export const MyPapersScreen = () => {
   const [publishSubmitting, setPublishSubmitting] = useState(false);
   const [publishError, setPublishError] = useState('');
 
-  const loadData = useCallback(async (silent = false) => {
-    if (!silent && papers.length === 0) {
-      setLoading(true);
-    } else {
-      setRefreshing(true);
-    }
+  const loadData = useCallback(
+    async (silent = false) => {
+      if (!silent && papers.length === 0) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
 
-    const [papersResult, categoriesResult] = await Promise.allSettled([
-      researchApi.getMyPapers({ forceRefresh: silent }),
-      researchApi.getCategories({ forceRefresh: silent }),
-    ]);
+      const [papersResult, categoriesResult] = await Promise.allSettled([
+        researchApi.getMyPapers({ forceRefresh: silent }),
+        researchApi.getCategories({ forceRefresh: silent }),
+      ]);
 
-    if (papersResult.status === 'fulfilled') {
-      setPapers(papersResult.value);
-      setError('');
-    } else {
-      setError('Unable to load your papers.');
-    }
-    if (categoriesResult.status === 'fulfilled') {
-      setCategories(categoriesResult.value);
-    }
+      if (papersResult.status === 'fulfilled') {
+        setPapers(papersResult.value);
+        setError('');
+      } else {
+        setError('Unable to load your papers.');
+      }
+      if (categoriesResult.status === 'fulfilled') {
+        setCategories(categoriesResult.value);
+      }
 
-    setLoading(false);
-    setRefreshing(false);
-  }, [papers.length]);
+      setLoading(false);
+      setRefreshing(false);
+    },
+    [papers.length],
+  );
 
   useEffect(() => {
     loadData();
@@ -120,7 +131,7 @@ export const MyPapersScreen = () => {
 
   const submitPublishRequest = useCallback(async () => {
     if (!publishTarget) return;
-    
+
     // Validate DOI
     const cleaned = doiInput.trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i, '');
     if (!/^10\.\d{4,9}\/\S+$/i.test(cleaned)) {
@@ -144,21 +155,27 @@ export const MyPapersScreen = () => {
     }
   }, [publishTarget, doiInput, loadData]);
 
-  const handlePaperPress = useCallback((paperId: string) => {
-    navigation.navigate('ResearchDetail', { paperId });
-  }, [navigation]);
+  const handlePaperPress = useCallback(
+    (paperId: string) => {
+      navigation.navigate('ResearchDetail', { paperId });
+    },
+    [navigation],
+  );
 
-  const renderPaperItem = useCallback(({ item, index }: { item: ResearchPaper; index: number }) => (
-    <ListEntranceItem index={index}>
-      <StandardPaperCard
-        paper={item}
-        variant="papers"
-        category={resolveCategoryName(item.category, categoryNameById)}
-        onPress={() => handlePaperPress(item.id)}
-        onRequestPublication={() => setPublishTarget(item)}
-      />
-    </ListEntranceItem>
-  ), [categoryNameById, handlePaperPress]);
+  const renderPaperItem = useCallback(
+    ({ item, index }: { item: ResearchPaper; index: number }) => (
+      <ListEntranceItem index={index}>
+        <StandardPaperCard
+          paper={item}
+          variant="papers"
+          category={resolveCategoryName(item.category, categoryNameById)}
+          onPress={() => handlePaperPress(item.id)}
+          onRequestPublication={() => setPublishTarget(item)}
+        />
+      </ListEntranceItem>
+    ),
+    [categoryNameById, handlePaperPress],
+  );
 
   const handleRefresh = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -179,7 +196,8 @@ export const MyPapersScreen = () => {
         <View style={styles.sheetContent}>
           <Text style={styles.sheetTitle}>Formal publication</Text>
           <Text style={styles.sheetDesc}>
-            Your paper is approved for the internal repository. If you have published it externally, enter your journal's DOI to request formal publication.
+            Your paper is approved for the internal repository. If you have published it externally,
+            enter your journal's DOI to request formal publication.
           </Text>
 
           <Input
@@ -251,7 +269,6 @@ export const MyPapersScreen = () => {
           }
           ListHeaderComponent={() => (
             <View style={styles.listHeader}>
-
               {error ? <InlineNotice tone="danger" message={error} /> : null}
 
               {loading ? (
@@ -264,7 +281,11 @@ export const MyPapersScreen = () => {
               {!loading && filtered.length === 0 ? (
                 <EmptyState
                   title="No papers found"
-                  message={query ? "Try adjusting your search terms." : "You haven't submitted any papers yet."}
+                  message={
+                    query
+                      ? 'Try adjusting your search terms.'
+                      : "You haven't submitted any papers yet."
+                  }
                 />
               ) : null}
             </View>
@@ -274,7 +295,7 @@ export const MyPapersScreen = () => {
           estimatedItemSize={220}
           renderItem={renderPaperItem}
         />
-        
+
         <Pressable
           style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
           onPress={() => navigation.getParent()?.navigate('SubmitResearch')}

@@ -15,7 +15,13 @@ import { AuthProvider } from './src/context/AuthContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing, useReducedMotion } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  Easing,
+  useReducedMotion,
+} from 'react-native-reanimated';
 
 import { PrivacyProvider } from './src/context/PrivacyContext';
 import { CoachmarkProvider } from './src/components/coachmarks/CoachmarkProvider';
@@ -37,7 +43,23 @@ const ThemeTransitionOverlay = () => {
     });
   }, [scheme]);
   const style = useAnimatedStyle(() => ({ opacity: opacity.value }));
-  return <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: theme.colors.surface.base, zIndex: 999 }, style]} />;
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        {
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: theme.colors.surface.base,
+          zIndex: 999,
+        },
+        style,
+      ]}
+    />
+  );
 };
 
 const AppShell = () => {
@@ -65,7 +87,15 @@ const AppShell = () => {
 
   if (error) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: '#F8FAFC' }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 24,
+          backgroundColor: '#F8FAFC',
+        }}
+      >
         <Text style={{ color: '#B91C1C', textAlign: 'center', fontWeight: 'bold' }}>
           Failed to load essential app resources. Please check your connection and restart the app.
         </Text>

@@ -40,28 +40,64 @@ const CONTEXT_FALLBACK_DIRS = ['.agents/context', 'docs'];
 
 // Presence of any of these marks a directory as a dev-served app root.
 const DEV_CONFIG_MARKERS = [
-  'vite.config.js', 'vite.config.ts', 'vite.config.mjs', 'vite.config.mts', 'vite.config.cjs',
-  'svelte.config.js', 'svelte.config.mjs', 'svelte.config.ts',
-  'next.config.js', 'next.config.mjs', 'next.config.ts',
-  'astro.config.mjs', 'astro.config.js', 'astro.config.ts', 'astro.config.cjs',
-  'nuxt.config.ts', 'nuxt.config.js', 'nuxt.config.mjs',
-  'remix.config.js', 'react-router.config.ts',
+  'vite.config.js',
+  'vite.config.ts',
+  'vite.config.mjs',
+  'vite.config.mts',
+  'vite.config.cjs',
+  'svelte.config.js',
+  'svelte.config.mjs',
+  'svelte.config.ts',
+  'next.config.js',
+  'next.config.mjs',
+  'next.config.ts',
+  'astro.config.mjs',
+  'astro.config.js',
+  'astro.config.ts',
+  'astro.config.cjs',
+  'nuxt.config.ts',
+  'nuxt.config.js',
+  'nuxt.config.mjs',
+  'remix.config.js',
+  'react-router.config.ts',
   'angular.json',
-  'webpack.config.js', 'webpack.config.ts',
+  'webpack.config.js',
+  'webpack.config.ts',
 ];
 
 const CANDIDATE_SCAN_IGNORED = new Set([
-  'node_modules', '.git', 'dist', 'build', 'coverage', 'vendor', 'vendors',
-  '.next', '.nuxt', '.svelte-kit', '.astro', '.turbo', '.cache', '.vercel',
+  'node_modules',
+  '.git',
+  'dist',
+  'build',
+  'coverage',
+  'vendor',
+  'vendors',
+  '.next',
+  '.nuxt',
+  '.svelte-kit',
+  '.astro',
+  '.turbo',
+  '.cache',
+  '.vercel',
 ]);
 const CANDIDATE_SCAN_DEPTH = 2;
 
 function exists(p) {
-  try { fs.statSync(p); return true; } catch { return false; }
+  try {
+    fs.statSync(p);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function isDir(p) {
-  try { return fs.statSync(p).isDirectory(); } catch { return false; }
+  try {
+    return fs.statSync(p).isDirectory();
+  } catch {
+    return false;
+  }
 }
 
 function firstExisting(dir, names) {
@@ -136,7 +172,11 @@ export function discoverAppCandidates(rootDir, depth = CANDIDATE_SCAN_DEPTH) {
   const found = [];
   const scan = (dir, remaining) => {
     let entries;
-    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
     for (const entry of entries) {
       if (!entry.isDirectory()) continue;
       if (entry.name.startsWith('.') || CANDIDATE_SCAN_IGNORED.has(entry.name)) continue;
@@ -164,19 +204,19 @@ export function discoverAppCandidates(rootDir, depth = CANDIDATE_SCAN_DEPTH) {
 export function resolveRoots({ cwd = process.cwd(), targetPath = null } = {}) {
   const absCwd = path.resolve(cwd);
   const absTarget = targetPath
-    ? (path.isAbsolute(targetPath) ? targetPath : path.resolve(absCwd, targetPath))
+    ? path.isAbsolute(targetPath)
+      ? targetPath
+      : path.resolve(absCwd, targetPath)
     : null;
-  const targetDir = absTarget
-    ? (isDir(absTarget) ? absTarget : path.dirname(absTarget))
-    : absCwd;
+  const targetDir = absTarget ? (isDir(absTarget) ? absTarget : path.dirname(absTarget)) : absCwd;
 
   // The walk bound must be an ancestor of the target: a git root found from
   // the CWD is only usable when the target actually lives inside it,
   // otherwise the walk would climb out of both trees.
   const targetGitRoot = findGitRoot(targetDir);
   const cwdGitRoot = targetGitRoot ? null : findGitRoot(absCwd);
-  const repoRoot = targetGitRoot
-    || (cwdGitRoot && insideOrEqual(targetDir, cwdGitRoot) ? cwdGitRoot : null);
+  const repoRoot =
+    targetGitRoot || (cwdGitRoot && insideOrEqual(targetDir, cwdGitRoot) ? cwdGitRoot : null);
   // Without a git boundary, never ascend above the starting directory: the
   // filesystem above an unversioned project is not ours to interpret.
   const upperBound = repoRoot || targetDir;
@@ -186,13 +226,16 @@ export function resolveRoots({ cwd = process.cwd(), targetPath = null } = {}) {
   // walk may ascend when an explicit target selected a workspace child. A
   // root-level live config must never shadow a child the target picked.
   const legacyRoot = resolveProjectRoot(absCwd, absTarget ? { targetPath: absTarget } : {});
-  const markerBound = absTarget && insideOrEqual(targetDir, legacyRoot) && insideOrEqual(legacyRoot, upperBound)
-    ? legacyRoot
-    : upperBound;
+  const markerBound =
+    absTarget && insideOrEqual(targetDir, legacyRoot) && insideOrEqual(legacyRoot, upperBound)
+      ? legacyRoot
+      : upperBound;
 
   let appRoot = walkUp(targetDir, markerBound, (dir) => (isAppRoot(dir) ? dir : null));
   let resolvedFrom = appRoot
-    ? (absTarget ? `target:${path.relative(absCwd, absTarget) || '.'}` : 'cwd')
+    ? absTarget
+      ? `target:${path.relative(absCwd, absTarget) || '.'}`
+      : 'cwd'
     : null;
 
   if (!appRoot && !absTarget) {
@@ -225,8 +268,12 @@ export function resolveRoots({ cwd = process.cwd(), targetPath = null } = {}) {
 
   // Each context file resolves independently: a child app may carry its own
   // PRODUCT.md while inheriting DESIGN.md from the repo root (or vice versa).
-  const productPath = walkUp(appRoot, effectiveRepoRoot, (dir) => findContextFile(dir, PRODUCT_NAMES));
-  const designPath = walkUp(appRoot, effectiveRepoRoot, (dir) => findContextFile(dir, DESIGN_NAMES));
+  const productPath = walkUp(appRoot, effectiveRepoRoot, (dir) =>
+    findContextFile(dir, PRODUCT_NAMES),
+  );
+  const designPath = walkUp(appRoot, effectiveRepoRoot, (dir) =>
+    findContextFile(dir, DESIGN_NAMES),
+  );
   const contextRoot = productPath
     ? path.dirname(productPath)
     : designPath
@@ -266,8 +313,9 @@ export function writeRootsManifest(manifest) {
     // recent first. A single last-boot-wins value made a helper run from the
     // repo root silently target whichever app booted last, even while an
     // earlier app's session was the one still live.
-    const entries = readPointerEntries(manifest.repoRoot)
-      .filter((entry) => path.resolve(entry.appRoot) !== path.resolve(manifest.appRoot));
+    const entries = readPointerEntries(manifest.repoRoot).filter(
+      (entry) => path.resolve(entry.appRoot) !== path.resolve(manifest.appRoot),
+    );
     entries.unshift({ appRoot: manifest.appRoot, bootedAt: new Date().toISOString() });
     fs.writeFileSync(pointer, JSON.stringify({ version: 2, appRoots: entries }));
   }
@@ -302,7 +350,9 @@ function hasLiveServer(appRoot) {
   let port;
   let token;
   try {
-    const info = JSON.parse(fs.readFileSync(path.join(appRoot, '.impeccable', 'live', 'server.json'), 'utf-8'));
+    const info = JSON.parse(
+      fs.readFileSync(path.join(appRoot, '.impeccable', 'live', 'server.json'), 'utf-8'),
+    );
     if (!info || typeof info.pid !== 'number') return false;
     pid = info.pid;
     port = Number(info.port);
@@ -320,11 +370,20 @@ function hasLiveServer(appRoot) {
   // every platform.
   if (Number.isInteger(port) && port > 0 && token) {
     try {
-      execFileSync(process.execPath, ['-e', [
-        "const req = require('node:http').get({ host: '127.0.0.1', port: Number(process.argv[1]), path: '/status?token=' + encodeURIComponent(process.argv[2]), timeout: 1200 }, (res) => { res.resume(); process.exit(res.statusCode === 200 ? 0 : 1); });",
-        "req.on('timeout', () => { req.destroy(); process.exit(1); });",
-        "req.on('error', () => process.exit(1));",
-      ].join(''), String(port), token], { timeout: 4000, stdio: 'ignore' });
+      execFileSync(
+        process.execPath,
+        [
+          '-e',
+          [
+            "const req = require('node:http').get({ host: '127.0.0.1', port: Number(process.argv[1]), path: '/status?token=' + encodeURIComponent(process.argv[2]), timeout: 1200 }, (res) => { res.resume(); process.exit(res.statusCode === 200 ? 0 : 1); });",
+            "req.on('timeout', () => { req.destroy(); process.exit(1); });",
+            "req.on('error', () => process.exit(1));",
+          ].join(''),
+          String(port),
+          token,
+        ],
+        { timeout: 4000, stdio: 'ignore' },
+      );
       return true;
     } catch {
       return false;
@@ -359,7 +418,9 @@ function hasActiveDurableSession(appRoot) {
     try {
       const snapshot = JSON.parse(fs.readFileSync(path.join(dir, name), 'utf-8'));
       if (snapshot?.phase && !TERMINAL_SESSION_PHASES.has(snapshot.phase)) return true;
-    } catch { /* skip unreadable snapshots */ }
+    } catch {
+      /* skip unreadable snapshots */
+    }
   }
   return false;
 }
@@ -408,9 +469,10 @@ export function resolveLiveRoots(cwd = process.cwd(), { targetPath = null } = {}
         .filter(Boolean);
       if (candidates.length > 0) {
         const liveApps = candidates.filter((manifest) => hasLiveServer(manifest.appRoot));
-        const recoveringApps = liveApps.length > 0
-          ? liveApps
-          : candidates.filter((manifest) => hasActiveDurableSession(manifest.appRoot));
+        const recoveringApps =
+          liveApps.length > 0
+            ? liveApps
+            : candidates.filter((manifest) => hasActiveDurableSession(manifest.appRoot));
         const tier = recoveringApps.length > 0 ? recoveringApps : candidates;
         // Multiple apps qualifying at the same tier is inherent ambiguity:
         // intent is unknowable from the repo root. The choice stays
@@ -418,10 +480,13 @@ export function resolveLiveRoots(cwd = process.cwd(), { targetPath = null } = {}
         // silent, so the agent can re-anchor when it meant the other app.
         if (tier.length > 1) {
           const chosen = tier[0].appRoot;
-          const others = tier.slice(1).map((manifest) => manifest.appRoot).join(', ');
+          const others = tier
+            .slice(1)
+            .map((manifest) => manifest.appRoot)
+            .join(', ');
           process.stderr.write(
-            `[impeccable live] Multiple apps in this repo have live state; using ${chosen}. `
-            + `Other candidate(s): ${others}. Run from the app directory (or pass --target) to address a specific app.\n`,
+            `[impeccable live] Multiple apps in this repo have live state; using ${chosen}. ` +
+              `Other candidate(s): ${others}. Run from the app directory (or pass --target) to address a specific app.\n`,
           );
         }
         return { manifest: tier[0], source: 'pointer' };
@@ -494,7 +559,9 @@ export function enterLiveRoot(cwd = process.cwd()) {
     // pointing at a deleted directory is stale ambient truth, not a reason
     // to guess.
     if (!isDir(appRoot)) {
-      console.error(`[impeccable live] resolved app root does not exist: ${appRoot} (stale roots manifest? re-run the live boot, or pass --target <path>)`);
+      console.error(
+        `[impeccable live] resolved app root does not exist: ${appRoot} (stale roots manifest? re-run the live boot, or pass --target <path>)`,
+      );
       process.exit(1);
     }
     try {

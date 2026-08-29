@@ -25,7 +25,10 @@ import { isFirstEntranceArmed } from '../lib/firstEntrance';
  * student bar maps it on Browse; the faculty bar leaves it unset, so nothing
  * registers there.
  */
-export type TabMeta = Record<string, { label: string; icon: LucideIcon; coachmarkId?: CoachmarkId }>;
+export type TabMeta = Record<
+  string,
+  { label: string; icon: LucideIcon; coachmarkId?: CoachmarkId }
+>;
 
 // Faithful port of the visual-direction mockup's `.navind` transition:
 // `left .42s cubic-bezier(.34,1.3,.4,1)` — a spring-overshoot slide.

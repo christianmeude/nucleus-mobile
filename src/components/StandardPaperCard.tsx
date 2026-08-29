@@ -18,117 +18,117 @@ export interface StandardPaperCardProps {
   onRequestPublication?: () => void;
 }
 
-export const StandardPaperCard = memo(({
-  paper,
-  variant,
-  category,
-  categoryColor,
-  onPress,
-  onRequestPublication,
-}: StandardPaperCardProps) => {
-  const { theme } = useTheme();
-  const styles = useThemedStyles(makeStyles);
+export const StandardPaperCard = memo(
+  ({
+    paper,
+    variant,
+    category,
+    categoryColor,
+    onPress,
+    onRequestPublication,
+  }: StandardPaperCardProps) => {
+    const { theme } = useTheme();
+    const styles = useThemedStyles(makeStyles);
 
-  const dotColor = categoryColor ?? theme.colors.brand.primary;
-  const showCategory = category && category.trim().length > 0;
+    const dotColor = categoryColor ?? theme.colors.brand.primary;
+    const showCategory = category && category.trim().length > 0;
 
-  const dateStr = formatDate(paperDate(paper));
-  const authorName = getPrimaryAuthorName(paper);
-  const isPublished = PUBLISHED_STATUSES.has(paper.status);
+    const dateStr = formatDate(paperDate(paper));
+    const authorName = getPrimaryAuthorName(paper);
+    const isPublished = PUBLISHED_STATUSES.has(paper.status);
 
-  const metaParts: string[] = [];
-  if (variant === 'papers') {
-    metaParts.push(`${isPublished ? 'Approved' : 'Submitted'} ${dateStr}`);
-  } else {
-    metaParts.push(`${authorName} · ${dateStr}`);
-    metaParts.push(`${paper.view_count || 0} views`);
-  }
+    const metaParts: string[] = [];
+    if (variant === 'papers') {
+      metaParts.push(`${isPublished ? 'Approved' : 'Submitted'} ${dateStr}`);
+    } else {
+      metaParts.push(`${authorName} · ${dateStr}`);
+      metaParts.push(`${paper.view_count || 0} views`);
+    }
 
-  const title = paper.title || 'Untitled paper';
+    const title = paper.title || 'Untitled paper';
 
-  return (
-    <PressableCard
-      onPress={onPress}
-      accessibilityLabel={title}
-      elevation="level1"
-    >
-      <View style={styles.content}>
-        {showCategory ? (
-          <View style={styles.catRow}>
-            <View style={[styles.dot, { backgroundColor: dotColor }]} />
-            <Text style={[styles.cat, { color: dotColor }]} numberOfLines={1}>
-              {category}
-            </Text>
-          </View>
-        ) : null}
-        
-        {paper.status === 'published' && (
-          <View style={{ marginBottom: 2 }}>
-            <PublishedBadge />
-          </View>
-        )}
+    return (
+      <PressableCard onPress={onPress} accessibilityLabel={title} elevation="level1">
+        <View style={styles.content}>
+          {showCategory ? (
+            <View style={styles.catRow}>
+              <View style={[styles.dot, { backgroundColor: dotColor }]} />
+              <Text style={[styles.cat, { color: dotColor }]} numberOfLines={1}>
+                {category}
+              </Text>
+            </View>
+          ) : null}
 
-        <Text style={styles.title} numberOfLines={variant === 'browse' ? 2 : 3}>
-          {title}
-        </Text>
-        
-        <Text style={styles.meta} numberOfLines={1}>
-          {metaParts.join('   ·   ')}
-        </Text>
+          {paper.status === 'published' && (
+            <View style={{ marginBottom: 2 }}>
+              <PublishedBadge />
+            </View>
+          )}
 
-        {variant === 'papers' ? (
-          <View style={styles.progressContainer}>
-            <PaperProgressMap status={paper.status} variant="list" />
+          <Text style={styles.title} numberOfLines={variant === 'browse' ? 2 : 3}>
+            {title}
+          </Text>
 
-            {/* Action: request publication */}
-            {paper.status === 'approved' && !paper.publish_requested_at && !!onRequestPublication && (
-              <Pressable
-                onPress={onRequestPublication}
-                style={({ pressed }) => [styles.actionLink, pressed && { opacity: 0.6 }]}
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityLabel="Request Publication"
-              >
-                <Text style={styles.actionLinkText}>Request formal publication</Text>
-                <Icon icon={ArrowRight} size={14} color={theme.colors.brand.primary} />
-              </Pressable>
-            )}
+          <Text style={styles.meta} numberOfLines={1}>
+            {metaParts.join('   ·   ')}
+          </Text>
 
-            {/* Status: publication pending */}
-            {paper.status === 'approved' && paper.publish_requested_at && (
-              <View style={styles.statusRow}>
-                <Icon icon={ShieldCheck} size={14} color={theme.colors.state.success} />
-                <Text style={[styles.statusText, { color: theme.colors.state.success }]}>
-                  Publication requested
-                </Text>
-              </View>
-            )}
+          {variant === 'papers' ? (
+            <View style={styles.progressContainer}>
+              <PaperProgressMap status={paper.status} variant="list" />
 
-            {/* Status: needs revision */}
-            {paper.status === 'revision_required' && (
-              <View style={styles.statusRow}>
-                <Icon icon={AlertTriangle} size={14} color={theme.colors.state.warning} />
-                <Text style={[styles.statusText, { color: theme.colors.state.warning }]}>
-                  {statusToLabel('revision_required')}
-                </Text>
-              </View>
-            )}
+              {/* Action: request publication */}
+              {paper.status === 'approved' &&
+                !paper.publish_requested_at &&
+                !!onRequestPublication && (
+                  <Pressable
+                    onPress={onRequestPublication}
+                    style={({ pressed }) => [styles.actionLink, pressed && { opacity: 0.6 }]}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Request Publication"
+                  >
+                    <Text style={styles.actionLinkText}>Request formal publication</Text>
+                    <Icon icon={ArrowRight} size={14} color={theme.colors.brand.primary} />
+                  </Pressable>
+                )}
 
-            {/* Status: rejected */}
-            {paper.status === 'rejected' && (
-              <View style={styles.statusRow}>
-                <Icon icon={XCircle} size={14} color={theme.colors.state.danger} />
-                <Text style={[styles.statusText, { color: theme.colors.state.danger }]}>
-                  {statusToLabel('rejected')}
-                </Text>
-              </View>
-            )}
-          </View>
-        ) : null}
-      </View>
-    </PressableCard>
-  );
-});
+              {/* Status: publication pending */}
+              {paper.status === 'approved' && paper.publish_requested_at && (
+                <View style={styles.statusRow}>
+                  <Icon icon={ShieldCheck} size={14} color={theme.colors.state.success} />
+                  <Text style={[styles.statusText, { color: theme.colors.state.success }]}>
+                    Publication requested
+                  </Text>
+                </View>
+              )}
+
+              {/* Status: needs revision */}
+              {paper.status === 'revision_required' && (
+                <View style={styles.statusRow}>
+                  <Icon icon={AlertTriangle} size={14} color={theme.colors.state.warning} />
+                  <Text style={[styles.statusText, { color: theme.colors.state.warning }]}>
+                    {statusToLabel('revision_required')}
+                  </Text>
+                </View>
+              )}
+
+              {/* Status: rejected */}
+              {paper.status === 'rejected' && (
+                <View style={styles.statusRow}>
+                  <Icon icon={XCircle} size={14} color={theme.colors.state.danger} />
+                  <Text style={[styles.statusText, { color: theme.colors.state.danger }]}>
+                    {statusToLabel('rejected')}
+                  </Text>
+                </View>
+              )}
+            </View>
+          ) : null}
+        </View>
+      </PressableCard>
+    );
+  },
+);
 
 StandardPaperCard.displayName = 'StandardPaperCard';
 

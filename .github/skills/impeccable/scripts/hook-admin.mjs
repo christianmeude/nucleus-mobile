@@ -37,7 +37,15 @@ import {
   normalizeIgnoreValueEntries,
 } from './hook-lib.mjs';
 
-const ACTIONS = new Set(['status', 'on', 'off', 'ignore-rule', 'ignore-file', 'ignore-value', 'reset']);
+const ACTIONS = new Set([
+  'status',
+  'on',
+  'off',
+  'ignore-rule',
+  'ignore-file',
+  'ignore-value',
+  'reset',
+]);
 const IMPECCABLE_HOOK_COMMAND_MARKERS = [
   'skills/impeccable/scripts/hook-probe.mjs',
   'skills/impeccable/scripts/hook.mjs',
@@ -75,7 +83,8 @@ const HOOK_MANIFEST_TARGETS = [
     destRel: '.claude/settings.local.json',
     sharedDestRel: '.claude/settings.json',
     manifest: () => ({
-      description: 'Impeccable design detector: immediate-tier checks after Edit/Write/MultiEdit on UI files, full-rule deep pass on Stop.',
+      description:
+        'Impeccable design detector: immediate-tier checks after Edit/Write/MultiEdit on UI files, full-rule deep pass on Stop.',
       hooks: {
         PostToolUse: [
           {
@@ -90,7 +99,11 @@ const HOOK_MANIFEST_TARGETS = [
             ],
           },
         ],
-        Stop: [stopManifestEntry('node "${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/hook.mjs"')],
+        Stop: [
+          stopManifestEntry(
+            'node "${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/hook.mjs"',
+          ),
+        ],
       },
     }),
   },
@@ -166,16 +179,32 @@ function readRawConfigFile(filePath) {
   }
 }
 
-const DETECTOR_CONFIG_KEYS = new Set(['ignoreRules', 'ignoreFiles', 'ignoreValues', 'designSystem', 'advisoryRules']);
+const DETECTOR_CONFIG_KEYS = new Set([
+  'ignoreRules',
+  'ignoreFiles',
+  'ignoreValues',
+  'designSystem',
+  'advisoryRules',
+]);
 
 function hookSection(unified) {
-  return unified && typeof unified === 'object' && !Array.isArray(unified) && unified.hook && typeof unified.hook === 'object' && !Array.isArray(unified.hook)
+  return unified &&
+    typeof unified === 'object' &&
+    !Array.isArray(unified) &&
+    unified.hook &&
+    typeof unified.hook === 'object' &&
+    !Array.isArray(unified.hook)
     ? unified.hook
     : null;
 }
 
 function detectorSection(unified) {
-  return unified && typeof unified === 'object' && !Array.isArray(unified) && unified.detector && typeof unified.detector === 'object' && !Array.isArray(unified.detector)
+  return unified &&
+    typeof unified === 'object' &&
+    !Array.isArray(unified) &&
+    unified.detector &&
+    typeof unified.detector === 'object' &&
+    !Array.isArray(unified.detector)
     ? unified.detector
     : null;
 }
@@ -215,7 +244,10 @@ function writeHookConfig(cwd, hookConfig, opts = {}) {
   const filePath = opts.local ? getLocalConfigPath(cwd) : getConfigPath(cwd);
   if (opts.local) ensureHookGitExcludes(cwd);
   const existingRaw = readRawConfigFile(filePath).raw;
-  const existing = existingRaw && typeof existingRaw === 'object' && !Array.isArray(existingRaw) ? existingRaw : {};
+  const existing =
+    existingRaw && typeof existingRaw === 'object' && !Array.isArray(existingRaw)
+      ? existingRaw
+      : {};
   const existingHookSection = hookSection(existing);
   const existingHook = stripDetectorKeys(existingHookSection);
   const legacyDetector = pickDetectorKeys(existingHookSection);
@@ -238,7 +270,10 @@ function writeDetectorConfig(cwd, detectorConfig, opts = {}) {
   const filePath = opts.local ? getLocalConfigPath(cwd) : getConfigPath(cwd);
   if (opts.local) ensureHookGitExcludes(cwd);
   const existingRaw = readRawConfigFile(filePath).raw;
-  const existing = existingRaw && typeof existingRaw === 'object' && !Array.isArray(existingRaw) ? existingRaw : {};
+  const existing =
+    existingRaw && typeof existingRaw === 'object' && !Array.isArray(existingRaw)
+      ? existingRaw
+      : {};
   const nextHook = stripDetectorKeys(hookSection(existing));
   const existingDetectorSection = detectorSection(existing) || {};
   const existingDetector = mergeDetectorConfig(existingDetectorSection);
@@ -261,30 +296,44 @@ function mergeHookConfig(existing) {
   return {
     enabled: base.enabled === false ? false : true,
     limits: {
-      maxFindings: Number.isFinite(base?.limits?.maxFindings) ? base.limits.maxFindings : DEFAULT_CONFIG.limits.maxFindings,
-      maxChars: Number.isFinite(base?.limits?.maxChars) ? base.limits.maxChars : DEFAULT_CONFIG.limits.maxChars,
+      maxFindings: Number.isFinite(base?.limits?.maxFindings)
+        ? base.limits.maxFindings
+        : DEFAULT_CONFIG.limits.maxFindings,
+      maxChars: Number.isFinite(base?.limits?.maxChars)
+        ? base.limits.maxChars
+        : DEFAULT_CONFIG.limits.maxChars,
     },
   };
 }
 
 function mergeDetectorConfig(existing, seed = null) {
   const base = existing && typeof existing === 'object' ? existing : {};
-  const out = seed ? {
-    ignoreRules: [...seed.ignoreRules],
-    ignoreFiles: [...seed.ignoreFiles],
-    ignoreValues: normalizeIgnoreValueEntries(seed.ignoreValues),
-  } : {
-    ignoreRules: [],
-    ignoreFiles: [],
-    ignoreValues: [],
-  };
-  if (seed?.designSystem && typeof seed.designSystem === 'object' && !Array.isArray(seed.designSystem)) {
+  const out = seed
+    ? {
+        ignoreRules: [...seed.ignoreRules],
+        ignoreFiles: [...seed.ignoreFiles],
+        ignoreValues: normalizeIgnoreValueEntries(seed.ignoreValues),
+      }
+    : {
+        ignoreRules: [],
+        ignoreFiles: [],
+        ignoreValues: [],
+      };
+  if (
+    seed?.designSystem &&
+    typeof seed.designSystem === 'object' &&
+    !Array.isArray(seed.designSystem)
+  ) {
     out.designSystem = { ...seed.designSystem };
   }
   if (seed?.advisoryRules === 'include' || seed?.advisoryRules === 'exclude') {
     out.advisoryRules = seed.advisoryRules;
   }
-  if (base.designSystem && typeof base.designSystem === 'object' && !Array.isArray(base.designSystem)) {
+  if (
+    base.designSystem &&
+    typeof base.designSystem === 'object' &&
+    !Array.isArray(base.designSystem)
+  ) {
     out.designSystem = {
       ...(out.designSystem || {}),
       enabled: base.designSystem.enabled === false ? false : true,
@@ -320,7 +369,10 @@ function ignoreValueEntryKey(entry) {
   // Sorted: a file scope is a set. Comparing stored order made an on-disk scope
   // miss the sorted argv form, so a re-add duplicated the entry and a remove
   // silently failed. Every key that hashes `files` must sort — there are four.
-  const files = Array.isArray(entry.files) && entry.files.length > 0 ? [...entry.files].sort().join('\x1f') : '';
+  const files =
+    Array.isArray(entry.files) && entry.files.length > 0
+      ? [...entry.files].sort().join('\x1f')
+      : '';
   return `${entry.rule}\0${entry.value}\0${files}`;
 }
 
@@ -343,7 +395,8 @@ function statusReport(cwd) {
   // command refuses — the opposite of what is on disk. Matches the
   // `rule=value [files]` shape `impeccable ignores list` already prints.
   const ignoreValues = cfg.ignoreValues.map((entry) => {
-    const scope = Array.isArray(entry.files) && entry.files.length ? ` [${entry.files.join(', ')}]` : '';
+    const scope =
+      Array.isArray(entry.files) && entry.files.length ? ` [${entry.files.join(', ')}]` : '';
     return `${entry.rule}=${entry.value}${scope}`;
   });
 
@@ -385,7 +438,9 @@ function setEnabled(cwd, value) {
     parts.push('No installed provider skill folders found to repair.');
   }
   if (repaired.backups.length > 0) {
-    parts.push(`Backed up malformed manifest(s): ${repaired.backups.map((filePath) => path.relative(cwd, filePath) || filePath).join(', ')}.`);
+    parts.push(
+      `Backed up malformed manifest(s): ${repaired.backups.map((filePath) => path.relative(cwd, filePath) || filePath).join(', ')}.`,
+    );
   }
   return parts.join(' ');
 }
@@ -437,14 +492,19 @@ function safeReadText(filePath) {
 }
 
 function mergeHookManifests(existing, fresh) {
-  const existingObject = existing && typeof existing === 'object' && !Array.isArray(existing) ? existing : {};
+  const existingObject =
+    existing && typeof existing === 'object' && !Array.isArray(existing) ? existing : {};
   const freshObject = fresh && typeof fresh === 'object' && !Array.isArray(fresh) ? fresh : {};
-  const existingHooks = existingObject.hooks && typeof existingObject.hooks === 'object' && !Array.isArray(existingObject.hooks)
-    ? existingObject.hooks
-    : {};
-  const freshHooks = freshObject.hooks && typeof freshObject.hooks === 'object' && !Array.isArray(freshObject.hooks)
-    ? freshObject.hooks
-    : {};
+  const existingHooks =
+    existingObject.hooks &&
+    typeof existingObject.hooks === 'object' &&
+    !Array.isArray(existingObject.hooks)
+      ? existingObject.hooks
+      : {};
+  const freshHooks =
+    freshObject.hooks && typeof freshObject.hooks === 'object' && !Array.isArray(freshObject.hooks)
+      ? freshObject.hooks
+      : {};
 
   const merged = { ...existingObject, hooks: {} };
   if (freshObject.version !== undefined) merged.version = freshObject.version;
@@ -478,7 +538,8 @@ function valueHasImpeccableHookMarker(value) {
     return IMPECCABLE_HOOK_COMMAND_MARKERS.some((marker) => value.includes(marker));
   }
   if (Array.isArray(value)) return value.some(valueHasImpeccableHookMarker);
-  if (value && typeof value === 'object') return Object.values(value).some(valueHasImpeccableHookMarker);
+  if (value && typeof value === 'object')
+    return Object.values(value).some(valueHasImpeccableHookMarker);
   return false;
 }
 
@@ -486,15 +547,17 @@ function stripImpeccableHookEntry(entry) {
   if (!entry || typeof entry !== 'object') return entry;
   // `command`/`args`: Claude/Codex/Cursor. `bash`/`powershell`: GitHub Copilot's
   // flat entry shape, where the marker lives under the shell-command keys.
-  if (valueHasImpeccableHookMarker(entry.command) || valueHasImpeccableHookMarker(entry.args)
-    || valueHasImpeccableHookMarker(entry.bash) || valueHasImpeccableHookMarker(entry.powershell)) {
+  if (
+    valueHasImpeccableHookMarker(entry.command) ||
+    valueHasImpeccableHookMarker(entry.args) ||
+    valueHasImpeccableHookMarker(entry.bash) ||
+    valueHasImpeccableHookMarker(entry.powershell)
+  ) {
     return null;
   }
   if (!Array.isArray(entry.hooks)) return entry;
 
-  const strippedHooks = entry.hooks
-    .map(stripImpeccableHookEntry)
-    .filter(Boolean);
+  const strippedHooks = entry.hooks.map(stripImpeccableHookEntry).filter(Boolean);
 
   if (strippedHooks.length === 0 && entry.hooks.some(valueHasImpeccableHookMarker)) {
     return null;
@@ -504,9 +567,7 @@ function stripImpeccableHookEntry(entry) {
 
 function stripImpeccableHookEntries(entries) {
   if (!Array.isArray(entries)) return [];
-  return entries
-    .map(stripImpeccableHookEntry)
-    .filter(Boolean);
+  return entries.map(stripImpeccableHookEntry).filter(Boolean);
 }
 
 function pruneImpeccableHookFromManifest(manifestPath) {
@@ -518,9 +579,10 @@ function pruneImpeccableHookFromManifest(manifestPath) {
     return false;
   }
 
-  const existingHooks = parsed.hooks && typeof parsed.hooks === 'object' && !Array.isArray(parsed.hooks)
-    ? parsed.hooks
-    : {};
+  const existingHooks =
+    parsed.hooks && typeof parsed.hooks === 'object' && !Array.isArray(parsed.hooks)
+      ? parsed.hooks
+      : {};
   const cleanedHooks = {};
   for (const [event, entries] of Object.entries(existingHooks)) {
     const kept = stripImpeccableHookEntries(entries);
@@ -545,7 +607,9 @@ function pruneImpeccableHookFromManifest(manifestPath) {
 }
 
 function normalizeRuleId(rule) {
-  return String(rule || '').trim().toLowerCase();
+  return String(rule || '')
+    .trim()
+    .toLowerCase();
 }
 
 function parseIgnoreRuleArgs(args) {
@@ -576,9 +640,12 @@ function parseIgnoreRuleArgs(args) {
 function addIgnoreRule(cwd, args) {
   const parsed = parseIgnoreRuleArgs(args);
   const rule = parsed.rule;
-  if (!rule) throw new Error(`Pass a rule id, e.g. ${IMPECCABLE_COMMAND} hooks ignore-rule side-tab`);
+  if (!rule)
+    throw new Error(`Pass a rule id, e.g. ${IMPECCABLE_COMMAND} hooks ignore-rule side-tab`);
   if (rule === 'overused-font' && !parsed.allValues) {
-    throw new Error(`overused-font is value-specific by default. Use ${IMPECCABLE_COMMAND} hooks ignore-value overused-font <font> for a confirmed font, or ${IMPECCABLE_COMMAND} hooks ignore-rule overused-font --all-values only when the user asked to ignore overused fonts generally.`);
+    throw new Error(
+      `overused-font is value-specific by default. Use ${IMPECCABLE_COMMAND} hooks ignore-value overused-font <font> for a confirmed font, or ${IMPECCABLE_COMMAND} hooks ignore-rule overused-font --all-values only when the user asked to ignore overused fonts generally.`,
+    );
   }
   const config = mergeDetectorConfig(readRawDetectorConfig(cwd));
   if (!config.ignoreRules.includes(rule)) config.ignoreRules.push(rule);
@@ -598,7 +665,9 @@ function parseIgnoreFileArgs(args) {
     } else if (arg === '--local') {
       local = true;
     } else if (arg === '--reason' || arg.startsWith('--reason=')) {
-      throw new Error('--reason is not supported for ignore-file because detector.ignoreFiles stores globs only; use ignore-value when a documented rule-specific exception fits');
+      throw new Error(
+        '--reason is not supported for ignore-file because detector.ignoreFiles stores globs only; use ignore-value when a documented rule-specific exception fits',
+      );
     } else if (arg.startsWith('--')) {
       throw new Error(`Unknown ignore-file flag: ${arg}`);
     } else {
@@ -618,7 +687,8 @@ function parseIgnoreFileArgs(args) {
 function addIgnoreFile(cwd, args) {
   const parsed = parseIgnoreFileArgs(args);
   const glob = parsed.glob;
-  if (!glob) throw new Error(`Pass a glob, e.g. ${IMPECCABLE_COMMAND} hooks ignore-file "src/legacy/**"`);
+  if (!glob)
+    throw new Error(`Pass a glob, e.g. ${IMPECCABLE_COMMAND} hooks ignore-file "src/legacy/**"`);
   const config = mergeDetectorConfig(readRawDetectorConfig(cwd, { local: parsed.local }));
   if (!config.ignoreFiles.includes(glob)) config.ignoreFiles.push(glob);
   const target = writeDetectorConfig(cwd, config, { local: parsed.local });
@@ -680,7 +750,9 @@ function parseIgnoreValueArgs(args) {
 
   const [rule, ...valueParts] = positionals;
   return {
-    rule: String(rule || '').trim().toLowerCase(),
+    rule: String(rule || '')
+      .trim()
+      .toLowerCase(),
     value: normalizeIgnoreValue(valueParts.join(' ')),
     // Sorted: the dedup key compares the files array, so an unsorted scope made
     // `--file b.css --file a.css` a different entry from `--file a.css --file b.css`.
@@ -694,7 +766,9 @@ function parseIgnoreValueArgs(args) {
 function addIgnoreValue(cwd, args) {
   const parsed = parseIgnoreValueArgs(args);
   if (!parsed.rule || !parsed.value) {
-    throw new Error(`Pass a rule id and value, e.g. ${IMPECCABLE_COMMAND} hooks ignore-value overused-font Inter`);
+    throw new Error(
+      `Pass a rule id and value, e.g. ${IMPECCABLE_COMMAND} hooks ignore-value overused-font Inter`,
+    );
   }
 
   if (parsed.shared && parsed.local) {
@@ -707,10 +781,13 @@ function addIgnoreValue(cwd, args) {
   if (parsed.value === '*' && parsed.files.length === 0) {
     // `ignore-rule overused-font` refuses on its own without --all-values, so
     // naming the bare form here would hand the user a second error.
-    const projectWide = parsed.rule === 'overused-font'
-      ? `${IMPECCABLE_COMMAND} hooks ignore-rule ${parsed.rule} --all-values`
-      : `${IMPECCABLE_COMMAND} hooks ignore-rule ${parsed.rule}`;
-    throw new Error(`Wildcard value ignores must be scoped with --file <glob>, e.g. ${IMPECCABLE_COMMAND} hooks ignore-value design-system-font-size "*" --file "src/widget.js". To suppress the rule project-wide use ${projectWide}.`);
+    const projectWide =
+      parsed.rule === 'overused-font'
+        ? `${IMPECCABLE_COMMAND} hooks ignore-rule ${parsed.rule} --all-values`
+        : `${IMPECCABLE_COMMAND} hooks ignore-rule ${parsed.rule}`;
+    throw new Error(
+      `Wildcard value ignores must be scoped with --file <glob>, e.g. ${IMPECCABLE_COMMAND} hooks ignore-value design-system-font-size "*" --file "src/widget.js". To suppress the rule project-wide use ${projectWide}.`,
+    );
   }
 
   const local = parsed.local;
@@ -746,7 +823,13 @@ function reset(cwd) {
   for (const filePath of [getConfigPath(cwd), getLocalConfigPath(cwd)]) {
     try {
       const raw = readRawConfigFile(filePath).raw;
-      if (!raw || typeof raw !== 'object' || Array.isArray(raw) || (!('hook' in raw) && !('detector' in raw))) continue;
+      if (
+        !raw ||
+        typeof raw !== 'object' ||
+        Array.isArray(raw) ||
+        (!('hook' in raw) && !('detector' in raw))
+      )
+        continue;
       const { hook, detector, ...rest } = raw;
       if (Object.keys(rest).length === 0) {
         fs.unlinkSync(filePath);
@@ -754,7 +837,9 @@ function reset(cwd) {
         fs.writeFileSync(filePath, JSON.stringify(rest, null, 2) + '\n');
       }
       removed.push(path.relative(cwd, filePath) || filePath);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
   // State files are wholly ours; delete outright.
   for (const filePath of [getCachePath(cwd), getPendingPath(cwd)]) {
@@ -763,7 +848,9 @@ function reset(cwd) {
         fs.unlinkSync(filePath);
         removed.push(path.relative(cwd, filePath) || filePath);
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
   return removed.length
     ? `Reset design hook config and cache (removed: ${removed.join(', ')}).`
@@ -783,13 +870,27 @@ function main() {
   try {
     let out = '';
     switch (action) {
-      case 'status': out = statusReport(cwd); break;
-      case 'on':     out = setEnabled(cwd, true); break;
-      case 'off':    out = setEnabled(cwd, false); break;
-      case 'ignore-rule': out = addIgnoreRule(cwd, rest); break;
-      case 'ignore-file': out = addIgnoreFile(cwd, rest); break;
-      case 'ignore-value': out = addIgnoreValue(cwd, rest); break;
-      case 'reset':  out = reset(cwd); break;
+      case 'status':
+        out = statusReport(cwd);
+        break;
+      case 'on':
+        out = setEnabled(cwd, true);
+        break;
+      case 'off':
+        out = setEnabled(cwd, false);
+        break;
+      case 'ignore-rule':
+        out = addIgnoreRule(cwd, rest);
+        break;
+      case 'ignore-file':
+        out = addIgnoreFile(cwd, rest);
+        break;
+      case 'ignore-value':
+        out = addIgnoreValue(cwd, rest);
+        break;
+      case 'reset':
+        out = reset(cwd);
+        break;
     }
     process.stdout.write(out + '\n');
   } catch (err) {

@@ -29,7 +29,13 @@ const scriptCmd = (name) => `node "${path.join(SELF_DIR, name)}"`;
 export const PER_REQUEST_TIMEOUT_MS = 270_000;
 export const DEFAULT_EVENT_LEASE_MS = 600_000;
 
-const EVENT_TYPES_NEEDING_AGENT_REPLY = new Set(['generate', 'steer', 'manual_edit_apply', 'carbonize_cleanup', 'variant_mount_failed']);
+const EVENT_TYPES_NEEDING_AGENT_REPLY = new Set([
+  'generate',
+  'steer',
+  'manual_edit_apply',
+  'carbonize_cleanup',
+  'variant_mount_failed',
+]);
 
 function readServerInfo() {
   const record = readLiveServerInfo(process.cwd());
@@ -46,12 +52,14 @@ export function buildPollReplyPayload(token, { id, type, message, file, data, so
 
 export function manualApplyPollBanner(event = {}) {
   const id = event.id || 'EVENT_ID';
-  return [
-    `Manual Apply action required: edit source, then reply with \`live-poll.mjs --reply ${id} done --data '<json>'\`.`,
-    'The JSON data must include status, appliedEntryIds, failed, files, and notes; summary counters are only a recovery fallback.',
-    'Do not run live-commit-manual-edits.mjs for this leased event.',
-    'Do not poll again before replying.',
-  ].join('\n') + '\n';
+  return (
+    [
+      `Manual Apply action required: edit source, then reply with \`live-poll.mjs --reply ${id} done --data '<json>'\`.`,
+      'The JSON data must include status, appliedEntryIds, failed, files, and notes; summary counters are only a recovery fallback.',
+      'Do not run live-commit-manual-edits.mjs for this leased event.',
+      'Do not poll again before replying.',
+    ].join('\n') + '\n'
+  );
 }
 
 /**
@@ -79,12 +87,10 @@ export function parseReplyArgs(args) {
       throw wrapped;
     }
   }
-  const message = args.find((a, i) =>
-    i > replyIdx + 2
-    && !a.startsWith('--')
-    && i !== fileIdx + 1
-    && i !== dataIdx + 1
-  ) || undefined;
+  const message =
+    args.find(
+      (a, i) => i > replyIdx + 2 && !a.startsWith('--') && i !== fileIdx + 1 && i !== dataIdx + 1,
+    ) || undefined;
   return { id, type: status, message, file, data };
 }
 
@@ -96,7 +102,9 @@ function validateReplyArgs({ id, status }) {
     throw err;
   }
   if (['done', 'error', 'complete', 'discard', 'discarded'].includes(id)) {
-    const err = new Error(`${usage}\nThe value after --reply must be the event id, not the status ${JSON.stringify(id)}. Use --reply EVENT_ID ${id}.`);
+    const err = new Error(
+      `${usage}\nThe value after --reply must be the event id, not the status ${JSON.stringify(id)}. Use --reply EVENT_ID ${id}.`,
+    );
     err.code = 'INVALID_REPLY_ARGS';
     throw err;
   }
@@ -120,9 +128,17 @@ export async function postReply(base, token, reply) {
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     const failureLines = Array.isArray(body.failures)
-      ? body.failures.map((f) => `  ${f.file}${f.line != null ? `:${f.line}` : ''} ${f.message}`).join('\n')
+      ? body.failures
+          .map((f) => `  ${f.file}${f.line != null ? `:${f.line}` : ''} ${f.message}`)
+          .join('\n')
       : null;
-    const parts = [body.error || res.statusText, body.reason, body.hint, failureLines, body._instructions].filter(Boolean);
+    const parts = [
+      body.error || res.statusText,
+      body.reason,
+      body.hint,
+      failureLines,
+      body._instructions,
+    ].filter(Boolean);
     throw new Error(parts.join('\n'));
   }
 }
@@ -144,10 +160,12 @@ export function isEventPending(status, eventId) {
   return (status.pendingEvents || []).some((entry) => entry.id === eventId);
 }
 
-export async function waitForEventAck(base, token, eventId, {
-  pollIntervalMs = 400,
-  maxWaitMs = 600_000,
-} = {}) {
+export async function waitForEventAck(
+  base,
+  token,
+  eventId,
+  { pollIntervalMs = 400, maxWaitMs = 600_000 } = {},
+) {
   const deadline = Date.now() + maxWaitMs;
   while (Date.now() < deadline) {
     const status = await fetchServerStatus(base, token);
@@ -157,22 +175,24 @@ export async function waitForEventAck(base, token, eventId, {
   return false;
 }
 
-export async function fetchNextEvent(base, token, {
-  totalDeadline,
-  types,
-  resolveTypes,
-  perRequestTimeoutMs = PER_REQUEST_TIMEOUT_MS,
-  leaseMs = DEFAULT_EVENT_LEASE_MS,
-  signal,
-} = {}) {
+export async function fetchNextEvent(
+  base,
+  token,
+  {
+    totalDeadline,
+    types,
+    resolveTypes,
+    perRequestTimeoutMs = PER_REQUEST_TIMEOUT_MS,
+    leaseMs = DEFAULT_EVENT_LEASE_MS,
+    signal,
+  } = {},
+) {
   while (true) {
     if (totalDeadline && Date.now() >= totalDeadline) {
       return { type: 'timeout' };
     }
 
-    const remaining = totalDeadline
-      ? totalDeadline - Date.now()
-      : PER_REQUEST_TIMEOUT_MS;
+    const remaining = totalDeadline ? totalDeadline - Date.now() : PER_REQUEST_TIMEOUT_MS;
     const slice = Math.min(Math.max(remaining, 1000), perRequestTimeoutMs);
     const query = new URLSearchParams({
       token,
@@ -211,11 +231,11 @@ export async function augmentEventWithAcceptHandling(event, base, token) {
   const scriptArgs = buildAcceptScriptArgs(event);
 
   try {
-    const out = execFileSync(
-      'node',
-      [acceptScript, ...scriptArgs],
-      { encoding: 'utf-8', cwd: process.cwd(), timeout: 30_000 },
-    );
+    const out = execFileSync('node', [acceptScript, ...scriptArgs], {
+      encoding: 'utf-8',
+      cwd: process.cwd(),
+      timeout: 30_000,
+    });
     event._acceptResult = JSON.parse(out.trim());
   } catch (err) {
     event._acceptResult = { handled: false, mode: 'error', error: err.message };
@@ -240,15 +260,20 @@ export async function completeAcceptHandling(event, base, token) {
     event._completionAck = { ok: false, error: err.message };
   }
   if (!event._completionAck) {
-    event._completionAck = completionAckForAcceptResult(event.id, completionType, event._acceptResult);
+    event._completionAck = completionAckForAcceptResult(
+      event.id,
+      completionType,
+      event._acceptResult,
+    );
   }
   return event;
 }
 
 export function buildAcceptScriptArgs(event) {
-  const scriptArgs = event.type === 'discard'
-    ? ['--id', String(event.id), '--discard']
-    : ['--id', String(event.id), '--variant', String(event.variantId)];
+  const scriptArgs =
+    event.type === 'discard'
+      ? ['--id', String(event.id), '--discard']
+      : ['--id', String(event.id), '--variant', String(event.variantId)];
   if (event.pageUrl) scriptArgs.push('--page-url', String(event.pageUrl));
   if (event.type === 'accept' && event.paramValues && Object.keys(event.paramValues).length > 0) {
     scriptArgs.push('--param-values', JSON.stringify(event.paramValues));
@@ -261,7 +286,11 @@ export function writeCarbonizeBanner(event) {
     process.stderr.write('\n' + manualApplyPollBanner(event) + '\n');
   }
   if (event._acceptResult?.carbonize === true) {
-    process.stderr.write('\n⚠ Carbonize cleanup REQUIRED before next poll. After cleanup, run live-complete.mjs --id ' + event.id + '. See reference/live.md "Required after accept".\n\n');
+    process.stderr.write(
+      '\n⚠ Carbonize cleanup REQUIRED before next poll. After cleanup, run live-complete.mjs --id ' +
+        event.id +
+        '. See reference/live.md "Required after accept".\n\n',
+    );
   }
 }
 
@@ -276,24 +305,39 @@ export function printPollEvent(event) {
   console.log(JSON.stringify(event));
 }
 
-export async function runPollOnce(base, token, { totalTimeout = 600_000, types, resolveTypes, perRequestTimeoutMs } = {}) {
+export async function runPollOnce(
+  base,
+  token,
+  { totalTimeout = 600_000, types, resolveTypes, perRequestTimeoutMs } = {},
+) {
   const deadline = Date.now() + totalTimeout;
-  const event = await fetchNextEvent(base, token, { totalDeadline: deadline, types, resolveTypes, perRequestTimeoutMs });
+  const event = await fetchNextEvent(base, token, {
+    totalDeadline: deadline,
+    types,
+    resolveTypes,
+    perRequestTimeoutMs,
+  });
   await augmentEventWithAcceptHandling(event, base, token);
   writeCarbonizeBanner(event);
   printPollEvent(event);
   return event;
 }
 
-export async function runPollStream(base, token, {
-  ackTimeoutMs = 600_000,
-  ackPollIntervalMs = 400,
-  shouldContinue = () => true,
-  types,
-  resolveTypes,
-  perRequestTimeoutMs,
-} = {}) {
-  process.stderr.write('[impeccable-poll] stream mode: one JSON object per line on stdout; use --reply while this process stays running\n');
+export async function runPollStream(
+  base,
+  token,
+  {
+    ackTimeoutMs = 600_000,
+    ackPollIntervalMs = 400,
+    shouldContinue = () => true,
+    types,
+    resolveTypes,
+    perRequestTimeoutMs,
+  } = {},
+) {
+  process.stderr.write(
+    '[impeccable-poll] stream mode: one JSON object per line on stdout; use --reply while this process stays running\n',
+  );
 
   while (shouldContinue()) {
     const event = await fetchNextEvent(base, token, { types, resolveTypes, perRequestTimeoutMs });
@@ -322,7 +366,9 @@ export async function runPollStream(base, token, {
 function handlePollError(err) {
   if (err.code === 'AUTH_FAILED') {
     console.error(err.message);
-    console.error(`Try restarting: ${scriptCmd('live-server.mjs')} stop && ${scriptCmd('live.mjs')}`);
+    console.error(
+      `Try restarting: ${scriptCmd('live-server.mjs')} stop && ${scriptCmd('live.mjs')}`,
+    );
     process.exit(1);
   }
   if (err.cause?.code === 'ECONNREFUSED') {

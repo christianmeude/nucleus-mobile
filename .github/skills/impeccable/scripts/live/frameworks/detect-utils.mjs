@@ -32,9 +32,11 @@ export function hasAnyDependency(cwd, names) {
 /** First top-level file name matching `re`, or null. */
 export function findConfigFile(cwd, re) {
   try {
-    return fs.readdirSync(cwd, { withFileTypes: true })
-      .find((entry) => entry.isFile() && re.test(entry.name))
-      ?.name ?? null;
+    return (
+      fs
+        .readdirSync(cwd, { withFileTypes: true })
+        .find((entry) => entry.isFile() && re.test(entry.name))?.name ?? null
+    );
   } catch {
     return null;
   }

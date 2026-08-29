@@ -48,7 +48,7 @@ describe('getSavedPaperIds', () => {
   it('returns paper ids from the default collection', async () => {
     const collectionsBuilder = createQueryBuilder(queryResult({ data: { id: 'col-1' } }));
     const papersBuilder = createQueryBuilder(
-      queryResult({ data: [{ paper_id: 'p1' }, { paper_id: 'p2' }] })
+      queryResult({ data: [{ paper_id: 'p1' }, { paper_id: 'p2' }] }),
     );
     mockSupabase.from.mockReturnValueOnce(collectionsBuilder).mockReturnValueOnce(papersBuilder);
 
@@ -68,7 +68,7 @@ describe('getSavedPaperIds', () => {
 
   it('propagates a Supabase error looking up the default collection', async () => {
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'lookup failed' } }))
+      createQueryBuilder(queryResult({ error: { message: 'lookup failed' } })),
     );
 
     await expect(getSavedPaperIds()).rejects.toMatchObject({ message: 'lookup failed' });
@@ -77,7 +77,9 @@ describe('getSavedPaperIds', () => {
   it('propagates a Supabase error loading saved paper ids', async () => {
     mockSupabase.from
       .mockReturnValueOnce(createQueryBuilder(queryResult({ data: { id: 'col-1' } })))
-      .mockReturnValueOnce(createQueryBuilder(queryResult({ error: { message: 'papers failed' } })));
+      .mockReturnValueOnce(
+        createQueryBuilder(queryResult({ error: { message: 'papers failed' } })),
+      );
 
     await expect(getSavedPaperIds()).rejects.toMatchObject({ message: 'papers failed' });
   });
@@ -86,7 +88,7 @@ describe('getSavedPaperIds', () => {
 describe('getMyCollections', () => {
   it('orders the default collection first, then by created_at', async () => {
     const builder = createQueryBuilder(
-      queryResult({ data: [{ id: 'col-1', is_default: true, name: 'Saved' }] })
+      queryResult({ data: [{ id: 'col-1', is_default: true, name: 'Saved' }] }),
     );
     mockSupabase.from.mockReturnValueOnce(builder);
 
@@ -99,7 +101,7 @@ describe('getMyCollections', () => {
 
   it('propagates a Supabase error', async () => {
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'boom' } }))
+      createQueryBuilder(queryResult({ error: { message: 'boom' } })),
     );
 
     await expect(getMyCollections()).rejects.toMatchObject({ message: 'boom' });
@@ -111,10 +113,10 @@ describe('getSavedPapers', () => {
     mockSupabase.from
       .mockReturnValueOnce(createQueryBuilder(queryResult({ data: { id: 'col-1' } })))
       .mockReturnValueOnce(
-        createQueryBuilder(queryResult({ data: [{ paper_id: 'p1' }, { paper_id: 'p2' }] }))
+        createQueryBuilder(queryResult({ data: [{ paper_id: 'p1' }, { paper_id: 'p2' }] })),
       );
     const papersBuilder = createQueryBuilder(
-      queryResult({ data: [{ id: 'p1', title: 'Paper One' }] })
+      queryResult({ data: [{ id: 'p1', title: 'Paper One' }] }),
     );
     mockSupabase.from.mockReturnValueOnce(papersBuilder);
 
@@ -135,7 +137,9 @@ describe('getSavedPapers', () => {
     mockSupabase.from
       .mockReturnValueOnce(createQueryBuilder(queryResult({ data: { id: 'col-1' } })))
       .mockReturnValueOnce(createQueryBuilder(queryResult({ data: [{ paper_id: 'p1' }] })))
-      .mockReturnValueOnce(createQueryBuilder(queryResult({ error: { message: 'papers failed' } })));
+      .mockReturnValueOnce(
+        createQueryBuilder(queryResult({ error: { message: 'papers failed' } })),
+      );
 
     await expect(getSavedPapers()).rejects.toMatchObject({ message: 'papers failed' });
   });

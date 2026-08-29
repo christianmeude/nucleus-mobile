@@ -19,7 +19,12 @@ interface ResearchTileProps {
  * category eyebrow, author, and views · date footer. `ResearchCard` remains the
  * single-column card used elsewhere (My Papers, etc.).
  */
-export const ResearchTile = memo(function ResearchTile({ paper, category, categoryColor, onPress }: ResearchTileProps) {
+export const ResearchTile = memo(function ResearchTile({
+  paper,
+  category,
+  categoryColor,
+  onPress,
+}: ResearchTileProps) {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const authorName = getPrimaryAuthorName(paper);

@@ -18,7 +18,6 @@ import { supabase } from '../../lib/supabase';
 import { initialsFor } from '../../utils/format';
 import { Mail, Lock, Moon, LogOut } from 'lucide-react-native';
 
-
 export const ProfileScreen = () => {
   const { user, signOut } = useAuth();
   const { preference, setPreference, scheme, theme } = useTheme();
@@ -41,7 +40,8 @@ export const ProfileScreen = () => {
 
   // Identity lines under the name: Department first (broader context), then Program or Role.
   const primaryIdentity = user?.department?.trim();
-  const secondaryIdentity = user?.role === 'faculty' ? roleLabel : (user?.program?.trim() || roleLabel);
+  const secondaryIdentity =
+    user?.role === 'faculty' ? roleLabel : user?.program?.trim() || roleLabel;
   const identityLines = [primaryIdentity, secondaryIdentity].filter(
     (part): part is string => !!part,
   );
@@ -193,7 +193,8 @@ export const ProfileScreen = () => {
         >
           <Text style={styles.sheetTitle}>Recovery email</Text>
           <Text style={styles.sheetDescription}>
-            Use a personal address so you can reset your password if you lose access to your university email.
+            Use a personal address so you can reset your password if you lose access to your
+            university email.
           </Text>
           <Text style={styles.sheetLabel}>Personal email</Text>
           <BottomSheetTextInput
@@ -209,7 +210,11 @@ export const ProfileScreen = () => {
           />
           {recoveryError ? <Text style={styles.errorText}>{recoveryError}</Text> : null}
           {recoveryStatus ? <Text style={styles.successText}>{recoveryStatus}</Text> : null}
-          <Button label="Save recovery email" onPress={saveRecoveryEmail} loading={recoveryLoading} />
+          <Button
+            label="Save recovery email"
+            onPress={saveRecoveryEmail}
+            loading={recoveryLoading}
+          />
         </BottomSheetScrollView>
       </BottomSheet>
 
@@ -221,7 +226,9 @@ export const ProfileScreen = () => {
           contentContainerStyle={{ gap: theme.spacing.sm }}
         >
           <Text style={styles.sheetTitle}>Change password</Text>
-          <Text style={styles.sheetDescription}>Choose a new password with at least 8 characters.</Text>
+          <Text style={styles.sheetDescription}>
+            Choose a new password with at least 8 characters.
+          </Text>
           <Text style={styles.sheetLabel}>Current password</Text>
           <BottomSheetTextInput
             style={styles.sheetInput}

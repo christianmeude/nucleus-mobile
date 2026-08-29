@@ -49,10 +49,15 @@ export const BottomSheet = forwardRef<BottomSheetModal, BottomSheetProps>(
         </BottomSheetView>
       </BottomSheetModal>
     );
-  }
+  },
 );
 
-export { BottomSheetScrollView, BottomSheetTextInput, BottomSheetFlatList, BottomSheetSectionList } from '@gorhom/bottom-sheet';
+export {
+  BottomSheetScrollView,
+  BottomSheetTextInput,
+  BottomSheetFlatList,
+  BottomSheetSectionList,
+} from '@gorhom/bottom-sheet';
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({

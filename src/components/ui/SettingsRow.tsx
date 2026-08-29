@@ -6,7 +6,12 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { PressableScale } from './motion/PressableScale';
 import { Icon } from './Icon';
-import Animated, { useAnimatedStyle, withTiming, Easing, useSharedValue } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+  useSharedValue,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 type SettingsRowTrailing = 'chevron' | 'toggle';
@@ -58,7 +63,11 @@ export const SettingsRow = ({
       {trailing === 'chevron' ? (
         <Icon icon={ChevronRight} size={18} color={theme.colors.text.disabled} />
       ) : trailing === 'toggle' ? (
-        <ReanimatedToggle value={value} onValueChange={onValueChange} accessibilityLabel={accessibilityLabel ?? label} />
+        <ReanimatedToggle
+          value={value}
+          onValueChange={onValueChange}
+          accessibilityLabel={accessibilityLabel ?? label}
+        />
       ) : null}
     </View>
   );
@@ -90,7 +99,10 @@ const ReanimatedToggle = ({
   const { theme } = useTheme();
   const progress = useSharedValue(value ? 1 : 0);
   useEffect(() => {
-    progress.value = withTiming(value ? 1 : 0, { duration: 250, easing: Easing.inOut(Easing.quad) });
+    progress.value = withTiming(value ? 1 : 0, {
+      duration: 250,
+      easing: Easing.inOut(Easing.quad),
+    });
   }, [value]);
   const thumbStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: progress.value * 16 }],
@@ -110,7 +122,9 @@ const ReanimatedToggle = ({
       hitSlop={8}
       style={[toggleStyles.track, trackStyle]}
     >
-      <Animated.View style={[toggleStyles.thumb, { backgroundColor: theme.colors.surface.raised }, thumbStyle]} />
+      <Animated.View
+        style={[toggleStyles.thumb, { backgroundColor: theme.colors.surface.raised }, thumbStyle]}
+      />
     </Pressable>
   );
 };

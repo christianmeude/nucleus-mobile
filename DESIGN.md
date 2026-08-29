@@ -136,6 +136,7 @@ components:
 NUcleus Mobile is a research repository for National University Dasmariñas students. Browsing, reading, and submitting papers is the whole job of the app. The aesthetic philosophy is built for long reading sessions on a phone screen, calibrated against Material 3's type-scale and shape conventions rather than a bespoke scale. It feels native, legible, and academically serious without being overly corporate.
 
 **Key Characteristics:**
+
 - **One Typeface**: Roboto is the single app-wide typeface to read as neutral and platform-native.
 - **Strict Brand Alignment**: Navy for primary actions and navigation; gold reserved strictly for emphasis.
 - **Soft Geometry**: Modest corner radii tied closely to platform (Material 3/iOS) defaults.
@@ -146,12 +147,15 @@ NUcleus Mobile is a research repository for National University Dasmariñas stud
 The palette is anchored by the university's navy and gold, with navy driving structure and gold reserved for rare emphasis.
 
 ### Primary
+
 - **Brand Navy** (#1B3A8C): The core action color. Used for primary buttons, active nav state, links, and focus rings. Hover and pressed states step down in lightness. `primary-surface` (#EAF0FB) is the tint background for selected rows.
 
 ### Secondary
+
 - **Brand Gold** (#CDA434): A true metallic gold. Reserved strictly for emphasis: status chips, category eyebrows, the bookmark/save affordance, and the Submit FAB.
 
 ### Neutral
+
 - **Text Primary** (#0F172A): Headings and primary reading text.
 - **Text Secondary** (#475569): Supporting copy.
 - **Text Muted** (#64748B): Metadata and captions.
@@ -161,6 +165,7 @@ The palette is anchored by the university's navy and gold, with navy driving str
 - **Border Subtle** (#E2E8F0): Hairlines for cards and dividers.
 
 ### Named Rules
+
 **The Emphasis Rule.** Gold is never used for large fills or decoration. Gold that appears everywhere stops meaning anything.
 
 ## Typography
@@ -171,6 +176,7 @@ The palette is anchored by the university's navy and gold, with navy driving str
 **Character:** Utilitarian, highly legible, and native. Visual hierarchy is achieved entirely through size, weight, and letter-spacing per token, rather than introducing a second family.
 
 ### Hierarchy
+
 - **Display** (600, 28px, 36px): Paper detail titles.
 - **Headline (h1)** (700, 24px, 32px): Screen titles ("Browse"), dashboard greeting.
 - **Title (h2)** (700, 20px, 28px): Section headers, stat callouts.
@@ -184,6 +190,7 @@ The palette is anchored by the university's navy and gold, with navy driving str
 - **Button** (600, 15px, 20px): Button and CTA labels.
 
 ### Named Rules
+
 **The Single Font Rule.** Do not introduce a second font family. Hierarchy comes from size and weight.
 
 ## Layout
@@ -197,11 +204,13 @@ Spacing follows an 8-point grid (with a 4px half-step for tight groupings). Card
 Elevation is soft and used sparingly. The system relies primarily on surface tone and subtle borders rather than heavy skeuomorphism.
 
 ### Shadow Vocabulary
+
 - **Level 0 (Flat):** Resting state, no shadow.
 - **Level 1 (Subtle Lift):** `0 1px 3px rgba(0,0,0,0.06)`. Used for tiles and secondary cards.
 - **Level 2 (Raised):** `0 4px 12px rgba(0,0,0,0.1)`. Used for primary paper cards once settled.
 
 ### Named Rules
+
 **The Hairline Rule.** Cards separate from the background mainly through a `border-subtle` hairline. Shadow is reserved for cards that need to read as "above" other content.
 
 ## Shapes
@@ -215,16 +224,19 @@ Corner radius scales with the size of the element it's applied to and is never u
 - **999px (pill):** Avatars, buttons, badges.
 
 ### Named Rules
+
 **The Continuous Corner Rule.** Every card-shaped `View` or `Pressable` must set `borderCurve: 'continuous'` for the native iOS squircle treatment.
 
 ## Components
 
 ### Card
+
 - **Shape:** 14px radius (lg) with continuous curve.
 - **Background:** `surface-raised` (#FFFFFF) with a `border-subtle` hairline.
 - **Padding:** 16px (lg).
 
 ### Primary Button
+
 - **Shape:** 999px radius (pill).
 - **Background:** `primary` (#1B3A8C) with `text-on-brand` (#FFFFFF).
 - **Padding:** 12px 24px.
@@ -232,26 +244,31 @@ Corner radius scales with the size of the element it's applied to and is never u
 - **Disabled:** `border-subtle` fill with `text-disabled` label.
 
 ### Chip / Status Pill
+
 - **Style:** Tint-surface background (e.g. `accent-surface`, `success-surface`) with matching saturated color text.
 - **Shape:** 8px radius (sm).
 - **State:** Never a solid fill behind body-length text.
 
 ### Avatar
+
 - **Style:** Initials in `caption` weight on a `primary` fill.
 - **Shape:** 999px radius (pill).
 
 ### Inputs / Search Field
+
 - **Style:** `surface-sunken` (#F1F5F9) fill, `border-subtle` hairline, 10px radius (md) with continuous curve.
 - **Focus:** `border-focus` (#2E5BC9) 2px ring.
 
 ## Do's and Don'ts
 
 ### Do:
+
 - **Do** check a heading size against the nearest Material 3 Headline/Title role before changing it.
 - **Do** set `borderCurve: 'continuous'` on every new card-shaped surface.
 - **Do** reserve gold exclusively for emphasis.
 
 ### Don't:
+
 - **Don't** size up a heading just because it "could be bigger".
 - **Don't** use gold as a fill color for large surfaces or decoration.
 - **Don't** introduce a second font family; rely on Roboto's weights.

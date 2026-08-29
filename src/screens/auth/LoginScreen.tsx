@@ -284,7 +284,12 @@ export const LoginScreen = () => {
           hitSlop={12}
           style={styles.ghostToggleTrack}
         >
-          <View style={[styles.ghostToggleThumb, isDark ? styles.ghostThumbDark : styles.ghostThumbLight]}>
+          <View
+            style={[
+              styles.ghostToggleThumb,
+              isDark ? styles.ghostThumbDark : styles.ghostThumbLight,
+            ]}
+          >
             <Icon icon={isDark ? Moon : Sun} size={14} color="rgba(255,255,255,0.95)" />
           </View>
         </Pressable>
@@ -421,8 +426,13 @@ export const LoginScreen = () => {
 
                 {/* TEMPORARY DEV BUTTON (Hidden) */}
                 {false && (
-                  <Pressable onPress={() => setDevModalVisible(true)} style={{ marginTop: 16, alignItems: 'center' }}>
-                    <Text style={{ color: 'rgba(255,255,255,0.5)', textDecorationLine: 'underline' }}>
+                  <Pressable
+                    onPress={() => setDevModalVisible(true)}
+                    style={{ marginTop: 16, alignItems: 'center' }}
+                  >
+                    <Text
+                      style={{ color: 'rgba(255,255,255,0.5)', textDecorationLine: 'underline' }}
+                    >
                       [Dev] FTUE Simulator
                     </Text>
                   </Pressable>
@@ -440,169 +450,166 @@ export const LoginScreen = () => {
         onDismiss={() => setShowForgotPassword(false)}
         snapPoints={FORGOT_PASSWORD_SNAP_POINTS}
       >
-          <BottomSheetScrollView
-            showsVerticalScrollIndicator={false}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.sheetContent}
-          >
-            <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>
-                {sheetStep === 1 ? 'Forgot Password' : 'Reset Password'}
-              </Text>
-              <Text style={styles.sheetSubtitle}>
-                {sheetStep === 1
-                  ? "Enter your email address and we'll send you a verification code."
-                  : 'Enter the code sent to your email and your new password.'}
-              </Text>
-            </View>
+        <BottomSheetScrollView
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.sheetContent}
+        >
+          <View style={styles.sheetHeader}>
+            <Text style={styles.sheetTitle}>
+              {sheetStep === 1 ? 'Forgot Password' : 'Reset Password'}
+            </Text>
+            <Text style={styles.sheetSubtitle}>
+              {sheetStep === 1
+                ? "Enter your email address and we'll send you a verification code."
+                : 'Enter the code sent to your email and your new password.'}
+            </Text>
+          </View>
 
-            {sheetStep === 1 ? (
+          {sheetStep === 1 ? (
+            <View style={styles.sheetFormGroup}>
+              <Text style={styles.sheetLabel}>Email</Text>
+              <View
+                style={[
+                  styles.sheetInputWrap,
+                  focused === 'forgotEmail' && styles.sheetInputWrapFocused,
+                ]}
+              >
+                <Icon
+                  icon={Mail}
+                  size={18}
+                  color={iconColor('forgotEmail')}
+                  style={styles.sheetInputIcon}
+                />
+                <BottomSheetTextInput
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  placeholder="you@example.com"
+                  placeholderTextColor={theme.colors.text.disabled}
+                  style={styles.sheetInput}
+                  value={forgotEmail}
+                  onChangeText={setForgotEmail}
+                  onFocus={() => setFocused('forgotEmail')}
+                  onBlur={() => setFocused(null)}
+                />
+              </View>
+            </View>
+          ) : (
+            <>
               <View style={styles.sheetFormGroup}>
-                <Text style={styles.sheetLabel}>Email</Text>
+                <Text style={styles.sheetLabel}>Verification Code</Text>
                 <View
                   style={[
                     styles.sheetInputWrap,
-                    focused === 'forgotEmail' && styles.sheetInputWrapFocused,
+                    focused === 'code' && styles.sheetInputWrapFocused,
                   ]}
                 >
                   <Icon
-                    icon={Mail}
+                    icon={Grid3x3}
                     size={18}
-                    color={iconColor('forgotEmail')}
+                    color={iconColor('code')}
                     style={styles.sheetInputIcon}
                   />
                   <BottomSheetTextInput
                     autoCapitalize="none"
-                    keyboardType="email-address"
-                    placeholder="you@example.com"
+                    keyboardType="number-pad"
+                    placeholder="Enter 6-digit code"
                     placeholderTextColor={theme.colors.text.disabled}
                     style={styles.sheetInput}
-                    value={forgotEmail}
-                    onChangeText={setForgotEmail}
-                    onFocus={() => setFocused('forgotEmail')}
+                    value={code}
+                    onChangeText={setCode}
+                    onFocus={() => setFocused('code')}
                     onBlur={() => setFocused(null)}
                   />
                 </View>
               </View>
-            ) : (
-              <>
-                <View style={styles.sheetFormGroup}>
-                  <Text style={styles.sheetLabel}>Verification Code</Text>
-                  <View
-                    style={[
-                      styles.sheetInputWrap,
-                      focused === 'code' && styles.sheetInputWrapFocused,
-                    ]}
-                  >
-                    <Icon
-                      icon={Grid3x3}
-                      size={18}
-                      color={iconColor('code')}
-                      style={styles.sheetInputIcon}
-                    />
-                    <BottomSheetTextInput
-                      autoCapitalize="none"
-                      keyboardType="number-pad"
-                      placeholder="Enter 6-digit code"
-                      placeholderTextColor={theme.colors.text.disabled}
-                      style={styles.sheetInput}
-                      value={code}
-                      onChangeText={setCode}
-                      onFocus={() => setFocused('code')}
-                      onBlur={() => setFocused(null)}
-                    />
-                  </View>
-                </View>
 
-                <View style={styles.sheetFormGroup}>
-                  <Text style={styles.sheetLabel}>New Password</Text>
-                  <View
-                    style={[
-                      styles.sheetInputWrap,
-                      focused === 'newPassword' && styles.sheetInputWrapFocused,
-                    ]}
-                  >
-                    <Icon
-                      icon={Lock}
-                      size={18}
-                      color={iconColor('newPassword')}
-                      style={styles.sheetInputIcon}
-                    />
-                    <BottomSheetTextInput
-                      secureTextEntry
-                      placeholder="Enter new password"
-                      placeholderTextColor={theme.colors.text.disabled}
-                      style={styles.sheetInput}
-                      value={newPassword}
-                      onChangeText={setNewPassword}
-                      onFocus={() => setFocused('newPassword')}
-                      onBlur={() => setFocused(null)}
-                    />
-                  </View>
-                </View>
-              </>
-            )}
-
-            {sheetError ? (
-              <View style={styles.sheetErrorBox}>
-                <Icon icon={CircleAlert} size={16} color={theme.colors.state.danger} />
-                <Text style={styles.sheetError}>{sheetError}</Text>
-              </View>
-            ) : null}
-
-            {sheetSuccessMsg && !sheetError ? (
-              <View
-                style={[
-                  styles.sheetErrorBox,
-                  { backgroundColor: theme.colors.state.successSurface },
-                ]}
-              >
-                <Icon icon={CircleCheck} size={16} color={theme.colors.state.success} />
-                <Text style={[styles.sheetError, { color: theme.colors.state.success }]}>
-                  {sheetSuccessMsg}
-                </Text>
-              </View>
-            ) : null}
-
-            <View style={styles.sheetActions}>
-              {sheetStep === 1 ? (
-                <Pressable
-                  style={styles.sheetPrimaryBtn}
-                  onPress={handleSendCode}
-                  disabled={sheetLoading}
+              <View style={styles.sheetFormGroup}>
+                <Text style={styles.sheetLabel}>New Password</Text>
+                <View
+                  style={[
+                    styles.sheetInputWrap,
+                    focused === 'newPassword' && styles.sheetInputWrapFocused,
+                  ]}
                 >
-                  {sheetLoading ? (
-                    <ActivityIndicator color={theme.colors.brand.primary} />
-                  ) : (
-                    <Text style={styles.sheetPrimaryBtnText}>Send Reset Code</Text>
-                  )}
-                </Pressable>
-              ) : (
-                <Pressable
-                  style={styles.sheetPrimaryBtn}
-                  onPress={handleResetPassword}
-                  disabled={sheetLoading}
-                >
-                  {sheetLoading ? (
-                    <ActivityIndicator color={theme.colors.brand.primary} />
-                  ) : (
-                    <Text style={styles.sheetPrimaryBtnText}>Reset Password</Text>
-                  )}
-                </Pressable>
-              )}
+                  <Icon
+                    icon={Lock}
+                    size={18}
+                    color={iconColor('newPassword')}
+                    style={styles.sheetInputIcon}
+                  />
+                  <BottomSheetTextInput
+                    secureTextEntry
+                    placeholder="Enter new password"
+                    placeholderTextColor={theme.colors.text.disabled}
+                    style={styles.sheetInput}
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    onFocus={() => setFocused('newPassword')}
+                    onBlur={() => setFocused(null)}
+                  />
+                </View>
+              </View>
+            </>
+          )}
+
+          {sheetError ? (
+            <View style={styles.sheetErrorBox}>
+              <Icon icon={CircleAlert} size={16} color={theme.colors.state.danger} />
+              <Text style={styles.sheetError}>{sheetError}</Text>
+            </View>
+          ) : null}
+
+          {sheetSuccessMsg && !sheetError ? (
+            <View
+              style={[styles.sheetErrorBox, { backgroundColor: theme.colors.state.successSurface }]}
+            >
+              <Icon icon={CircleCheck} size={16} color={theme.colors.state.success} />
+              <Text style={[styles.sheetError, { color: theme.colors.state.success }]}>
+                {sheetSuccessMsg}
+              </Text>
+            </View>
+          ) : null}
+
+          <View style={styles.sheetActions}>
+            {sheetStep === 1 ? (
               <Pressable
-                style={styles.sheetCancelBtn}
-                onPress={() => {
-                  setShowForgotPassword(false);
-                  bottomSheetRef.current?.dismiss();
-                }}
+                style={styles.sheetPrimaryBtn}
+                onPress={handleSendCode}
                 disabled={sheetLoading}
               >
-                <Text style={styles.sheetCancelBtnText}>Cancel</Text>
+                {sheetLoading ? (
+                  <ActivityIndicator color={theme.colors.brand.primary} />
+                ) : (
+                  <Text style={styles.sheetPrimaryBtnText}>Send Reset Code</Text>
+                )}
               </Pressable>
-            </View>
-          </BottomSheetScrollView>
-        </BottomSheet>
+            ) : (
+              <Pressable
+                style={styles.sheetPrimaryBtn}
+                onPress={handleResetPassword}
+                disabled={sheetLoading}
+              >
+                {sheetLoading ? (
+                  <ActivityIndicator color={theme.colors.brand.primary} />
+                ) : (
+                  <Text style={styles.sheetPrimaryBtnText}>Reset Password</Text>
+                )}
+              </Pressable>
+            )}
+            <Pressable
+              style={styles.sheetCancelBtn}
+              onPress={() => {
+                setShowForgotPassword(false);
+                bottomSheetRef.current?.dismiss();
+              }}
+              disabled={sheetLoading}
+            >
+              <Text style={styles.sheetCancelBtnText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </BottomSheetScrollView>
+      </BottomSheet>
     </View>
   );
 };

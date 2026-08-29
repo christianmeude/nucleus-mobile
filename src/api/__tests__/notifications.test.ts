@@ -40,7 +40,7 @@ describe('notificationsApi.getNotifications', () => {
   it('loads the caller notifications, newest first, with the default limit', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     const builder = createQueryBuilder(
-      queryResult({ data: [notificationRow({ id: 'n1' }), notificationRow({ id: 'n2' })] })
+      queryResult({ data: [notificationRow({ id: 'n1' }), notificationRow({ id: 'n2' })] }),
     );
     mockSupabase.from.mockReturnValueOnce(builder);
 
@@ -65,7 +65,7 @@ describe('notificationsApi.getNotifications', () => {
   it('propagates a Supabase error', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'load failed' } }))
+      createQueryBuilder(queryResult({ error: { message: 'load failed' } })),
     );
 
     await expect(notificationsApi.getNotifications()).rejects.toThrow('load failed');
@@ -93,7 +93,7 @@ describe('notificationsApi.getUnreadCount', () => {
   it('propagates a Supabase error', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'count failed' } }))
+      createQueryBuilder(queryResult({ error: { message: 'count failed' } })),
     );
 
     await expect(notificationsApi.getUnreadCount()).rejects.toThrow('count failed');
@@ -116,7 +116,7 @@ describe('notificationsApi.markAsRead', () => {
   it('propagates a Supabase error', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'update failed' } }))
+      createQueryBuilder(queryResult({ error: { message: 'update failed' } })),
     );
 
     await expect(notificationsApi.markAsRead('n1')).rejects.toThrow('update failed');
@@ -139,7 +139,7 @@ describe('notificationsApi.markAllAsRead', () => {
   it('propagates a Supabase error', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'update failed' } }))
+      createQueryBuilder(queryResult({ error: { message: 'update failed' } })),
     );
 
     await expect(notificationsApi.markAllAsRead()).rejects.toThrow('update failed');

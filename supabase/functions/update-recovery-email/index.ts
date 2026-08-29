@@ -32,7 +32,8 @@ Deno.serve(async (req) => {
   });
   const { data: authData, error: authError } = await sessionClient.auth.getUser(token);
   const accountEmail = authData.user?.email?.trim().toLowerCase();
-  if (authError || !accountEmail) return json({ error: 'Your session has expired. Please sign in again.' }, 401);
+  if (authError || !accountEmail)
+    return json({ error: 'Your session has expired. Please sign in again.' }, 401);
 
   let recoveryEmail = '';
   try {

@@ -1,13 +1,6 @@
 import { fetchAppUserProfile } from '../auth/fetchAppUserProfile';
-import {
-  PUBLISHED_STATUSES,
-  PaperAnnotation,
-} from './research';
-import {
-  AnnotationType,
-  AnnotationRect,
-  AnnotationPoint,
-} from '../utils/annotation';
+import { PUBLISHED_STATUSES, PaperAnnotation } from './research';
+import { AnnotationType, AnnotationRect, AnnotationPoint } from '../utils/annotation';
 import { supabase } from '../lib/supabase';
 import { NotificationItem, PaperStatus } from '../types/domain';
 import { apiCache, SWROptions } from '../utils/apiCache';
@@ -180,7 +173,7 @@ const FACULTY_PAPER_SELECT = `
 
 function pickAuthor(rel?: FacultyAuthorRelation): FacultyAuthorRow | null {
   if (!rel) return null;
-  return Array.isArray(rel) ? rel[0] ?? null : rel;
+  return Array.isArray(rel) ? (rel[0] ?? null) : rel;
 }
 
 function buildFullName(row?: FacultyAuthorRow | null): string {
@@ -404,7 +397,13 @@ export function summarizeFacultyWorkload(papers: FacultyAssignedPaper[]): Facult
     }
   }
 
-  return { pendingReview, revisionRequired, forwardedByYou, approvedByYou, totalAssigned: papers.length };
+  return {
+    pendingReview,
+    revisionRequired,
+    forwardedByYou,
+    approvedByYou,
+    totalAssigned: papers.length,
+  };
 }
 
 // =============================================================================
@@ -496,7 +495,7 @@ function pickReviewer(
   rel?: FacultyAnnotationUserRow | FacultyAnnotationUserRow[] | null,
 ): FacultyAnnotationUserRow | null {
   if (!rel) return null;
-  return Array.isArray(rel) ? rel[0] ?? null : rel;
+  return Array.isArray(rel) ? (rel[0] ?? null) : rel;
 }
 
 function toFacultyAnnotation(row: FacultyAnnotationRow): PaperAnnotation {
@@ -509,7 +508,10 @@ function toFacultyAnnotation(row: FacultyAnnotationRow): PaperAnnotation {
   const metaEnd = text.indexOf(ANNOTATION_META_CLOSE);
   if (metaStart === 0 && metaEnd > ANNOTATION_META_OPEN.length) {
     try {
-      meta = JSON.parse(text.slice(ANNOTATION_META_OPEN.length, metaEnd)) as Record<string, unknown>;
+      meta = JSON.parse(text.slice(ANNOTATION_META_OPEN.length, metaEnd)) as Record<
+        string,
+        unknown
+      >;
     } catch {
       meta = {};
     }
@@ -620,7 +622,6 @@ function buildDrawEnvelope(input: CreateFacultyDrawInput, drawImageUrl: string):
   return `${ANNOTATION_META_OPEN}${JSON.stringify(meta)}${ANNOTATION_META_CLOSE}\n`;
 }
 
-
 // =============================================================================
 // Repository + Notifications (read-only, #12)
 // -----------------------------------------------------------------------------
@@ -662,7 +663,9 @@ export const facultyApi = {
    * Relies on the deployed research_papers SELECT policy
    * (faculty_id = email-resolved public.users.id) — no RPC.
    */
-  getAssignedPapers: async (options?: SWROptions<FacultyAssignedPaper[]>): Promise<FacultyAssignedPaper[]> => {
+  getAssignedPapers: async (
+    options?: SWROptions<FacultyAssignedPaper[]>,
+  ): Promise<FacultyAssignedPaper[]> => {
     return apiCache.fetchWithSWR(
       'faculty:assigned',
       async () => {
@@ -678,18 +681,22 @@ export const facultyApi = {
         }
 
         const rows = Array.isArray(data) ? (data as unknown as FacultyPaperRow[]) : [];
-        return rows.map(toFacultyAssignedPaper).sort((left, right) => paperSortTime(right) - paperSortTime(left));
+        return rows
+          .map(toFacultyAssignedPaper)
+          .sort((left, right) => paperSortTime(right) - paperSortTime(left));
       },
-      options
+      options,
     );
   },
 
-  getUpNextPaper: async (options?: SWROptions<FacultyAssignedPaper | null>): Promise<FacultyAssignedPaper | null> => {
+  getUpNextPaper: async (
+    options?: SWROptions<FacultyAssignedPaper | null>,
+  ): Promise<FacultyAssignedPaper | null> => {
     return apiCache.fetchWithSWR(
       'faculty:upNext',
       async () => {
         const profile = await resolveCurrentFacultyProfile();
-        
+
         const { data, error } = await supabase
           .from('research_papers')
           .select(FACULTY_PAPER_SELECT)
@@ -706,16 +713,18 @@ export const facultyApi = {
 
         return data ? toFacultyAssignedPaper(data as unknown as FacultyPaperRow) : null;
       },
-      options
+      options,
     );
   },
 
-  getDashboardSummary: async (options?: SWROptions<FacultyWorkloadSummary>): Promise<FacultyWorkloadSummary> => {
+  getDashboardSummary: async (
+    options?: SWROptions<FacultyWorkloadSummary>,
+  ): Promise<FacultyWorkloadSummary> => {
     return apiCache.fetchWithSWR(
       'faculty:summary',
       async () => {
         const profile = await resolveCurrentFacultyProfile();
-        
+
         const { data, error } = await supabase
           .from('research_papers')
           .select('status')
@@ -731,7 +740,7 @@ export const facultyApi = {
         let forwardedByYou = 0;
         let approvedByYou = 0;
 
-        rows.forEach(row => {
+        rows.forEach((row) => {
           if (row.status === 'pending_faculty') pendingReview++;
           else if (row.status === 'revision_required') revisionRequired++;
           else if (row.status === 'approved' || row.status === 'published') approvedByYou++;
@@ -746,7 +755,7 @@ export const facultyApi = {
           totalAssigned: rows.length,
         };
       },
-      options
+      options,
     );
   },
 
@@ -755,34 +764,43 @@ export const facultyApi = {
     limit: number = 20,
     filter: 'needs_review' | 'revisions' | 'forwarded' | 'approved' | 'all' = 'needs_review',
     search?: string,
-    options?: SWROptions<FacultyAssignedPaper[]>
+    options?: SWROptions<FacultyAssignedPaper[]>,
   ): Promise<FacultyAssignedPaper[]> => {
     const cacheKey = `faculty:queue:${page}:${limit}:${filter}:${search || ''}`;
     return apiCache.fetchWithSWR(
       cacheKey,
       async () => {
         const profile = await resolveCurrentFacultyProfile();
-        
-        let query = supabase.from('research_papers').select(FACULTY_PAPER_SELECT).eq('faculty_id', profile.id);
-        
+
+        let query = supabase
+          .from('research_papers')
+          .select(FACULTY_PAPER_SELECT)
+          .eq('faculty_id', profile.id);
+
         if (filter === 'needs_review') {
           query = query.in('status', ['pending_faculty', 'revision_required']);
         } else if (filter === 'revisions') {
           query = query.eq('status', 'revision_required');
         } else if (filter === 'forwarded') {
-          query = query.in('status', ['pending_dean', 'pending_program_chair', 'pending_editor', 'pending_admin']);
+          query = query.in('status', [
+            'pending_dean',
+            'pending_program_chair',
+            'pending_editor',
+            'pending_admin',
+          ]);
         } else if (filter === 'approved') {
           query = query.in('status', ['approved', 'published']);
         }
-        
+
         if (search && search.trim()) {
           const q = search.trim();
           query = query.or(`title.ilike.%${q}%,abstract.ilike.%${q}%`);
         }
 
         // Performance fix: remove nullsFirst: false to allow b-tree index usage
-        query = query.order('submission_date', { ascending: false })
-                     .order('created_at', { ascending: false });
+        query = query
+          .order('submission_date', { ascending: false })
+          .order('created_at', { ascending: false });
 
         const from = page * limit;
         query = query.range(from, from + limit - 1);
@@ -796,7 +814,7 @@ export const facultyApi = {
         const rows = Array.isArray(data) ? (data as unknown as FacultyPaperRow[]) : [];
         return rows.map(toFacultyAssignedPaper);
       },
-      options
+      options,
     );
   },
 
@@ -1027,7 +1045,9 @@ export const facultyApi = {
       throw new Error(uploadError.message || 'Unable to upload drawing.');
     }
 
-    const { data: publicUrlData } = supabase.storage.from('research-papers').getPublicUrl(uploadData.path);
+    const { data: publicUrlData } = supabase.storage
+      .from('research-papers')
+      .getPublicUrl(uploadData.path);
     const drawImageUrl = publicUrlData.publicUrl;
 
     const { data, error } = await supabase.rpc('create_faculty_annotation', {
@@ -1045,7 +1065,9 @@ export const facultyApi = {
   },
 
   /** Published papers, newest first — same Repository content students browse. RLS-scoped. */
-  getPublishedPapers: async (options?: SWROptions<FacultyAssignedPaper[]>): Promise<FacultyAssignedPaper[]> => {
+  getPublishedPapers: async (
+    options?: SWROptions<FacultyAssignedPaper[]>,
+  ): Promise<FacultyAssignedPaper[]> => {
     return apiCache.fetchWithSWR(
       'faculty:published',
       async () => {
@@ -1061,9 +1083,11 @@ export const facultyApi = {
         }
 
         const rows = Array.isArray(data) ? (data as unknown as FacultyPaperRow[]) : [];
-        return rows.map(toFacultyAssignedPaper).sort((left, right) => paperSortTime(right) - paperSortTime(left));
+        return rows
+          .map(toFacultyAssignedPaper)
+          .sort((left, right) => paperSortTime(right) - paperSortTime(left));
       },
-      options
+      options,
     );
   },
 
@@ -1083,7 +1107,7 @@ export const facultyApi = {
     }
 
     return (Array.isArray(data) ? (data as unknown as FacultyNotificationRow[]) : []).map(
-      toFacultyNotificationItem
+      toFacultyNotificationItem,
     );
   },
 

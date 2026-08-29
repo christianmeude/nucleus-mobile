@@ -22,4 +22,3 @@ export const getActiveFilterCount = (state: BrowseFilterState): number => {
     (state.yearFrom || state.yearTo ? 1 : 0)
   );
 };
-

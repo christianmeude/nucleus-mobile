@@ -6,8 +6,6 @@ import { type Theme } from '../../theme';
 import { Icon } from '../ui/Icon';
 import { X, CheckSquare, Square } from 'lucide-react-native';
 
-
-
 const PRIVACY_KEY = '@nucleus_privacy_accepted';
 const ONBOARDING_KEY = 'firstRun.hasOnboarded';
 const COACHMARKS_KEY = 'firstRun.seenCoachmarks';
@@ -26,7 +24,7 @@ export const DevResetModal = ({ visible, onClose }: { visible: boolean; onClose:
       AsyncStorage.multiGet([PRIVACY_KEY, ONBOARDING_KEY, COACHMARKS_KEY]).then((stores) => {
         setRequirePrivacy(stores[0][1] !== 'true');
         setRequireOnboarding(stores[1][1] !== 'true');
-        
+
         // If there's no data, or empty array, it means they need to see coachmarks
         const coachmarksData = stores[2][1];
         if (!coachmarksData || coachmarksData === '[]') {
@@ -58,18 +56,30 @@ export const DevResetModal = ({ visible, onClose }: { visible: boolean; onClose:
       else await AsyncStorage.setItem(COACHMARKS_KEY, JSON.stringify(COACHMARK_IDS));
 
       Alert.alert(
-        'Dev Settings Saved', 
+        'Dev Settings Saved',
         'Please restart the Expo app (press "r" in the terminal) so the root navigator can properly re-initialize the FTUE states.',
-        [{ text: 'OK', onPress: onClose }]
+        [{ text: 'OK', onPress: onClose }],
       );
     } catch (e) {
       Alert.alert('Error', 'Failed to update storage');
     }
   };
 
-  const CheckboxItem = ({ label, value, onChange }: { label: string, value: boolean, onChange: (v: boolean) => void }) => (
+  const CheckboxItem = ({
+    label,
+    value,
+    onChange,
+  }: {
+    label: string;
+    value: boolean;
+    onChange: (v: boolean) => void;
+  }) => (
     <Pressable style={styles.checkboxRow} onPress={() => onChange(!value)}>
-      <Icon icon={value ? CheckSquare : Square} size={24} color={value ? theme.colors.brand.primary : theme.colors.text.muted} />
+      <Icon
+        icon={value ? CheckSquare : Square}
+        size={24}
+        color={value ? theme.colors.brand.primary : theme.colors.text.muted}
+      />
       <Text style={styles.checkboxLabel}>{label}</Text>
     </Pressable>
   );
@@ -86,13 +96,26 @@ export const DevResetModal = ({ visible, onClose }: { visible: boolean; onClose:
           </View>
 
           <Text style={styles.desc}>
-            Check the items you want to strictly APPEAR on the next app launch. Unchecked items will be silently marked as completed.
+            Check the items you want to strictly APPEAR on the next app launch. Unchecked items will
+            be silently marked as completed.
           </Text>
 
           <View style={styles.list}>
-            <CheckboxItem label="Require Privacy Clause" value={requirePrivacy} onChange={setRequirePrivacy} />
-            <CheckboxItem label="Require Student Onboarding" value={requireOnboarding} onChange={setRequireOnboarding} />
-            <CheckboxItem label="Require Coachmarks" value={requireCoachmarks} onChange={setRequireCoachmarks} />
+            <CheckboxItem
+              label="Require Privacy Clause"
+              value={requirePrivacy}
+              onChange={setRequirePrivacy}
+            />
+            <CheckboxItem
+              label="Require Student Onboarding"
+              value={requireOnboarding}
+              onChange={setRequireOnboarding}
+            />
+            <CheckboxItem
+              label="Require Coachmarks"
+              value={requireCoachmarks}
+              onChange={setRequireCoachmarks}
+            />
           </View>
 
           <Pressable style={styles.saveBtn} onPress={handleSave}>

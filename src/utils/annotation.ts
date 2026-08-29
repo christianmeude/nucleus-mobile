@@ -1,5 +1,3 @@
-
-
 import { FileText, Pencil, MessageCircle } from 'lucide-react-native';
 
 export const ANNOTATION_META_OPEN = '[[meta]]';
@@ -33,7 +31,10 @@ export function parseAnnotationMeta(text: string): ParsedAnnotationMeta {
 
   if (metaStart === 0 && metaEnd > ANNOTATION_META_OPEN.length) {
     try {
-      meta = JSON.parse(text.slice(ANNOTATION_META_OPEN.length, metaEnd)) as Record<string, unknown>;
+      meta = JSON.parse(text.slice(ANNOTATION_META_OPEN.length, metaEnd)) as Record<
+        string,
+        unknown
+      >;
     } catch {
       meta = {};
     }

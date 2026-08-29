@@ -42,7 +42,10 @@ Deno.serve(async (req) => {
   });
 
   // Verify the user token — this gives us auth.users.id
-  const { data: { user }, error: authError } = await adminClient.auth.getUser(authHeader.replace('Bearer ', ''));
+  const {
+    data: { user },
+    error: authError,
+  } = await adminClient.auth.getUser(authHeader.replace('Bearer ', ''));
   if (authError || !user) {
     return json({ error: 'Unauthorized' }, 401);
   }
@@ -78,7 +81,10 @@ Deno.serve(async (req) => {
   }
 
   if (paper.status !== 'approved') {
-    return json({ error: `Only approved papers can request formal publication (status: ${paper.status})` }, 400);
+    return json(
+      { error: `Only approved papers can request formal publication (status: ${paper.status})` },
+      400,
+    );
   }
 
   // Update paper

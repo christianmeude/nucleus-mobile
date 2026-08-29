@@ -15,7 +15,7 @@ export const buildCategoryNameById = (categories: Category[]): Map<string, strin
  */
 export const resolveCategoryName = (
   value: string | null | undefined,
-  categoryNameById: Map<string, string>
+  categoryNameById: Map<string, string>,
 ): string | null => {
   if (!value) return null;
   if (categoryNameById.has(value)) {

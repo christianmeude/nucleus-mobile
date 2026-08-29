@@ -17,8 +17,6 @@ import Animated, {
 import { BlurView } from 'expo-blur';
 import { TriangleAlert } from 'lucide-react-native';
 
-
-
 export const UnsupportedRoleScreen = () => {
   const { user, signOut } = useAuth();
   const { theme } = useTheme();

@@ -73,7 +73,12 @@ Deno.serve(async (req) => {
 
     // Process a max of 5 embeddings per request to avoid WORKER_RESOURCE_LIMIT
     if (upserted >= 5) {
-      return json({ total: papers?.length ?? 0, upserted, skipped, message: 'Run again to process more' });
+      return json({
+        total: papers?.length ?? 0,
+        upserted,
+        skipped,
+        message: 'Run again to process more',
+      });
     }
 
     // Generate the 384-dim embedding (gte-small, no external key).

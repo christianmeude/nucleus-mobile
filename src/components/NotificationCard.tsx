@@ -121,8 +121,6 @@ export const NotificationCard = memo(({ notification, onPress }: NotificationCar
           </Text>
         ) : null}
 
-
-
         {isRevision && (
           <View style={styles.actionRow}>
             <Pressable

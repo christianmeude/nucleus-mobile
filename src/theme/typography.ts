@@ -61,7 +61,7 @@ const make = (
   weight: FontWeightKey,
   fontSize: number,
   lineHeight: number,
-  letterSpacing?: number
+  letterSpacing?: number,
 ): TypographyStyle => ({
   fontFamily: families[family][weight],
   fontWeight: fontWeightToKey[weight],

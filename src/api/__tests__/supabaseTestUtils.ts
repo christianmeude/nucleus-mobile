@@ -151,7 +151,7 @@ export function fakeProfileRow(overrides: Partial<FakeProfileRow> = {}): FakePro
  */
 export function queueProfileLookup(
   client: MockSupabaseClient,
-  opts: { authUser?: Partial<FakeAuthUser>; profileRow?: Partial<FakeProfileRow> | null } = {}
+  opts: { authUser?: Partial<FakeAuthUser>; profileRow?: Partial<FakeProfileRow> | null } = {},
 ) {
   const authUser = fakeAuthUser(opts.authUser);
   const profileRow = opts.profileRow === null ? null : fakeProfileRow(opts.profileRow ?? {});
@@ -162,7 +162,7 @@ export function queueProfileLookup(
   });
 
   (client.from as jest.Mock).mockReturnValueOnce(
-    createQueryBuilder(queryResult({ data: profileRow, error: null }))
+    createQueryBuilder(queryResult({ data: profileRow, error: null })),
   );
 
   return { authUser, profileRow };

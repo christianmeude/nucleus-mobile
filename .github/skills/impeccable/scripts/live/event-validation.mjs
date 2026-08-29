@@ -25,8 +25,12 @@ const FORBIDDEN_MANUAL_EDIT_TEXT_CHARS = ['<', '{', '}', '`'];
 export const MOUNT_URL_MAX_LENGTH = 2000;
 export const MOUNT_ERROR_MAX_LENGTH = 1000;
 
-function isValidId(v) { return typeof v === 'string' && ID_PATTERN.test(v); }
-function isValidVariantId(v) { return typeof v === 'string' && VARIANT_ID_PATTERN.test(v); }
+function isValidId(v) {
+  return typeof v === 'string' && ID_PATTERN.test(v);
+}
+function isValidVariantId(v) {
+  return typeof v === 'string' && VARIANT_ID_PATTERN.test(v);
+}
 
 function validateManualEditText(newText) {
   if (typeof newText !== 'string') return null;
@@ -48,22 +52,31 @@ function validateAnnotationFields(msg) {
 }
 
 function validateInsertGenerate(msg) {
-  if (!msg.insert || typeof msg.insert !== 'object') return 'generate: insert mode requires insert object';
-  if (!INSERT_POSITIONS.has(msg.insert.position)) return 'generate: insert.position must be before or after';
+  if (!msg.insert || typeof msg.insert !== 'object')
+    return 'generate: insert mode requires insert object';
+  if (!INSERT_POSITIONS.has(msg.insert.position))
+    return 'generate: insert.position must be before or after';
   const anchor = msg.insert.anchor;
   if (!anchor || typeof anchor !== 'object') return 'generate: insert.anchor required';
-  if (!anchor.tagName && !anchor.outerHTML && !(Array.isArray(anchor.classes) && anchor.classes.length)) {
+  if (
+    !anchor.tagName &&
+    !anchor.outerHTML &&
+    !(Array.isArray(anchor.classes) && anchor.classes.length)
+  ) {
     return 'generate: insert.anchor needs tagName, classes, or outerHTML';
   }
-  if (!msg.placeholder || typeof msg.placeholder !== 'object') return 'generate: insert mode requires placeholder dimensions';
+  if (!msg.placeholder || typeof msg.placeholder !== 'object')
+    return 'generate: insert mode requires placeholder dimensions';
   if (!Number.isFinite(msg.placeholder.width) || !Number.isFinite(msg.placeholder.height)) {
     return 'generate: placeholder width and height must be numbers';
   }
-  if (!canCreateInsert({
-    prompt: msg.freeformPrompt,
-    comments: msg.comments,
-    strokes: msg.strokes,
-  })) {
+  if (
+    !canCreateInsert({
+      prompt: msg.freeformPrompt,
+      comments: msg.comments,
+      strokes: msg.strokes,
+    })
+  ) {
     return 'generate: insert requires freeformPrompt or annotations';
   }
   return validateAnnotationFields(msg);
@@ -79,7 +92,8 @@ function validateManualEditEvent(msg, label) {
   if (!isValidId(msg.id)) return label + ': missing or malformed id';
   if (!msg.pageUrl || typeof msg.pageUrl !== 'string') return label + ': missing pageUrl';
   if (!msg.element || typeof msg.element !== 'object') return label + ': missing element';
-  if (!Array.isArray(msg.ops) || msg.ops.length === 0) return label + ': ops must be non-empty array';
+  if (!Array.isArray(msg.ops) || msg.ops.length === 0)
+    return label + ': ops must be non-empty array';
   if (msg.ops.length > 100) return label + ': too many ops (max 100)';
   for (const op of msg.ops) {
     if (typeof op.ref !== 'string') return label + ': op.ref required';
@@ -94,7 +108,12 @@ function validateManualEditEvent(msg, label) {
       }
       const forbidden = validateManualEditText(op.newText);
       if (forbidden) {
-        return label + ': newText cannot contain ' + forbidden.join(' ') + ' (plain text only; ask the AI to insert markup)';
+        return (
+          label +
+          ': newText cannot contain ' +
+          forbidden.join(' ') +
+          ' (plain text only; ask the AI to insert markup)'
+        );
       }
     }
   }
@@ -123,10 +142,12 @@ function validateMountAck(msg) {
 
 function validateMountFailure(msg) {
   if (!isValidId(msg.id)) return 'variant_mount_failed: missing or malformed id';
-  if (!isValidMountVariant(msg.variant)) return 'variant_mount_failed: variant must be an integer 1-999';
+  if (!isValidMountVariant(msg.variant))
+    return 'variant_mount_failed: variant must be an integer 1-999';
   if (typeof msg.url !== 'string' || !msg.url.trim()) return 'variant_mount_failed: url required';
   if (msg.url.length > MOUNT_URL_MAX_LENGTH) return 'variant_mount_failed: url too long';
-  if (typeof msg.error !== 'string' || !msg.error.trim()) return 'variant_mount_failed: error required';
+  if (typeof msg.error !== 'string' || !msg.error.trim())
+    return 'variant_mount_failed: error required';
   if (msg.error.length > MOUNT_ERROR_MAX_LENGTH) return 'variant_mount_failed: error too long';
   return null;
 }
@@ -136,14 +157,19 @@ export function validateEvent(msg) {
   switch (msg.type) {
     case 'generate':
       if (!isValidId(msg.id)) return 'generate: missing or malformed id';
-      if (!Number.isInteger(msg.count) || msg.count < 1 || msg.count > 8) return 'generate: count must be 1-8';
+      if (!Number.isInteger(msg.count) || msg.count < 1 || msg.count > 8)
+        return 'generate: count must be 1-8';
       if (msg.mode === 'insert') return validateInsertGenerate(msg);
       return validateReplaceGenerate(msg);
     case 'accept':
       if (!isValidId(msg.id)) return 'accept: missing or malformed id';
       if (!isValidVariantId(msg.variantId)) return 'accept: missing or malformed variantId';
       if (msg.paramValues !== undefined) {
-        if (typeof msg.paramValues !== 'object' || msg.paramValues === null || Array.isArray(msg.paramValues)) {
+        if (
+          typeof msg.paramValues !== 'object' ||
+          msg.paramValues === null ||
+          Array.isArray(msg.paramValues)
+        ) {
           return 'accept: paramValues must be an object';
         }
       }
@@ -152,8 +178,14 @@ export function validateEvent(msg) {
       return isValidId(msg.id) ? null : 'discard: missing or malformed id';
     case 'checkpoint':
       if (!isValidId(msg.id)) return 'checkpoint: missing or malformed id';
-      if (!Number.isInteger(msg.revision) || msg.revision < 0) return 'checkpoint: revision must be a non-negative integer';
-      if (msg.paramValues !== undefined && (typeof msg.paramValues !== 'object' || msg.paramValues === null || Array.isArray(msg.paramValues))) {
+      if (!Number.isInteger(msg.revision) || msg.revision < 0)
+        return 'checkpoint: revision must be a non-negative integer';
+      if (
+        msg.paramValues !== undefined &&
+        (typeof msg.paramValues !== 'object' ||
+          msg.paramValues === null ||
+          Array.isArray(msg.paramValues))
+      ) {
         return 'checkpoint: paramValues must be an object';
       }
       return null;
@@ -164,9 +196,18 @@ export function validateEvent(msg) {
       // phase the progress bar cannot show, so accepting an arbitrary
       // lowercase word only defers the failure to the UI.
       if (!AGENT_PHASE_SET.has(msg.phase)) {
-        return 'agent_phase: unknown phase ' + msg.phase + ' (expected one of ' + AGENT_PHASES.join(', ') + ')';
+        return (
+          'agent_phase: unknown phase ' +
+          msg.phase +
+          ' (expected one of ' +
+          AGENT_PHASES.join(', ') +
+          ')'
+        );
       }
-      if (msg.durationMs !== undefined && (!Number.isFinite(msg.durationMs) || msg.durationMs < 0)) {
+      if (
+        msg.durationMs !== undefined &&
+        (!Number.isFinite(msg.durationMs) || msg.durationMs < 0)
+      ) {
         return 'agent_phase: durationMs must be a non-negative number';
       }
       return null;
@@ -185,13 +226,15 @@ export function validateEvent(msg) {
       if (!isValidId(msg.id)) return 'steer: missing or malformed id';
       if (typeof msg.message !== 'string' || !msg.message.trim()) return 'steer: message required';
       if (msg.message.length > 4000) return 'steer: message too long';
-      if (msg.pageUrl !== undefined && typeof msg.pageUrl !== 'string') return 'steer: pageUrl must be string';
+      if (msg.pageUrl !== undefined && typeof msg.pageUrl !== 'string')
+        return 'steer: pageUrl must be string';
       return null;
     case 'carbonize_cleanup':
       if (!isValidId(msg.id)) return 'carbonize_cleanup: missing or malformed id';
       if (!isValidId(msg.sessionId)) return 'carbonize_cleanup: missing or malformed sessionId';
       if (!msg.file || typeof msg.file !== 'string') return 'carbonize_cleanup: missing file';
-      if (!isValidVariantId(String(msg.variantId))) return 'carbonize_cleanup: missing or malformed variantId';
+      if (!isValidVariantId(String(msg.variantId)))
+        return 'carbonize_cleanup: missing or malformed variantId';
       return null;
     default:
       return 'Unknown event type: ' + msg.type;

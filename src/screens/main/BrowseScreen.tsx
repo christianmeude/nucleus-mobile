@@ -43,7 +43,6 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { CloudOff, Landmark, Check } from 'lucide-react-native';
 
-
 type ViewMode = 'list' | 'grid';
 
 const timeOf = (paper: ResearchPaper) => new Date(paperDate(paper) || 0).getTime();
@@ -73,33 +72,36 @@ export const BrowseScreen = () => {
 
   const { recent, addRecent } = useRecentSearches();
 
-  const loadData = useCallback(async (silent = false) => {
-    if (!silent && papers.length === 0) {
-      setLoading(true);
-    } else {
-      setRefreshing(true);
-    }
+  const loadData = useCallback(
+    async (silent = false) => {
+      if (!silent && papers.length === 0) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
 
-    try {
-      const [publishedRows, categoryRows, departmentRows, programRows] = await Promise.all([
-        researchApi.getPublishedPapers(undefined, { forceRefresh: silent }),
-        researchApi.getCategories({ forceRefresh: silent }),
-        submitApi.getDepartments(),
-        submitApi.getPrograms(),
-      ]);
+      try {
+        const [publishedRows, categoryRows, departmentRows, programRows] = await Promise.all([
+          researchApi.getPublishedPapers(undefined, { forceRefresh: silent }),
+          researchApi.getCategories({ forceRefresh: silent }),
+          submitApi.getDepartments(),
+          submitApi.getPrograms(),
+        ]);
 
-      setPapers(publishedRows);
-      setCategories(categoryRows);
-      setDepartments(departmentRows);
-      setPrograms(programRows);
-      setError('');
-    } catch (_error) {
-      setError('Unable to load published papers.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [papers.length]);
+        setPapers(publishedRows);
+        setCategories(categoryRows);
+        setDepartments(departmentRows);
+        setPrograms(programRows);
+        setError('');
+      } catch (_error) {
+        setError('Unable to load published papers.');
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [papers.length],
+  );
 
   useEffect(() => {
     loadData();
@@ -108,7 +110,7 @@ export const BrowseScreen = () => {
   const paramCategoryId: string | undefined = route.params?.categoryId;
   useEffect(() => {
     if (!paramCategoryId) return;
-    setFilters(prev => ({ ...prev, categories: [paramCategoryId] }));
+    setFilters((prev) => ({ ...prev, categories: [paramCategoryId] }));
     navigation.setParams({ categoryId: undefined });
   }, [paramCategoryId, navigation]);
 
@@ -203,15 +205,24 @@ export const BrowseScreen = () => {
     const yTo = filters.yearTo ? parseInt(filters.yearTo, 10) : null;
 
     return rows.filter((paper) => {
-      if (filters.categories.length > 0 && (!paper.category || !filters.categories.includes(paper.category))) {
+      if (
+        filters.categories.length > 0 &&
+        (!paper.category || !filters.categories.includes(paper.category))
+      ) {
         return false;
       }
 
-      if (filters.departments.length > 0 && (!paper.department || !filters.departments.includes(paper.department))) {
+      if (
+        filters.departments.length > 0 &&
+        (!paper.department || !filters.departments.includes(paper.department))
+      ) {
         return false;
       }
 
-      if (filters.programs.length > 0 && (!paper.program_id || !filters.programs.includes(paper.program_id))) {
+      if (
+        filters.programs.length > 0 &&
+        (!paper.program_id || !filters.programs.includes(paper.program_id))
+      ) {
         return false;
       }
 
@@ -393,8 +404,7 @@ export const BrowseScreen = () => {
           </View>
         </View>
       </Screen>
-
-      </>
+    </>
   );
 };
 
@@ -471,4 +481,3 @@ const makeStyles = (theme: Theme) =>
       flex: 1,
     },
   });
-

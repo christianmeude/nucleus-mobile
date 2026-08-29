@@ -236,8 +236,12 @@ function toWorkflowEntry(row: ResearchWorkflowRow): WorkflowEntry {
 
 function toResearchPaper(row: ResearchPaperRow): ResearchPaper {
   const primaryAuthor =
-    toPaperAuthor(row.author ?? row.users ?? row.structured_authors?.find((entry) => entry?.is_primary)?.author ?? null) ??
-    undefined;
+    toPaperAuthor(
+      row.author ??
+        row.users ??
+        row.structured_authors?.find((entry) => entry?.is_primary)?.author ??
+        null,
+    ) ?? undefined;
 
   const structuredAuthors = Array.isArray(row.structured_authors)
     ? row.structured_authors.map(toStructuredAuthorEntry)
@@ -296,7 +300,10 @@ function filterPublishedRows(rows: ResearchPaperRow[], params?: ResearchListPara
       return false;
     }
 
-    if (normalizedProgram && (paper.program?.name || '').trim().toLowerCase() !== normalizedProgram) {
+    if (
+      normalizedProgram &&
+      (paper.program?.name || '').trim().toLowerCase() !== normalizedProgram
+    ) {
       return false;
     }
 
@@ -307,7 +314,7 @@ function filterPublishedRows(rows: ResearchPaperRow[], params?: ResearchListPara
       if (!paperYear) {
         return false; // exclude if paper has no valid date
       }
-      
+
       if (yearFrom !== null && paperYear < yearFrom) {
         return false;
       }
@@ -360,7 +367,9 @@ async function resolveCurrentProfile() {
   const profileResult = await fetchAppUserProfile(userData.user);
 
   if (!profileResult.user) {
-    throw new Error(profileResult.message || 'Your account is not provisioned for research access.');
+    throw new Error(
+      profileResult.message || 'Your account is not provisioned for research access.',
+    );
   }
 
   return profileResult.user;
@@ -437,8 +446,8 @@ async function loadResearchRows(selectQuery: string, filters?: ResearchListParam
     new Set(
       (Array.isArray(coAuthorData) ? coAuthorData : [])
         .map((row: any) => row?.research_id)
-        .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0)
-    )
+        .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0),
+    ),
   ).filter((id) => !primaryIds.has(id));
 
   let coAuthoredRows: ResearchPaperRow[] = [];
@@ -592,11 +601,14 @@ export const researchApi = {
           return rightDate - leftDate;
         });
       },
-      options
+      options,
     );
   },
 
-  getPublishedPapers: async (params?: ResearchListParams, options?: SWROptions<ResearchPaper[]>) => {
+  getPublishedPapers: async (
+    params?: ResearchListParams,
+    options?: SWROptions<ResearchPaper[]>,
+  ) => {
     const cacheKey = `research:published:${JSON.stringify(params || {})}`;
     return apiCache.fetchWithSWR(
       cacheKey,
@@ -624,7 +636,7 @@ export const researchApi = {
             return rightDate - leftDate;
           });
       },
-      options
+      options,
     );
   },
 
@@ -635,7 +647,10 @@ export const researchApi = {
    * then re-fetched here under the caller's own session, so RLS stays the single
    * content gate; the server relevance order is preserved.
    */
-  searchPapers: async (query: string, opts?: { limit?: number; yearFrom?: string; yearTo?: string }): Promise<ResearchPaper[]> => {
+  searchPapers: async (
+    query: string,
+    opts?: { limit?: number; yearFrom?: string; yearTo?: string },
+  ): Promise<ResearchPaper[]> => {
     const trimmed = query.trim();
     if (!trimmed) return [];
 
@@ -678,16 +693,19 @@ export const researchApi = {
     const query = `${paper.title} ${paper.abstract}`;
     // Fetch a bit more in case the current paper is in the top results
     const results = await researchApi.searchPapers(query, { limit: limit + 2 });
-    return results.filter(p => p.id !== paper.id).slice(0, limit);
+    return results.filter((p) => p.id !== paper.id).slice(0, limit);
   },
 
   getCategories: async (options?: SWROptions<Category[]>) => {
     return apiCache.fetchWithSWR(
       'research:categories',
       async () => {
-        const { data, error } = await supabase.from('research_categories').select('id, name').order('name', {
-          ascending: true,
-        });
+        const { data, error } = await supabase
+          .from('research_categories')
+          .select('id, name')
+          .order('name', {
+            ascending: true,
+          });
 
         if (error) {
           throw new Error(error.message || 'Unable to load categories.');
@@ -695,7 +713,7 @@ export const researchApi = {
 
         return (Array.isArray(data) ? data : []) as Category[];
       },
-      options
+      options,
     );
   },
 
@@ -721,13 +739,11 @@ export const researchApi = {
 
     const row = data as unknown as ResearchPaperRow;
     const workflowHistory = Array.isArray(row.approval_workflow)
-      ? row.approval_workflow
-          .map(toWorkflowEntry)
-          .sort((left, right) => {
-            const leftDate = new Date(left.reviewed_at || left.created_at || 0).getTime();
-            const rightDate = new Date(right.reviewed_at || right.created_at || 0).getTime();
-            return rightDate - leftDate;
-          })
+      ? row.approval_workflow.map(toWorkflowEntry).sort((left, right) => {
+          const leftDate = new Date(left.reviewed_at || left.created_at || 0).getTime();
+          const rightDate = new Date(right.reviewed_at || right.created_at || 0).getTime();
+          return rightDate - leftDate;
+        })
       : [];
 
     return {
@@ -836,7 +852,8 @@ export const researchApi = {
       stats: {
         totalRecords: papers.length,
         uploadedCount: papers.length,
-        publishedCount: papers.filter((paper) => PUBLISHED_STATUSES.has(String(paper.status))).length,
+        publishedCount: papers.filter((paper) => PUBLISHED_STATUSES.has(String(paper.status)))
+          .length,
       },
       records: papers,
     };
@@ -951,8 +968,7 @@ function generatePathId(): string {
     Math.floor(Math.random() * n)
       .toString(16)
       .padStart(1, '0');
-  const seg = (len: number) =>
-    Array.from({ length: len }, () => hex(16)).join('');
+  const seg = (len: number) => Array.from({ length: len }, () => hex(16)).join('');
   const variant = ['8', '9', 'a', 'b'][Math.floor(Math.random() * 4)];
   return `${seg(8)}-${seg(4)}-4${seg(3)}-${variant}${seg(3)}-${seg(12)}`;
 }
@@ -982,7 +998,11 @@ async function getSubmissionPolicy(): Promise<SubmissionPolicy> {
     const allowedRaw = (data as { allowed_file_types?: unknown }).allowed_file_types;
     const allowed = Array.isArray(allowedRaw)
       ? (allowedRaw as unknown[])
-          .map((value) => String(value || '').toLowerCase().replace(/^\./, ''))
+          .map((value) =>
+            String(value || '')
+              .toLowerCase()
+              .replace(/^\./, ''),
+          )
           .filter(Boolean)
       : [];
 
@@ -1140,21 +1160,19 @@ async function getMyDraft(paperId?: string | null): Promise<SubmitDraftPayload |
 
 async function saveMyDraft(
   paperId: string | null,
-  payload: SubmitDraftPayload
+  payload: SubmitDraftPayload,
 ): Promise<{ persisted: boolean }> {
   try {
     const profile = await resolveCurrentStudentProfile();
-    const { error } = await supabase
-      .from('submission_drafts')
-      .upsert(
-        {
-          user_id: profile.id,
-          paper_id: paperId,
-          draft_data: payload,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'user_id,paper_id' }
-      );
+    const { error } = await supabase.from('submission_drafts').upsert(
+      {
+        user_id: profile.id,
+        paper_id: paperId,
+        draft_data: payload,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,paper_id' },
+    );
 
     if (error) {
       console.warn('[saveMyDraft] server draft save failed:', error.message);
@@ -1341,7 +1359,7 @@ async function submitResearch(input: SubmitInput): Promise<SubmitResult> {
         is_primary: true,
         author_order: 0,
       },
-      { onConflict: 'research_id,user_id' }
+      { onConflict: 'research_id,user_id' },
     );
   } catch (error) {
     console.warn('[submitResearch] research_authors upsert warning:', error);
@@ -1354,7 +1372,7 @@ async function submitResearch(input: SubmitInput): Promise<SubmitResult> {
 
 async function createCoAuthorInvitations(
   researchId: string,
-  inviteeIds: string[]
+  inviteeIds: string[],
 ): Promise<{ created: number; skipped: number }> {
   if (!Array.isArray(inviteeIds) || inviteeIds.length === 0) {
     return { created: 0, skipped: 0 };
@@ -1367,11 +1385,10 @@ async function createCoAuthorInvitations(
   }
 
   try {
-    const { data, error } = await supabase
-      .rpc('create_co_author_invitations', {
-        p_research_id: researchId,
-        p_invitee_ids: unique,
-      });
+    const { data, error } = await supabase.rpc('create_co_author_invitations', {
+      p_research_id: researchId,
+      p_invitee_ids: unique,
+    });
 
     if (error) {
       console.warn('[createCoAuthorInvitations]', error.message);

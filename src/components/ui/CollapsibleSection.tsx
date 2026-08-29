@@ -6,7 +6,6 @@ import { type Theme } from '../../theme';
 import { Icon } from './Icon';
 import { ChevronDown } from 'lucide-react-native';
 
-
 interface CollapsibleSectionProps {
   title: string;
   count: number;

@@ -55,10 +55,7 @@ export const PressableCard = ({
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
       disabled={disabled}
-      style={[
-        styles.pressable,
-        disabled ? styles.disabled : null,
-      ]}
+      style={[styles.pressable, disabled ? styles.disabled : null]}
     >
       <Surface
         elevation={activeElevation}

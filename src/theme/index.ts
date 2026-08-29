@@ -45,17 +45,8 @@ export type Theme = typeof themes.light;
 
 export { colors, palette, schemes, platformColors } from './colors';
 export type { Colors, Palette, SchemeName } from './colors';
-export {
-  families as fontFamilies,
-  fontWeightToKey as fontWeights,
-  typography,
-} from './typography';
-export type {
-  FontFamilyKey,
-  FontWeightKey,
-  TypographyKey,
-  TypographyScale,
-} from './typography';
+export { families as fontFamilies, fontWeightToKey as fontWeights, typography } from './typography';
+export type { FontFamilyKey, FontWeightKey, TypographyKey, TypographyScale } from './typography';
 export { spacing } from './spacing';
 export type { Spacing, SpacingKey } from './spacing';
 export { radii } from './radii';

@@ -63,13 +63,13 @@ describe('researchApi.getMyPapers', () => {
           row({ id: 'p1', published_date: '2026-01-01T00:00:00.000Z' }),
           row({ id: 'p2', published_date: '2026-03-01T00:00:00.000Z' }),
         ],
-      })
+      }),
     );
     const coAuthorIdsBuilder = createQueryBuilder(
-      queryResult({ data: [{ research_id: 'p3' }, { research_id: 'p1' }] })
+      queryResult({ data: [{ research_id: 'p3' }, { research_id: 'p1' }] }),
     );
     const coAuthoredBuilder = createQueryBuilder(
-      queryResult({ data: [row({ id: 'p3', published_date: '2026-02-01T00:00:00.000Z' })] })
+      queryResult({ data: [row({ id: 'p3', published_date: '2026-02-01T00:00:00.000Z' })] }),
     );
 
     mockSupabase.from
@@ -102,7 +102,7 @@ describe('researchApi.getMyPapers', () => {
   it('propagates a Supabase error from the primary papers query', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'db down' } }))
+      createQueryBuilder(queryResult({ error: { message: 'db down' } })),
     );
 
     await expect(researchApi.getMyPapers()).rejects.toThrow('db down');
@@ -130,20 +130,23 @@ describe('researchApi.getPublishedPapers', () => {
           row({ id: 'p1', category: 'cs', published_date: '2026-01-01T00:00:00.000Z' }),
           row({ id: 'p2', category: 'bio', published_date: '2026-01-02T00:00:00.000Z' }),
         ],
-      })
+      }),
     );
     mockSupabase.from.mockReturnValueOnce(builder);
 
     const result = await researchApi.getPublishedPapers({ category: 'cs' });
 
-    expect(builder.in).toHaveBeenCalledWith('status', expect.arrayContaining(['approved', 'published']));
+    expect(builder.in).toHaveBeenCalledWith(
+      'status',
+      expect.arrayContaining(['approved', 'published']),
+    );
     expect(result.map((p) => p.id)).toEqual(['p1']);
   });
 
   it('propagates a Supabase error', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'timeout' } }))
+      createQueryBuilder(queryResult({ error: { message: 'timeout' } })),
     );
 
     await expect(researchApi.getPublishedPapers()).rejects.toThrow('timeout');
@@ -157,7 +160,7 @@ describe('researchApi.getPublishedPapers', () => {
           row({ id: 'p1', department: 'CCIS', department_id: 'd1' }),
           row({ id: 'p2', department: 'College of Education', department_id: 'd2' }),
         ],
-      })
+      }),
     );
     mockSupabase.from.mockReturnValueOnce(builder);
 
@@ -187,11 +190,14 @@ describe('researchApi.getPublishedPapers', () => {
           }),
           row({ id: 'p3', department: 'CCIS', department_id: 'd1' }),
         ],
-      })
+      }),
     );
     mockSupabase.from.mockReturnValueOnce(builder);
 
-    const result = await researchApi.getPublishedPapers({ department: 'ccis', program: 'computer science' });
+    const result = await researchApi.getPublishedPapers({
+      department: 'ccis',
+      program: 'computer science',
+    });
 
     expect(result.map((p) => p.id)).toEqual(['p1']);
     expect(result[0].department_id).toBe('d1');
@@ -213,7 +219,7 @@ describe('researchApi.getPublishedPapers', () => {
             program: { id: 'pr2', name: 'Information Technology', code: 'BSIT' },
           }),
         ],
-      })
+      }),
     );
     mockSupabase.from.mockReturnValueOnce(builder);
 
@@ -226,7 +232,7 @@ describe('researchApi.getPublishedPapers', () => {
 describe('researchApi.getCategories', () => {
   it('returns the categories list without resolving a profile', async () => {
     const builder = createQueryBuilder(
-      queryResult({ data: [{ id: '1', name: 'Computer Science' }] })
+      queryResult({ data: [{ id: '1', name: 'Computer Science' }] }),
     );
     mockSupabase.from.mockReturnValueOnce(builder);
 
@@ -239,7 +245,7 @@ describe('researchApi.getCategories', () => {
 
   it('propagates a Supabase error', async () => {
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'relation missing' } }))
+      createQueryBuilder(queryResult({ error: { message: 'relation missing' } })),
     );
 
     await expect(researchApi.getCategories()).rejects.toThrow('relation missing');
@@ -258,7 +264,7 @@ describe('researchApi.getResearchById', () => {
             { id: 'w2', reviewed_at: '2026-03-01T00:00:00.000Z' },
           ],
         }),
-      })
+      }),
     );
     mockSupabase.from.mockReturnValueOnce(builder);
 
@@ -279,7 +285,7 @@ describe('researchApi.getResearchById', () => {
   it('propagates a Supabase error', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'boom' } }))
+      createQueryBuilder(queryResult({ error: { message: 'boom' } })),
     );
 
     await expect(researchApi.getResearchById('p1')).rejects.toThrow('boom');
@@ -297,13 +303,17 @@ describe('researchApi.getResearchFile', () => {
             file_url:
               'https://project.supabase.co/storage/v1/object/public/research-papers/student-1/file.pdf',
           },
-        })
-      )
+        }),
+      ),
     );
     const createSignedUrl = jest
       .fn<() => Promise<any>>()
       .mockResolvedValue({ data: { signedUrl: 'https://signed.example/file.pdf' }, error: null });
-    mockSupabase.storage.from.mockReturnValueOnce({ createSignedUrl, upload: jest.fn(), getPublicUrl: jest.fn() });
+    mockSupabase.storage.from.mockReturnValueOnce({
+      createSignedUrl,
+      upload: jest.fn(),
+      getPublicUrl: jest.fn(),
+    });
 
     const result = await researchApi.getResearchFile('p1');
 
@@ -327,11 +337,13 @@ describe('researchApi.getResearchFile', () => {
             file_url:
               'https://project.supabase.co/storage/v1/object/public/research-papers/student-1/file.pdf',
           },
-        })
-      )
+        }),
+      ),
     );
     mockSupabase.storage.from.mockReturnValueOnce({
-      createSignedUrl: jest.fn<() => Promise<any>>().mockResolvedValue({ data: null, error: { message: 'not found' } }),
+      createSignedUrl: jest
+        .fn<() => Promise<any>>()
+        .mockResolvedValue({ data: null, error: { message: 'not found' } }),
       upload: jest.fn(),
       getPublicUrl: jest.fn(),
     });
@@ -346,7 +358,7 @@ describe('researchApi.getResearchFile', () => {
   it('reports no-file when the paper has no file_url', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ data: { id: 'p1', file_url: null } }))
+      createQueryBuilder(queryResult({ data: { id: 'p1', file_url: null } })),
     );
 
     const result = await researchApi.getResearchFile('p1');
@@ -364,7 +376,7 @@ describe('researchApi.getResearchFile', () => {
   it('propagates a Supabase error looking up the paper', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'read failed' } }))
+      createQueryBuilder(queryResult({ error: { message: 'read failed' } })),
     );
 
     await expect(researchApi.getResearchFile('p1')).rejects.toThrow('read failed');
@@ -383,7 +395,11 @@ describe('researchApi.trackView', () => {
     expect(mockSupabase.rpc).toHaveBeenCalledWith('increment_view_count', { row_id: 'p1' });
     expect(mockSupabase.from).toHaveBeenCalledWith('paper_views');
     expect(insertBuilder.insert).toHaveBeenCalledWith(
-      expect.objectContaining({ paper_id: 'p1', user_id: 'student-1', viewed_at: expect.any(String) })
+      expect.objectContaining({
+        paper_id: 'p1',
+        user_id: 'student-1',
+        viewed_at: expect.any(String),
+      }),
     );
   });
 
@@ -405,8 +421,10 @@ describe('researchApi.getProfileData', () => {
     mockSupabase.from
       .mockReturnValueOnce(
         createQueryBuilder(
-          queryResult({ data: [row({ id: 'p1', status: 'published' }), row({ id: 'p2', status: 'pending' })] })
-        )
+          queryResult({
+            data: [row({ id: 'p1', status: 'published' }), row({ id: 'p2', status: 'pending' })],
+          }),
+        ),
       )
       .mockReturnValueOnce(createQueryBuilder(queryResult({ data: [] })));
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
@@ -426,20 +444,16 @@ describe('researchApi.getRelatedPapers', () => {
         results: [
           { paper_id: 'p2', score: 0.9 },
           { paper_id: 'p1', score: 0.8 },
-          { paper_id: 'p3', score: 0.7 }
-        ]
+          { paper_id: 'p3', score: 0.7 },
+        ],
       },
-      error: null
+      error: null,
     });
 
     const builder = createQueryBuilder(
       queryResult({
-        data: [
-          row({ id: 'p2' }),
-          row({ id: 'p1' }),
-          row({ id: 'p3' })
-        ]
-      })
+        data: [row({ id: 'p2' }), row({ id: 'p1' }), row({ id: 'p3' })],
+      }),
     );
     mockSupabase.from.mockReturnValueOnce(builder);
 
@@ -447,19 +461,19 @@ describe('researchApi.getRelatedPapers', () => {
     const result = await researchApi.getRelatedPapers(paper, 2);
 
     expect(mockSupabase.functions.invoke).toHaveBeenCalledWith('search-papers', {
-      body: { q: 'Test Title Test Abstract', limit: 4 }
+      body: { q: 'Test Title Test Abstract', limit: 4 },
     });
-    
+
     expect(builder.in).toHaveBeenCalledWith('id', ['p2', 'p1', 'p3']);
-    
+
     // p1 is filtered out, leaving p2 and p3
-    expect(result.map(r => r.id)).toEqual(['p2', 'p3']);
+    expect(result.map((r) => r.id)).toEqual(['p2', 'p3']);
   });
-  
+
   it('gracefully handles empty search results', async () => {
     mockSupabase.functions.invoke.mockResolvedValueOnce({
       data: { results: [] },
-      error: null
+      error: null,
     });
 
     const paper = row({ id: 'p1', title: 'Test', abstract: 'Abstract' }) as any;
@@ -474,8 +488,8 @@ describe('submitApi.getSubmissionPolicy', () => {
   it('normalizes allowed file types from the stored settings row', async () => {
     mockSupabase.from.mockReturnValueOnce(
       createQueryBuilder(
-        queryResult({ data: { max_file_size_mb: 25, allowed_file_types: ['.PDF', 'Docx'] } })
-      )
+        queryResult({ data: { max_file_size_mb: 25, allowed_file_types: ['.PDF', 'Docx'] } }),
+      ),
     );
 
     const policy = await submitApi.getSubmissionPolicy();
@@ -485,7 +499,7 @@ describe('submitApi.getSubmissionPolicy', () => {
 
   it('falls back to defaults on a Supabase error rather than throwing', async () => {
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'no policy table' } }))
+      createQueryBuilder(queryResult({ error: { message: 'no policy table' } })),
     );
 
     await expect(submitApi.getSubmissionPolicy()).resolves.toEqual({
@@ -498,7 +512,7 @@ describe('submitApi.getSubmissionPolicy', () => {
 describe('submitApi.getDepartments', () => {
   it('returns department rows', async () => {
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ data: [{ id: 'd1', name: 'CCIS', code: 'CCIS' }] }))
+      createQueryBuilder(queryResult({ data: [{ id: 'd1', name: 'CCIS', code: 'CCIS' }] })),
     );
 
     await expect(submitApi.getDepartments()).resolves.toEqual([
@@ -508,7 +522,7 @@ describe('submitApi.getDepartments', () => {
 
   it('returns an empty array on a Supabase error rather than throwing', async () => {
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'boom' } }))
+      createQueryBuilder(queryResult({ error: { message: 'boom' } })),
     );
 
     await expect(submitApi.getDepartments()).resolves.toEqual([]);
@@ -523,7 +537,7 @@ describe('submitApi.getPrograms', () => {
           { id: 'pr1', name: 'Computer Science', code: 'BSCS', department_id: 'd1' },
           { id: 'pr2', name: 'Information Technology', code: 'BSIT', department_id: 'd1' },
         ],
-      })
+      }),
     );
     mockSupabase.from.mockReturnValueOnce(builder);
 
@@ -550,7 +564,7 @@ describe('submitApi.getPrograms', () => {
 
   it('returns an empty array on a Supabase error rather than throwing', async () => {
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'relation missing' } }))
+      createQueryBuilder(queryResult({ error: { message: 'relation missing' } })),
     );
 
     await expect(submitApi.getPrograms('d1')).resolves.toEqual([]);
@@ -574,8 +588,20 @@ describe('submitApi.getFacultyMembers', () => {
       p_department_id: null,
     });
     expect(result).toEqual([
-      { id: 'f1', email: 'ada@nu.edu.ph', fullName: 'Dr. Ada Lovelace', department: 'CCIS', department_id: null },
-      { id: 'f2', email: 'grace@nu.edu.ph', fullName: 'Grace Hopper', department: null, department_id: null },
+      {
+        id: 'f1',
+        email: 'ada@nu.edu.ph',
+        fullName: 'Dr. Ada Lovelace',
+        department: 'CCIS',
+        department_id: null,
+      },
+      {
+        id: 'f2',
+        email: 'grace@nu.edu.ph',
+        fullName: 'Grace Hopper',
+        department: null,
+        department_id: null,
+      },
     ]);
   });
 
@@ -621,7 +647,7 @@ describe('submitApi.getMyDraft / saveMyDraft / deleteMyDraft', () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     const draft = { formData: {}, selectedCoAuthors: [], hasNewFile: false, updatedAt: 'now' };
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ data: { id: 'd1', draft_data: draft } }))
+      createQueryBuilder(queryResult({ data: { id: 'd1', draft_data: draft } })),
     );
 
     await expect(submitApi.getMyDraft(null)).resolves.toEqual(draft);
@@ -630,7 +656,7 @@ describe('submitApi.getMyDraft / saveMyDraft / deleteMyDraft', () => {
   it('getMyDraft returns null rather than throwing on a Supabase error', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'boom' } }))
+      createQueryBuilder(queryResult({ error: { message: 'boom' } })),
     );
 
     await expect(submitApi.getMyDraft(null)).resolves.toBeNull();
@@ -639,7 +665,7 @@ describe('submitApi.getMyDraft / saveMyDraft / deleteMyDraft', () => {
   it('saveMyDraft reports persisted:false on a Supabase error instead of throwing', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'write failed' } }))
+      createQueryBuilder(queryResult({ error: { message: 'write failed' } })),
     );
 
     await expect(
@@ -648,14 +674,14 @@ describe('submitApi.getMyDraft / saveMyDraft / deleteMyDraft', () => {
         selectedCoAuthors: [],
         hasNewFile: false,
         updatedAt: 'now',
-      })
+      }),
     ).resolves.toEqual({ persisted: false });
   });
 
   it('deleteMyDraft swallows errors and never throws', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'delete failed' } }))
+      createQueryBuilder(queryResult({ error: { message: 'delete failed' } })),
     );
 
     await expect(submitApi.deleteMyDraft(null)).resolves.toBeUndefined();
@@ -710,7 +736,7 @@ describe('submitApi.submitResearch (validation only)', () => {
         facultyId: '',
         department: '',
         departmentId: '',
-      })
+      }),
     ).rejects.toThrow('A file is required for new submissions.');
   });
 
@@ -728,7 +754,7 @@ describe('submitApi.submitResearch (validation only)', () => {
         facultyId: '',
         department: '',
         departmentId: '',
-      })
+      }),
     ).rejects.toThrow('Title, abstract, and category are required.');
   });
 
@@ -746,7 +772,7 @@ describe('submitApi.submitResearch (validation only)', () => {
         facultyId: '',
         department: '',
         departmentId: '',
-      })
+      }),
     ).rejects.toThrow(/^\[submit\] profile:/);
   });
 });

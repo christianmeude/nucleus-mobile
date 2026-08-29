@@ -7,7 +7,6 @@ import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
 import { ChevronLeft } from 'lucide-react-native';
 
-
 export const ResearchDetailHeader = ({ navigation, options }: NativeStackHeaderProps) => {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();

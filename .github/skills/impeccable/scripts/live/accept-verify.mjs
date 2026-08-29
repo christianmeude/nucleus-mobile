@@ -15,12 +15,23 @@
 const FORBIDDEN = [
   { marker: 'impeccable-variants-start', why: 'variant wrapper comment left in source' },
   { marker: 'impeccable-variants-end', why: 'variant wrapper comment left in source' },
-  { marker: 'impeccable-carbonize-start', why: 'carbonize block not rewritten into permanent form' },
+  {
+    marker: 'impeccable-carbonize-start',
+    why: 'carbonize block not rewritten into permanent form',
+  },
   { marker: 'impeccable-carbonize-end', why: 'carbonize block not rewritten into permanent form' },
   { marker: 'impeccable-param-values', why: 'param-values comment not baked and removed' },
   { marker: 'data-impeccable-', why: 'live-mode plumbing attribute left on markup' },
-  { marker: /\bdata-p-[A-Za-z0-9_-]+\s*(?:=|\])/, label: 'data-p-*', why: 'preview parameter attribute left on markup' },
-  { marker: /var\(\s*--p-[A-Za-z0-9_-]+\s*[,)]/, label: 'var(--p-*)', why: 'preview parameter variable not baked to a literal' },
+  {
+    marker: /\bdata-p-[A-Za-z0-9_-]+\s*(?:=|\])/,
+    label: 'data-p-*',
+    why: 'preview parameter attribute left on markup',
+  },
+  {
+    marker: /var\(\s*--p-[A-Za-z0-9_-]+\s*[,)]/,
+    label: 'var(--p-*)',
+    why: 'preview parameter variable not baked to a literal',
+  },
   { marker: '--impeccable-variant-ready', why: 'preview readiness sentinel left in CSS' },
 ];
 

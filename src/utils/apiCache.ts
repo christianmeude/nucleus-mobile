@@ -97,7 +97,7 @@ class ApiCache {
   async fetchWithSWR<T>(
     key: string,
     fetcher: () => Promise<T>,
-    options: SWROptions<T> = {}
+    options: SWROptions<T> = {},
   ): Promise<T> {
     const { forceRefresh = false, ttl = DEFAULT_TTL, onUpdate } = options;
     const now = Date.now();
@@ -123,7 +123,7 @@ class ApiCache {
   private async runForegroundFetch<T>(
     key: string,
     fetcher: () => Promise<T>,
-    onUpdate?: (data: T) => void
+    onUpdate?: (data: T) => void,
   ): Promise<T> {
     const existing = this.inFlight.get(key);
     if (existing) {
@@ -151,7 +151,7 @@ class ApiCache {
   private runBackgroundFetch<T>(
     key: string,
     fetcher: () => Promise<T>,
-    onUpdate?: (data: T) => void
+    onUpdate?: (data: T) => void,
   ): void {
     if (this.inFlight.has(key)) return;
 

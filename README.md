@@ -5,6 +5,7 @@ NUcleus Mobile is the official React Native (Expo) app for enrolled students and
 ## Features
 
 **For Students:**
+
 - Browse and search published research with category filters
 - View research details, abstracts, and access PDF links
 - Submit new research papers and manage revisions
@@ -12,6 +13,7 @@ NUcleus Mobile is the official React Native (Expo) app for enrolled students and
 - Manage notifications and co-author invitations
 
 **For Faculty & Admins:**
+
 - Dedicated command center and workload dashboards
 - Review Queue for managing pending paper approvals
 - Approve, reject, or request revisions for submissions
@@ -28,18 +30,21 @@ NUcleus Mobile is the official React Native (Expo) app for enrolled students and
 ## Setup
 
 1. Install dependencies:
+
 ```bash
 npm install
 ```
 
 2. Configure environment variables:
-Create a `.env` file from `.env.example` and set:
+   Create a `.env` file from `.env.example` and set:
+
 ```bash
 EXPO_PUBLIC_SUPABASE_URL=your-supabase-url
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
 3. Start the development server:
+
 ```bash
 npx expo start
 ```

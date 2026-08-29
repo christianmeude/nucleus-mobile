@@ -82,9 +82,7 @@ export const FacultyPaperCard = memo(({ paper, onPress }: FacultyPaperCardProps)
           <Text style={styles.meta} numberOfLines={1}>
             {paper.authorName} · {formatDate(paper.submissionDate || paper.createdAt)}
           </Text>
-          <Text style={styles.daysText}>
-            {daysWaiting === 1 ? '1 day' : `${daysWaiting} days`}
-          </Text>
+          <Text style={styles.daysText}>{daysWaiting === 1 ? '1 day' : `${daysWaiting} days`}</Text>
         </View>
       </View>
     </PressableCard>

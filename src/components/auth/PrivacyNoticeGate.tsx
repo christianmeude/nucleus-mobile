@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  Platform,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Linking from 'expo-linking';
 import * as Haptics from 'expo-haptics';
@@ -7,13 +15,11 @@ import Animated, { FadeInDown, FadeOut, SlideInDown, SlideOutDown } from 'react-
 import { BlurView } from 'expo-blur';
 import { Icon } from '../../components/ui/Icon';
 
-
 import { useAuth } from '../../context/AuthContext';
 import { usePrivacy } from '../../context/PrivacyContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { Lock, MapPin, Mail, Shield } from 'lucide-react-native';
-
 
 const RA_10173_URL = 'https://privacy.gov.ph/data-privacy-act/';
 const NU_PRIVACY_POLICY_URL = 'https://www.national-u.edu.ph/data-privacy/';
@@ -125,7 +131,10 @@ export const PrivacyNoticeGate = ({ children }: { children: React.ReactNode }) =
         <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.card}>
           <P>
             National University Dasmariñas values your privacy and is committed to protecting your
-            personal information. By continuing with account creation on <Strong>NUCLEUS</Strong> (National University Capstone & Learning Electronic Unified System), you acknowledge that your data will be handled responsibly in accordance with applicable privacy regulations.
+            personal information. By continuing with account creation on <Strong>NUCLEUS</Strong>{' '}
+            (National University Capstone & Learning Electronic Unified System), you acknowledge
+            that your data will be handled responsibly in accordance with applicable privacy
+            regulations.
           </P>
           <View style={styles.divider} />
           <P>
@@ -134,70 +143,194 @@ export const PrivacyNoticeGate = ({ children }: { children: React.ReactNode }) =
             with the{' '}
             <Text style={styles.inlineLink} onPress={() => handleLink(RA_10173_URL)}>
               Data Privacy Act of 2012 (RA 10173)
-            </Text>.
+            </Text>
+            .
           </P>
 
           {/* 1 */}
           <Text style={styles.sectionTitle}>1. Personal Data We Collect</Text>
           <View style={styles.list}>
-            <ListItem index={1}><P><Strong>Identity and contact details:</Strong> Full name, institutional email address, recovery email (optional), and account credentials.</P></ListItem>
-            <ListItem index={2}><P><Strong>Academic and student records:</Strong> Department, program, research submissions, co-author information, grades-related metadata, and publication details.</P></ListItem>
-            <ListItem index={3}><P><Strong>Research content:</Strong> Thesis documents, abstracts, annotations, review comments, and related files uploaded to the repository.</P></ListItem>
-            <ListItem index={4}><P><Strong>System and platform data:</Strong> Login timestamps, IP addresses, device and browser information, access logs, and audit trails for security and compliance.</P></ListItem>
-            <ListItem index={5}><P><Strong>Communications:</Strong> In-app notifications, email confirmations, and password recovery messages sent through institutional channels.</P></ListItem>
+            <ListItem index={1}>
+              <P>
+                <Strong>Identity and contact details:</Strong> Full name, institutional email
+                address, recovery email (optional), and account credentials.
+              </P>
+            </ListItem>
+            <ListItem index={2}>
+              <P>
+                <Strong>Academic and student records:</Strong> Department, program, research
+                submissions, co-author information, grades-related metadata, and publication
+                details.
+              </P>
+            </ListItem>
+            <ListItem index={3}>
+              <P>
+                <Strong>Research content:</Strong> Thesis documents, abstracts, annotations, review
+                comments, and related files uploaded to the repository.
+              </P>
+            </ListItem>
+            <ListItem index={4}>
+              <P>
+                <Strong>System and platform data:</Strong> Login timestamps, IP addresses, device
+                and browser information, access logs, and audit trails for security and compliance.
+              </P>
+            </ListItem>
+            <ListItem index={5}>
+              <P>
+                <Strong>Communications:</Strong> In-app notifications, email confirmations, and
+                password recovery messages sent through institutional channels.
+              </P>
+            </ListItem>
           </View>
 
           {/* 2 */}
           <Text style={styles.sectionTitle}>2. Why We Process Your Personal Data</Text>
-          <P>We process your personal data based on consent, contractual necessity, legitimate institutional interests, and compliance with legal obligations. Specifically, we use your data to:</P>
+          <P>
+            We process your personal data based on consent, contractual necessity, legitimate
+            institutional interests, and compliance with legal obligations. Specifically, we use
+            your data to:
+          </P>
           <View style={styles.list}>
-            <ListItem index={1}><P>Verify your identity and institutional affiliation during registration and login.</P></ListItem>
-            <ListItem index={2}><P>Enable research submission, peer review, approval workflows, and repository access.</P></ListItem>
-            <ListItem index={3}><P>Maintain academic records, audit logs, and compliance with university policies.</P></ListItem>
-            <ListItem index={4}><P>Send service-related notifications, including email confirmation and account updates.</P></ListItem>
-            <ListItem index={5}><P>Protect the platform against unauthorized access, fraud, and security incidents.</P></ListItem>
+            <ListItem index={1}>
+              <P>
+                Verify your identity and institutional affiliation during registration and login.
+              </P>
+            </ListItem>
+            <ListItem index={2}>
+              <P>
+                Enable research submission, peer review, approval workflows, and repository access.
+              </P>
+            </ListItem>
+            <ListItem index={3}>
+              <P>Maintain academic records, audit logs, and compliance with university policies.</P>
+            </ListItem>
+            <ListItem index={4}>
+              <P>
+                Send service-related notifications, including email confirmation and account
+                updates.
+              </P>
+            </ListItem>
+            <ListItem index={5}>
+              <P>
+                Protect the platform against unauthorized access, fraud, and security incidents.
+              </P>
+            </ListItem>
           </View>
 
           {/* 3 */}
           <Text style={styles.sectionTitle}>3. NUCLEUS and Digital Platforms</Text>
-          <P>National University uses NUCLEUS and related digital platforms (including institutional portals and learning systems) to deliver academic and research services. Data may be collected through registration forms, portal entries, research submissions, and system logs.</P>
+          <P>
+            National University uses NUCLEUS and related digital platforms (including institutional
+            portals and learning systems) to deliver academic and research services. Data may be
+            collected through registration forms, portal entries, research submissions, and system
+            logs.
+          </P>
           <View style={styles.list}>
-            <ListItem index={1}><P><Strong>Accounts and access:</Strong> Account creation, login and authentication, and role-based permissions for students, faculty, and staff.</P></ListItem>
-            <ListItem index={2}><P><Strong>Transactions:</Strong> Research submission and review workflows, co-author invitations, approval status updates, and repository access.</P></ListItem>
-            <ListItem index={3}><P><Strong>Logs and device data:</Strong> Access logs such as timestamps, IP addresses, and device or browser information for security and monitoring.</P></ListItem>
-            <ListItem index={4}><P><Strong>Support and audit:</Strong> Helpdesk requests, troubleshooting records, and audit trails for compliance and incident response.</P></ListItem>
+            <ListItem index={1}>
+              <P>
+                <Strong>Accounts and access:</Strong> Account creation, login and authentication,
+                and role-based permissions for students, faculty, and staff.
+              </P>
+            </ListItem>
+            <ListItem index={2}>
+              <P>
+                <Strong>Transactions:</Strong> Research submission and review workflows, co-author
+                invitations, approval status updates, and repository access.
+              </P>
+            </ListItem>
+            <ListItem index={3}>
+              <P>
+                <Strong>Logs and device data:</Strong> Access logs such as timestamps, IP addresses,
+                and device or browser information for security and monitoring.
+              </P>
+            </ListItem>
+            <ListItem index={4}>
+              <P>
+                <Strong>Support and audit:</Strong> Helpdesk requests, troubleshooting records, and
+                audit trails for compliance and incident response.
+              </P>
+            </ListItem>
           </View>
 
           {/* 4 */}
           <Text style={styles.sectionTitle}>4. Sharing and Disclosure</Text>
-          <P>National University does not sell your personal data. We share it only on a need-to-know basis, including:</P>
+          <P>
+            National University does not sell your personal data. We share it only on a need-to-know
+            basis, including:
+          </P>
           <View style={styles.list}>
-            <ListItem index={1}><P><Strong>Within NU:</Strong> Relevant offices and academic units involved in research review, enrollment verification, and institutional reporting.</P></ListItem>
-            <ListItem index={2}><P><Strong>Third-party service providers and partners:</Strong> Vendors that support IT infrastructure, cloud hosting, email delivery, and related services, subject to contractual safeguards.</P></ListItem>
-            <ListItem index={3}><P><Strong>Government and lawful requests:</Strong> Regulators, courts, or authorities when required by applicable law or valid legal process.</P></ListItem>
+            <ListItem index={1}>
+              <P>
+                <Strong>Within NU:</Strong> Relevant offices and academic units involved in research
+                review, enrollment verification, and institutional reporting.
+              </P>
+            </ListItem>
+            <ListItem index={2}>
+              <P>
+                <Strong>Third-party service providers and partners:</Strong> Vendors that support IT
+                infrastructure, cloud hosting, email delivery, and related services, subject to
+                contractual safeguards.
+              </P>
+            </ListItem>
+            <ListItem index={3}>
+              <P>
+                <Strong>Government and lawful requests:</Strong> Regulators, courts, or authorities
+                when required by applicable law or valid legal process.
+              </P>
+            </ListItem>
           </View>
 
           {/* 5 */}
           <Text style={styles.sectionTitle}>5. Cross-Border Transfers</Text>
-          <P>National University may use cloud service providers located outside the Philippines to operate NUCLEUS and related systems. When personal data is transferred abroad, we apply appropriate safeguards in accordance with the Data Privacy Act of 2012 and National University policies.</P>
+          <P>
+            National University may use cloud service providers located outside the Philippines to
+            operate NUCLEUS and related systems. When personal data is transferred abroad, we apply
+            appropriate safeguards in accordance with the Data Privacy Act of 2012 and National
+            University policies.
+          </P>
 
           {/* 6 */}
           <Text style={styles.sectionTitle}>6. Retention and Disposal</Text>
-          <P>We retain personal data for as long as necessary to fulfill the purposes stated in this notice, or as required by law, institutional policy, or legitimate business needs. Research records, audit logs, and academic submissions may be kept for the duration of your enrollment or employment and beyond where retention is required for compliance, historical reference, or legal obligations. When data is no longer needed, it is securely disposed of or anonymized in accordance with our retention schedule.</P>
+          <P>
+            We retain personal data for as long as necessary to fulfill the purposes stated in this
+            notice, or as required by law, institutional policy, or legitimate business needs.
+            Research records, audit logs, and academic submissions may be kept for the duration of
+            your enrollment or employment and beyond where retention is required for compliance,
+            historical reference, or legal obligations. When data is no longer needed, it is
+            securely disposed of or anonymized in accordance with our retention schedule.
+          </P>
 
           {/* 7 */}
           <Text style={styles.sectionTitle}>7. Security Measures</Text>
-          <P>National University implements administrative, technical, and organizational safeguards to protect personal data, including:</P>
+          <P>
+            National University implements administrative, technical, and organizational safeguards
+            to protect personal data, including:
+          </P>
           <View style={styles.list}>
-            <ListItem index={1}><P>Role-based access controls and confidentiality obligations for authorized personnel.</P></ListItem>
-            <ListItem index={2}><P>System security monitoring, logging, and incident response procedures.</P></ListItem>
-            <ListItem index={3}><P>Technical safeguards such as encryption in transit and secure authentication.</P></ListItem>
-            <ListItem index={4}><P>Training and awareness programs for personnel who handle personal data.</P></ListItem>
+            <ListItem index={1}>
+              <P>
+                Role-based access controls and confidentiality obligations for authorized personnel.
+              </P>
+            </ListItem>
+            <ListItem index={2}>
+              <P>System security monitoring, logging, and incident response procedures.</P>
+            </ListItem>
+            <ListItem index={3}>
+              <P>Technical safeguards such as encryption in transit and secure authentication.</P>
+            </ListItem>
+            <ListItem index={4}>
+              <P>Training and awareness programs for personnel who handle personal data.</P>
+            </ListItem>
           </View>
 
           {/* 8 */}
           <Text style={styles.sectionTitle}>8. Your Rights and How to Contact Us</Text>
-          <P>Under the Data Privacy Act of 2012, you have the right to be informed, to access, to object, to erasure or blocking, to rectify, to file a complaint with the National Privacy Commission, and to damages. To exercise your rights or raise privacy concerns regarding NUCLEUS, you may contact the Data Privacy Office using the details below.</P>
+          <P>
+            Under the Data Privacy Act of 2012, you have the right to be informed, to access, to
+            object, to erasure or blocking, to rectify, to file a complaint with the National
+            Privacy Commission, and to damages. To exercise your rights or raise privacy concerns
+            regarding NUCLEUS, you may contact the Data Privacy Office using the details below.
+          </P>
 
           <View style={styles.dpoCard}>
             <View style={styles.dpoHeader}>
@@ -210,63 +343,83 @@ export const PrivacyNoticeGate = ({ children }: { children: React.ReactNode }) =
             </View>
             <View style={styles.dpoItem}>
               <Icon icon={Mail} size={16} color={theme.colors.brand.primary} />
-              <P><Strong>Main Contact:</Strong> <Text style={styles.inlineLink} onPress={() => handleLink('mailto:dpo@national-u.edu.ph')}>dpo@national-u.edu.ph</Text></P>
+              <P>
+                <Strong>Main Contact:</Strong>{' '}
+                <Text
+                  style={styles.inlineLink}
+                  onPress={() => handleLink('mailto:dpo@national-u.edu.ph')}
+                >
+                  dpo@national-u.edu.ph
+                </Text>
+              </P>
             </View>
             <View style={styles.dpoItem}>
               <Icon icon={Mail} size={16} color={theme.colors.brand.primary} />
-              <P><Strong>Campus Contact:</Strong> <Text style={styles.inlineLink} onPress={() => handleLink('mailto:cop@nu-dasma.edu.ph')}>cop@nu-dasma.edu.ph</Text></P>
+              <P>
+                <Strong>Campus Contact:</Strong>{' '}
+                <Text
+                  style={styles.inlineLink}
+                  onPress={() => handleLink('mailto:cop@nu-dasma.edu.ph')}
+                >
+                  cop@nu-dasma.edu.ph
+                </Text>
+              </P>
             </View>
           </View>
 
           {/* 9 */}
           <Text style={styles.sectionTitle}>9. Full Data Privacy Policy</Text>
           <P>
-            For the complete National University Data Privacy Policy, including contact details for the Data Protection Officer, please visit{' '}
+            For the complete National University Data Privacy Policy, including contact details for
+            the Data Protection Officer, please visit{' '}
             <Text style={styles.inlineLink} onPress={() => handleLink(NU_PRIVACY_POLICY_URL)}>
               National University Data Privacy Policy
-            </Text>.
+            </Text>
+            .
           </P>
-
         </Animated.View>
       </Animated.ScrollView>
 
       {/* Floating Bottom Bar */}
-      <Animated.View 
-        entering={SlideInDown.delay(300).duration(400)} 
+      <Animated.View
+        entering={SlideInDown.delay(300).duration(400)}
         exiting={SlideOutDown.duration(300)}
         style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}
       >
-        <BlurView 
-          intensity={80} 
-          tint={scheme === 'dark' ? 'dark' : 'light'} 
-          style={StyleSheet.absoluteFill} 
+        <BlurView
+          intensity={80}
+          tint={scheme === 'dark' ? 'dark' : 'light'}
+          style={StyleSheet.absoluteFill}
         />
-        
+
         <View style={styles.bottomBarContent}>
           {!hasScrolledToBottom && (
             <View style={styles.scrollHint}>
               <Icon icon={Shield} size={12} color={theme.colors.brand.primary} />
-              <Text style={styles.scrollHintText}>Scroll through the entire notice to enable acceptance.</Text>
+              <Text style={styles.scrollHintText}>
+                Scroll through the entire notice to enable acceptance.
+              </Text>
             </View>
           )}
 
           <View style={styles.actionRow}>
-            <Pressable
-              style={styles.cancelButton}
-              onPress={handleDecline}
-            >
+            <Pressable style={styles.cancelButton} onPress={handleDecline}>
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </Pressable>
-            
+
             <Pressable
               style={({ pressed }) => [
-                styles.acceptButton, 
+                styles.acceptButton,
                 pressed && canAccept && styles.acceptButtonPressed,
-                !canAccept && styles.acceptButtonDisabled
+                !canAccept && styles.acceptButtonDisabled,
               ]}
               onPress={handleAccept}
             >
-              <Text style={[styles.acceptButtonText, !canAccept && styles.acceptButtonTextDisabled]}>I Accept</Text>
+              <Text
+                style={[styles.acceptButtonText, !canAccept && styles.acceptButtonTextDisabled]}
+              >
+                I Accept
+              </Text>
             </Pressable>
           </View>
         </View>

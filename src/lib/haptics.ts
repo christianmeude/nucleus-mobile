@@ -10,12 +10,9 @@ const swallow = () => {};
 export const haptics = {
   light: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(swallow),
   medium: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(swallow),
-  success: () =>
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(swallow),
-  error: () =>
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(swallow),
-  warning: () =>
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(swallow),
+  success: () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(swallow),
+  error: () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(swallow),
+  warning: () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(swallow),
 };
 
 export type HapticName = keyof typeof haptics;

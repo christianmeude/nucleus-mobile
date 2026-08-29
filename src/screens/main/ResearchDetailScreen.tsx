@@ -42,8 +42,15 @@ import {
 } from '../../utils/format';
 import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
 import { PUBLISHED_STATUSES } from '../../components/PaperStatusChip';
-import { File, MessageCircle, Bookmark, FileText, Link2, ShieldCheck, ArrowUpRight } from 'lucide-react-native';
-
+import {
+  File,
+  MessageCircle,
+  Bookmark,
+  FileText,
+  Link2,
+  ShieldCheck,
+  ArrowUpRight,
+} from 'lucide-react-native';
 
 type DetailRouteProp = RouteProp<RootStackParamList, 'ResearchDetail'>;
 
@@ -92,7 +99,7 @@ export const ResearchDetailScreen = () => {
 
   const submitPublishRequest = useCallback(async () => {
     if (!publishTarget) return;
-    
+
     // Validate DOI
     const cleaned = doiInput.trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i, '');
     if (!/^10\.\d{4,9}\/\S+$/i.test(cleaned)) {
@@ -236,7 +243,7 @@ export const ResearchDetailScreen = () => {
   // paper still in review (only reachable from Dashboard/My Papers), there's nothing
   // published yet to meaningfully relate it to.
   const isRepositoryPaper = PUBLISHED_STATUSES.has(paper.status);
-  
+
   // Feedback (annotations) is internal review info. It shouldn't be accessible
   // to anyone on the repository page, as it's published.
   const showFeedback = !isRepositoryPaper;
@@ -292,7 +299,8 @@ export const ResearchDetailScreen = () => {
           <View style={styles.sheetContent}>
             <Text style={styles.sheetTitle}>Formal publication</Text>
             <Text style={styles.sheetDesc}>
-              Your paper is approved for the internal repository. If you have published it externally, enter your journal's DOI to request formal publication.
+              Your paper is approved for the internal repository. If you have published it
+              externally, enter your journal's DOI to request formal publication.
             </Text>
 
             <Input
@@ -320,251 +328,264 @@ export const ResearchDetailScreen = () => {
         }
       >
         <Screen edges={{ top: false }}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          showsHorizontalScrollIndicator={false}
-          style={styles.container}
-          contentContainerStyle={styles.content}
-        >
-          {categoryName ? <Text style={styles.eyebrow}>{categoryName}</Text> : null}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+            style={styles.container}
+            contentContainerStyle={styles.content}
+          >
+            {categoryName ? <Text style={styles.eyebrow}>{categoryName}</Text> : null}
 
-          {paper.status === 'published' && (
-            <View style={{ marginBottom: 6 }}>
-              <PublishedBadge />
-            </View>
-          )}
-
-          <Text style={styles.title}>{paper.title}</Text>
-
-          <Text style={styles.authors}>{authorsLine}</Text>
-          {paper.program?.name || paper.department ? (
-            <Text style={styles.affiliation}>
-              {[paper.program?.name, paper.department].filter(Boolean).join(' · ')}
-            </Text>
-          ) : null}
-
-          <View style={styles.metaRow}>
-            <Text style={styles.metaText}>{formatDate(displayDate)}</Text>
-            <Text style={styles.metaSep}>·</Text>
-            <Text style={styles.metaText}>{paper.view_count || 0} views</Text>
-          </View>
-
-          {paper.status === 'published' && paper.doi && (
-            <View style={styles.doiCard}>
-              <View style={styles.doiHeader}>
-                <Icon icon={ShieldCheck} size={16} color={theme.colors.brand.accent} />
-                <Text style={styles.doiTitle}>Formal Publication (DOI)</Text>
+            {paper.status === 'published' && (
+              <View style={{ marginBottom: 6 }}>
+                <PublishedBadge />
               </View>
-              <Text style={styles.doiLink} selectable>
-                https://doi.org/{paper.doi}
-              </Text>
-            </View>
-          )}
+            )}
 
-          {paper.status === 'approved' && isOwner && (
-            paper.publish_requested_at ? (
+            <Text style={styles.title}>{paper.title}</Text>
+
+            <Text style={styles.authors}>{authorsLine}</Text>
+            {paper.program?.name || paper.department ? (
+              <Text style={styles.affiliation}>
+                {[paper.program?.name, paper.department].filter(Boolean).join(' · ')}
+              </Text>
+            ) : null}
+
+            <View style={styles.metaRow}>
+              <Text style={styles.metaText}>{formatDate(displayDate)}</Text>
+              <Text style={styles.metaSep}>·</Text>
+              <Text style={styles.metaText}>{paper.view_count || 0} views</Text>
+            </View>
+
+            {paper.status === 'published' && paper.doi && (
               <View style={styles.doiCard}>
                 <View style={styles.doiHeader}>
-                  <Icon icon={ShieldCheck} size={16} color={theme.colors.state.success} />
-                  <Text style={[styles.doiTitle, { color: theme.colors.state.success }]}>Publication requested</Text>
+                  <Icon icon={ShieldCheck} size={16} color={theme.colors.brand.accent} />
+                  <Text style={styles.doiTitle}>Formal Publication (DOI)</Text>
                 </View>
-                <Text style={styles.doiLink}>Pending admin review.</Text>
+                <Text style={styles.doiLink} selectable>
+                  https://doi.org/{paper.doi}
+                </Text>
               </View>
-            ) : (
-              <PressableScale
-                style={styles.doiCard}
-                onPress={() => setPublishTarget(paper)}
-                accessibilityRole="button"
-                accessibilityLabel="Request formal publication"
-              >
-                <View style={styles.doiHeader}>
-                  <Icon icon={ArrowUpRight} size={16} color={theme.colors.brand.primary} />
-                  <Text style={styles.doiTitle}>Request formal publication</Text>
-                </View>
-                <Text style={styles.doiLink}>Submit a DOI to list this paper in the public registry.</Text>
-              </PressableScale>
-            )
-          )}
-
-          <View style={styles.readRow}>
-            {annotations.length > 0 && showFeedback ? (
-              <PressableScale
-                style={styles.feedbackBtn}
-                onPress={() => setPanelOpen(true)}
-                accessibilityRole="button"
-                accessibilityLabel="View feedback"
-              >
-                <Icon icon={MessageCircle} size={20} color={theme.colors.text.secondary} />
-                <Text style={styles.feedbackBtnText}>Feedback ({annotations.length})</Text>
-              </PressableScale>
-            ) : null}
-            <PressableScale
-              style={styles.bookmarkBtn}
-              onPress={handleToggleSave}
-              disabled={savePending}
-              accessibilityRole="button"
-              accessibilityLabel={saved ? 'Remove from saved' : 'Save paper'}
-            >
-              <Animated.View style={savePopStyle}>
-                <Icon
-                  icon={Bookmark}
-                  size={22}
-                  color={saved ? theme.colors.brand.accent : theme.colors.text.muted}
-                  fill={saved ? theme.colors.brand.accent : 'none'}
-                />
-              </Animated.View>
-            </PressableScale>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Paper</Text>
-            {fileError ? (
-              <InlineNotice tone="danger" message={fileError} />
-            ) : (
-              <PressableScale
-                style={styles.previewCard}
-                onPress={() => setPdfOpen(true)}
-                disabled={!fileUri}
-                accessibilityRole="button"
-                accessibilityLabel="View full paper"
-                accessibilityState={{ disabled: !fileUri }}
-              >
-                <View style={styles.previewCardInner}>
-                  {fileUri ? (
-                    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-                      <PdfViewer uri={fileUri} variant="preview" watermarkText={isRepositoryPaper ? '' : undefined} />
-                    </View>
-                  ) : null}
-                  {/* Frost the page behind the button; a soft scrim guarantees the
-                    button reads even where a platform's blur is weak. */}
-                  <BlurView
-                    intensity={28}
-                    tint={scheme === 'dark' ? 'dark' : 'light'}
-                    style={StyleSheet.absoluteFill}
-                    pointerEvents="none"
-                  />
-                  <View style={styles.previewScrim} pointerEvents="none" />
-                  <View style={styles.previewButton} pointerEvents="none">
-                    <Icon icon={FileText} size={18} color={theme.colors.text.onBrand} />
-                    <Text style={styles.previewButtonText}>View Full Paper</Text>
-                  </View>
-                </View>
-              </PressableScale>
             )}
-          </View>
 
-          {error ? <InlineNotice tone="danger" message={error} /> : null}
-
-          {keywords.length > 0 ? (
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Keywords</Text>
-              <View style={styles.keywordsWrap}>
-                {keywords.map((keyword) => (
-                  <View key={keyword} style={styles.keywordTag}>
-                    <Text style={styles.keywordText}>{keyword}</Text>
+            {paper.status === 'approved' &&
+              isOwner &&
+              (paper.publish_requested_at ? (
+                <View style={styles.doiCard}>
+                  <View style={styles.doiHeader}>
+                    <Icon icon={ShieldCheck} size={16} color={theme.colors.state.success} />
+                    <Text style={[styles.doiTitle, { color: theme.colors.state.success }]}>
+                      Publication requested
+                    </Text>
                   </View>
-                ))}
-              </View>
-            </View>
-          ) : null}
-
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Abstract</Text>
-            <Text style={styles.abstract}>{paper.abstract || 'No abstract available.'}</Text>
-          </View>
-
-          {isRepositoryPaper && related.length > 0 ? (
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Related papers</Text>
-              <View style={styles.relatedList}>
-                {related.map((item, index) => {
-                  const relatedCategory = resolveCategoryName(item.category, categoryNameById);
-                  const relatedYear = yearOf(item);
-                  return (
-                    <ListEntranceItem key={item.id} index={index}>
-                      <PressableScale
-                        style={styles.relatedRow}
-                        onPress={() => navigation.push(route.name, { paperId: item.id })}
-                        accessibilityRole="button"
-                        accessibilityLabel={item.title || 'Untitled paper'}
-                      >
-                        <View style={styles.relatedMark} />
-                        <View style={styles.relatedBody}>
-                          {relatedCategory ? (
-                            <Text style={styles.relatedCat}>{relatedCategory}</Text>
-                          ) : null}
-                          <Text style={styles.relatedTitle} numberOfLines={2}>
-                            {item.title}
-                          </Text>
-                          <Text style={styles.relatedAuthor} numberOfLines={1}>
-                            {getPrimaryAuthorName(item)}
-                            {relatedYear ? `  ·  ${relatedYear}` : ''}
-                          </Text>
-                        </View>
-                      </PressableScale>
-                    </ListEntranceItem>
-                  );
-                })}
-              </View>
-            </View>
-          ) : null}
-
-          {showWorkflow ? (
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Submission timeline</Text>
-              {workflow.length === 0 ? (
-                <Text style={styles.workflowEmpty}>No timeline available.</Text>
-              ) : (
-                <View style={styles.workflowList}>
-                  {workflow.map((entry, index) => (
-                    <ListEntranceItem key={entry.id} index={index}>
-                      <View
-                        style={[styles.workflowRow, index === 0 ? styles.workflowRowCurrent : null]}
-                      >
-                        {index === 0 ? <View style={styles.workflowBar} /> : null}
-                        <View style={styles.workflowBody}>
-                          <Text style={styles.workflowName}>
-                            {statusToLabel(entry.status) || entry.action_type || 'Updated'}
-                          </Text>
-                          {entry.reviewer_role ? (
-                            <Text style={styles.workflowMeta}>Reviewer: {entry.reviewer_role}</Text>
-                          ) : null}
-                          {entry.comments ? (
-                            <Text style={styles.workflowComment}>{entry.comments}</Text>
-                          ) : null}
-                        </View>
-                        <Text style={styles.workflowDate}>
-                          {formatDate(entry.reviewed_at || entry.created_at)}
-                        </Text>
-                      </View>
-                    </ListEntranceItem>
-                  ))}
+                  <Text style={styles.doiLink}>Pending admin review.</Text>
                 </View>
+              ) : (
+                <PressableScale
+                  style={styles.doiCard}
+                  onPress={() => setPublishTarget(paper)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Request formal publication"
+                >
+                  <View style={styles.doiHeader}>
+                    <Icon icon={ArrowUpRight} size={16} color={theme.colors.brand.primary} />
+                    <Text style={styles.doiTitle}>Request formal publication</Text>
+                  </View>
+                  <Text style={styles.doiLink}>
+                    Submit a DOI to list this paper in the public registry.
+                  </Text>
+                </PressableScale>
+              ))}
+
+            <View style={styles.readRow}>
+              {annotations.length > 0 && showFeedback ? (
+                <PressableScale
+                  style={styles.feedbackBtn}
+                  onPress={() => setPanelOpen(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="View feedback"
+                >
+                  <Icon icon={MessageCircle} size={20} color={theme.colors.text.secondary} />
+                  <Text style={styles.feedbackBtnText}>Feedback ({annotations.length})</Text>
+                </PressableScale>
+              ) : null}
+              <PressableScale
+                style={styles.bookmarkBtn}
+                onPress={handleToggleSave}
+                disabled={savePending}
+                accessibilityRole="button"
+                accessibilityLabel={saved ? 'Remove from saved' : 'Save paper'}
+              >
+                <Animated.View style={savePopStyle}>
+                  <Icon
+                    icon={Bookmark}
+                    size={22}
+                    color={saved ? theme.colors.brand.accent : theme.colors.text.muted}
+                    fill={saved ? theme.colors.brand.accent : 'none'}
+                  />
+                </Animated.View>
+              </PressableScale>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>Paper</Text>
+              {fileError ? (
+                <InlineNotice tone="danger" message={fileError} />
+              ) : (
+                <PressableScale
+                  style={styles.previewCard}
+                  onPress={() => setPdfOpen(true)}
+                  disabled={!fileUri}
+                  accessibilityRole="button"
+                  accessibilityLabel="View full paper"
+                  accessibilityState={{ disabled: !fileUri }}
+                >
+                  <View style={styles.previewCardInner}>
+                    {fileUri ? (
+                      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                        <PdfViewer
+                          uri={fileUri}
+                          variant="preview"
+                          watermarkText={isRepositoryPaper ? '' : undefined}
+                        />
+                      </View>
+                    ) : null}
+                    {/* Frost the page behind the button; a soft scrim guarantees the
+                    button reads even where a platform's blur is weak. */}
+                    <BlurView
+                      intensity={28}
+                      tint={scheme === 'dark' ? 'dark' : 'light'}
+                      style={StyleSheet.absoluteFill}
+                      pointerEvents="none"
+                    />
+                    <View style={styles.previewScrim} pointerEvents="none" />
+                    <View style={styles.previewButton} pointerEvents="none">
+                      <Icon icon={FileText} size={18} color={theme.colors.text.onBrand} />
+                      <Text style={styles.previewButtonText}>View Full Paper</Text>
+                    </View>
+                  </View>
+                </PressableScale>
               )}
             </View>
-          ) : null}
-        </ScrollView>
-      </Screen>
-      {annotations.length > 0 && showFeedback && (
-        <AnnotationPanel
-          annotations={annotations}
-          visible={panelOpen}
-          selectedAnnotationId={selectedAnnotationId}
-          onClose={() => {
-            setPanelOpen(false);
-            setSelectedAnnotationId(null);
-          }}
-          onAnnotationPress={(ann) => {
-            setPanelOpen(false);
-            if (ann.pageNumber) {
-              setPdfOpen(true);
-              setTimeout(() => {
-                pdfRef.current?.jumpToPage(ann.pageNumber!);
-              }, 400);
-            }
-          }}
-        />
-      )}
+
+            {error ? <InlineNotice tone="danger" message={error} /> : null}
+
+            {keywords.length > 0 ? (
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>Keywords</Text>
+                <View style={styles.keywordsWrap}>
+                  {keywords.map((keyword) => (
+                    <View key={keyword} style={styles.keywordTag}>
+                      <Text style={styles.keywordText}>{keyword}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ) : null}
+
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>Abstract</Text>
+              <Text style={styles.abstract}>{paper.abstract || 'No abstract available.'}</Text>
+            </View>
+
+            {isRepositoryPaper && related.length > 0 ? (
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>Related papers</Text>
+                <View style={styles.relatedList}>
+                  {related.map((item, index) => {
+                    const relatedCategory = resolveCategoryName(item.category, categoryNameById);
+                    const relatedYear = yearOf(item);
+                    return (
+                      <ListEntranceItem key={item.id} index={index}>
+                        <PressableScale
+                          style={styles.relatedRow}
+                          onPress={() => navigation.push(route.name, { paperId: item.id })}
+                          accessibilityRole="button"
+                          accessibilityLabel={item.title || 'Untitled paper'}
+                        >
+                          <View style={styles.relatedMark} />
+                          <View style={styles.relatedBody}>
+                            {relatedCategory ? (
+                              <Text style={styles.relatedCat}>{relatedCategory}</Text>
+                            ) : null}
+                            <Text style={styles.relatedTitle} numberOfLines={2}>
+                              {item.title}
+                            </Text>
+                            <Text style={styles.relatedAuthor} numberOfLines={1}>
+                              {getPrimaryAuthorName(item)}
+                              {relatedYear ? `  ·  ${relatedYear}` : ''}
+                            </Text>
+                          </View>
+                        </PressableScale>
+                      </ListEntranceItem>
+                    );
+                  })}
+                </View>
+              </View>
+            ) : null}
+
+            {showWorkflow ? (
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>Submission timeline</Text>
+                {workflow.length === 0 ? (
+                  <Text style={styles.workflowEmpty}>No timeline available.</Text>
+                ) : (
+                  <View style={styles.workflowList}>
+                    {workflow.map((entry, index) => (
+                      <ListEntranceItem key={entry.id} index={index}>
+                        <View
+                          style={[
+                            styles.workflowRow,
+                            index === 0 ? styles.workflowRowCurrent : null,
+                          ]}
+                        >
+                          {index === 0 ? <View style={styles.workflowBar} /> : null}
+                          <View style={styles.workflowBody}>
+                            <Text style={styles.workflowName}>
+                              {statusToLabel(entry.status) || entry.action_type || 'Updated'}
+                            </Text>
+                            {entry.reviewer_role ? (
+                              <Text style={styles.workflowMeta}>
+                                Reviewer: {entry.reviewer_role}
+                              </Text>
+                            ) : null}
+                            {entry.comments ? (
+                              <Text style={styles.workflowComment}>{entry.comments}</Text>
+                            ) : null}
+                          </View>
+                          <Text style={styles.workflowDate}>
+                            {formatDate(entry.reviewed_at || entry.created_at)}
+                          </Text>
+                        </View>
+                      </ListEntranceItem>
+                    ))}
+                  </View>
+                )}
+              </View>
+            ) : null}
+          </ScrollView>
+        </Screen>
+        {annotations.length > 0 && showFeedback && (
+          <AnnotationPanel
+            annotations={annotations}
+            visible={panelOpen}
+            selectedAnnotationId={selectedAnnotationId}
+            onClose={() => {
+              setPanelOpen(false);
+              setSelectedAnnotationId(null);
+            }}
+            onAnnotationPress={(ann) => {
+              setPanelOpen(false);
+              if (ann.pageNumber) {
+                setPdfOpen(true);
+                setTimeout(() => {
+                  pdfRef.current?.jumpToPage(ann.pageNumber!);
+                }, 400);
+              }
+            }}
+          />
+        )}
       </SheetPresenter>
     </SheetPresenter>
   );

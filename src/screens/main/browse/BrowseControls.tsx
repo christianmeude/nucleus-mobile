@@ -30,7 +30,7 @@ export const BrowseControls = ({
       <Text style={styles.resultCount}>
         {resultCount} {resultCount === 1 ? 'Paper' : 'Papers'}
       </Text>
-      
+
       <View style={styles.actions}>
         {hasActiveFilters && (
           <PressableScale onPress={onClearFilters} style={styles.clearBtn}>

@@ -50,7 +50,11 @@ export function readInjectJournal(cwd = process.cwd()) {
 }
 
 export function clearInjectJournal(cwd = process.cwd()) {
-  try { fs.unlinkSync(injectJournalPath(cwd)); } catch { /* already gone */ }
+  try {
+    fs.unlinkSync(injectJournalPath(cwd));
+  } catch {
+    /* already gone */
+  }
 }
 
 function writeInjectJournal(cwd, journal) {
@@ -81,7 +85,10 @@ export function recordInjection(cwd = process.cwd(), { framework, port, artifact
 }
 
 function normalizeRel(cwd, rel) {
-  return path.resolve(cwd, String(rel || '')).split(path.sep).join('/');
+  return path
+    .resolve(cwd, String(rel || ''))
+    .split(path.sep)
+    .join('/');
 }
 
 function readIfPresent(abs) {
@@ -126,7 +133,11 @@ function healArtifact(cwd, artifact, undoers) {
     if (!artifact.marker || !content.includes(artifact.marker)) {
       return { path: artifact.path, action: 'disowned' };
     }
-    try { fs.rmSync(abs, { force: true }); } catch { return null; }
+    try {
+      fs.rmSync(abs, { force: true });
+    } catch {
+      return null;
+    }
     if (artifact.pruneTo !== undefined) {
       const pruneRoot = path.resolve(cwd, artifact.pruneTo || '.');
       if (insideProject(cwd, pruneRoot) || pruneRoot === path.resolve(cwd)) {
@@ -147,7 +158,11 @@ function healArtifact(cwd, artifact, undoers) {
     if (typeof undo !== 'function') return null;
     const next = undo(content);
     if (next === content) return { path: artifact.path, action: 'disowned' };
-    try { fs.writeFileSync(abs, next, 'utf-8'); } catch { return null; }
+    try {
+      fs.writeFileSync(abs, next, 'utf-8');
+    } catch {
+      return null;
+    }
     return { path: artifact.path, action: 'unpatched' };
   }
 
@@ -167,7 +182,10 @@ function healArtifact(cwd, artifact, undoers) {
  * actually changed or removed, so callers can stay silent when nothing was
  * orphaned. Idempotent: a second call finds an empty journal.
  */
-export function healInjectJournal(cwd = process.cwd(), { keep = [], undoers = PATCH_UNDOERS } = {}) {
+export function healInjectJournal(
+  cwd = process.cwd(),
+  { keep = [], undoers = PATCH_UNDOERS } = {},
+) {
   const journal = readInjectJournal(cwd);
   if (!journal) return { healed: [], kept: [] };
 

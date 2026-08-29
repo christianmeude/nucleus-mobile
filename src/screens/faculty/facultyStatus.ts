@@ -23,7 +23,12 @@ export function matchesQueueFilter(status: string, filter: FacultyQueueFilter): 
     case 'revisions':
       return status === 'revision_required';
     case 'forwarded':
-      return status === 'pending_dean' || status === 'pending_program_chair' || status === 'pending_editor' || status === 'pending_admin';
+      return (
+        status === 'pending_dean' ||
+        status === 'pending_program_chair' ||
+        status === 'pending_editor' ||
+        status === 'pending_admin'
+      );
     case 'approved':
       return status === 'approved' || status === 'published';
     case 'all':

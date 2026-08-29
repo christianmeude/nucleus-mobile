@@ -32,13 +32,13 @@ export const DashboardScreen = () => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
-  
+
   const [assemble] = useState(isFirstEntranceArmed);
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
   const [trendingPapers, setTrendingPapers] = useState<ResearchPaper[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -47,12 +47,13 @@ export const DashboardScreen = () => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
 
-    const [papersResult, categoriesResult, notificationsResult, trendingResult] = await Promise.allSettled([
-      researchApi.getMyPapers(),
-      researchApi.getCategories(),
-      notificationsApi.getNotifications(5),
-      researchApi.getPublishedPapers(),
-    ]);
+    const [papersResult, categoriesResult, notificationsResult, trendingResult] =
+      await Promise.allSettled([
+        researchApi.getMyPapers(),
+        researchApi.getCategories(),
+        notificationsApi.getNotifications(5),
+        researchApi.getPublishedPapers(),
+      ]);
 
     if (papersResult.status === 'fulfilled') {
       setPapers(papersResult.value);
@@ -60,7 +61,7 @@ export const DashboardScreen = () => {
     } else {
       setError('Failed to load dashboard data.');
     }
-    
+
     if (categoriesResult.status === 'fulfilled') setCategories(categoriesResult.value);
     if (notificationsResult.status === 'fulfilled') setNotifications(notificationsResult.value);
     if (trendingResult.status === 'fulfilled') setTrendingPapers(trendingResult.value.slice(0, 5));
@@ -171,7 +172,9 @@ export const DashboardScreen = () => {
                       paper={upNextPaper}
                       variant="papers"
                       category={resolveCategoryName(upNextPaper.category, categoryNameById)}
-                      onPress={() => navigation.navigate('ResearchDetail', { paperId: upNextPaper.id })}
+                      onPress={() =>
+                        navigation.navigate('ResearchDetail', { paperId: upNextPaper.id })
+                      }
                     />
                   </View>
                 ) : papers.length === 0 && trendingPapers.length > 0 ? (
@@ -189,7 +192,9 @@ export const DashboardScreen = () => {
                             paper={paper}
                             variant="browse"
                             category={resolveCategoryName(paper.category, categoryNameById)}
-                            onPress={() => navigation.navigate('ResearchDetail', { paperId: paper.id })}
+                            onPress={() =>
+                              navigation.navigate('ResearchDetail', { paperId: paper.id })
+                            }
                           />
                         </View>
                       ))}
@@ -219,7 +224,9 @@ export const DashboardScreen = () => {
                             notification={item}
                             onPress={() => {
                               if (item.research_id) {
-                                navigation.navigate('ResearchDetail', { paperId: item.research_id });
+                                navigation.navigate('ResearchDetail', {
+                                  paperId: item.research_id,
+                                });
                               }
                             }}
                           />

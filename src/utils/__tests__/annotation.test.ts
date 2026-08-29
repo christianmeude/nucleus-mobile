@@ -1,5 +1,10 @@
 import { describe, it, expect } from '@jest/globals';
-import { parseAnnotationMeta, normalizeAnnotationType, sanitizeHighlightRects, sanitizeAnchorPercent } from '../annotation';
+import {
+  parseAnnotationMeta,
+  normalizeAnnotationType,
+  sanitizeHighlightRects,
+  sanitizeAnchorPercent,
+} from '../annotation';
 
 describe('annotation util', () => {
   it('parses valid meta envelope', () => {
@@ -32,7 +37,10 @@ describe('annotation util', () => {
   });
 
   it('sanitizes highlight rects', () => {
-    const input = [{ x: 10, y: 20, w: 100, h: 50 }, { x: 'bad', y: 20 }];
+    const input = [
+      { x: 10, y: 20, w: 100, h: 50 },
+      { x: 'bad', y: 20 },
+    ];
     const result = sanitizeHighlightRects(input);
     expect(result).toEqual([{ x: 10, y: 20, w: 100, h: 50 }]);
   });

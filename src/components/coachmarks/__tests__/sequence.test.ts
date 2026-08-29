@@ -1,10 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import {
-  COACHMARK_COPY,
-  COACHMARK_ORDER,
-  type CoachmarkId,
-  nextCoachmark,
-} from '../sequence';
+import { COACHMARK_COPY, COACHMARK_ORDER, type CoachmarkId, nextCoachmark } from '../sequence';
 
 describe('coachmark sequence', () => {
   it('walks bell → submitFab → browseTab in order from nothing seen', () => {

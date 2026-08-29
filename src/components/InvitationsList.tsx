@@ -57,24 +57,27 @@ export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
     loadData();
   }, [loadData]);
 
-  const runAction = useCallback(async (token: string, action: 'accept' | 'decline') => {
-    setActingToken(token);
-    setError('');
+  const runAction = useCallback(
+    async (token: string, action: 'accept' | 'decline') => {
+      setActingToken(token);
+      setError('');
 
-    try {
-      if (action === 'accept') {
-        await invitationsApi.accept(token);
-      } else {
-        await invitationsApi.decline(token);
+      try {
+        if (action === 'accept') {
+          await invitationsApi.accept(token);
+        } else {
+          await invitationsApi.decline(token);
+        }
+
+        await loadData(true);
+      } catch (_error) {
+        setError(`Failed to ${action} invitation.`);
+      } finally {
+        setActingToken('');
       }
-
-      await loadData(true);
-    } catch (_error) {
-      setError(`Failed to ${action} invitation.`);
-    } finally {
-      setActingToken('');
-    }
-  }, [loadData]);
+    },
+    [loadData],
+  );
 
   const handleRefresh = useCallback(() => {
     haptics.light();

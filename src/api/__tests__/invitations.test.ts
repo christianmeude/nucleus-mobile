@@ -47,11 +47,18 @@ describe('invitationsApi.getInvitations', () => {
           invitationRow({ id: 'inv-1', inviter_id: 'faculty-1' }),
           invitationRow({ id: 'inv-2', inviter_id: 'faculty-1' }),
         ],
-      })
+      }),
     );
     mockSupabase.from.mockReturnValueOnce(listBuilder);
     mockSupabase.rpc.mockResolvedValueOnce({
-      data: [{ id: 'faculty-1', email: 'prof@nu-dasma.edu.ph', first_name: 'Grace', last_name: 'Hopper' }],
+      data: [
+        {
+          id: 'faculty-1',
+          email: 'prof@nu-dasma.edu.ph',
+          first_name: 'Grace',
+          last_name: 'Hopper',
+        },
+      ],
       error: null,
     });
     const countBuilder = createQueryBuilder(queryResult({ count: 5 }));
@@ -81,7 +88,7 @@ describe('invitationsApi.getInvitations', () => {
   it('propagates a Supabase error from the list query', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'list failed' } }))
+      createQueryBuilder(queryResult({ error: { message: 'list failed' } })),
     );
 
     await expect(invitationsApi.getInvitations()).rejects.toThrow('list failed');
@@ -90,7 +97,7 @@ describe('invitationsApi.getInvitations', () => {
   it('propagates an error resolving the inviter profile via RPC', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ data: [invitationRow({ inviter_id: 'faculty-1' })] }))
+      createQueryBuilder(queryResult({ data: [invitationRow({ inviter_id: 'faculty-1' })] })),
     );
     mockSupabase.rpc.mockResolvedValueOnce({ data: null, error: { message: 'rpc failed' } });
 
@@ -101,7 +108,7 @@ describe('invitationsApi.getInvitations', () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(createQueryBuilder(queryResult({ data: [] })));
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'count failed' } }))
+      createQueryBuilder(queryResult({ error: { message: 'count failed' } })),
     );
 
     await expect(invitationsApi.getInvitations()).rejects.toThrow('count failed');
@@ -113,7 +120,7 @@ describe('invitationsApi.acceptInvitation', () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     const updateBuilder = createQueryBuilder(queryResult());
     const invitationLookupBuilder = createQueryBuilder(
-      queryResult({ data: { research_id: 'paper-1' } })
+      queryResult({ data: { research_id: 'paper-1' } }),
     );
     const existingLookupBuilder = createQueryBuilder(queryResult({ data: null }));
     const maxOrderBuilder = createQueryBuilder(queryResult({ data: { author_order: 2 } }));
@@ -129,20 +136,20 @@ describe('invitationsApi.acceptInvitation', () => {
     await invitationsApi.acceptInvitation('tok-1');
 
     expect(updateBuilder.update).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 'accepted', responded_at: expect.any(String) })
+      expect.objectContaining({ status: 'accepted', responded_at: expect.any(String) }),
     );
     expect(updateBuilder.eq).toHaveBeenNthCalledWith(1, 'token', 'tok-1');
     expect(updateBuilder.eq).toHaveBeenNthCalledWith(2, 'invitee_id', 'student-1');
     expect(upsertBuilder.upsert).toHaveBeenCalledWith(
       { research_id: 'paper-1', user_id: 'student-1', is_primary: false, author_order: 3 },
-      { onConflict: 'research_id,user_id' }
+      { onConflict: 'research_id,user_id' },
     );
   });
 
   it('propagates the Supabase error from the status update', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'update rejected' } }))
+      createQueryBuilder(queryResult({ error: { message: 'update rejected' } })),
     );
 
     await expect(invitationsApi.acceptInvitation('tok-1')).rejects.toThrow('update rejected');
@@ -153,7 +160,9 @@ describe('invitationsApi.acceptInvitation', () => {
     const updateBuilder = createQueryBuilder(queryResult());
     mockSupabase.from
       .mockReturnValueOnce(updateBuilder)
-      .mockReturnValueOnce(createQueryBuilder(queryResult({ error: { message: 'lookup failed' } })));
+      .mockReturnValueOnce(
+        createQueryBuilder(queryResult({ error: { message: 'lookup failed' } })),
+      );
 
     await expect(invitationsApi.acceptInvitation('tok-1')).resolves.toBeUndefined();
   });
@@ -168,7 +177,7 @@ describe('invitationsApi.declineInvitation', () => {
     await invitationsApi.declineInvitation('tok-1');
 
     expect(updateBuilder.update).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 'declined' })
+      expect.objectContaining({ status: 'declined' }),
     );
     expect(mockSupabase.from).toHaveBeenCalledTimes(2); // users profile lookup + the update
   });
@@ -176,7 +185,7 @@ describe('invitationsApi.declineInvitation', () => {
   it('propagates the Supabase error from the status update', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'update rejected' } }))
+      createQueryBuilder(queryResult({ error: { message: 'update rejected' } })),
     );
 
     await expect(invitationsApi.declineInvitation('tok-1')).rejects.toThrow('update rejected');

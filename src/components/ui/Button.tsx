@@ -2,7 +2,8 @@ import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { palette, type Theme } from '../../theme';
 
-type ButtonVariant = 'primary' | 'secondary' | 'subtle' | 'soft' | 'accent' | 'warning' | 'danger' | 'success';
+type ButtonVariant =
+  'primary' | 'secondary' | 'subtle' | 'soft' | 'accent' | 'warning' | 'danger' | 'success';
 type ButtonSize = 'md' | 'sm';
 
 interface ButtonProps {
@@ -35,20 +36,38 @@ export const Button = ({
   // State variants are tonal in both modes to avoid "clown car" solid bright colors side-by-side
   const stateStyle = isStateVariant
     ? variant === 'warning'
-      ? { backgroundColor: theme.colors.state.warningSurface, borderColor: isDark ? 'rgba(130, 102, 30, 0.32)' : theme.colors.state.warning }
+      ? {
+          backgroundColor: theme.colors.state.warningSurface,
+          borderColor: isDark ? 'rgba(130, 102, 30, 0.32)' : theme.colors.state.warning,
+        }
       : variant === 'danger'
-        ? { backgroundColor: theme.colors.state.dangerSurface, borderColor: isDark ? 'rgba(127, 29, 29, 0.32)' : theme.colors.state.danger }
-        : { backgroundColor: theme.colors.state.successSurface, borderColor: isDark ? 'rgba(6, 95, 70, 0.32)' : theme.colors.state.success }
+        ? {
+            backgroundColor: theme.colors.state.dangerSurface,
+            borderColor: isDark ? 'rgba(127, 29, 29, 0.32)' : theme.colors.state.danger,
+          }
+        : {
+            backgroundColor: theme.colors.state.successSurface,
+            borderColor: isDark ? 'rgba(6, 95, 70, 0.32)' : theme.colors.state.success,
+          }
     : null;
-    
+
   const statePressedStyle = isStateVariant
     ? variant === 'warning'
-      ? { backgroundColor: isDark ? 'rgba(130, 102, 30, 0.24)' : theme.colors.state.warning, borderColor: isDark ? 'rgba(130, 102, 30, 0.45)' : theme.colors.state.warning }
+      ? {
+          backgroundColor: isDark ? 'rgba(130, 102, 30, 0.24)' : theme.colors.state.warning,
+          borderColor: isDark ? 'rgba(130, 102, 30, 0.45)' : theme.colors.state.warning,
+        }
       : variant === 'danger'
-        ? { backgroundColor: isDark ? 'rgba(127, 29, 29, 0.24)' : theme.colors.state.danger, borderColor: isDark ? 'rgba(127, 29, 29, 0.45)' : theme.colors.state.danger }
-        : { backgroundColor: isDark ? 'rgba(6, 95, 70, 0.24)' : theme.colors.state.success, borderColor: isDark ? 'rgba(6, 95, 70, 0.45)' : theme.colors.state.success }
+        ? {
+            backgroundColor: isDark ? 'rgba(127, 29, 29, 0.24)' : theme.colors.state.danger,
+            borderColor: isDark ? 'rgba(127, 29, 29, 0.45)' : theme.colors.state.danger,
+          }
+        : {
+            backgroundColor: isDark ? 'rgba(6, 95, 70, 0.24)' : theme.colors.state.success,
+            borderColor: isDark ? 'rgba(6, 95, 70, 0.45)' : theme.colors.state.success,
+          }
     : null;
-    
+
   const stateLabelStyle = isStateVariant
     ? variant === 'warning'
       ? { color: theme.colors.state.warning }
@@ -85,19 +104,25 @@ export const Button = ({
                   : variant === 'accent'
                     ? theme.colors.brand.accent
                     : isStateVariant
-                      ? (pressed && !isDark ? theme.colors.text.onBrand : stateLabelStyle?.color)
+                      ? pressed && !isDark
+                        ? theme.colors.text.onBrand
+                        : stateLabelStyle?.color
                       : theme.colors.brand.primary
               }
             />
           ) : (
             <>
               {icon}
-              <Text style={[
-                styles.label, 
-                styles[`${variant}Label`], 
-                isStateVariant ? stateLabelStyle : null,
-                pressed && !isBlocked && isStateVariant && !isDark ? { color: theme.colors.text.onBrand } : null
-              ]}>
+              <Text
+                style={[
+                  styles.label,
+                  styles[`${variant}Label`],
+                  isStateVariant ? stateLabelStyle : null,
+                  pressed && !isBlocked && isStateVariant && !isDark
+                    ? { color: theme.colors.text.onBrand }
+                    : null,
+                ]}
+              >
                 {label}
               </Text>
             </>

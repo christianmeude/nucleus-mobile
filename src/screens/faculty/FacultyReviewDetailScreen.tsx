@@ -34,7 +34,6 @@ import { type Theme } from '../../theme';
 import { formatDate } from '../../utils/format';
 import { CircleX, Pencil, CircleCheck } from 'lucide-react-native';
 
-
 type FacultyDetailRoute = RouteProp<RootStackParamList, 'FacultyReviewDetail'>;
 type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
 type SheetKind = 'approve' | 'revision' | 'reject';
@@ -368,7 +367,12 @@ export const FacultyReviewDetailScreen = () => {
               <Text style={styles.sectionTitle}>Your decision</Text>
               <View style={styles.decisionRow}>
                 <View style={styles.decisionButtonWrapper}>
-                  <Button label="Reject" variant="danger" icon={<Icon icon={CircleX} size={18} color={theme.colors.state.danger} />} onPress={() => openSheet('reject')} />
+                  <Button
+                    label="Reject"
+                    variant="danger"
+                    icon={<Icon icon={CircleX} size={18} color={theme.colors.state.danger} />}
+                    onPress={() => openSheet('reject')}
+                  />
                 </View>
                 <View style={styles.decisionButtonWrapper}>
                   <Button
@@ -379,7 +383,12 @@ export const FacultyReviewDetailScreen = () => {
                   />
                 </View>
                 <View style={styles.decisionButtonWrapper}>
-                  <Button label="Approve" variant="success" icon={<Icon icon={CircleCheck} size={18} color={theme.colors.state.success} />} onPress={openApprove} />
+                  <Button
+                    label="Approve"
+                    variant="success"
+                    icon={<Icon icon={CircleCheck} size={18} color={theme.colors.state.success} />}
+                    onPress={openApprove}
+                  />
                 </View>
               </View>
             </View>
@@ -387,25 +396,47 @@ export const FacultyReviewDetailScreen = () => {
         </Animated.ScrollView>
       </Screen>
 
-      <BottomSheet ref={actionSheetRef} onDismiss={() => setSheet(null)} snapPoints={['65%', '92%']}>
+      <BottomSheet
+        ref={actionSheetRef}
+        onDismiss={() => setSheet(null)}
+        snapPoints={['65%', '92%']}
+      >
         {sheet === 'approve' ? (
           <>
-            <View style={[styles.sheetHeader, { backgroundColor: theme.colors.state.successSurface }]}>
+            <View
+              style={[styles.sheetHeader, { backgroundColor: theme.colors.state.successSurface }]}
+            >
               <Icon icon={CircleCheck} size={24} color={theme.colors.state.success} />
-              <Text style={[styles.sheetTitle, { color: theme.colors.brand.primary }]}>Approve &amp; forward</Text>
+              <Text style={[styles.sheetTitle, { color: theme.colors.brand.primary }]}>
+                Approve &amp; forward
+              </Text>
             </View>
 
             {confirmStep ? (
               <Card padding="md" style={styles.confirmCard}>
-                <Text style={styles.confirmAction}>Approve &amp; forward to {approvers?.find(a => a.id === selectedApproverId)?.name}</Text>
+                <Text style={styles.confirmAction}>
+                  Approve &amp; forward to{' '}
+                  {approvers?.find((a) => a.id === selectedApproverId)?.name}
+                </Text>
                 <Text style={styles.confirmPaper}>{detail?.title}</Text>
                 <Text style={styles.confirmAuthor}>by {detail?.authorName}</Text>
                 <View style={styles.sheetButtons}>
-                  <Button label="Cancel" variant="subtle" onPress={() => setConfirmStep(false)} disabled={acting} />
-                  <Button label="Confirm" variant="primary" onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    runApprove();
-                  }} loading={acting} disabled={acting} />
+                  <Button
+                    label="Cancel"
+                    variant="subtle"
+                    onPress={() => setConfirmStep(false)}
+                    disabled={acting}
+                  />
+                  <Button
+                    label="Confirm"
+                    variant="primary"
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      runApprove();
+                    }}
+                    loading={acting}
+                    disabled={acting}
+                  />
                 </View>
               </Card>
             ) : (
@@ -477,22 +508,39 @@ export const FacultyReviewDetailScreen = () => {
 
         {sheet === 'revision' ? (
           <>
-            <View style={[styles.sheetHeader, { backgroundColor: theme.colors.state.warningSurface }]}>
+            <View
+              style={[styles.sheetHeader, { backgroundColor: theme.colors.state.warningSurface }]}
+            >
               <Icon icon={Pencil} size={24} color={theme.colors.state.warning} />
-              <Text style={[styles.sheetTitle, { color: theme.colors.state.warning }]}>Request revision</Text>
+              <Text style={[styles.sheetTitle, { color: theme.colors.state.warning }]}>
+                Request revision
+              </Text>
             </View>
 
             {confirmStep ? (
               <Card padding="md" style={styles.confirmCard}>
-                <Text style={[styles.confirmAction, { color: theme.colors.state.warning }]}>Request Revision</Text>
+                <Text style={[styles.confirmAction, { color: theme.colors.state.warning }]}>
+                  Request Revision
+                </Text>
                 <Text style={styles.confirmPaper}>{detail?.title}</Text>
                 <Text style={styles.confirmAuthor}>by {detail?.authorName}</Text>
                 <View style={styles.sheetButtons}>
-                  <Button label="Cancel" variant="subtle" onPress={() => setConfirmStep(false)} disabled={acting} />
-                  <Button label="Confirm" variant="warning" onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    runRevision();
-                  }} loading={acting} disabled={acting} />
+                  <Button
+                    label="Cancel"
+                    variant="subtle"
+                    onPress={() => setConfirmStep(false)}
+                    disabled={acting}
+                  />
+                  <Button
+                    label="Confirm"
+                    variant="warning"
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      runRevision();
+                    }}
+                    loading={acting}
+                    disabled={acting}
+                  />
                 </View>
               </Card>
             ) : (
@@ -534,22 +582,39 @@ export const FacultyReviewDetailScreen = () => {
 
         {sheet === 'reject' ? (
           <>
-            <View style={[styles.sheetHeader, { backgroundColor: theme.colors.state.dangerSurface }]}>
+            <View
+              style={[styles.sheetHeader, { backgroundColor: theme.colors.state.dangerSurface }]}
+            >
               <Icon icon={CircleX} size={24} color={theme.colors.state.danger} />
-              <Text style={[styles.sheetTitle, { color: theme.colors.state.danger }]}>Reject paper</Text>
+              <Text style={[styles.sheetTitle, { color: theme.colors.state.danger }]}>
+                Reject paper
+              </Text>
             </View>
 
             {confirmStep ? (
               <Card padding="md" style={styles.confirmCard}>
-                <Text style={[styles.confirmAction, { color: theme.colors.state.danger }]}>Reject Paper</Text>
+                <Text style={[styles.confirmAction, { color: theme.colors.state.danger }]}>
+                  Reject Paper
+                </Text>
                 <Text style={styles.confirmPaper}>{detail?.title}</Text>
                 <Text style={styles.confirmAuthor}>by {detail?.authorName}</Text>
                 <View style={styles.sheetButtons}>
-                  <Button label="Cancel" variant="subtle" onPress={() => setConfirmStep(false)} disabled={acting} />
-                  <Button label="Confirm" variant="danger" onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    runReject();
-                  }} loading={acting} disabled={acting} />
+                  <Button
+                    label="Cancel"
+                    variant="subtle"
+                    onPress={() => setConfirmStep(false)}
+                    disabled={acting}
+                  />
+                  <Button
+                    label="Confirm"
+                    variant="danger"
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      runReject();
+                    }}
+                    loading={acting}
+                    disabled={acting}
+                  />
                 </View>
               </Card>
             ) : (
@@ -608,7 +673,10 @@ export const FacultyReviewDetailScreen = () => {
 
       {showSuccess && (
         <View style={styles.successOverlay}>
-          <Animated.View entering={ZoomIn.springify().damping(12).stiffness(200)} style={styles.successIcon}>
+          <Animated.View
+            entering={ZoomIn.springify().damping(12).stiffness(200)}
+            style={styles.successIcon}
+          >
             <Icon icon={CircleCheck} size={64} color={theme.colors.state.success} />
             <Text style={styles.successText}>Decision Submitted</Text>
           </Animated.View>

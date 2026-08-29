@@ -79,7 +79,7 @@ describe('facultyApi.getAssignedPapers', () => {
           paperRow({ id: 'p1', submission_date: '2026-01-01T00:00:00.000Z' }),
           paperRow({ id: 'p2', submission_date: '2026-03-01T00:00:00.000Z' }),
         ],
-      })
+      }),
     );
     mockSupabase.from.mockReturnValueOnce(builder);
 
@@ -98,7 +98,7 @@ describe('facultyApi.getAssignedPapers', () => {
   it('propagates a Supabase error', async () => {
     queueProfileLookup(mockSupabase, { profileRow: facultyProfile() });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'load failed' } }))
+      createQueryBuilder(queryResult({ error: { message: 'load failed' } })),
     );
 
     await expect(facultyApi.getAssignedPapers()).rejects.toThrow('load failed');
@@ -118,8 +118,8 @@ describe('facultyApi.getReviewDetail', () => {
               { id: 'w2', reviewed_at: '2026-02-01T00:00:00.000Z' },
             ],
           }),
-        })
-      )
+        }),
+      ),
     );
 
     const result = await facultyApi.getReviewDetail('p1');
@@ -138,7 +138,7 @@ describe('facultyApi.getReviewDetail', () => {
   it('propagates a Supabase error', async () => {
     queueProfileLookup(mockSupabase, { profileRow: facultyProfile() });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'boom' } }))
+      createQueryBuilder(queryResult({ error: { message: 'boom' } })),
     );
 
     await expect(facultyApi.getReviewDetail('p1')).rejects.toThrow('boom');
@@ -156,8 +156,8 @@ describe('facultyApi.getReviewFile', () => {
             file_url:
               'https://project.supabase.co/storage/v1/object/public/research-papers/student-1/file.pdf',
           },
-        })
-      )
+        }),
+      ),
     );
     mockSupabase.storage.from.mockReturnValueOnce({
       createSignedUrl: jest
@@ -175,7 +175,7 @@ describe('facultyApi.getReviewFile', () => {
   it('throws when no file is attached', async () => {
     queueProfileLookup(mockSupabase, { profileRow: facultyProfile() });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ data: { id: 'p1', file_url: null } }))
+      createQueryBuilder(queryResult({ data: { id: 'p1', file_url: null } })),
     );
 
     await expect(facultyApi.getReviewFile('p1')).rejects.toThrow('No file is attached');
@@ -184,7 +184,7 @@ describe('facultyApi.getReviewFile', () => {
   it('propagates a Supabase error', async () => {
     queueProfileLookup(mockSupabase, { profileRow: facultyProfile() });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'read failed' } }))
+      createQueryBuilder(queryResult({ error: { message: 'read failed' } })),
     );
 
     await expect(facultyApi.getReviewFile('p1')).rejects.toThrow('read failed');
@@ -195,7 +195,9 @@ describe('facultyApi.getDeanChairMembers', () => {
   it('maps dean/chair rows', async () => {
     queueProfileLookup(mockSupabase, { profileRow: facultyProfile() });
     mockSupabase.rpc.mockResolvedValueOnce({
-      data: [{ id: 'd1', first_name: 'Ada', last_name: 'Lovelace', role: 'dean', department: 'CCIS' }],
+      data: [
+        { id: 'd1', first_name: 'Ada', last_name: 'Lovelace', role: 'dean', department: 'CCIS' },
+      ],
       error: null,
     });
 
@@ -231,10 +233,13 @@ describe('facultyApi.approvePaper / requestRevision / rejectPaper', () => {
 
   it('approvePaper propagates an RPC error', async () => {
     queueProfileLookup(mockSupabase, { profileRow: facultyProfile() });
-    mockSupabase.rpc.mockResolvedValueOnce({ data: null, error: { message: 'not pending_faculty' } });
+    mockSupabase.rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'not pending_faculty' },
+    });
 
     await expect(facultyApi.approvePaper('p1', 'dean-1', 'dean')).rejects.toThrow(
-      'not pending_faculty'
+      'not pending_faculty',
     );
   });
 
@@ -296,8 +301,8 @@ describe('facultyApi.getAnnotations', () => {
               reviewer: { id: 'r1', first_name: 'Ada', last_name: 'Lovelace', role: 'dean' },
             },
           ],
-        })
-      )
+        }),
+      ),
     );
 
     const result = await facultyApi.getAnnotations('p1');
@@ -322,21 +327,25 @@ describe('facultyApi.getAnnotations', () => {
       createQueryBuilder(
         queryResult({
           data: [{ id: 'a1', comment: 'Looks good overall.', created_at: null, reviewer: null }],
-        })
-      )
+        }),
+      ),
     );
 
     const result = await facultyApi.getAnnotations('p1');
 
     expect(result[0]).toEqual(
-      expect.objectContaining({ annotationType: 'comment', pageNumber: null, note: 'Looks good overall.' })
+      expect.objectContaining({
+        annotationType: 'comment',
+        pageNumber: null,
+        note: 'Looks good overall.',
+      }),
     );
   });
 
   it('propagates a Supabase error', async () => {
     queueProfileLookup(mockSupabase, { profileRow: facultyProfile() });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'load failed' } }))
+      createQueryBuilder(queryResult({ error: { message: 'load failed' } })),
     );
 
     await expect(facultyApi.getAnnotations('p1')).rejects.toThrow('load failed');
@@ -372,7 +381,7 @@ describe('facultyApi.createNoteAnnotation', () => {
         note: '   ',
         pageNumber: 1,
         anchorPercent: { x: 0, y: 0 },
-      })
+      }),
     ).rejects.toThrow('Add a note before saving');
     expect(mockSupabase.rpc).not.toHaveBeenCalled();
   });
@@ -390,7 +399,7 @@ describe('facultyApi.createNoteAnnotation', () => {
         note: 'x',
         pageNumber: 1,
         anchorPercent: { x: 0, y: 0 },
-      })
+      }),
     ).rejects.toThrow('not assigned to you');
   });
 });
@@ -404,20 +413,23 @@ describe('facultyApi.getPublishedPapers', () => {
           paperRow({ id: 'p1', submission_date: '2026-01-01T00:00:00.000Z' }),
           paperRow({ id: 'p2', submission_date: '2026-02-01T00:00:00.000Z' }),
         ],
-      })
+      }),
     );
     mockSupabase.from.mockReturnValueOnce(builder);
 
     const result = await facultyApi.getPublishedPapers();
 
-    expect(builder.in).toHaveBeenCalledWith('status', expect.arrayContaining(['approved', 'published']));
+    expect(builder.in).toHaveBeenCalledWith(
+      'status',
+      expect.arrayContaining(['approved', 'published']),
+    );
     expect(result.map((p) => p.id)).toEqual(['p2', 'p1']);
   });
 
   it('propagates a Supabase error', async () => {
     queueProfileLookup(mockSupabase, { profileRow: facultyProfile() });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'boom' } }))
+      createQueryBuilder(queryResult({ error: { message: 'boom' } })),
     );
 
     await expect(facultyApi.getPublishedPapers()).rejects.toThrow('boom');
@@ -429,8 +441,15 @@ describe('facultyApi.getNotifications / markNotificationRead / markAllNotificati
     queueProfileLookup(mockSupabase, { profileRow: facultyProfile() });
     const builder = createQueryBuilder(
       queryResult({
-        data: [{ id: 'n1', user_id: 'faculty-1', is_read: false, created_at: '2026-01-01T00:00:00.000Z' }],
-      })
+        data: [
+          {
+            id: 'n1',
+            user_id: 'faculty-1',
+            is_read: false,
+            created_at: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+      }),
     );
     mockSupabase.from.mockReturnValueOnce(builder);
 
@@ -443,7 +462,7 @@ describe('facultyApi.getNotifications / markNotificationRead / markAllNotificati
   it('getNotifications propagates a Supabase error', async () => {
     queueProfileLookup(mockSupabase, { profileRow: facultyProfile() });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'load failed' } }))
+      createQueryBuilder(queryResult({ error: { message: 'load failed' } })),
     );
 
     await expect(facultyApi.getNotifications()).rejects.toThrow('load failed');
@@ -463,7 +482,7 @@ describe('facultyApi.getNotifications / markNotificationRead / markAllNotificati
   it('markAllNotificationsRead propagates a Supabase error', async () => {
     queueProfileLookup(mockSupabase, { profileRow: facultyProfile() });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ error: { message: 'update failed' } }))
+      createQueryBuilder(queryResult({ error: { message: 'update failed' } })),
     );
 
     await expect(facultyApi.markAllNotificationsRead()).rejects.toThrow('update failed');

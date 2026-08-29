@@ -6,9 +6,20 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { DashboardHero, EmptyState, InlineNotice, Screen, Skeleton, WorkloadChart } from '../../components/ui';
+import {
+  DashboardHero,
+  EmptyState,
+  InlineNotice,
+  Screen,
+  Skeleton,
+  WorkloadChart,
+} from '../../components/ui';
 import { FacultyPaperCard } from '../../components/FacultyPaperCard';
-import { facultyApi, type FacultyAssignedPaper, type FacultyWorkloadSummary } from '../../api/faculty';
+import {
+  facultyApi,
+  type FacultyAssignedPaper,
+  type FacultyWorkloadSummary,
+} from '../../api/faculty';
 import { NotificationItem } from '../../types/domain';
 import { NotificationCard } from '../../components/NotificationCard';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
@@ -19,7 +30,6 @@ import { useAuth } from '../../context/AuthContext';
 import { greetingForHour, initialsFor } from '../../utils/format';
 import { haptics } from '../../lib/haptics';
 import { ArrowRight } from 'lucide-react-native';
-
 
 const DashboardSkeleton = () => {
   const styles = useThemedStyles(makeStyles);
@@ -44,7 +54,7 @@ export const FacultyDashboardScreen = () => {
   const [summary, setSummary] = useState<FacultyWorkloadSummary | null>(null);
   const [upNextPaper, setUpNextPaper] = useState<FacultyAssignedPaper | null>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  
+
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -54,11 +64,11 @@ export const FacultyDashboardScreen = () => {
   const load = useCallback(async () => {
     try {
       setError(null);
-      
+
       const [summaryData, paperData, notifData] = await Promise.all([
         facultyApi.getDashboardSummary(),
         facultyApi.getUpNextPaper(),
-        facultyApi.getNotifications(3)
+        facultyApi.getNotifications(3),
       ]);
 
       setSummary(summaryData);
@@ -79,7 +89,7 @@ export const FacultyDashboardScreen = () => {
   useFocusEffect(
     useCallback(() => {
       load();
-    }, [load])
+    }, [load]),
   );
 
   const onRefresh = useCallback(async () => {
@@ -131,7 +141,8 @@ export const FacultyDashboardScreen = () => {
             <WorkloadChart
               summary={summary}
               onSelectFilter={(filter) => {
-                let initialFilter: 'needs_review' | 'revisions' | 'forwarded' | 'approved' | 'all' = 'all';
+                let initialFilter: 'needs_review' | 'revisions' | 'forwarded' | 'approved' | 'all' =
+                  'all';
                 if (filter === 'needs_review') initialFilter = 'needs_review';
                 if (filter === 'revisions') initialFilter = 'revisions';
                 if (filter === 'forwarded') initialFilter = 'forwarded';
@@ -147,24 +158,28 @@ export const FacultyDashboardScreen = () => {
             <View style={styles.sections}>
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Action Required</Text>
-                
+
                 <View style={styles.activityList}>
                   {upNextPaper && (
                     <FacultyPaperCard
                       paper={upNextPaper}
-                      onPress={() => navigation.navigate('FacultyReviewDetail', { paperId: upNextPaper.id })}
+                      onPress={() =>
+                        navigation.navigate('FacultyReviewDetail', { paperId: upNextPaper.id })
+                      }
                     />
                   )}
-                  
+
                   {notifications.map((item, index) => (
                     <ListEntranceItem key={item.id} index={upNextPaper ? index + 1 : index}>
                       <NotificationCard
-                         notification={item}
-                         onPress={() => {
-                           if (item.research_id) {
-                             navigation.navigate('FacultyReviewDetail', { paperId: item.research_id });
-                           }
-                         }}
+                        notification={item}
+                        onPress={() => {
+                          if (item.research_id) {
+                            navigation.navigate('FacultyReviewDetail', {
+                              paperId: item.research_id,
+                            });
+                          }
+                        }}
                       />
                     </ListEntranceItem>
                   ))}
@@ -172,18 +187,22 @@ export const FacultyDashboardScreen = () => {
 
                 {summary && summary.pendingReview > 1 && (
                   <View style={styles.seeAllWrapper}>
-                    <Pressable 
+                    <Pressable
                       style={({ pressed }) => [styles.seeAllButton, pressed && { opacity: 0.6 }]}
-                      onPress={() => navigation.navigate('FacultyReview', { initialFilter: 'needs_review' })}
+                      onPress={() =>
+                        navigation.navigate('FacultyReview', { initialFilter: 'needs_review' })
+                      }
                     >
-                      <Text style={styles.seeAllText}>See all {summary.pendingReview} pending papers</Text>
+                      <Text style={styles.seeAllText}>
+                        See all {summary.pendingReview} pending papers
+                      </Text>
                       <Icon icon={ArrowRight} size={16} color={theme.colors.brand.primary} />
                     </Pressable>
                   </View>
                 )}
 
                 {!upNextPaper && notifications.length === 0 && (
-                   <EmptyState context="all-caught-up" />
+                  <EmptyState context="all-caught-up" />
                 )}
               </View>
             </View>
