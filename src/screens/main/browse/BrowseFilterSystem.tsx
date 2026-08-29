@@ -1,9 +1,10 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { StyleSheet, Text, View, Keyboard } from 'react-native';
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Check, SlidersHorizontal } from 'lucide-react-native';
 
-import { BottomSheet, Button, Icon, Input, PressableScale, SegmentedControl } from '../../../components/ui';
+import { BottomSheet, Button, Icon, Input, PressableScale } from '../../../components/ui';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import { type Theme } from '../../../theme';
 import { Category } from '../../../types/domain';
@@ -27,6 +28,7 @@ export const BrowseFilterSystem = ({
 }: BrowseFilterSystemProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const insets = useSafeAreaInsets();
   const sheetRef = useRef<BottomSheetModal>(null);
 
   type FilterTab = 'fields' | 'departments' | 'year';
@@ -116,18 +118,33 @@ export const BrowseFilterSystem = ({
         </View>
 
         <View style={styles.tabsContainer}>
-          <SegmentedControl
-            value={activeTab}
-            onValueChange={(val) => setActiveTab(val as FilterTab)}
-            options={[
-              { key: 'fields', label: 'FIELDS' },
-              { key: 'departments', label: 'DEPARTMENTS' },
-              { key: 'year', label: 'YEAR RANGE' },
-            ]}
-          />
+          <PressableScale 
+            style={[styles.tabBtn, activeTab === 'fields' && styles.tabBtnActive]} 
+            onPress={() => setActiveTab('fields')}
+          >
+            <Text style={[styles.tabText, activeTab === 'fields' && styles.tabTextActive]}>FIELDS</Text>
+          </PressableScale>
+
+          <PressableScale 
+            style={[styles.tabBtn, activeTab === 'departments' && styles.tabBtnActive]} 
+            onPress={() => setActiveTab('departments')}
+          >
+            <Text style={[styles.tabText, activeTab === 'departments' && styles.tabTextActive]}>DEPARTMENTS</Text>
+          </PressableScale>
+
+          <PressableScale 
+            style={[styles.tabBtn, activeTab === 'year' && styles.tabBtnActive]} 
+            onPress={() => setActiveTab('year')}
+          >
+            <Text style={[styles.tabText, activeTab === 'year' && styles.tabTextActive]}>YEAR RANGE</Text>
+          </PressableScale>
         </View>
 
-        <BottomSheetScrollView style={styles.sheetScroll} showsVerticalScrollIndicator={false}>
+        <BottomSheetScrollView 
+          style={styles.sheetScroll} 
+          contentContainerStyle={{ paddingBottom: insets.bottom + 64 }}
+          showsVerticalScrollIndicator={false}
+        >
           {/* CATEGORIES / FIELDS */}
           {activeTab === 'fields' && (
             <View style={styles.section}>
@@ -258,11 +275,30 @@ const makeStyles = (theme: Theme) =>
       color: theme.colors.text.primary,
     },
     tabsContainer: {
-      paddingHorizontal: theme.spacing.xl,
-      paddingTop: theme.spacing.md,
-      paddingBottom: theme.spacing.md,
+      flexDirection: 'row',
+      alignItems: 'center',
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border.subtle,
+      marginTop: theme.spacing.sm,
+    },
+    tabBtn: {
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: theme.spacing.md,
+      borderBottomWidth: 2,
+      borderBottomColor: 'transparent',
+    },
+    tabBtnActive: {
+      borderBottomColor: theme.colors.brand.primary,
+    },
+    tabText: {
+      fontFamily: theme.fontFamilies.ui.semibold,
+      fontSize: 12,
+      letterSpacing: 0.5,
+      color: theme.colors.text.muted,
+    },
+    tabTextActive: {
+      color: theme.colors.brand.primary,
     },
     sheetScroll: {
       flex: 1,
