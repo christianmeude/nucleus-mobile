@@ -64,21 +64,18 @@ export const palette = {
   },
   success: {
     100: '#D1FAE5',
-    300: '#6EE7B7', // Crisp, luminous mint for small bold text on navy (8.2:1)
     400: '#34D399',
     500: '#059669',
     600: '#047857',
   },
   warning: {
     100: '#FEF3C7',
-    300: '#FCD34D', // Clear amber/gold (9.3:1)
     400: '#FBBF24',
     500: '#D97706',
     600: '#B45309',
   },
   danger: {
     100: '#FEE2E2',
-    300: '#FCA5A5', // Soft coral red that doesn't vibrate on deep blue (6.8:1)
     400: '#F87171',
     500: '#DC2626',
     600: '#B91C1C',
@@ -210,12 +207,12 @@ export const dark: ColorScheme = {
     focus: palette.navy[300],
   },
   state: {
-    success: palette.success[300],
-    successSurface: palette.success[300] + '24', // 14% opacity
-    warning: palette.warning[300],
-    warningSurface: palette.warning[300] + '24',
-    danger: palette.danger[300],
-    dangerSurface: palette.danger[300] + '24',
+    success: palette.success[400],
+    successSurface: palette.success[400] + '24', // 14% opacity
+    warning: palette.warning[400],
+    warningSurface: palette.warning[400] + '24',
+    danger: palette.danger[400],
+    dangerSurface: palette.danger[400] + '24',
   },
 };
 

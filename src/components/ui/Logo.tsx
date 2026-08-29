@@ -3,7 +3,7 @@ import { useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 
 interface LogoProps {
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
   showWordmark?: boolean;
   wordmarkStyle?: any;
 }
@@ -13,6 +13,7 @@ const sizeMap = {
   md: { mark: 64, wordmark: 20, tracking: 4 },
   lg: { mark: 96, wordmark: 24, tracking: 5 },
   xl: { mark: 128, wordmark: 32, tracking: 6 },
+  xxl: { mark: 192, wordmark: 48, tracking: 8 },
 } as const;
 
 import Animated from 'react-native-reanimated';

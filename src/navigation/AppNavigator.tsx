@@ -111,7 +111,7 @@ const FullScreenLoader = ({ exiting, onFinished }: { exiting?: boolean; onFinish
     <View style={styles.loaderContainer}>
       <Animated.View style={[styles.halo, haloStyle]} />
       <Animated.View style={animatedStyle}>
-        <Logo size="lg" showWordmark={false} />
+        <Logo size="xxl" showWordmark={false} />
       </Animated.View>
     </View>
   );
@@ -258,9 +258,14 @@ const makeStyles = (t: Theme) =>
     },
     halo: {
       position: 'absolute',
-      width: 180,
-      height: 180,
-      borderRadius: 90,
+      width: 340,
+      height: 340,
+      borderRadius: 170,
       backgroundColor: t.colors.brand.primarySoft,
+      shadowColor: t.colors.brand.primary,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.6,
+      shadowRadius: 40,
+      elevation: 20,
     },
   });
