@@ -43,7 +43,7 @@ export const BrowseFilterBar = ({
       <Text style={styles.resultCount}>
         {resultCount} {resultCount === 1 ? 'Paper' : 'Papers'}
       </Text>
-      <View style={styles.subbarRight}>
+      <View style={styles.pillsRow}>
         <PressableScale
           style={[styles.pill, fieldActive && styles.pillActive]}
           onPress={onOpenFieldSheet}
@@ -130,9 +130,9 @@ export const BrowseFilterBar = ({
 export const makeStyles = (theme: Theme) =>
   StyleSheet.create({
     subbar: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+      flexDirection: 'column',
+      alignItems: 'stretch',
+      gap: theme.spacing.sm,
     },
     resultCount: {
       fontFamily: theme.fontFamilies.ui.semibold,
@@ -141,10 +141,11 @@ export const makeStyles = (theme: Theme) =>
       textTransform: 'uppercase',
       color: theme.colors.text.disabled,
     },
-    subbarRight: {
+    pillsRow: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
+      flexWrap: 'wrap',
     },
     pill: {
       flexDirection: 'row',
