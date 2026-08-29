@@ -238,7 +238,7 @@ export const LoginScreen = () => {
     } else if (data?.error) {
       setSheetError(data.error);
     } else {
-      bottomSheetRef.current?.close();
+      bottomSheetRef.current?.dismiss();
       setShowForgotPassword(false);
       setSheetSuccessMsg('');
       setSheetStep(1);
@@ -252,6 +252,15 @@ export const LoginScreen = () => {
     setSheetSuccessMsg('');
     setShowForgotPassword(true);
   };
+
+  useEffect(() => {
+    if (showForgotPassword) {
+      // conditional BottomSheet mounts closed — explicitly present it on next tick
+      requestAnimationFrame(() => bottomSheetRef.current?.present());
+    } else {
+      bottomSheetRef.current?.dismiss();
+    }
+  }, [showForgotPassword]);
 
   return (
     <View style={styles.root}>
@@ -410,12 +419,11 @@ export const LoginScreen = () => {
 
       <DevResetModal visible={devModalVisible} onClose={() => setDevModalVisible(false)} />
 
-      {showForgotPassword && (
-        <BottomSheet
-          ref={bottomSheetRef}
-          onDismiss={() => setShowForgotPassword(false)}
-          snapPoints={['50%', '90%']}
-        >
+      <BottomSheet
+        ref={bottomSheetRef}
+        onDismiss={() => setShowForgotPassword(false)}
+        snapPoints={['50%', '90%']}
+      >
           <BottomSheetScrollView
             showsVerticalScrollIndicator={false}
             showsHorizontalScrollIndicator={false}
@@ -576,7 +584,6 @@ export const LoginScreen = () => {
             </View>
           </BottomSheetScrollView>
         </BottomSheet>
-      )}
     </View>
   );
 };
