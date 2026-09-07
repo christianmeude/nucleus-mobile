@@ -16,6 +16,7 @@ export interface StandardPaperCardProps {
   categoryColor?: string;
   onPress: () => void;
   onRequestPublication?: () => void;
+  onResubmit?: () => void;
 }
 
 export const StandardPaperCard = memo(
@@ -26,6 +27,7 @@ export const StandardPaperCard = memo(
     categoryColor,
     onPress,
     onRequestPublication,
+    onResubmit,
   }: StandardPaperCardProps) => {
     const { theme } = useTheme();
     const styles = useThemedStyles(makeStyles);
@@ -111,6 +113,20 @@ export const StandardPaperCard = memo(
                     {statusToLabel('revision_required')}
                   </Text>
                 </View>
+              )}
+
+              {/* Action: resubmit revision */}
+              {paper.status === 'revision_required' && !!onResubmit && (
+                <Pressable
+                  onPress={onResubmit}
+                  style={({ pressed }) => [styles.actionLink, pressed && { opacity: 0.6 }]}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Resubmit revision"
+                >
+                  <Text style={styles.actionLinkText}>Resubmit revision</Text>
+                  <Icon icon={ArrowRight} size={14} color={theme.colors.brand.primary} />
+                </Pressable>
               )}
 
               {/* Status: rejected */}

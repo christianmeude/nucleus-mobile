@@ -175,6 +175,11 @@ export const DashboardScreen = () => {
                       onPress={() =>
                         navigation.navigate('ResearchDetail', { paperId: upNextPaper.id })
                       }
+                      onResubmit={() =>
+                        (navigation.getParent() ?? navigation).navigate('SubmitResearch', {
+                          resubmitPaperId: upNextPaper.id,
+                        })
+                      }
                     />
                   </View>
                 ) : papers.length === 0 && trendingPapers.length > 0 ? (

@@ -212,6 +212,11 @@ export const ResearchDetailScreen = () => {
     }
   };
 
+  const handleResubmitPress = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    navigation.navigate('SubmitResearch', { resubmitPaperId: paperId });
+  }, [navigation, paperId]);
+
   if (loading) {
     return (
       <Screen edges={{ top: false }} style={styles.loaderContainer}>
@@ -470,6 +475,16 @@ export const ResearchDetailScreen = () => {
             </View>
 
             {error ? <InlineNotice tone="danger" message={error} /> : null}
+
+            {isOwner && paper.status === 'revision_required' ? (
+              <View style={styles.section}>
+                <Button
+                  label="Resubmit revision"
+                  onPress={handleResubmitPress}
+                  accessibilityLabel="Resubmit revised research"
+                />
+              </View>
+            ) : null}
 
             {keywords.length > 0 ? (
               <View style={styles.section}>

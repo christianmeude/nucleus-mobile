@@ -100,6 +100,12 @@ export const MyPapersScreen = () => {
     loadData();
   }, [loadData]);
 
+  useFocusEffect(
+    useCallback(() => {
+      loadData(true);
+    }, [loadData]),
+  );
+
   const categoryNameById = useMemo(() => buildCategoryNameById(categories), [categories]);
 
   const filtered = useMemo(() => {
@@ -162,6 +168,14 @@ export const MyPapersScreen = () => {
     [navigation],
   );
 
+  const handleResubmitPress = useCallback(
+    (paperId: string) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      navigation.getParent()?.navigate('SubmitResearch', { resubmitPaperId: paperId });
+    },
+    [navigation],
+  );
+
   const renderPaperItem = useCallback(
     ({ item, index }: { item: ResearchPaper; index: number }) => (
       <ListEntranceItem index={index}>
@@ -171,10 +185,11 @@ export const MyPapersScreen = () => {
           category={resolveCategoryName(item.category, categoryNameById)}
           onPress={() => handlePaperPress(item.id)}
           onRequestPublication={() => setPublishTarget(item)}
+          onResubmit={() => handleResubmitPress(item.id)}
         />
       </ListEntranceItem>
     ),
-    [categoryNameById, handlePaperPress],
+    [categoryNameById, handlePaperPress, handleResubmitPress],
   );
 
   const handleRefresh = useCallback(() => {
