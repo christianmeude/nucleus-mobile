@@ -18,7 +18,15 @@ _Avoid_: Notifications, feed
 
 **Action Queue**:
 A strict list of pending requests that require explicit user action (e.g., Accept/Decline), which are removed once acted upon.
-_Avoid_: Invitations, pending requests
+_Avoid_: pending requests
+
+**Co-author Invitation**:
+A concrete Action Queue item inviting a student to co-author a research project. Only pending invitations expose Accept/Decline actions; accepted, declined, and expired ones render status only.
+_Avoid_: Invitations (generic)
+
+**Review Progress**:
+The owner-visible, newest-first sequence of review events for a paper (status, reviewer role, date, comments). Rendered in My Papers and Dashboard detail views at every status; never exposed in Browse.
+_Avoid_: Submission timeline
 
 **Student Dashboard**:
 A command center for the student focused on immediate priority and actionable insight (e.g., papers needing revision).
