@@ -1,6 +1,6 @@
 import { Icon } from '../../components/ui/Icon';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, ZoomIn, SlideOutLeft, FadeOut } from 'react-native-reanimated';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -25,23 +25,26 @@ import {
 } from '../../components/PdfViewer';
 import { AnnotationPanel } from '../../components/AnnotationPanel';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
-import { PaperAnnotation } from '../../api/research';
+import { PublishedBadge } from '../../components/ui/PublishedBadge';
+import { PaperAnnotation, researchApi } from '../../api/research';
+import type { Category } from '../../types/domain';
 import { facultyApi, type FacultyApprover, type FacultyReviewDetail } from '../../api/faculty';
 import { RootStackParamList } from '../../navigation/types';
 
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
-import { formatDate } from '../../utils/format';
-import { CircleX, Pencil, CircleCheck } from 'lucide-react-native';
+import {
+  formatDate,
+  formatRole,
+  splitAnnotationSummary,
+  statusToLabel,
+} from '../../utils/format';
+import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
+import { CircleX, Pencil, CircleCheck, ShieldCheck, ArrowUpRight } from 'lucide-react-native';
 
 type FacultyDetailRoute = RouteProp<RootStackParamList, 'FacultyReviewDetail'>;
 type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
 type SheetKind = 'approve' | 'revision' | 'reject';
-
-function titleCase(value?: string | null, fallback = ''): string {
-  if (!value) return fallback;
-  return value.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
-}
 
 export const FacultyReviewDetailScreen = () => {
   const route = useRoute<FacultyDetailRoute>();
@@ -55,6 +58,7 @@ export const FacultyReviewDetailScreen = () => {
   const [fileError, setFileError] = useState<string | null>(null);
   const [annotations, setAnnotations] = useState<PaperAnnotation[] | null>(null);
   const [annotationsError, setAnnotationsError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [panelOpen, setPanelOpen] = useState(false);
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
   const pdfRef = useRef<PdfViewerRef>(null);
@@ -119,6 +123,21 @@ export const FacultyReviewDetailScreen = () => {
       active = false;
     };
   }, [paperId]);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const rows = await researchApi.getCategories();
+        if (active) setCategories(rows);
+      } catch {
+        // Category eyebrow is decorative; the detail works without it.
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const loadAnnotations = useCallback(async () => {
     try {
@@ -280,6 +299,21 @@ export const FacultyReviewDetailScreen = () => {
 
   const canReview = detail.status === 'pending_faculty';
 
+  // Shared header content mirrors ResearchDetail exactly (same order, copy,
+  // and formatting) so both roles see the same view. Plain computation (not a
+  // hook) because this sits below the loading early-returns.
+  const categoryNameById = buildCategoryNameById(categories);
+  const categoryName = detail ? resolveCategoryName(detail.category, categoryNameById) : '';
+  const authorsLine = detail
+    ? [detail.authorName, ...(detail.coAuthorNames ?? [])].join('  ·  ')
+    : '';
+  const affiliation = detail
+    ? [detail.programName, detail.department].filter(Boolean).join(' · ')
+    : '';
+  const displayDate = detail
+    ? detail.publishedDate || detail.submissionDate || detail.createdAt
+    : null;
+
   return (
     <>
       <Screen edges={{ top: false }}>
@@ -290,12 +324,42 @@ export const FacultyReviewDetailScreen = () => {
           style={styles.screen}
           contentContainerStyle={styles.content}
         >
+          {categoryName ? <Text style={styles.eyebrow}>{categoryName}</Text> : null}
+          {detail.status === 'published' ? (
+            <View style={{ marginBottom: 6 }}>
+              <PublishedBadge />
+            </View>
+          ) : null}
           <Text style={styles.title}>{detail.title}</Text>
-          <Text style={styles.meta}>
-            {detail.authorName}
-            {detail.department ? ` · ${detail.department}` : ''} ·{' '}
-            {formatDate(detail.submissionDate || detail.createdAt)}
-          </Text>
+          <Text style={styles.authors}>{authorsLine}</Text>
+          {affiliation ? <Text style={styles.affiliation}>{affiliation}</Text> : null}
+          <View style={styles.metaRow}>
+            <Text style={styles.metaText}>{formatDate(displayDate)}</Text>
+            <Text style={styles.metaSep}>·</Text>
+            <Text style={styles.metaText}>{detail.viewCount || 0} views</Text>
+          </View>
+          {detail.status === 'published' && detail.doi ? (
+            <View style={styles.doiCard}>
+              <View style={styles.doiHeader}>
+                <Icon icon={ShieldCheck} size={16} color={theme.colors.brand.accent} />
+                <Text style={styles.doiTitle}>Formal Publication (DOI)</Text>
+              </View>
+              <PressableScale
+                style={styles.doiLinkRow}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  Linking.openURL(`https://doi.org/${detail.doi}`).catch(() => undefined);
+                }}
+                accessibilityRole="link"
+                accessibilityLabel={`Open DOI https://doi.org/${detail.doi} in browser`}
+              >
+                <Text style={styles.doiLink} numberOfLines={1}>
+                  https://doi.org/{detail.doi}
+                </Text>
+                <Icon icon={ArrowUpRight} size={14} color={theme.colors.brand.primary} />
+              </PressableScale>
+            </View>
+          ) : null}
 
           {detail.revisionNotes ? (
             <InlineNotice tone="warning" message={`Revision notes: ${detail.revisionNotes}`} />
@@ -305,7 +369,7 @@ export const FacultyReviewDetailScreen = () => {
           ) : null}
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Paper</Text>
+            <Text style={styles.sectionLabel}>Paper</Text>
             {fileError ? (
               <InlineNotice tone="danger" message={fileError} />
             ) : fileUri ? (
@@ -325,39 +389,89 @@ export const FacultyReviewDetailScreen = () => {
             )}
           </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Abstract</Text>
-            <Text style={styles.body}>{detail.abstract || '—'}</Text>
-          </View>
-
           {detail.keywords && detail.keywords.length > 0 ? (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Keywords</Text>
-              <Text style={styles.body}>{detail.keywords.join(', ')}</Text>
+              <Text style={styles.sectionLabel}>Keywords</Text>
+              <View style={styles.keywordsWrap}>
+                {detail.keywords.map((keyword) => (
+                  <View key={keyword} style={styles.keywordTag}>
+                    <Text style={styles.keywordText}>{keyword}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
           ) : null}
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Review history</Text>
+            <Text style={styles.sectionLabel}>Abstract</Text>
+            <Text style={styles.abstract}>{detail.abstract || 'No abstract available.'}</Text>
+          </View>
+
+          <View
+            style={styles.section}
+            accessible
+            accessibilityLabel={`Review progress, ${statusToLabel(detail.status) || detail.status}`}
+          >
+            <Text style={styles.sectionLabel}>Review progress</Text>
             {detail.workflow.length === 0 ? (
-              <Text style={styles.muted}>No review activity yet.</Text>
+              <Text style={styles.workflowEmpty}>No review activity yet.</Text>
             ) : (
-              <View style={styles.timeline}>
-                {detail.workflow.map((entry, index) => (
-                  <ListEntranceItem key={entry.id} index={index}>
-                    <Card padding="md">
-                      <Text style={styles.timelineHead}>
-                        {titleCase(entry.reviewerRole, 'Reviewer')}
-                        {entry.actionType ? ` · ${titleCase(entry.actionType)}` : ''}
-                      </Text>
-                      <Text style={styles.muted}>
-                        {entry.reviewerName ? `${entry.reviewerName} · ` : ''}
-                        {formatDate(entry.reviewedAt || entry.createdAt)}
-                      </Text>
-                      {entry.comments ? <Text style={styles.body}>{entry.comments}</Text> : null}
-                    </Card>
-                  </ListEntranceItem>
-                ))}
+              <View style={styles.workflowList}>
+                {detail.workflow.map((entry, index) => {
+                  const isCurrent = index === 0;
+                  const isLast = index === detail.workflow.length - 1;
+                  const isTerminal =
+                    entry.status === 'approved' || entry.status === 'published';
+                  const dateValue = formatDate(entry.reviewedAt || entry.createdAt);
+                  const roleLabel = formatRole(entry.reviewerRole);
+                  const metaLine = roleLabel ? `${roleLabel} · ${dateValue}` : dateValue;
+                  const commentParts = splitAnnotationSummary(entry.comments);
+                  return (
+                    <ListEntranceItem key={entry.id} index={index}>
+                      <View style={styles.workflowRow}>
+                        <View style={styles.workflowRail}>
+                          <View
+                            style={[
+                              styles.workflowDot,
+                              isCurrent
+                                ? styles.workflowDotCurrent
+                                : isTerminal
+                                  ? styles.workflowDotTerminal
+                                  : styles.workflowDotPast,
+                            ]}
+                          />
+                          {!isLast ? <View style={styles.workflowConnector} /> : null}
+                        </View>
+                        <View style={styles.workflowBody}>
+                          <Text style={styles.workflowName}>
+                            {statusToLabel(entry.status) || 'Status updated'}
+                          </Text>
+                          {metaLine ? (
+                            <Text style={styles.workflowMeta}>{metaLine}</Text>
+                          ) : null}
+                          {commentParts.main ? (
+                            <Text style={styles.workflowComment}>{commentParts.main}</Text>
+                          ) : null}
+                          {commentParts.summary.length > 0 ? (
+                            <View style={styles.workflowSummary}>
+                              <Text style={styles.workflowSummaryLabel}>
+                                Annotation Summary
+                              </Text>
+                              {commentParts.summary.map((line, lineIndex) => (
+                                <Text
+                                  key={`${entry.id}-summary-${lineIndex}`}
+                                  style={styles.workflowSummaryItem}
+                                >
+                                  {lineIndex + 1}. {line}
+                                </Text>
+                              ))}
+                            </View>
+                          ) : null}
+                        </View>
+                      </View>
+                    </ListEntranceItem>
+                  );
+                })}
               </View>
             )}
           </View>
@@ -653,10 +767,9 @@ export const FacultyReviewDetailScreen = () => {
         ) : null}
       </BottomSheet>
 
-      {annotations && (
+      {annotations && panelOpen && (
         <AnnotationPanel
           annotations={annotations as PaperAnnotation[]}
-          visible={panelOpen}
           selectedAnnotationId={selectedAnnotationId}
           onClose={() => {
             setPanelOpen(false);
@@ -700,15 +813,81 @@ const makeStyles = (theme: Theme) =>
       flex: 1,
       justifyContent: 'center',
     },
+    // Shared header/sections mirror ResearchDetail exactly (same order, copy,
+    // and formatting) so both roles see the same view.
+    eyebrow: {
+      fontFamily: theme.fontFamilies.ui.semibold,
+      fontSize: 11,
+      letterSpacing: 0.8,
+      textTransform: 'uppercase',
+      color: theme.colors.brand.primary,
+      marginBottom: theme.spacing.sm,
+    },
     title: {
-      fontFamily: theme.fontFamilies.display.semibold,
-      fontSize: 26,
-      lineHeight: 32,
+      ...theme.typography.display,
+      color: theme.colors.text.primary,
+      marginBottom: theme.spacing.md,
+    },
+    authors: {
+      fontFamily: theme.fontFamilies.display.regular,
+      fontStyle: 'italic',
+      fontSize: 15,
+      lineHeight: 22,
+      color: theme.colors.text.secondary,
+      marginBottom: theme.spacing.xs,
+    },
+    affiliation: {
+      ...theme.typography.bodySmall,
+      color: theme.colors.text.muted,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: theme.spacing.sm,
+      marginTop: theme.spacing.md,
+      paddingBottom: theme.spacing.lg,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.border.subtle,
+    },
+    metaText: {
+      ...theme.typography.metadata,
+      color: theme.colors.text.secondary,
+    },
+    metaSep: {
+      ...theme.typography.metadata,
+      color: theme.colors.border.strong,
+    },
+    doiCard: {
+      marginTop: theme.spacing.lg,
+      padding: theme.spacing.md,
+      borderRadius: theme.radii.lg,
+      borderCurve: 'continuous',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.border.subtle,
+      gap: theme.spacing.sm,
+    },
+    doiHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.xs,
+    },
+    doiTitle: {
+      ...theme.typography.label,
       color: theme.colors.text.primary,
     },
-    meta: {
-      ...theme.typography.metadata,
-      color: theme.colors.text.muted,
+    doiLinkRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.xs,
+    },
+    doiLink: {
+      ...theme.typography.caption,
+      fontSize: 13,
+      lineHeight: 18,
+      color: theme.colors.brand.primary,
+      textDecorationLine: 'underline',
+      flex: 1,
     },
     section: {
       gap: theme.spacing.sm,
@@ -717,16 +896,117 @@ const makeStyles = (theme: Theme) =>
       ...theme.typography.h3,
       color: theme.colors.text.primary,
     },
-    body: {
-      ...theme.typography.body,
+    sectionLabel: {
+      ...theme.typography.label,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      color: theme.colors.text.muted,
+    },
+    keywordsWrap: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: theme.spacing.sm,
+    },
+    keywordTag: {
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.border.subtle,
+      borderRadius: theme.radii.sm,
+      borderCurve: 'continuous',
+      backgroundColor: theme.colors.surface.raised,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 6,
+    },
+    keywordText: {
+      ...theme.typography.bodySmall,
       color: theme.colors.text.secondary,
+    },
+    abstract: {
+      fontFamily: theme.fontFamilies.display.regular,
+      fontSize: 16,
+      lineHeight: 26,
+      color: theme.colors.text.primary,
     },
     muted: {
       ...theme.typography.bodySmall,
       color: theme.colors.text.muted,
     },
-    timeline: {
-      gap: theme.spacing.sm,
+    workflowList: {
+      gap: 0,
+    },
+    workflowRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: theme.spacing.md,
+      paddingVertical: theme.spacing.md,
+    },
+    workflowRail: {
+      width: 20,
+      alignItems: 'center',
+      alignSelf: 'stretch',
+    },
+    workflowDot: {
+      width: 10,
+      height: 10,
+      borderRadius: theme.radii.pill,
+      borderCurve: 'continuous',
+      marginTop: 5,
+    },
+    workflowDotCurrent: {
+      backgroundColor: theme.colors.brand.primary,
+      borderWidth: 2,
+      borderColor: theme.colors.brand.accent,
+      width: 14,
+      height: 14,
+      marginTop: 3,
+    },
+    workflowDotPast: {
+      backgroundColor: theme.colors.border.strong,
+    },
+    workflowDotTerminal: {
+      backgroundColor: theme.colors.state.success,
+    },
+    workflowConnector: {
+      flex: 1,
+      width: 2,
+      borderRadius: theme.radii.pill,
+      backgroundColor: theme.colors.border.subtle,
+      marginTop: theme.spacing.xs,
+      marginBottom: -theme.spacing.md,
+    },
+    workflowBody: {
+      flex: 1,
+      gap: 2,
+    },
+    workflowName: {
+      ...theme.typography.bodyStrong,
+      color: theme.colors.text.primary,
+    },
+    workflowMeta: {
+      ...theme.typography.metadata,
+      color: theme.colors.text.muted,
+    },
+    workflowComment: {
+      ...theme.typography.bodySmall,
+      color: theme.colors.text.secondary,
+    },
+    workflowEmpty: {
+      ...theme.typography.bodySmall,
+      color: theme.colors.text.muted,
+    },
+    workflowSummary: {
+      marginTop: theme.spacing.xs,
+      paddingLeft: theme.spacing.sm,
+      borderLeftWidth: 2,
+      borderLeftColor: theme.colors.border.subtle,
+      gap: 2,
+    },
+    workflowSummaryLabel: {
+      ...theme.typography.label,
+      color: theme.colors.text.muted,
+    },
+    workflowSummaryItem: {
+      ...theme.typography.bodySmall,
+      color: theme.colors.text.secondary,
     },
     annotationReply: {
       marginTop: theme.spacing.sm,
@@ -734,10 +1014,6 @@ const makeStyles = (theme: Theme) =>
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: theme.colors.border.subtle,
       gap: theme.spacing.xs,
-    },
-    timelineHead: {
-      ...theme.typography.bodyStrong,
-      color: theme.colors.text.primary,
     },
     actions: {
       gap: theme.spacing.sm,

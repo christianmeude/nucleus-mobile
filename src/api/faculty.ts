@@ -68,11 +68,16 @@ export interface FacultyReviewDetail {
   submissionDate?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
+  publishedDate?: string | null;
+  viewCount?: number | null;
+  doi?: string | null;
   revisionNotes?: string | null;
   rejectionReason?: string | null;
   department?: string | null;
+  programName?: string | null;
   authorName: string;
   authorEmail?: string | null;
+  coAuthorNames?: string[];
   fileUrl?: string | null;
   workflow: FacultyWorkflowEntry[];
 }
@@ -130,10 +135,15 @@ interface FacultyPaperRow {
   submission_date?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  published_date?: string | null;
+  view_count?: number | null;
+  doi?: string | null;
   revision_notes?: string | null;
   last_reviewer_role?: string | null;
   department?: string | null;
   department_id?: string | null;
+  program_id?: string | null;
+  program?: { id: string; name: string; code?: string | null } | null;
   author?: FacultyAuthorRelation;
   structured_authors?: FacultyStructuredAuthorRow[] | null;
 }
@@ -148,10 +158,19 @@ const FACULTY_PAPER_SELECT = `
   submission_date,
   created_at,
   updated_at,
+  published_date,
+  view_count,
+  doi,
   revision_notes,
   last_reviewer_role,
   department,
   department_id,
+  program_id,
+  program:programs!research_papers_program_id_fkey(
+    id,
+    name,
+    code
+  ),
   author:users!research_papers_author_id_fkey(
     id,
     email,
@@ -277,6 +296,13 @@ function workflowTime(entry: FacultyWorkflowEntry): number {
 
 function toFacultyReviewDetail(row: FacultyDetailRow): FacultyReviewDetail {
   const author = resolveAuthorRow(row);
+  const coAuthorNames = Array.isArray(row.structured_authors)
+    ? row.structured_authors
+        .filter((entry) => !entry?.is_primary)
+        .map((entry) => buildFullName(pickAuthor(entry?.author)))
+        .map((name) => name.trim())
+        .filter(Boolean)
+    : [];
   const workflow = Array.isArray(row.approval_workflow)
     ? row.approval_workflow
         .map(toFacultyWorkflowEntry)
@@ -293,11 +319,16 @@ function toFacultyReviewDetail(row: FacultyDetailRow): FacultyReviewDetail {
     submissionDate: row.submission_date ?? null,
     createdAt: row.created_at ?? null,
     updatedAt: row.updated_at ?? null,
+    publishedDate: row.published_date ?? null,
+    viewCount: row.view_count ?? null,
+    doi: row.doi ?? null,
     revisionNotes: row.revision_notes ?? null,
     rejectionReason: row.rejection_reason ?? null,
     department: row.department ?? null,
+    programName: row.program?.name ?? null,
     authorName: buildFullName(author) || 'Unknown author',
     authorEmail: author?.email ?? null,
+    coAuthorNames,
     fileUrl: row.file_url ?? null,
     workflow,
   };
