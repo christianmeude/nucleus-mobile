@@ -58,7 +58,9 @@ export const InvitationCard = memo(
     const isPending = status === 'pending';
     const isExpired = status === 'expired';
     const notActionable = !isPending;
-    const showActions = isPending || isExpired;
+    // Only pending invitations are actionable. Expired/accepted/declined
+    // render no actions at all (no reserved spacing).
+    const showActions = isPending;
     const pressDisabled = notActionable || acting;
 
     const inviterName =
