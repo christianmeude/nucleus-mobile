@@ -36,7 +36,7 @@ import { Button, InlineNotice } from './ui';
 const PDFJS_VERSION = '3.11.174';
 
 import { AnnotationType, AnnotationRect, AnnotationPoint } from '../utils/annotation';
-import { MousePointer2, Eye, Maximize, X } from 'lucide-react-native';
+import { MousePointer2, Eye, EyeOff, Maximize, X } from 'lucide-react-native';
 
 /**
  * A positioned annotation overlay to render on top of a PDF page.
@@ -108,6 +108,22 @@ const buildViewerHtml = (
     return null;
   }
 
+  // Tap reporting with touch/click dedupe (Android WebView often never fires
+  // click for touches; touchend preventDefault suppresses the trailing click).
+  var __lastTapId = '';
+  var __lastTapTime = 0;
+  function tapAnn(id) {
+    var now = Date.now();
+    if (id === __lastTapId && now - __lastTapTime < 600) return;
+    __lastTapId = id;
+    __lastTapTime = now;
+    post({ type: 'tapAnnotation', id: id });
+  }
+  function bindTap(el, id) {
+    el.ontouchend = function(e) { e.stopPropagation(); e.preventDefault(); tapAnn(id); };
+    el.onclick = function(e) { e.stopPropagation(); tapAnn(id); };
+  }
+
   window.__buildOverlays = function(jsonStr) {
     document.querySelectorAll('.ann-overlay').forEach(function(el) { el.remove(); });
     var anns;
@@ -121,7 +137,7 @@ const buildViewerHtml = (
         img.className = 'ann-overlay';
         img.src = ann.drawImageUrl;
         img.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;opacity:0.85;pointer-events:auto;cursor:pointer;';
-        img.onclick = function(e) { e.stopPropagation(); post({ type: 'tapAnnotation', id: ann.id }); };
+        bindTap(img, ann.id);
         wrapper.appendChild(img);
       }
       if (ann.highlightRects && ann.highlightRects.length) {
@@ -134,7 +150,7 @@ const buildViewerHtml = (
           el.style.width = rect.w + '%';
           el.style.height = rect.h + '%';
           el.style.background = safeColor(ann.highlightColor, 0.35) || safeColor('${themeColors.accent}', 0.35);
-          el.onclick = function(e) { e.stopPropagation(); post({ type: 'tapAnnotation', id: ann.id }); };
+          bindTap(el, ann.id);
           wrapper.appendChild(el);
         });
       }
@@ -145,7 +161,7 @@ const buildViewerHtml = (
         pin.style.left = ann.anchorPercent.x + '%';
         pin.style.top = ann.anchorPercent.y + '%';
         pin.style.background = safeColor(ann.highlightColor, 0.9) || '${themeColors.accent}';
-        pin.onclick = function(e) { e.stopPropagation(); post({ type: 'tapAnnotation', id: ann.id }); };
+        bindTap(pin, ann.id);
         wrapper.appendChild(pin);
       }
     });
@@ -246,6 +262,9 @@ const buildViewerHtml = (
                 return page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise
                   .then(function () {
                     if (!firstDone) { firstDone = true; post({ type: 'loaded', pages: pdf.numPages }); }
+                  })
+                  .then(function () {
+                    post({ type: 'pageReady', pageNumber: pageNum, pages: pdf.numPages });
                   });
               });
             });
@@ -305,6 +324,9 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
     const [errored, setErrored] = useState(false);
     const [errorText, setErrorText] = useState<string | null>(null);
     const firedFirstLoad = useRef(false);
+    // Bumps every time another page finishes rendering, so overlays for later
+    // pages are (re)built once their wrappers exist.
+    const [renderedPages, setRenderedPages] = useState(0);
 
     useImperativeHandle(ref, () => ({
       jumpToPage: (pageNumber: number) => {
@@ -318,6 +340,8 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
 
     // Inject annotation overlay data whenever the PDF finishes loading or annotations change.
     // Overlays are created hidden; the visibility effect below controls show/hide independently.
+    // Rebuilt as each page renders: overlays for not-yet-rendered pages are skipped by the
+    // builder, so without this pins on later pages would silently never appear.
     useEffect(() => {
       if (!loaded || !webViewRef.current) return;
       const positioned = (annotations ?? []).filter((a) => a.pageNumber !== null);
@@ -326,7 +350,7 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
       webViewRef.current.injectJavaScript(
         `window.__buildOverlays && window.__buildOverlays(${JSON.stringify(json)}); true;`,
       );
-    }, [loaded, annotations]);
+    }, [loaded, annotations, renderedPages]);
 
     // Toggle overlay visibility whenever showAnnotations or loaded changes.
     useEffect(() => {
@@ -389,6 +413,12 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
         if (typeof payload.pageNumber === 'number' && payload.imageDataUrl) {
           onPlaceDraw?.(payload.pageNumber, payload.imageDataUrl);
         }
+      } else if (payload.type === 'pageReady') {
+        setRenderedPages((prev) =>
+          typeof payload.pageNumber === 'number' && payload.pageNumber > prev
+            ? payload.pageNumber
+            : prev,
+        );
       } else if (payload.type === 'tapAnnotation' && payload.id) {
         onAnnotationPress?.(payload.id);
       }
@@ -600,10 +630,17 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
           <Pressable
             onPress={() => setShowAnnotations((prev) => !prev)}
             accessibilityRole="button"
-            accessibilityLabel={showAnnotations ? 'Hide annotations' : 'Show annotations'}
-            style={styles.controlButton}
+            accessibilityLabel={overlaysVisible ? 'Hide annotations' : 'Show annotations'}
+            style={[
+              styles.controlButton,
+              overlaysVisible ? styles.controlButtonActive : null,
+            ]}
           >
-            <Icon icon={Eye} size={18} color={theme.colors.text.onBrand} />
+            <Icon
+              icon={overlaysVisible ? EyeOff : Eye}
+              size={18}
+              color={theme.colors.text.onBrand}
+            />
           </Pressable>
         ) : null}
         {fill || isFullscreen ? null : (
@@ -685,7 +722,7 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
                       ref={ref}
                       uri={uri}
                       annotations={annotations}
-                      showAnnotations={showAnnotations}
+                      showAnnotations={overlaysVisible}
                       onAnnotationPress={onAnnotationPress}
                       annotationMode={pendingAnchor ? 'none' : annotationMode}
                       onPlaceNote={(pageNumber, anchor) => {

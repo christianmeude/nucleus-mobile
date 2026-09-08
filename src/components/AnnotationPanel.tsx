@@ -12,7 +12,6 @@ import { ANNOTATION_ICONS } from '../utils/annotation';
 
 interface AnnotationPanelProps {
   annotations: PaperAnnotation[];
-  visible: boolean;
   onClose: () => void;
   onAnnotationPress?: (annotation: PaperAnnotation) => void;
   selectedAnnotationId?: string | null;
@@ -27,7 +26,6 @@ interface ThreadedAnnotation {
 
 export const AnnotationPanel = ({
   annotations,
-  visible,
   onClose,
   onAnnotationPress,
   selectedAnnotationId,
@@ -38,26 +36,27 @@ export const AnnotationPanel = ({
   const itemLayouts = useRef<Record<string, number>>({});
   const panelRef = useRef<BottomSheetModal>(null);
 
+  // Self-present on mount. The parent mounts this panel only while open, so
+  // every open gets a fresh modal instance — this sidesteps Gorhom v5's stale
+  // dismissed-state where a second present() after a dismiss is a silent no-op
+  // (device log: present() fired with ref attached, nothing appeared, and later
+  // taps died because `visible` was already true).
   useEffect(() => {
-    if (visible) {
-      panelRef.current?.present();
-    } else {
-      panelRef.current?.dismiss();
-    }
-  }, [visible]);
+    const frame = requestAnimationFrame(() => panelRef.current?.present());
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   React.useEffect(() => {
-    if (visible && selectedAnnotationId) {
-      // Small timeout allows the BottomSheet to transition and the ScrollView to layout
-      const timer = setTimeout(() => {
-        const y = itemLayouts.current[selectedAnnotationId];
-        if (y !== undefined && scrollViewRef.current) {
-          scrollViewRef.current.scrollTo({ y, animated: true });
-        }
-      }, 400);
-      return () => clearTimeout(timer);
-    }
-  }, [visible, selectedAnnotationId]);
+    if (!selectedAnnotationId) return;
+    // Small timeout allows the BottomSheet to transition and the ScrollView to layout
+    const timer = setTimeout(() => {
+      const y = itemLayouts.current[selectedAnnotationId];
+      if (y !== undefined && scrollViewRef.current) {
+        scrollViewRef.current.scrollTo({ y, animated: true });
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [selectedAnnotationId]);
 
   const threadedGroups = useMemo(() => {
     const topLevel = new Map<string, ThreadedAnnotation>();
