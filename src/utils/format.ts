@@ -1,4 +1,4 @@
-import { PaperStatus, ResearchPaper, StructuredAuthorEntry } from '../types/domain';
+import { ResearchPaper, StructuredAuthorEntry } from '../types/domain';
 
 const STATUS_LABELS: Record<string, string> = {
   pending: 'Pending',
@@ -16,9 +16,50 @@ const STATUS_LABELS: Record<string, string> = {
   revision_required: 'Revision Required',
 };
 
-export const statusToLabel = (status?: PaperStatus) => {
+export const statusToLabel = (status?: string | null) => {
   if (!status) return 'Pending';
   return STATUS_LABELS[String(status)] || String(status).replace(/_/g, ' ');
+};
+
+/** Formal role label ("program_chair" → "Program Chair"). Shared by the
+ *  student and faculty timelines so both roles see identical formatting. */
+export const formatRole = (value?: string | null) => {
+  const trimmed = String(value ?? '').trim();
+  if (!trimmed) return '';
+  return trimmed
+    .split('_')
+    .map((word) =>
+      word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '',
+    )
+    .join(' ');
+};
+
+export interface CommentParts {
+  /** Comment text above the marker (may be empty). */
+  main: string;
+  /** Enumerated lines below the marker, numbering stripped. */
+  summary: string[];
+}
+
+/**
+ * Split a review comment's trailing "[Annotation Summary]" snapshot
+ * (written at decision time, enumerating the annotations the reviewer saw)
+ * from the reviewer's own words. Marker absent → everything is `main`.
+ */
+export const splitAnnotationSummary = (comment?: string | null): CommentParts => {
+  const lines = String(comment ?? '').split('\n');
+  const markerIndex = lines.findIndex((line) =>
+    line.trim().toLowerCase().startsWith('[annotation summary]'),
+  );
+  if (markerIndex === -1) {
+    return { main: String(comment ?? '').trim(), summary: [] };
+  }
+  const main = lines.slice(0, markerIndex).join('\n').trim();
+  const summary = lines
+    .slice(markerIndex + 1)
+    .map((line) => line.trim().replace(/^\d+[.)]\s*/, ''))
+    .filter(Boolean);
+  return { main, summary };
 };
 
 /** Two-letter initials for an avatar tile; '?' when the name is empty. */

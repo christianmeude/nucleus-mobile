@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import * as Haptics from 'expo-haptics';
 import { BlurView } from 'expo-blur';
@@ -35,9 +35,11 @@ import { PdfViewer, type PdfViewerRef } from '../../components/PdfViewer';
 import { AnnotationPanel } from '../../components/AnnotationPanel';
 import {
   formatDate,
+  formatRole,
   getPrimaryAuthorName,
   listCoAuthorNames,
   paperDate,
+  splitAnnotationSummary,
   statusToLabel,
 } from '../../utils/format';
 import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
@@ -50,6 +52,7 @@ import {
   Link2,
   ShieldCheck,
   ArrowUpRight,
+  ChevronRight,
 } from 'lucide-react-native';
 
 type DetailRouteProp = RouteProp<RootStackParamList, 'ResearchDetail'>;
@@ -69,7 +72,7 @@ export const ResearchDetailScreen = () => {
   const { user } = useAuth();
   const { theme, scheme } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { paperId } = route.params;
+  const { paperId, from } = route.params;
 
   const [paper, setPaper] = useState<ResearchPaper | null>(null);
   const [annotations, setAnnotations] = useState<any[]>([]);
@@ -240,18 +243,23 @@ export const ResearchDetailScreen = () => {
 
   const isOwner =
     paper.structured_authors?.some((e) => e.is_primary && e.user_id === user?.id) ?? false;
-  // Workflow history carries reviewer↔author comments — show it only to the owner while the
-  // paper is still in review. Once approved/published it is a public artifact (this is the
-  // only status Browse surfaces), so the workflow stays hidden for everyone.
-  const showWorkflow = isOwner && paper.status !== 'approved' && paper.status !== 'published';
-  // Related papers only make sense once a paper is a public repository entry — for a
-  // paper still in review (only reachable from Dashboard/My Papers), there's nothing
-  // published yet to meaningfully relate it to.
   const isRepositoryPaper = PUBLISHED_STATUSES.has(paper.status);
+  // Explicit entry-point context: My Papers / Dashboard are the owner workspace
+  // (timeline + feedback visible at every status, no Related Papers). Browse is
+  // the public repository view (timeline + feedback hidden, Related shown).
+  // Deep-links and notifications carry no `from` — fall back to ownership.
+  const isOwnerContext =
+    from === 'myPapers' || from === 'dashboard' || (from == null && isOwner);
+  // Workflow history carries reviewer↔author comments — owner-gated and never
+  // exposed in Browse, even once approved/published.
+  const showWorkflow = isOwner && isOwnerContext;
+  // Related papers are a Browse discovery feature — never shown in the owner
+  // workspace, even for repository papers.
+  const showRelated = isRepositoryPaper && !isOwnerContext;
 
-  // Feedback (annotations) is internal review info. It shouldn't be accessible
-  // to anyone on the repository page, as it's published.
-  const showFeedback = !isRepositoryPaper;
+  // Feedback (annotations) is internal review info. It is visible to the owner
+  // in their own workspace at every status, and never exposed in Browse.
+  const showFeedback = isOwner && isOwnerContext;
 
   const keywords = Array.isArray(paper.keywords) ? paper.keywords.filter(Boolean) : [];
   const categoryName = resolveCategoryName(paper.category, categoryNameById);
@@ -268,6 +276,7 @@ export const ResearchDetailScreen = () => {
   const displayDate = paper.published_date || paper.created_at;
 
   return (
+    <>
     <SheetPresenter
       open={pdfOpen}
       onClose={() => setPdfOpen(false)}
@@ -362,15 +371,44 @@ export const ResearchDetailScreen = () => {
               <Text style={styles.metaText}>{paper.view_count || 0} views</Text>
             </View>
 
+            {annotations.length > 0 && showFeedback ? (
+              <PressableScale
+                style={styles.feedbackRow}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setPanelOpen(true);
+                  }}
+                accessibilityRole="button"
+                accessibilityLabel={`View reviewer feedback, ${annotations.length} annotations`}
+              >
+                <Icon icon={MessageCircle} size={18} color={theme.colors.text.muted} />
+                <Text style={styles.feedbackRowText}>
+                  Reviewer feedback ({annotations.length})
+                </Text>
+                <Icon icon={ChevronRight} size={18} color={theme.colors.text.muted} />
+              </PressableScale>
+            ) : null}
+
             {paper.status === 'published' && paper.doi && (
               <View style={styles.doiCard}>
                 <View style={styles.doiHeader}>
                   <Icon icon={ShieldCheck} size={16} color={theme.colors.brand.accent} />
                   <Text style={styles.doiTitle}>Formal Publication (DOI)</Text>
                 </View>
-                <Text style={styles.doiLink} selectable>
-                  https://doi.org/{paper.doi}
-                </Text>
+                <PressableScale
+                  style={styles.doiLinkRow}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    Linking.openURL(`https://doi.org/${paper.doi}`).catch(() => undefined);
+                  }}
+                  accessibilityRole="link"
+                  accessibilityLabel={`Open DOI https://doi.org/${paper.doi} in browser`}
+                >
+                  <Text style={styles.doiLink} numberOfLines={1}>
+                    https://doi.org/{paper.doi}
+                  </Text>
+                  <Icon icon={ArrowUpRight} size={14} color={theme.colors.brand.primary} />
+                </PressableScale>
               </View>
             )}
 
@@ -384,7 +422,7 @@ export const ResearchDetailScreen = () => {
                       Publication requested
                     </Text>
                   </View>
-                  <Text style={styles.doiLink}>Pending admin review.</Text>
+                  <Text style={styles.doiStatic}>Pending admin review.</Text>
                 </View>
               ) : (
                 <PressableScale
@@ -397,24 +435,13 @@ export const ResearchDetailScreen = () => {
                     <Icon icon={ArrowUpRight} size={16} color={theme.colors.brand.primary} />
                     <Text style={styles.doiTitle}>Request formal publication</Text>
                   </View>
-                  <Text style={styles.doiLink}>
+                  <Text style={styles.doiStatic}>
                     Submit a DOI to list this paper in the public registry.
                   </Text>
                 </PressableScale>
               ))}
 
             <View style={styles.readRow}>
-              {annotations.length > 0 && showFeedback ? (
-                <PressableScale
-                  style={styles.feedbackBtn}
-                  onPress={() => setPanelOpen(true)}
-                  accessibilityRole="button"
-                  accessibilityLabel="View feedback"
-                >
-                  <Icon icon={MessageCircle} size={20} color={theme.colors.text.secondary} />
-                  <Text style={styles.feedbackBtnText}>Feedback ({annotations.length})</Text>
-                </PressableScale>
-              ) : null}
               <PressableScale
                 style={styles.bookmarkBtn}
                 onPress={handleToggleSave}
@@ -504,7 +531,7 @@ export const ResearchDetailScreen = () => {
               <Text style={styles.abstract}>{paper.abstract || 'No abstract available.'}</Text>
             </View>
 
-            {isRepositoryPaper && related.length > 0 ? (
+            {showRelated && related.length > 0 ? (
               <View style={styles.section}>
                 <Text style={styles.sectionLabel}>Related papers</Text>
                 <View style={styles.relatedList}>
@@ -541,68 +568,101 @@ export const ResearchDetailScreen = () => {
             ) : null}
 
             {showWorkflow ? (
-              <View style={styles.section}>
-                <Text style={styles.sectionLabel}>Submission timeline</Text>
+              <View
+                style={styles.section}
+                accessible
+                accessibilityLabel={`Review progress, ${statusToLabel(paper.status) || paper.status}`}
+              >
+                <Text style={styles.sectionLabel}>Review progress</Text>
                 {workflow.length === 0 ? (
-                  <Text style={styles.workflowEmpty}>No timeline available.</Text>
+                  <Text style={styles.workflowEmpty}>No review activity yet.</Text>
                 ) : (
                   <View style={styles.workflowList}>
-                    {workflow.map((entry, index) => (
-                      <ListEntranceItem key={entry.id} index={index}>
-                        <View
-                          style={[
-                            styles.workflowRow,
-                            index === 0 ? styles.workflowRowCurrent : null,
-                          ]}
-                        >
-                          {index === 0 ? <View style={styles.workflowBar} /> : null}
-                          <View style={styles.workflowBody}>
-                            <Text style={styles.workflowName}>
-                              {statusToLabel(entry.status) || entry.action_type || 'Updated'}
-                            </Text>
-                            {entry.reviewer_role ? (
-                              <Text style={styles.workflowMeta}>
-                                Reviewer: {entry.reviewer_role}
+                    {workflow.map((entry, index) => {
+                      const isCurrent = index === 0;
+                      const isLast = index === workflow.length - 1;
+                      const isTerminal =
+                        entry.status === 'approved' || entry.status === 'published';
+                      const dateValue = formatDate(entry.reviewed_at || entry.created_at);
+                      const roleLabel = formatRole(entry.reviewer_role);
+                      const metaLine = roleLabel ? `${roleLabel} · ${dateValue}` : dateValue;
+                      const commentParts = splitAnnotationSummary(entry.comments);
+                      return (
+                        <ListEntranceItem key={entry.id} index={index}>
+                          <View style={styles.workflowRow}>
+                            <View style={styles.workflowRail}>
+                              <View
+                                style={[
+                                  styles.workflowDot,
+                                  isCurrent
+                                    ? styles.workflowDotCurrent
+                                    : isTerminal
+                                      ? styles.workflowDotTerminal
+                                      : styles.workflowDotPast,
+                                ]}
+                              />
+                              {!isLast ? <View style={styles.workflowConnector} /> : null}
+                            </View>
+                            <View style={styles.workflowBody}>
+                              <Text style={styles.workflowName}>
+                                {statusToLabel(entry.status) ||
+                                  entry.action_type ||
+                                  'Status updated'}
                               </Text>
-                            ) : null}
-                            {entry.comments ? (
-                              <Text style={styles.workflowComment}>{entry.comments}</Text>
-                            ) : null}
+                              {metaLine ? (
+                                <Text style={styles.workflowMeta}>{metaLine}</Text>
+                              ) : null}
+                              {commentParts.main ? (
+                                <Text style={styles.workflowComment}>{commentParts.main}</Text>
+                              ) : null}
+                              {commentParts.summary.length > 0 ? (
+                                <View style={styles.workflowSummary}>
+                                  <Text style={styles.workflowSummaryLabel}>
+                                    Annotation Summary
+                                  </Text>
+                                  {commentParts.summary.map((line, lineIndex) => (
+                                    <Text
+                                      key={`${entry.id}-summary-${lineIndex}`}
+                                      style={styles.workflowSummaryItem}
+                                    >
+                                      {lineIndex + 1}. {line}
+                                    </Text>
+                                  ))}
+                                </View>
+                              ) : null}
+                            </View>
                           </View>
-                          <Text style={styles.workflowDate}>
-                            {formatDate(entry.reviewed_at || entry.created_at)}
-                          </Text>
-                        </View>
-                      </ListEntranceItem>
-                    ))}
+                        </ListEntranceItem>
+                      );
+                    })}
                   </View>
                 )}
               </View>
             ) : null}
           </ScrollView>
         </Screen>
-        {annotations.length > 0 && showFeedback && (
-          <AnnotationPanel
-            annotations={annotations}
-            visible={panelOpen}
-            selectedAnnotationId={selectedAnnotationId}
-            onClose={() => {
-              setPanelOpen(false);
-              setSelectedAnnotationId(null);
-            }}
-            onAnnotationPress={(ann) => {
-              setPanelOpen(false);
-              if (ann.pageNumber) {
-                setPdfOpen(true);
-                setTimeout(() => {
-                  pdfRef.current?.jumpToPage(ann.pageNumber!);
-                }, 400);
-              }
-            }}
-          />
-        )}
       </SheetPresenter>
     </SheetPresenter>
+      {annotations.length > 0 && showFeedback && panelOpen && (
+        <AnnotationPanel
+          annotations={annotations}
+          selectedAnnotationId={selectedAnnotationId}
+          onClose={() => {
+            setPanelOpen(false);
+            setSelectedAnnotationId(null);
+          }}
+          onAnnotationPress={(ann) => {
+            setPanelOpen(false);
+            if (ann.pageNumber) {
+              setPdfOpen(true);
+              setTimeout(() => {
+                pdfRef.current?.jumpToPage(ann.pageNumber!);
+              }, 400);
+            }
+          }}
+        />
+      )}
+    </>
   );
 };
 
@@ -675,20 +735,20 @@ const makeStyles = (theme: Theme) =>
       marginTop: theme.spacing.lg,
       gap: theme.spacing.sm,
     },
-    feedbackBtn: {
+    feedbackRow: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.md,
-      height: 44,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.border.subtle,
-      borderRadius: theme.radii.md,
-      borderCurve: 'continuous',
+      marginTop: theme.spacing.lg,
+      paddingVertical: theme.spacing.sm,
+      minHeight: 52,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.border.subtle,
     },
-    feedbackBtnText: {
-      ...theme.typography.bodyStrong,
+    feedbackRowText: {
+      ...theme.typography.body,
       color: theme.colors.text.secondary,
+      flex: 1,
     },
     bookmarkBtn: {
       width: 44,
@@ -723,7 +783,20 @@ const makeStyles = (theme: Theme) =>
       color: theme.colors.text.primary,
       fontFamily: 'monospace',
     },
+    doiLinkRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.xs,
+    },
     doiLink: {
+      ...theme.typography.caption,
+      fontSize: 13,
+      lineHeight: 18,
+      color: theme.colors.brand.primary,
+      textDecorationLine: 'underline',
+      flex: 1,
+    },
+    doiStatic: {
       ...theme.typography.caption,
       color: theme.colors.text.muted,
     },
@@ -853,28 +926,47 @@ const makeStyles = (theme: Theme) =>
       color: theme.colors.text.muted,
     },
     workflowList: {
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: theme.colors.border.subtle,
+      gap: 0,
     },
     workflowRow: {
       flexDirection: 'row',
       alignItems: 'flex-start',
       gap: theme.spacing.md,
       paddingVertical: theme.spacing.md,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: theme.colors.border.subtle,
     },
-    workflowRowCurrent: {
-      paddingLeft: theme.spacing.md,
+    workflowRail: {
+      width: 20,
+      alignItems: 'center',
+      alignSelf: 'stretch',
     },
-    workflowBar: {
-      position: 'absolute',
-      left: 0,
-      top: theme.spacing.md,
-      bottom: theme.spacing.md,
-      width: 3,
+    workflowDot: {
+      width: 10,
+      height: 10,
       borderRadius: theme.radii.pill,
-      backgroundColor: theme.colors.brand.accent,
+      borderCurve: 'continuous',
+      marginTop: 5,
+    },
+    workflowDotCurrent: {
+      backgroundColor: theme.colors.brand.primary,
+      borderWidth: 2,
+      borderColor: theme.colors.brand.accent,
+      width: 14,
+      height: 14,
+      marginTop: 3,
+    },
+    workflowDotPast: {
+      backgroundColor: theme.colors.border.strong,
+    },
+    workflowDotTerminal: {
+      backgroundColor: theme.colors.state.success,
+    },
+    workflowConnector: {
+      flex: 1,
+      width: 2,
+      borderRadius: theme.radii.pill,
+      backgroundColor: theme.colors.border.subtle,
+      marginTop: theme.spacing.xs,
+      marginBottom: -theme.spacing.md,
     },
     workflowBody: {
       flex: 1,
@@ -889,6 +981,21 @@ const makeStyles = (theme: Theme) =>
       color: theme.colors.text.muted,
     },
     workflowComment: {
+      ...theme.typography.bodySmall,
+      color: theme.colors.text.secondary,
+    },
+    workflowSummary: {
+      marginTop: theme.spacing.xs,
+      paddingLeft: theme.spacing.sm,
+      borderLeftWidth: 2,
+      borderLeftColor: theme.colors.border.subtle,
+      gap: 2,
+    },
+    workflowSummaryLabel: {
+      ...theme.typography.label,
+      color: theme.colors.text.muted,
+    },
+    workflowSummaryItem: {
       ...theme.typography.bodySmall,
       color: theme.colors.text.secondary,
     },

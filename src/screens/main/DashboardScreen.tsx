@@ -173,7 +173,10 @@ export const DashboardScreen = () => {
                       variant="papers"
                       category={resolveCategoryName(upNextPaper.category, categoryNameById)}
                       onPress={() =>
-                        navigation.navigate('ResearchDetail', { paperId: upNextPaper.id })
+                        navigation.navigate('ResearchDetail', {
+                          paperId: upNextPaper.id,
+                          from: 'dashboard',
+                        })
                       }
                       onResubmit={() =>
                         (navigation.getParent() ?? navigation).navigate('SubmitResearch', {
@@ -198,7 +201,10 @@ export const DashboardScreen = () => {
                             variant="browse"
                             category={resolveCategoryName(paper.category, categoryNameById)}
                             onPress={() =>
-                              navigation.navigate('ResearchDetail', { paperId: paper.id })
+                              navigation.navigate('ResearchDetail', {
+                                paperId: paper.id,
+                                from: 'browse',
+                              })
                             }
                           />
                         </View>

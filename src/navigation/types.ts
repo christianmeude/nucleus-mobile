@@ -7,7 +7,7 @@ export type RootStackParamList = {
   Login: undefined;
   UnsupportedRole: undefined;
   StudentTabs: undefined;
-  ResearchDetail: { paperId: string };
+  ResearchDetail: { paperId: string; from?: 'browse' | 'myPapers' | 'dashboard' };
   SubmitResearch: { resubmitPaperId?: string } | undefined;
   Activity: undefined;
   FacultyTabs: undefined;
