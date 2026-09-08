@@ -2,6 +2,8 @@ import { Icon } from '../../components/ui/Icon';
 import { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import type { LucideIcon } from 'lucide-react-native';
+import { BellOff, CircleCheck, FileText, Info, Search } from 'lucide-react-native';
 import { useThemedStyles, useTheme } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 
@@ -15,33 +17,33 @@ interface EmptyStateProps {
   context?: EmptyStateContext;
 }
 
-const CONTEXT_DEFAULTS = {
+const CONTEXT_DEFAULTS: Record<EmptyStateContext, { title: string; message: string; IconComponent: LucideIcon }> = {
   'all-caught-up': {
     title: 'All caught up!',
     message: 'There are no pending items for you to review.',
-    IconComponent: 'checkmark.circle',
+    IconComponent: CircleCheck,
   },
   'no-results': {
     title: 'No results found',
     message: 'Try a different search or filter.',
-    IconComponent: 'magnifyingglass',
+    IconComponent: Search,
   },
   'no-papers': {
     title: 'No papers yet',
     message: 'You have not submitted any papers.',
-    IconComponent: 'doc',
+    IconComponent: FileText,
   },
   'no-notifications': {
     title: 'No notifications',
     message: "You'll hear from us when something happens.",
-    IconComponent: 'bell.slash',
+    IconComponent: BellOff,
   },
   default: {
     title: 'Nothing here',
     message: 'There is nothing to show at this time.',
-    IconComponent: 'info.circle',
+    IconComponent: Info,
   },
-} as const;
+};
 
 export const EmptyState = ({ title, message, icon, context }: EmptyStateProps) => {
   const styles = useThemedStyles(makeStyles);
@@ -56,7 +58,7 @@ export const EmptyState = ({ title, message, icon, context }: EmptyStateProps) =
   let displayIcon = icon;
   if (!displayIcon && context) {
     const IconComp = ctx?.IconComponent ?? defaultCtx.IconComponent;
-    displayIcon = <Icon icon={IconComp as any} size={40} color={theme.colors.brand.primary} />;
+    displayIcon = <Icon icon={IconComp} size={40} color={theme.colors.brand.primary} />;
   }
 
   return (
