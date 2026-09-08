@@ -24,6 +24,7 @@ import { FACULTY_QUEUE_FILTERS, type FacultyQueueFilter } from './facultyStatus'
 import { FacultyTabsParamList, FacultyTabNavigationProp } from '../../navigation/types';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
+import { listEpochKey } from '../../utils/listEpochKey';
 import { Search, X, ChevronLeft, ChevronRight } from 'lucide-react-native';
 
 export const FacultyReviewScreen = () => {
@@ -272,6 +273,7 @@ export const FacultyReviewScreen = () => {
       </View>
 
       <LegendList
+        key={listEpochKey((papers ?? []).length === 0)}
         recycleItems={true}
         drawDistance={1500}
         contentContainerStyle={styles.content}

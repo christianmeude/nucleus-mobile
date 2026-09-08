@@ -10,6 +10,7 @@ import { CoAuthorInvitation } from '../types/domain';
 import { InvitationCard } from './InvitationCard';
 import { ListEntranceItem } from './ListEntranceItem';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
+import { listEpochKey } from '../utils/listEpochKey';
 import { type Theme } from '../theme';
 import { haptics } from '../lib/haptics';
 import { EmptyState, InlineNotice, Skeleton } from './ui';
@@ -111,6 +112,7 @@ export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
 
   return (
     <LegendList
+      key={listEpochKey(loading || invitations.length === 0)}
       onScroll={onScroll}
       scrollEventThrottle={16}
       recycleItems={true}

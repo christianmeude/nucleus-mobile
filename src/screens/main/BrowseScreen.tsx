@@ -32,6 +32,7 @@ import {
   TopBar,
 } from '../../components/ui';
 import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
+import { listEpochKey } from '../../utils/listEpochKey';
 
 import { BrowseHeader } from './browse/BrowseHeader';
 import { BrowseControls } from './browse/BrowseControls';
@@ -264,6 +265,7 @@ export const BrowseScreen = () => {
     (paperId: string) =>
       navigation.navigate(user?.role === 'faculty' ? 'FacultyPaperDetail' : 'ResearchDetail', {
         paperId,
+        from: 'browse',
       }),
     [navigation, user?.role],
   );
@@ -379,6 +381,7 @@ export const BrowseScreen = () => {
 
           <View style={styles.resultsWrap}>
             <LegendList
+              key={listEpochKey(listData.length === 0)}
               recycleItems={true}
               drawDistance={1500}
               style={styles.scroll}

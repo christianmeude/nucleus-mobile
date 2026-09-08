@@ -15,6 +15,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
 import { Category, PaperStatus, ResearchPaper } from '../../types/domain';
 import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
+import { listEpochKey } from '../../utils/listEpochKey';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { StandardPaperCard } from '../../components/StandardPaperCard';
@@ -163,7 +164,7 @@ export const MyPapersScreen = () => {
 
   const handlePaperPress = useCallback(
     (paperId: string) => {
-      navigation.navigate('ResearchDetail', { paperId });
+      navigation.navigate('ResearchDetail', { paperId, from: 'myPapers' });
     },
     [navigation],
   );
@@ -269,6 +270,7 @@ export const MyPapersScreen = () => {
         </View>
 
         <LegendList
+          key={listEpochKey(loading || filtered.length === 0)}
           recycleItems={true}
           drawDistance={1500}
           maintainScrollAtEnd={false}
