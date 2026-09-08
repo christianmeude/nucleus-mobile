@@ -38,12 +38,14 @@ import {
   Card,
   Chip,
   EmptyState,
+  FadeInView,
   Icon,
   InlineNotice,
   Skeleton,
 } from '../../components/ui';
 import { RootStackParamList } from '../../navigation/types';
 import { usePushNotifications } from '../../hooks/usePushNotifications';
+import { haptics } from '../../lib/haptics';
 
 type SubmitNav = NativeStackNavigationProp<RootStackParamList, 'SubmitResearch'>;
 type SubmitRoute = RouteProp<RootStackParamList, 'SubmitResearch'>;
@@ -136,6 +138,14 @@ const FormSection = ({
   );
 };
 
+const CHECKLIST_STEP_BY_KEY: Record<string, string> = {
+  pdf: 'Step 1 · File',
+  title: 'Step 2 · Title',
+  abstract: 'Step 2 · Abstract',
+  category: 'Step 3 · Category',
+  faculty: 'Step 3 · Adviser',
+};
+
 export const SubmitResearchScreen = () => {
   const navigation = useNavigation<SubmitNav>();
   const route = useRoute<SubmitRoute>();
@@ -171,7 +181,6 @@ export const SubmitResearchScreen = () => {
   const programSheetRef = useRef<BottomSheetModal>(null);
   const facultySheetRef = useRef<BottomSheetModal>(null);
   const checklistSheetRef = useRef<BottomSheetModal>(null);
-  const [showChecklistModal, setShowChecklistModal] = useState(false);
 
   const [bootstrapping, setBootstrapping] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -434,9 +443,6 @@ export const SubmitResearchScreen = () => {
     return matched?.fullName || 'Faculty adviser';
   }, [formData.facultyId, facultyMembers]);
 
-  const allowedTypesLabel = policy.allowedFileTypes.map((t) => `.${t}`).join(', ');
-  const policyLine = `${allowedTypesLabel} • Max ${policy.maxFileSizeMb} MB`;
-
   // Per Phase 2 §3 — implement the stricter rule: adviser is required.
   const checklistItems = useMemo(
     () => [
@@ -506,6 +512,7 @@ export const SubmitResearchScreen = () => {
       // Request push notifications contextually on first submission success
       await requestAndRegisterPushToken();
 
+      haptics.success();
       setSubmitSuccess(true);
       setTimeout(() => {
         if (navigation.canGoBack()) {
@@ -513,7 +520,7 @@ export const SubmitResearchScreen = () => {
         } else {
           navigation.navigate('StudentTabs');
         }
-      }, 1500);
+      }, 2000);
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Failed to submit research.');
     } finally {
@@ -690,7 +697,7 @@ export const SubmitResearchScreen = () => {
                   <Text style={styles.uploadHint}>
                     {isResubmit && resubmitPaper?.file_url
                       ? 'Keeping current file unless replaced'
-                      : policyLine}
+                      : `PDF • Max ${policy.maxFileSizeMb} MB`}
                   </Text>
                 </Pressable>
               )}
@@ -965,16 +972,6 @@ export const SubmitResearchScreen = () => {
             )}
 
             {submitError ? <InlineNotice tone="danger" message={submitError} /> : null}
-            {submitSuccess ? (
-              <InlineNotice
-                tone="success"
-                message={
-                  isResubmit
-                    ? 'Research resubmitted successfully.'
-                    : 'Research submitted successfully.'
-                }
-              />
-            ) : null}
           </>
         )}
       </ScrollView>
@@ -1039,6 +1036,23 @@ export const SubmitResearchScreen = () => {
               </Pressable>
             )}
           </View>
+        </View>
+      ) : null}
+
+      {/* Submission success celebration */}
+      {submitSuccess ? (
+        <View style={styles.successOverlay}>
+          <FadeInView distance={14} fromScale={0.92} duration={380} style={styles.successContent}>
+            <View style={styles.successBadge}>
+              <Icon icon={CircleCheck} size={44} color={theme.colors.state.success} />
+            </View>
+            <Text style={styles.successTitle}>
+              {isResubmit ? 'Resubmitted for review' : 'Submitted for review'}
+            </Text>
+            <Text style={styles.successMessage}>
+              Your paper is now in the review queue. Your faculty adviser will be notified.
+            </Text>
+          </FadeInView>
         </View>
       ) : null}
 
@@ -1203,18 +1217,43 @@ export const SubmitResearchScreen = () => {
       <BottomSheet ref={checklistSheetRef} snapPoints={['50%', '75%']}>
         <Text style={styles.sheetTitle}>Submission checklist</Text>
         <Text style={styles.sheetIntro}>Confirm all required items before final submission.</Text>
+        <View style={styles.checklistProgress}>
+          <Text style={styles.checklistCount}>
+            {checklistItems.filter((item) => item.done).length} of {checklistItems.length} ready
+          </Text>
+          <View style={styles.checklistTrack}>
+            <View
+              style={[
+                styles.checklistFill,
+                {
+                  width: `${(checklistItems.filter((item) => item.done).length / Math.max(checklistItems.length, 1)) * 100}%`,
+                },
+              ]}
+            />
+          </View>
+        </View>
         <View style={styles.checklist}>
           {checklistItems.map((item) => (
             <View
               key={item.key}
               style={[styles.checklistRow, item.done ? styles.checklistRowDone : styles.checklistRowPending]}
             >
-              <Text style={styles.checklistLabel}>{item.label}</Text>
-              <Icon
-                icon={item.done ? CircleCheck : CircleAlert}
-                size={18}
-                color={item.done ? theme.colors.state.success : theme.colors.state.warning}
-              />
+              <View
+                style={[
+                  styles.checklistIconWrap,
+                  item.done ? styles.checklistIconDone : styles.checklistIconPending,
+                ]}
+              >
+                <Icon
+                  icon={item.done ? CircleCheck : CircleAlert}
+                  size={24}
+                  color={item.done ? theme.colors.state.success : theme.colors.state.warning}
+                />
+              </View>
+              <View style={styles.checklistText}>
+                <Text style={styles.checklistLabel}>{item.label}</Text>
+                <Text style={styles.checklistStep}>{CHECKLIST_STEP_BY_KEY[item.key] ?? ''}</Text>
+              </View>
             </View>
           ))}
         </View>
@@ -1227,7 +1266,7 @@ export const SubmitResearchScreen = () => {
         <View style={styles.actionRow}>
           <Button
             label="Review form"
-            onPress={() => setShowChecklistModal(false)}
+            onPress={() => checklistSheetRef.current?.dismiss()}
             variant="subtle"
           />
           <Button
@@ -1410,11 +1449,6 @@ const makeStyles = (theme: Theme) => StyleSheet.create({
     ...theme.typography.body,
     color: theme.colors.text.secondary,
   },
-  policyLine: {
-    ...theme.typography.caption,
-    color: theme.colors.text.muted,
-    marginTop: theme.spacing.xs,
-  },
   fileButtonRow: {
     flexDirection: 'row',
     marginTop: theme.spacing.sm,
@@ -1466,29 +1500,74 @@ const makeStyles = (theme: Theme) => StyleSheet.create({
     ...theme.typography.caption,
     color: theme.colors.text.muted,
   },
-  checklist: {
+  checklistProgress: {
     gap: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
+  },
+  checklistCount: {
+    ...theme.typography.bodyStrong,
+    color: theme.colors.text.primary,
+  },
+  checklistTrack: {
+    height: 6,
+    borderRadius: theme.radii.pill,
+    borderCurve: 'continuous',
+    backgroundColor: theme.colors.surface.sunken,
+    overflow: 'hidden',
+  },
+  checklistFill: {
+    height: '100%',
+    borderRadius: theme.radii.pill,
+    borderCurve: 'continuous',
+    backgroundColor: theme.colors.brand.primary,
+  },
+  checklist: {
+    gap: theme.spacing.md,
   },
   checklistRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderRadius: theme.radii.md,
+    gap: theme.spacing.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border.subtle,
+    borderRadius: theme.radii.lg,
+    borderCurve: 'continuous',
+    backgroundColor: theme.colors.surface.raised,
     paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: theme.spacing.md,
+    minHeight: 56,
   },
   checklistRowDone: {
-    borderColor: theme.colors.state.success,
-    backgroundColor: theme.colors.state.successSurface,
+    borderColor: theme.colors.border.subtle,
   },
   checklistRowPending: {
-    borderColor: theme.colors.state.warning,
+    borderColor: theme.colors.brand.primary,
+  },
+  checklistIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: theme.radii.pill,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checklistIconDone: {
+    backgroundColor: theme.colors.state.successSurface,
+  },
+  checklistIconPending: {
     backgroundColor: theme.colors.state.warningSurface,
   },
+  checklistText: {
+    flex: 1,
+    gap: 2,
+  },
   checklistLabel: {
-    ...theme.typography.label,
+    ...theme.typography.bodyStrong,
     color: theme.colors.text.primary,
+  },
+  checklistStep: {
+    ...theme.typography.caption,
+    color: theme.colors.text.muted,
   },
   navRow: {
     flexDirection: 'row',
@@ -1613,5 +1692,41 @@ const makeStyles = (theme: Theme) => StyleSheet.create({
   },
   submitTextDisabled: {
     color: theme.colors.text.muted,
+  },
+  successOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: theme.colors.surface.base,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing['3xl'],
+    zIndex: 100,
+  },
+  successContent: {
+    alignItems: 'center',
+    gap: theme.spacing.md,
+  },
+  successBadge: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.state.successSurface,
+    marginBottom: theme.spacing.xs,
+  },
+  successTitle: {
+    ...theme.typography.h1,
+    color: theme.colors.text.primary,
+    textAlign: 'center',
+  },
+  successMessage: {
+    ...theme.typography.body,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    maxWidth: 280,
   },
 });
