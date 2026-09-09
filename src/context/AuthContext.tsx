@@ -5,6 +5,7 @@ import { mapSupabaseAuthError } from '../auth/mapSupabaseAuthError';
 import { supabase } from '../lib/supabase';
 import { clearAuthTokens } from '../storage/authStorage';
 import { User } from '../types/domain';
+import { apiCache } from '../utils/apiCache';
 
 interface SignInResult {
   success: boolean;
@@ -40,13 +41,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // The API cache is scoped to the signed-in user; every identity change (sign-in,
+  // sign-out, account switch) must re-scope it so one account's data can never be
+  // served to another. Applied before setUser so consumers never read stale data.
+  const applyUser = (nextUser: User | null) => {
+    apiCache.setUserScope(nextUser?.id ?? 'anon');
+    setUser(nextUser);
+  };
+
   useEffect(() => {
     let cancelled = false;
 
     const finishApply = async (session: Session | null) => {
       const nextUser = await loadProfileFromSession(session);
       if (cancelled) return;
-      setUser(nextUser);
+      applyUser(nextUser);
     };
 
     const bootstrap = async () => {
@@ -67,7 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (!session) {
-        if (!cancelled) setUser(null);
+        if (!cancelled) applyUser(null);
         return;
       }
 
@@ -117,7 +126,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             error: errorMsg,
           };
         }
-        setUser(profile);
+        applyUser(profile);
         return { success: true };
       } catch (profileError) {
         await supabase.auth.signOut();
@@ -139,17 +148,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     await clearAuthTokens();
     await supabase.auth.signOut();
-    setUser(null);
+    applyUser(null);
   };
 
   const refreshCurrentUser = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const profile = await loadProfileFromSession(session);
-      setUser(profile);
+      applyUser(profile);
     } catch (_error) {
       await supabase.auth.signOut();
-      setUser(null);
+      applyUser(null);
     }
   };
 

@@ -24,18 +24,36 @@ const MAX_CACHE_SIZE = 100;
 class ApiCache {
   private cache = new Map<string, CacheEntry<any>>();
   private inFlight = new Map<string, Promise<any>>();
+  private scope = 'anon';
+
+  /**
+   * Re-scopes the cache to a single authenticated user. All entries are stored
+   * under a per-scope key prefix so data from one account can never be served
+   * to another after a sign-in/sign-out or an account switch. Switching scope
+   * drops the previous user's entries and in-flight requests.
+   */
+  setUserScope(scope: string): void {
+    if (scope === this.scope) return;
+    this.scope = scope;
+    this.clear();
+  }
+
+  private scopedKey(key: string): string {
+    return `${this.scope}:${key}`;
+  }
 
   /**
    * Retrieves an entry from cache if present and within TTL.
    */
   get<T>(key: string, ttl = DEFAULT_TTL): T | null {
-    const entry = this.cache.get(key);
+    const entry = this.cache.get(this.scopedKey(key));
     if (!entry) return null;
     if (Date.now() - entry.timestamp > ttl) return null;
 
     // Refresh LRU position
-    this.cache.delete(key);
-    this.cache.set(key, entry);
+    const scoped = this.scopedKey(key);
+    this.cache.delete(scoped);
+    this.cache.set(scoped, entry);
     return entry.data as T;
   }
 
@@ -43,12 +61,13 @@ class ApiCache {
    * Retrieves an entry from cache even if its TTL has expired (stale data).
    */
   getStale<T>(key: string): T | null {
-    const entry = this.cache.get(key);
+    const scoped = this.scopedKey(key);
+    const entry = this.cache.get(scoped);
     if (!entry) return null;
 
     // Refresh LRU position
-    this.cache.delete(key);
-    this.cache.set(key, entry);
+    this.cache.delete(scoped);
+    this.cache.set(scoped, entry);
     return entry.data as T;
   }
 
@@ -56,8 +75,9 @@ class ApiCache {
    * Stores data in the cache with the current timestamp, enforcing LRU eviction.
    */
   set<T>(key: string, data: T): void {
-    if (this.cache.has(key)) {
-      this.cache.delete(key);
+    const scoped = this.scopedKey(key);
+    if (this.cache.has(scoped)) {
+      this.cache.delete(scoped);
     } else if (this.cache.size >= MAX_CACHE_SIZE) {
       // Evict oldest entry (first key in Map iterator)
       const oldestKey = this.cache.keys().next().value;
@@ -65,15 +85,16 @@ class ApiCache {
         this.cache.delete(oldestKey);
       }
     }
-    this.cache.set(key, { data, timestamp: Date.now() });
+    this.cache.set(scoped, { data, timestamp: Date.now() });
   }
 
   /**
    * Deletes all cache entries whose key starts with the given prefix.
    */
   invalidate(keyPrefix: string): void {
+    const scopedPrefix = this.scopedKey(keyPrefix);
     for (const key of this.cache.keys()) {
-      if (key.startsWith(keyPrefix)) {
+      if (key.startsWith(scopedPrefix)) {
         this.cache.delete(key);
         this.inFlight.delete(key);
       }
@@ -100,24 +121,25 @@ class ApiCache {
     options: SWROptions<T> = {},
   ): Promise<T> {
     const { forceRefresh = false, ttl = DEFAULT_TTL, onUpdate } = options;
+    const scoped = this.scopedKey(key);
     const now = Date.now();
-    const entry = this.cache.get(key);
+    const entry = this.cache.get(scoped);
 
     // 1. Valid cache hit
     if (!forceRefresh && entry && now - entry.timestamp <= ttl) {
-      this.cache.delete(key);
-      this.cache.set(key, entry);
+      this.cache.delete(scoped);
+      this.cache.set(scoped, entry);
       return entry.data as T;
     }
 
     // 2. Stale cache hit: return stale immediately, revalidate in background
     if (!forceRefresh && entry) {
-      this.runBackgroundFetch(key, fetcher, onUpdate);
+      this.runBackgroundFetch(scoped, fetcher, onUpdate);
       return entry.data as T;
     }
 
     // 3. No cache or forceRefresh: fetch directly (deduplicating in-flight requests)
-    return this.runForegroundFetch(key, fetcher, onUpdate);
+    return this.runForegroundFetch(scoped, fetcher, onUpdate);
   }
 
   private async runForegroundFetch<T>(
