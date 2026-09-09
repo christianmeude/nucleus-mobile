@@ -28,61 +28,61 @@ colors:
   danger: '#B91C1C'
 typography:
   display:
-    fontFamily: Roboto
+    fontFamily: Inter
     fontSize: 28px
     lineHeight: 36px
     fontWeight: 600
     letterSpacing: 0.15px
   h1:
-    fontFamily: Roboto
+    fontFamily: Inter
     fontSize: 24px
     lineHeight: 32px
     fontWeight: 700
   h2:
-    fontFamily: Roboto
+    fontFamily: Inter
     fontSize: 20px
     lineHeight: 28px
     fontWeight: 700
   h3:
-    fontFamily: Roboto
+    fontFamily: Inter
     fontSize: 17px
     lineHeight: 24px
     fontWeight: 600
   body-strong:
-    fontFamily: Roboto
+    fontFamily: Inter
     fontSize: 15px
     lineHeight: 22px
     fontWeight: 600
   body:
-    fontFamily: Roboto
+    fontFamily: Inter
     fontSize: 15px
     lineHeight: 22px
     fontWeight: 400
   body-small:
-    fontFamily: Roboto
+    fontFamily: Inter
     fontSize: 13px
     lineHeight: 20px
     fontWeight: 400
   label:
-    fontFamily: Roboto
+    fontFamily: Inter
     fontSize: 13px
     lineHeight: 18px
     fontWeight: 600
     letterSpacing: 0.1px
   metadata:
-    fontFamily: Roboto
+    fontFamily: Inter
     fontSize: 12px
     lineHeight: 18px
     fontWeight: 500
     letterSpacing: 0.1px
   caption:
-    fontFamily: Roboto
+    fontFamily: Inter
     fontSize: 11px
     lineHeight: 16px
     fontWeight: 400
     letterSpacing: 0.2px
   button:
-    fontFamily: Roboto
+    fontFamily: Inter
     fontSize: 15px
     lineHeight: 20px
     fontWeight: 600
@@ -137,7 +137,7 @@ NUcleus Mobile is a research repository for National University Dasmariñas stud
 
 **Key Characteristics:**
 
-- **One Typeface**: Roboto is the single app-wide typeface to read as neutral and platform-native.
+- **One Typeface**: Inter is the single app-wide typeface to read as neutral and platform-native.
 - **Strict Brand Alignment**: Navy for primary actions and navigation; gold reserved strictly for emphasis.
 - **Soft Geometry**: Modest corner radii tied closely to platform (Material 3/iOS) defaults.
 - **Reading-First**: Ample spacing and disciplined use of color ensure cognitive ease during reading.
@@ -170,8 +170,8 @@ The palette is anchored by the university's navy and gold, with navy driving str
 
 ## Typography
 
-**Display Font:** Roboto (with system sans-serif fallback)
-**Body Font:** Roboto (with system sans-serif fallback)
+**Display Font:** Inter (with system sans-serif fallback)
+**Body Font:** Inter (with system sans-serif fallback)
 
 **Character:** Utilitarian, highly legible, and native. Visual hierarchy is achieved entirely through size, weight, and letter-spacing per token, rather than introducing a second family.
 
@@ -271,5 +271,5 @@ Corner radius scales with the size of the element it's applied to and is never u
 
 - **Don't** size up a heading just because it "could be bigger".
 - **Don't** use gold as a fill color for large surfaces or decoration.
-- **Don't** introduce a second font family; rely on Roboto's weights.
+- **Don't** introduce a second font family; rely on Inter's weights.
 - **Don't** ship a rounded corner without `borderCurve: 'continuous'` on iOS.

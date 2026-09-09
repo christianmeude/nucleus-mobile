@@ -1,0 +1,107 @@
+Test Case #,Description,Test Steps,Test Data,Expected Results,Actual Results,Pass/Fail
+1-1,Verify student dashboard loads with greeting counts Up Next Recent Activity,"1. Log in as provisioned student scroll privacy notice to bottom tap I Accept tap Sign In (Skip onboarding if shown).
+2. Land on the Home tab.
+3. Verify greeting hero status line Up Next card and Recent Activity list render.",Valid student account with existing submissions,"Greeting plus name submission counts revise-first Up Next recent activity visible; no errors",,
+1-2,Verify Up Next prioritizes revision and exposes Resubmit entry,"1. On the Home tab locate the Up Next section.
+2. Verify a revision_required paper tops the list.
+3. Tap Resubmit revision on that card.",Account with at least 1 revision_required paper,Up Next shows revise-first ordering; tap navigates to SubmitResearch hydrated for that paper,,
+1-3,Verify Recent Activity deep-link and pull-refresh,"1. On the Home tab tap an item in Recent Activity.
+2. Verify it opens the linked paper.
+3. Go back and pull-to-refresh the dashboard.",Existing notification linked to a paper,Tap opens ResearchDetail for that paper; refresh reloads content without error,,
+1-4,Verify dashboard empty / all-caught-up fallback state,"1. Log in as a student with no actionable papers.
+2. Observe the Up Next and recommendations area on the Home tab.",Student with zero pending/revision papers,Shows all-caught-up state with Recommended For You fallback list instead of Up Next,,
+2-1,Verify full submit wizard with valid PDF and metadata,"1. Go to the Papers tab and tap the Submit research FAB.
+2. On Step 1 tap Upload your paper and pick a valid PDF.
+3. On Step 2 enter title abstract and keywords.
+4. On Step 3 pick category department to program and faculty adviser.
+5. On Step 4 optionally add a co-author.
+6. Tap Review and submit tick all checklist items then tap Confirm and submit.",PDF up to 10MB; title plus abstract 150-250 words; valid category/dept/program/adviser,"Paper submits with success notice; app returns to Papers/Dashboard and the new submission appears in My Research",,
+2-2,Verify file picker restricts selection to PDF only,"1. Open SubmitResearch Step 1.
+2. Tap Upload your paper to open the device file picker.
+3. Observe non-PDF files (JPG DOCX PPTX) in the picker.
+4. Attempt to tap a non-PDF file then tap a PDF file.",Folder with JPG DOCX PPTX and PDF files,"Non-PDF files appear disabled/greyed and cannot be selected; only PDF files are selectable; no file attaches until a PDF is picked and Continue stays disabled",,
+2-3,Verify oversize file is rejected,"1. Open SubmitResearch Step 1.
+2. Attempt to pick a PDF larger than the policy max.",PDF over 10MB,"Inline error ""File too large ... Max ...MB""; file is not accepted",,
+2-4,Verify Continue is blocked on incomplete required metadata,"1. Advance through Steps 2-3 leaving title abstract category or adviser empty.
+2. Observe the footer buttons.",Empty required fields,"Continue / Review and submit stays disabled until title abstract category and adviser are complete",,
+2-5,Verify file can be removed and replaced,"1. On Step 1 with a file attached tap Remove.
+2. Pick a different valid PDF.",Two valid PDFs,File chip clears on Remove; replacement attaches and policy line (.pdf - Max 10 MB) still shows,,
+2-6,Verify manage co-authors search add remove external notes,"1. Go to Step 4 Co-authors.
+2. Type at least 2 characters in student search and wait for results.
+3. Tap Plus on a result to add the chip.
+4. Tap Remove on the chip.
+5. Enter external/non-system author notes.","Search e.g. ""ju""; valid student result",Debounced results show fullName/email with Check vs Plus states; add creates chip remove deletes it; external notes persist,,
+2-7,Verify checklist gate blocks submit until complete,"1. Complete Steps 1-3 and tap Review and submit.
+2. Leave one checklist item unticked and observe Confirm.
+3. Tick all items.",Partial checklist,"Confirm and submit stays disabled until file title abstract category and adviser items are all ticked",,
+2-8,Verify resubmit for revision_required with optional file,"1. From Dashboard Up Next a Papers card or ResearchDetail tap Resubmit revision on a revision_required paper.
+2. Verify the reviewer revision-notes card and hydrated fields.
+3. Keep the current file (do not re-pick) update title/notes.
+4. Tick the checklist and submit.",Owned revision_required paper,"Opens Resubmit Research showing reviewer notes with ""Keeping current file""; success shows ""Research resubmitted"" and the updated status shows on return to Papers",,
+3-1,Verify My Submissions list loads newest-first with status cards,"1. Log in as student.
+2. Tap the Papers tab.
+3. Verify the subtitle counts and status cards.",Multiple submissions with varying dates/statuses,Searchable newest-first list with author/co-author status chip stage and date; skeletons resolve to cards,,
+3-2,Verify search filters by title abstract keyword,"1. On the Papers tab type a query in ""Search your papers"".
+2. Verify the narrowed list.
+3. Clear the query.",Keyword matching one paper; non-matching string,"List narrows to title/abstract/keyword matches; no-match shows ""No papers found""; clearing restores the full list",,
+3-3,Verify segment filters All / In Review / Needs Revision / Approved,"1. On the Papers tab tap the All pill.
+2. Tap In Review.
+3. Tap Needs Revision.
+4. Tap Approved.",Papers in each status group,Each pill shows only its group (Active / Published / Revise-required mapping); counts correct,,
+3-4,Verify submission detail shows status timeline and feedback,"1. Tap a card on the Papers tab to open ResearchDetail.
+2. Verify metadata status and submission timeline.
+3. Tap Feedback (N) to open the annotations panel.",Owned paper with reviewer history,"Detail shows category/title/authors/date/views owner-gated timeline with reviewer role/comments/date and the feedback panel opens",,
+4-1,Verify invitations list loads,"1. Tap the bell icon in the TopBar.
+2. On the Activity screen tap the Invites chip.
+3. Verify the invitation cards.",Account with pending invite,Invitations header plus cards render; expired ones show a muted Expired pill with no actions,,
+4-2,Verify accept of a pending invitation,"1. Open Activity to Invites.
+2. Tap Accept on a pending unexpired card.
+3. Wait for the action to finish and refresh.",Pending unexpired invite,Card confirms acceptance (Accepting spinner to done); invite leaves the actionable state on refresh,,
+4-3,Verify decline of a pending invitation,"1. Open Activity to Invites.
+2. Tap Decline on a pending card.
+3. Confirm and refresh.",Pending invite,Decline confirms; invite leaves the actionable state,,
+4-4,Verify expired and empty invitation states,"1. Open Activity to Invites on an account with an expired invite.
+2. Verify no Accept/Decline actions exist on it.
+3. Open Invites on an account with zero invites.",Expired invite; account with no invites,"Expired card is disabled with Expired pill; empty inbox shows ""No invitations"" state",,
+5-1,Verify faculty dashboard loads totals workload and Action Required,"1. Log in as faculty and land on the Home tab.
+2. Verify the hero status line.
+3. Verify the workload donut and Action Required list.",Assigned papers across statuses,"Assigned totals Needs Review / In Revision / Forwarded / Approved chart and Up Next cards render correctly",,
+5-2,Verify dashboard shortcuts route to the filtered queue,"1. On the faculty Home tab tap a workload legend segment.
+2. Verify the queue opens with that filter.
+3. Go back and tap See all N pending.",pendingReview greater than 1,Legend tap navigates to FacultyReview with the matching initialFilter; See all opens the needs_review queue,,
+5-3,Verify dashboard all-caught-up empty state,"1. Log in as faculty with no pending reviews.
+2. Observe the Action Required area.",Zero pending papers,Shows the all-caught-up state instead of action cards,,
+6-1,Verify review queue loads paged papers with refresh,"1. Tap the Review tab.
+2. Verify the title and ""N submissions"" subtitle.
+3. Scroll to the end to trigger the next page.
+4. Pull-to-refresh.",More than 20 assigned papers,Queue loads 20 per page with footer skeleton then more cards; refresh reloads without error,,
+6-2,Verify queue search with no-results and clear,"1. On the Review tab type a title query in ""Search by title author or keyword"".
+2. Enter a nonsense string.
+3. Tap X to clear.","Matching title; ""zzz-no-match""",Debounced search narrows to matches; nonsense shows the no-results empty state; X restores the full queue,,
+6-3,Verify queue filter pills,"1. On the Review tab tap Needs Review.
+2. Tap Revisions.
+3. Tap Forwarded.
+4. Tap Approved.
+5. Tap All.",Papers in each bucket,"Each pill filters correctly (needs_review = pending_faculty plus revision_required; revisions; forwarded = pending_dean/chair/editor/admin; approved = approved plus published; all = everything)",,
+6-4,Verify queue card opens the review workspace,"1. On the Review tab tap any queue card.
+2. Verify the destination screen.",Assigned paper,Navigates to FacultyReviewDetail (Paper Review header) for that paperId,,
+7-1,Verify review workspace renders with history and decision gating,"1. Open FacultyReviewDetail from the queue.
+2. Verify title/meta revision/rejection notices inline PDF abstract keywords and review-history timeline.
+3. Repeat on an already-decided paper.",pending_faculty paper; decided paper,"All sections render; Your decision buttons appear only when status is pending_faculty otherwise read-only",,
+7-2,Verify page-linked note annotation with show/hide,"1. In the workspace PDF tap the pencil Add a note button.
+2. Tap the page to place the pin.
+3. Type a comment and save.
+4. Toggle the Eye show/hide button.
+5. Tap the pin to open the panel.",Comment ""Verify methodology citation p.2"",Pin drops and saves without error; Eye toggles pins; pin tap opens AnnotationPanel with jump-to-page,,
+7-3,Verify approve forwards to dean/chair and requires an assignee,"1. In the workspace tap Approve.
+2. Attempt Approve with no assignee selected.
+3. Pick a dean/chair add an optional note tap Approve.
+4. Confirm on the verification card.",Dean/chair roster; note up to 500 chars,"Empty assignee is blocked (""Select a dean...""); with assignee approval forwards the paper with a Decision Submitted overlay and back navigation",,
+7-4,Verify reject requires a reason,"1. In the workspace tap Reject.
+2. Attempt Reject with a blank reason.
+3. Enter a reason tap Reject.
+4. Confirm on the verification card.",Blank; reason up to 1000 chars,"Blank is blocked (""A rejection reason is required""); with reason rejection submits and the paper leaves the actionable queue",,
+7-5,Verify request-revision requires notes,"1. In the workspace tap Revision.
+2. Attempt Send back with blank notes.
+3. Enter revision notes tap Send back.
+4. Confirm on the verification card.",Blank; notes up to 1000 chars,"Blank is blocked (""Revision notes are required""); with notes the paper returns to revision_required and surfaces in the student Up Next",,
