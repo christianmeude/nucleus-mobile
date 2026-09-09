@@ -9,7 +9,7 @@ export default ({ config }: ConfigContext): any => {
     name: IS_DEV
       ? 'NUcleus Mobile (Dev)'
       : IS_PREVIEW
-        ? 'NUcleus Mobile (Preview)'
+        ? 'NUcleus Mobile'
         : 'NUcleus Mobile',
     slug: 'nucleus-student-mobile',
     version: '1.0.0',
