@@ -108,19 +108,21 @@ export const BrowseFilterSystem = ({
   return (
     <>
       <PressableScale
-        style={[styles.triggerBtn, activeCount > 0 && styles.triggerBtnActive]}
+        style={styles.triggerBtn}
         onPress={() => sheetRef.current?.present()}
         accessibilityRole="button"
-        accessibilityLabel="Open filters"
+        accessibilityLabel={activeCount > 0 ? `Filters, ${activeCount} active` : 'Open filters'}
       >
         <Icon
           icon={SlidersHorizontal}
-          size={16}
+          size={18}
           color={activeCount > 0 ? theme.colors.brand.primary : theme.colors.text.secondary}
         />
-        <Text style={[styles.triggerText, activeCount > 0 && styles.triggerTextActive]}>
-          Filters {activeCount > 0 ? `(${activeCount})` : ''}
-        </Text>
+        {activeCount > 0 ? (
+          <View style={styles.triggerBadge}>
+            <Text style={styles.triggerBadgeText}>{activeCount}</Text>
+          </View>
+        ) : null}
       </PressableScale>
 
       <BottomSheet ref={sheetRef} snapPoints={['80%', '95%']}>
@@ -317,29 +319,31 @@ export const BrowseFilterSystem = ({
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
     triggerBtn: {
-      flexDirection: 'row',
+      width: 44,
+      height: 44,
       alignItems: 'center',
-      gap: 6,
-      paddingHorizontal: 12,
-      height: 40,
-      borderRadius: theme.radii.lg,
+      justifyContent: 'center',
+      position: 'relative',
+    },
+    triggerBadge: {
+      position: 'absolute',
+      top: 2,
+      right: 2,
+      minWidth: 16,
+      height: 16,
+      paddingHorizontal: 4,
+      borderRadius: theme.radii.pill,
       borderCurve: 'continuous',
-      borderWidth: 1,
-      borderColor: theme.colors.border.subtle,
-      backgroundColor: theme.colors.surface.base,
+      backgroundColor: theme.colors.brand.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
-    triggerBtnActive: {
-      backgroundColor: theme.colors.brand.primarySoft,
-      borderColor: theme.colors.brand.primary,
-    },
-    triggerText: {
-      fontFamily: theme.fontFamilies.ui.medium,
-      fontSize: 14,
-      color: theme.colors.text.secondary,
-    },
-    triggerTextActive: {
-      color: theme.colors.brand.primary,
+    triggerBadgeText: {
       fontFamily: theme.fontFamilies.ui.semibold,
+      fontSize: 10,
+      lineHeight: 13,
+      color: theme.colors.text.onBrand,
+      fontVariant: ['tabular-nums'],
     },
     sheetHeader: {
       flexDirection: 'row',

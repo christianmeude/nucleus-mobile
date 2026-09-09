@@ -56,7 +56,7 @@ export const BrowseHeader = ({ query, setQuery, submitSearch, filterNode }: Brow
             value={query}
             onChangeText={setQuery}
             onSubmitEditing={submitSearch}
-            placeholder="Search papers, authors, keywords"
+            placeholder="Search papers"
             accessibilityLabel="Search papers"
             accessibilityHint="Filters published papers by title, author, or keyword"
           />

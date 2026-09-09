@@ -121,6 +121,38 @@ describe('researchApi.getMyPapers', () => {
   });
 });
 
+describe('researchApi.getMyPapers – account switching', () => {
+  it("returns the newly signed-in user's papers, not the previous user's cached papers", async () => {
+    // Malfoy signs in first and loads their papers.
+    queueProfileLookup(mockSupabase, {
+      authUser: { id: 'auth-malfoy', email: 'malfoy@nu-dasma.edu.ph' },
+      profileRow: { id: 'user-malfoy', email: 'malfoy@nu-dasma.edu.ph' },
+    });
+    mockSupabase.from
+      .mockReturnValueOnce(createQueryBuilder(queryResult({ data: [row({ id: 'malfoy-1' })] })))
+      .mockReturnValueOnce(createQueryBuilder(queryResult({ data: [] })));
+
+    const malfoyPapers = await researchApi.getMyPapers();
+    expect(malfoyPapers.map((p) => p.id)).toEqual(['malfoy-1']);
+
+    // Account boundary: Christian signs in on the same device. AuthContext must
+    // scope the API cache to the new user so Malfoy's cached data is unreachable.
+    apiCache.setUserScope('user-christian');
+
+    queueProfileLookup(mockSupabase, {
+      authUser: { id: 'auth-christian', email: 'christian@nu-dasma.edu.ph' },
+      profileRow: { id: 'user-christian', email: 'christian@nu-dasma.edu.ph' },
+    });
+    mockSupabase.from
+      .mockReturnValueOnce(createQueryBuilder(queryResult({ data: [row({ id: 'christian-1' })] })))
+      .mockReturnValueOnce(createQueryBuilder(queryResult({ data: [] })));
+
+    const christianPapers = await researchApi.getMyPapers();
+
+    expect(christianPapers.map((p) => p.id)).toEqual(['christian-1']);
+  });
+});
+
 describe('researchApi.getPublishedPapers', () => {
   it('queries only published/approved statuses and applies client-side filters', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });

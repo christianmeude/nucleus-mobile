@@ -35,7 +35,6 @@ export const DashboardScreen = () => {
 
   const [assemble] = useState(isFirstEntranceArmed);
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
-  const [trendingPapers, setTrendingPapers] = useState<ResearchPaper[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
@@ -47,13 +46,11 @@ export const DashboardScreen = () => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
 
-    const [papersResult, categoriesResult, notificationsResult, trendingResult] =
-      await Promise.allSettled([
-        researchApi.getMyPapers(),
-        researchApi.getCategories(),
-        notificationsApi.getNotifications(5),
-        researchApi.getPublishedPapers(),
-      ]);
+    const [papersResult, categoriesResult, notificationsResult] = await Promise.allSettled([
+      researchApi.getMyPapers(),
+      researchApi.getCategories(),
+      notificationsApi.getNotifications(5),
+    ]);
 
     if (papersResult.status === 'fulfilled') {
       setPapers(papersResult.value);
@@ -64,7 +61,6 @@ export const DashboardScreen = () => {
 
     if (categoriesResult.status === 'fulfilled') setCategories(categoriesResult.value);
     if (notificationsResult.status === 'fulfilled') setNotifications(notificationsResult.value);
-    if (trendingResult.status === 'fulfilled') setTrendingPapers(trendingResult.value.slice(0, 5));
 
     setLoading(false);
     setRefreshing(false);
@@ -185,32 +181,6 @@ export const DashboardScreen = () => {
                       }
                     />
                   </View>
-                ) : papers.length === 0 && trendingPapers.length > 0 ? (
-                  <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Recommended For You</Text>
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={styles.trendingScrollContent}
-                      style={styles.trendingScroll}
-                    >
-                      {trendingPapers.map((paper) => (
-                        <View key={paper.id} style={styles.trendingCardWrap}>
-                          <StandardPaperCard
-                            paper={paper}
-                            variant="browse"
-                            category={resolveCategoryName(paper.category, categoryNameById)}
-                            onPress={() =>
-                              navigation.navigate('ResearchDetail', {
-                                paperId: paper.id,
-                                from: 'browse',
-                              })
-                            }
-                          />
-                        </View>
-                      ))}
-                    </ScrollView>
-                  </View>
                 ) : papers.length === 0 ? (
                   <EmptyState context="no-papers" />
                 ) : (
@@ -284,15 +254,5 @@ const makeStyles = (t: Theme) =>
     },
     activityList: {
       gap: t.spacing.sm,
-    },
-    trendingScroll: {
-      marginHorizontal: -t.spacing.lg,
-    },
-    trendingScrollContent: {
-      paddingHorizontal: t.spacing.lg,
-      gap: t.spacing.sm,
-    },
-    trendingCardWrap: {
-      width: 260,
     },
   });

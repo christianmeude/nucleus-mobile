@@ -324,10 +324,10 @@ export const FacultyReviewDetailScreen = () => {
           style={styles.screen}
           contentContainerStyle={styles.content}
         >
-          {categoryName ? <Text style={styles.eyebrow}>{categoryName}</Text> : null}
-          {detail.status === 'published' ? (
-            <View style={{ marginBottom: 6 }}>
-              <PublishedBadge />
+          {categoryName || detail.status === 'published' ? (
+            <View style={styles.eyebrowRow}>
+              <Text style={styles.eyebrow}>{categoryName}</Text>
+              {detail.status === 'published' ? <PublishedBadge /> : null}
             </View>
           ) : null}
           <Text style={styles.title}>{detail.title}</Text>
@@ -361,11 +361,15 @@ export const FacultyReviewDetailScreen = () => {
             </View>
           ) : null}
 
-          {detail.revisionNotes ? (
-            <InlineNotice tone="warning" message={`Revision notes: ${detail.revisionNotes}`} />
-          ) : null}
-          {detail.rejectionReason ? (
-            <InlineNotice tone="danger" message={`Rejection reason: ${detail.rejectionReason}`} />
+          {detail.revisionNotes || detail.rejectionReason ? (
+            <View style={styles.noticeStack}>
+              {detail.revisionNotes ? (
+                <InlineNotice tone="warning" message={`Revision notes: ${detail.revisionNotes}`} />
+              ) : null}
+              {detail.rejectionReason ? (
+                <InlineNotice tone="danger" message={`Rejection reason: ${detail.rejectionReason}`} />
+              ) : null}
+            </View>
           ) : null}
 
           <View style={styles.section}>
@@ -806,7 +810,6 @@ const makeStyles = (theme: Theme) =>
     },
     content: {
       paddingTop: theme.spacing.lg,
-      gap: theme.spacing.xl,
       paddingBottom: theme.spacing['3xl'],
     },
     centered: {
@@ -815,13 +818,20 @@ const makeStyles = (theme: Theme) =>
     },
     // Shared header/sections mirror ResearchDetail exactly (same order, copy,
     // and formatting) so both roles see the same view.
+    eyebrowRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing.sm,
+      marginBottom: theme.spacing.sm,
+    },
     eyebrow: {
       fontFamily: theme.fontFamilies.ui.semibold,
       fontSize: 11,
       letterSpacing: 0.8,
       textTransform: 'uppercase',
       color: theme.colors.brand.primary,
-      marginBottom: theme.spacing.sm,
+      flexShrink: 1,
     },
     title: {
       ...theme.typography.display,
@@ -890,6 +900,11 @@ const makeStyles = (theme: Theme) =>
       flex: 1,
     },
     section: {
+      marginTop: theme.spacing.xl,
+      gap: theme.spacing.sm,
+    },
+    noticeStack: {
+      marginTop: theme.spacing.lg,
       gap: theme.spacing.sm,
     },
     sectionTitle: {
@@ -1016,6 +1031,7 @@ const makeStyles = (theme: Theme) =>
       gap: theme.spacing.xs,
     },
     actions: {
+      marginTop: theme.spacing.xl,
       gap: theme.spacing.sm,
     },
     decisionRow: {

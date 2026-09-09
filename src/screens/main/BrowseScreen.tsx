@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Keyboard, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { ListRenderItem } from 'react-native';
-import Animated, { LinearTransition, useReducedMotion } from 'react-native-reanimated';
+import Animated, { LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../../components/ui/Icon';
 
@@ -31,7 +31,12 @@ import {
   Skeleton,
   TopBar,
 } from '../../components/ui';
-import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
+import {
+  buildCategoryColorById,
+  buildCategoryNameById,
+  resolveCategoryColor,
+  resolveCategoryName,
+} from '../../utils/category';
 import { listEpochKey } from '../../utils/listEpochKey';
 
 import { BrowseHeader } from './browse/BrowseHeader';
@@ -55,7 +60,6 @@ export const BrowseScreen = () => {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const reducedMotion = useReducedMotion();
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [departments, setDepartments] = useState<DepartmentRow[]>([]);
@@ -71,7 +75,7 @@ export const BrowseScreen = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState('');
 
-  const { recent, addRecent } = useRecentSearches();
+  const { addRecent } = useRecentSearches();
 
   const loadData = useCallback(
     async (silent = false) => {
@@ -168,36 +172,14 @@ export const BrowseScreen = () => {
 
   const categoryNameById = useMemo(() => buildCategoryNameById(categories), [categories]);
 
-  const categoryColors = useMemo(
-    () => [
-      theme.colors.brand.primary,
-      theme.palette.navy[300],
-      theme.palette.navy[400],
-      theme.palette.navy[600],
-    ],
-    [theme],
-  );
-
-  const categoryColorById = useMemo(() => {
-    const map = new Map<string, string>();
-    categories.forEach((item, index) => {
-      map.set(item.id, categoryColors[index % categoryColors.length]);
-    });
-    return map;
-  }, [categories, categoryColors]);
+  const categoryColorById = useMemo(() => buildCategoryColorById(categories), [categories]);
 
   const colorForCategory = useCallback(
-    (value?: string | null) => {
-      if (value && categoryColorById.has(value)) {
-        return categoryColorById.get(value) as string;
-      }
-      return theme.colors.brand.primary;
-    },
-    [categoryColorById, theme],
+    (value?: string | null) => resolveCategoryColor(value, categoryColorById),
+    [categoryColorById],
   );
 
   const hasActiveFilters = getActiveFilterCount(filters) > 0;
-  const isFiltering = Boolean(query.trim()) || hasActiveFilters;
 
   const matched = useMemo(() => {
     let rows = useServerSearch ? (serverResults ?? []) : papers;
@@ -277,32 +259,39 @@ export const BrowseScreen = () => {
     loadData(true);
   }, [loadData]);
 
-  const renderItem = useCallback(
+  const renderGridItem = useCallback(
+    ({ item, index }: { item: ResearchPaper; index: number }) => {
+      const categoryColor = colorForCategory(item.category);
+      const categoryName = resolveCategoryName(item.category, categoryNameById);
+      return (
+        <BrowseGridCell
+          paper={item}
+          category={categoryName}
+          categoryColor={categoryColor}
+          onOpen={openDetail}
+        />
+      );
+    },
+    [colorForCategory, categoryNameById, openDetail],
+  );
+
+  const renderListItem = useCallback(
     ({ item, index }: { item: ResearchPaper; index: number }) => {
       const categoryColor = colorForCategory(item.category);
       const categoryName = resolveCategoryName(item.category, categoryNameById);
       return (
         <ListEntranceItem index={index}>
-          {viewMode === 'grid' ? (
-            <BrowseGridCell
-              paper={item}
-              category={categoryName}
-              categoryColor={categoryColor}
-              onOpen={openDetail}
-            />
-          ) : (
-            <StandardPaperCard
-              paper={item}
-              variant="browse"
-              category={categoryName}
-              categoryColor={categoryColor}
-              onPress={() => openDetail(item.id)}
-            />
-          )}
+          <StandardPaperCard
+            paper={item}
+            variant="browse"
+            category={categoryName}
+            categoryColor={categoryColor}
+            onPress={() => openDetail(item.id)}
+          />
         </ListEntranceItem>
       );
     },
-    [viewMode, colorForCategory, categoryNameById, openDetail, reducedMotion],
+    [colorForCategory, categoryNameById, openDetail],
   );
 
   const showClear = Boolean(query.trim());
@@ -329,11 +318,42 @@ export const BrowseScreen = () => {
 
   const listEmptyElement =
     loading || (useServerSearch && (searchLoading || isTyping)) ? (
-      <View style={styles.loadingWrap}>
-        <Skeleton height={140} />
-        <Skeleton height={84} />
-        <Skeleton height={84} />
-        <Skeleton height={84} />
+      <View style={viewMode === 'grid' ? styles.loadingGridWrap : styles.loadingWrap}>
+        {viewMode === 'grid' ? (
+          <>
+            <View style={styles.loadingGridRow}>
+              <View style={styles.skeletonFlex}>
+                <Skeleton height={148} />
+              </View>
+              <View style={styles.skeletonFlex}>
+                <Skeleton height={148} />
+              </View>
+            </View>
+            <View style={styles.loadingGridRow}>
+              <View style={styles.skeletonFlex}>
+                <Skeleton height={148} />
+              </View>
+              <View style={styles.skeletonFlex}>
+                <Skeleton height={148} />
+              </View>
+            </View>
+            <View style={styles.loadingGridRow}>
+              <View style={styles.skeletonFlex}>
+                <Skeleton height={148} />
+              </View>
+              <View style={styles.skeletonFlex}>
+                <Skeleton height={148} />
+              </View>
+            </View>
+          </>
+        ) : (
+          <>
+            <Skeleton height={140} />
+            <Skeleton height={84} />
+            <Skeleton height={84} />
+            <Skeleton height={84} />
+          </>
+        )}
       </View>
     ) : searchError ? (
       <EmptyState
@@ -354,56 +374,88 @@ export const BrowseScreen = () => {
   return (
     <>
       <Screen gutter={0} edges={{ top: false, bottom: false }}>
-        <View
-          style={[
-            styles.root,
-            { paddingTop: insets.top + theme.spacing.md, paddingBottom: insets.bottom },
-          ]}
-        >
-          <TopBar />
+        <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+          <View style={styles.header}>
+            <TopBar variant="compact">
+              <View style={styles.titleWrap}>
+                <Text style={styles.title}>Browse</Text>
+              </View>
+            </TopBar>
 
-          <BrowseHeader
-            query={query}
-            setQuery={setQuery}
-            submitSearch={submitSearch}
-            clearSearch={clearSearch}
-            showClear={showClear}
-            filterNode={
-              <BrowseFilterSystem
-                filters={filters}
-                onChange={setFilters}
-                categories={categories}
-                departments={departments}
-                programs={programs}
-              />
-            }
-          />
-
-          <View style={styles.resultsWrap}>
-            <LegendList
-              key={listEpochKey(listData.length === 0)}
-              recycleItems={true}
-              drawDistance={1500}
-              style={styles.scroll}
-              contentContainerStyle={styles.resultsContent}
-              data={listData}
-              keyExtractor={keyExtractor}
-              renderItem={renderItem}
-              numColumns={viewMode === 'grid' ? 2 : 1}
-              ListHeaderComponent={listHeaderElement}
-              ListEmptyComponent={listEmptyElement}
-              keyboardShouldPersistTaps="handled"
-              keyboardDismissMode="on-drag"
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={handleRefresh}
-                  tintColor={theme.colors.brand.primary}
-                  colors={[theme.colors.brand.primary]}
+            <BrowseHeader
+              query={query}
+              setQuery={setQuery}
+              submitSearch={submitSearch}
+              clearSearch={clearSearch}
+              showClear={showClear}
+              filterNode={
+                <BrowseFilterSystem
+                  filters={filters}
+                  onChange={setFilters}
+                  categories={categories}
+                  departments={departments}
+                  programs={programs}
                 />
               }
-              estimatedItemSize={viewMode === 'grid' ? 160 : 84}
             />
+          </View>
+
+          <View style={styles.resultsWrap}>
+            {viewMode === 'grid' ? (
+              <LegendList
+                key={`grid-${listEpochKey(listData.length === 0)}`}
+                recycleItems={true}
+                drawDistance={1500}
+                style={styles.scroll}
+                contentContainerStyle={styles.resultsContent}
+                data={listData}
+                keyExtractor={keyExtractor}
+                renderItem={renderGridItem}
+                numColumns={2}
+                columnWrapperStyle={{ gap: theme.spacing.md }}
+                ListHeaderComponent={listHeaderElement}
+                ListEmptyComponent={listEmptyElement}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={handleRefresh}
+                    tintColor={theme.colors.brand.primary}
+                    colors={[theme.colors.brand.primary]}
+                  />
+                }
+                estimatedItemSize={160}
+                getFixedItemSize={() => 148}
+                getItemType={() => 'grid'}
+              />
+            ) : (
+              <LegendList
+                key={`list-${listEpochKey(listData.length === 0)}`}
+                recycleItems={true}
+                drawDistance={1500}
+                style={styles.scroll}
+                contentContainerStyle={styles.resultsContent}
+                data={listData}
+                keyExtractor={keyExtractor}
+                renderItem={renderListItem}
+                numColumns={1}
+                ListHeaderComponent={listHeaderElement}
+                ListEmptyComponent={listEmptyElement}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={handleRefresh}
+                    tintColor={theme.colors.brand.primary}
+                    colors={[theme.colors.brand.primary]}
+                  />
+                }
+                estimatedItemSize={84}
+                getItemType={() => 'list'}
+              />
+            )}
           </View>
         </View>
       </Screen>
@@ -415,7 +467,28 @@ const makeStyles = (theme: Theme) =>
   StyleSheet.create({
     root: {
       flex: 1,
+    },
+    header: {
       paddingHorizontal: theme.spacing.lg,
+      paddingTop: theme.spacing.xl,
+      paddingBottom: theme.spacing.sm,
+      gap: theme.spacing.md,
+      backgroundColor: theme.colors.surface.raised,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.border.subtle,
+      zIndex: 10,
+      ...theme.shadows.level1,
+    },
+    titleWrap: {
+      flex: 1,
+      minWidth: 0,
+      justifyContent: 'center',
+    },
+    title: {
+      fontFamily: theme.fontFamilies.display.semibold,
+      fontSize: 26,
+      lineHeight: 32,
+      color: theme.colors.text.primary,
     },
     spacer: {
       flexShrink: 1,
@@ -430,6 +503,7 @@ const makeStyles = (theme: Theme) =>
     },
     resultsContent: {
       gap: theme.spacing.md,
+      paddingHorizontal: theme.spacing.lg,
       paddingTop: theme.spacing.md,
       paddingBottom: theme.spacing.xl + 120,
     },
@@ -439,6 +513,16 @@ const makeStyles = (theme: Theme) =>
     },
     loadingWrap: {
       gap: theme.spacing.md,
+    },
+    loadingGridWrap: {
+      gap: theme.spacing.md,
+    },
+    loadingGridRow: {
+      flexDirection: 'row',
+      gap: theme.spacing.md,
+    },
+    skeletonFlex: {
+      flex: 1,
     },
     sheetTitle: {
       ...theme.typography.h3,

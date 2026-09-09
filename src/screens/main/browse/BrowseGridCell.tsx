@@ -33,9 +33,9 @@ export const BrowseGridCell = memo(function BrowseGridCell({
   );
 });
 
-export const makeStyles = (theme: Theme) =>
+export const makeStyles = (_theme: Theme) =>
   StyleSheet.create({
     gridCell: {
-      width: '48%',
+      flex: 1,
     },
   });

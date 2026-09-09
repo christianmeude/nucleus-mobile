@@ -14,7 +14,12 @@ import * as Haptics from 'expo-haptics';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
 import { Category, PaperStatus, ResearchPaper } from '../../types/domain';
-import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
+import {
+  buildCategoryColorById,
+  buildCategoryNameById,
+  resolveCategoryColor,
+  resolveCategoryName,
+} from '../../utils/category';
 import { listEpochKey } from '../../utils/listEpochKey';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
@@ -108,6 +113,7 @@ export const MyPapersScreen = () => {
   );
 
   const categoryNameById = useMemo(() => buildCategoryNameById(categories), [categories]);
+  const categoryColorById = useMemo(() => buildCategoryColorById(categories), [categories]);
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -126,15 +132,6 @@ export const MyPapersScreen = () => {
         return rightDate - leftDate;
       });
   }, [activeFilter, papers, query]);
-
-  const subtitle = useMemo(() => {
-    const total = papers.length;
-    if (total === 0) return 'No submissions yet';
-    const needsAttention = papers.filter((p) => REVISE_REQUIRED_STATUSES.has(p.status)).length;
-    const base = `${total} submission${total === 1 ? '' : 's'}`;
-    if (needsAttention === 0) return base;
-    return `${base} · ${needsAttention} need${needsAttention === 1 ? 's' : ''} your attention`;
-  }, [papers]);
 
   const submitPublishRequest = useCallback(async () => {
     if (!publishTarget) return;
@@ -184,13 +181,14 @@ export const MyPapersScreen = () => {
           paper={item}
           variant="papers"
           category={resolveCategoryName(item.category, categoryNameById)}
+          categoryColor={resolveCategoryColor(item.category, categoryColorById)}
           onPress={() => handlePaperPress(item.id)}
           onRequestPublication={() => setPublishTarget(item)}
           onResubmit={() => handleResubmitPress(item.id)}
         />
       </ListEntranceItem>
     ),
-    [categoryNameById, handlePaperPress, handleResubmitPress],
+    [categoryNameById, categoryColorById, handlePaperPress, handleResubmitPress],
   );
 
   const handleRefresh = useCallback(() => {
@@ -245,7 +243,6 @@ export const MyPapersScreen = () => {
           <TopBar variant="compact">
             <View style={styles.titleWrap}>
               <Text style={styles.title}>My Papers</Text>
-              <Text style={styles.subtitle}>{subtitle}</Text>
             </View>
           </TopBar>
 
@@ -286,6 +283,12 @@ export const MyPapersScreen = () => {
           }
           ListHeaderComponent={() => (
             <View style={styles.listHeader}>
+              <View style={styles.subbar}>
+                <Text style={styles.resultCount}>
+                  {filtered.length} {filtered.length === 1 ? 'Paper' : 'Papers'}
+                </Text>
+              </View>
+
               {error ? <InlineNotice tone="danger" message={error} /> : null}
 
               {loading ? (
@@ -351,9 +354,23 @@ const makeStyles = (t: Theme) =>
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: t.colors.border.subtle,
       zIndex: 10,
+      ...t.shadows.level1,
     },
     listHeader: {
       gap: t.spacing.md,
+    },
+    subbar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: t.spacing.sm,
+    },
+    resultCount: {
+      fontFamily: t.fontFamilies.ui.semibold,
+      fontSize: 12,
+      letterSpacing: 0.6,
+      textTransform: 'uppercase',
+      color: t.colors.text.disabled,
     },
     titleWrap: {
       flex: 1,
@@ -365,11 +382,6 @@ const makeStyles = (t: Theme) =>
       fontSize: 26,
       lineHeight: 32,
       color: t.colors.text.primary,
-    },
-    subtitle: {
-      fontFamily: t.fontFamilies.ui.regular,
-      fontSize: 13,
-      color: t.colors.text.muted,
     },
     searchWrap: {
       flexDirection: 'row',

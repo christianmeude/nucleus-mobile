@@ -1,5 +1,5 @@
 import { Icon } from '../../components/ui/Icon';
-import { useCallback, useMemo, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Pressable,
   RefreshControl,
@@ -56,14 +56,6 @@ export const FacultyReviewScreen = () => {
     },
     [showRightHint, showLeftHint],
   );
-
-  const subtitle = useMemo(() => {
-    if (!papers) return 'Loading queue...';
-    const total = papers.length;
-    if (total === 0) return 'No submissions in this view';
-    const activeLabel = FACULTY_QUEUE_FILTERS.find((f) => f.key === filter)?.label || 'All';
-    return `${total} ${activeLabel.toLowerCase()} submission${total === 1 ? '' : 's'}`;
-  }, [papers, filter]);
 
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -162,7 +154,6 @@ export const FacultyReviewScreen = () => {
         <TopBar variant="compact">
           <View style={styles.titleWrap}>
             <Text style={styles.title}>Review Queue</Text>
-            <Text style={styles.subtitle}>{subtitle}</Text>
           </View>
         </TopBar>
 
@@ -171,7 +162,7 @@ export const FacultyReviewScreen = () => {
           <TextInput
             value={search}
             onChangeText={setSearch}
-            placeholder="Search by title, author, or keyword"
+            placeholder="Search submissions"
             placeholderTextColor={theme.colors.text.muted}
             style={styles.search}
             returnKeyType="search"
@@ -288,6 +279,14 @@ export const FacultyReviewScreen = () => {
         }
         ListHeaderComponent={() => (
           <View style={styles.listHeader}>
+            {papers !== null ? (
+              <View style={styles.subbar}>
+                <Text style={styles.resultCount}>
+                  {papers.length} {papers.length === 1 ? 'Submission' : 'Submissions'}
+                </Text>
+              </View>
+            ) : null}
+
             {error ? <InlineNotice tone="danger" message={error} /> : null}
 
             {papers === null ? (
@@ -331,6 +330,7 @@ const makeStyles = (theme: Theme) =>
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: theme.colors.border.subtle,
       zIndex: 10,
+      ...theme.shadows.level1,
     },
     titleWrap: {
       flex: 1,
@@ -342,11 +342,6 @@ const makeStyles = (theme: Theme) =>
       fontSize: 26,
       lineHeight: 32,
       color: theme.colors.text.primary,
-    },
-    subtitle: {
-      fontFamily: theme.fontFamilies.ui.regular,
-      fontSize: 13,
-      color: theme.colors.text.muted,
     },
     searchContainer: {
       flexDirection: 'row',
@@ -443,6 +438,19 @@ const makeStyles = (theme: Theme) =>
     },
     listHeader: {
       gap: theme.spacing.md,
+    },
+    subbar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: theme.spacing.sm,
+    },
+    resultCount: {
+      fontFamily: theme.fontFamilies.ui.semibold,
+      fontSize: 12,
+      letterSpacing: 0.6,
+      textTransform: 'uppercase',
+      color: theme.colors.text.disabled,
     },
     list: {
       gap: theme.spacing.md,

@@ -348,13 +348,12 @@ export const ResearchDetailScreen = () => {
             style={styles.container}
             contentContainerStyle={styles.content}
           >
-            {categoryName ? <Text style={styles.eyebrow}>{categoryName}</Text> : null}
-
-            {paper.status === 'published' && (
-              <View style={{ marginBottom: 6 }}>
-                <PublishedBadge />
+            {categoryName || paper.status === 'published' ? (
+              <View style={styles.eyebrowRow}>
+                <Text style={styles.eyebrow}>{categoryName}</Text>
+                {paper.status === 'published' ? <PublishedBadge /> : null}
               </View>
-            )}
+            ) : null}
 
             <Text style={styles.title}>{paper.title}</Text>
 
@@ -685,13 +684,20 @@ const makeStyles = (theme: Theme) =>
       ...theme.typography.bodySmall,
       color: theme.colors.text.secondary,
     },
+    eyebrowRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing.sm,
+      marginBottom: theme.spacing.sm,
+    },
     eyebrow: {
       fontFamily: theme.fontFamilies.ui.semibold,
       fontSize: 11,
       letterSpacing: 0.8,
       textTransform: 'uppercase',
       color: theme.colors.brand.primary,
-      marginBottom: theme.spacing.sm,
+      flexShrink: 1,
     },
     title: {
       ...theme.typography.display,
@@ -739,11 +745,9 @@ const makeStyles = (theme: Theme) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing.sm,
-      marginTop: theme.spacing.lg,
+      marginTop: theme.spacing.sm,
       paddingVertical: theme.spacing.sm,
       minHeight: 52,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: theme.colors.border.subtle,
     },
     feedbackRowText: {
       ...theme.typography.body,
