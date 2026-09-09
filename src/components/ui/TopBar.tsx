@@ -164,14 +164,11 @@ const makeStyles = (t: Theme) =>
       color: t.colors.text.primary,
     },
     actions: {
-      position: 'absolute',
-      right: 0,
-      top: 0,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'flex-end',
       gap: t.spacing.sm,
-      zIndex: 10,
+      flexShrink: 0,
     },
     bell: {
       width: 44,

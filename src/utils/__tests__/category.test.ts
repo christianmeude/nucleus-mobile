@@ -1,7 +1,14 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { Category } from '../../types/domain';
-import { UUID_PATTERN, buildCategoryNameById, resolveCategoryName } from '../category';
+import {
+  CATEGORY_COLORS,
+  UUID_PATTERN,
+  buildCategoryChipPalette,
+  buildCategoryNameById,
+  contrastRatio,
+  resolveCategoryName,
+} from '../category';
 
 const category = (partial: Partial<Category>): Category => partial as unknown as Category;
 
@@ -62,5 +69,36 @@ describe('resolveCategoryName', () => {
     expect(
       resolveCategoryName('123e4567-e89b-12d3-a456-426614174000', categoryNameById),
     ).toBeNull();
+  });
+});
+
+describe('buildCategoryChipPalette', () => {
+  // Real card surfaces: light.raised and dark.raised tokens. (colors.ts)
+  const surfaces: { name: string; hex: string }[] = [
+    { name: 'light raised', hex: '#F9FBFF' },
+    { name: 'dark raised', hex: '#111C38' },
+  ];
+  const accents = [...CATEGORY_COLORS, '#6B7280'];
+
+  it('clears WCAG AA (4.5:1) for small text on light and dark card surfaces', () => {
+    for (const surface of surfaces) {
+      for (const accent of accents) {
+        const { fg, bg } = buildCategoryChipPalette(accent, surface.hex);
+        expect(contrastRatio(fg, bg)).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+
+  it('tints the chip background toward the accent so the hue stays visible', () => {
+    for (const surface of surfaces) {
+      for (const accent of accents) {
+        expect(buildCategoryChipPalette(accent, surface.hex).bg).not.toBe(surface.hex);
+      }
+    }
+  });
+
+  it('keeps a foreground that already clears AA unchanged', () => {
+    const { fg } = buildCategoryChipPalette('#3674B5', '#F9FBFF');
+    expect(contrastRatio(fg, '#F9FBFF')).toBeGreaterThanOrEqual(4.5);
   });
 });

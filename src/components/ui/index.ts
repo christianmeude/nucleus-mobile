@@ -39,3 +39,4 @@ export { Input } from './Input';
 export { SearchField } from './SearchField';
 export { SegmentedControl } from './SegmentedControl';
 export { PublishedBadge } from './PublishedBadge';
+export { CategoryChip } from './CategoryChip';

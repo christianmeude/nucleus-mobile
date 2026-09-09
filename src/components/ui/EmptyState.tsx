@@ -17,7 +17,10 @@ interface EmptyStateProps {
   context?: EmptyStateContext;
 }
 
-const CONTEXT_DEFAULTS: Record<EmptyStateContext, { title: string; message: string; IconComponent: LucideIcon }> = {
+const CONTEXT_DEFAULTS: Record<
+  EmptyStateContext,
+  { title: string; message: string; IconComponent: LucideIcon }
+> = {
   'all-caught-up': {
     title: 'All caught up!',
     message: 'There are no pending items for you to review.',

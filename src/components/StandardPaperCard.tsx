@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ResearchPaper } from '../types/domain';
 import { getPrimaryAuthorName, formatDate, paperDate, statusToLabel } from '../utils/format';
-import { PressableCard, PublishedBadge, Icon } from './ui';
+import { PressableCard, PublishedBadge, Icon, CategoryChip } from './ui';
 import { ArrowRight, ShieldCheck, AlertTriangle, XCircle } from 'lucide-react-native';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
@@ -54,16 +54,18 @@ export const StandardPaperCard = memo(
         <View style={styles.content}>
           {showCategory ? (
             <View style={styles.catRow}>
-              <View style={[styles.dot, { backgroundColor: dotColor }]} />
-              <Text style={[styles.cat, { color: dotColor }]} numberOfLines={1}>
-                {category}
-              </Text>
+              <CategoryChip label={category} accent={dotColor} style={styles.chip} />
+              {paper.status === 'published' && (
+                <View style={styles.badgeRight}>
+                  <PublishedBadge size="sm" />
+                </View>
+              )}
             </View>
           ) : null}
 
-          {paper.status === 'published' && (
-            <View style={{ marginBottom: 2 }}>
-              <PublishedBadge />
+          {!showCategory && paper.status === 'published' && (
+            <View style={styles.badgeWrap}>
+              <PublishedBadge size="sm" />
             </View>
           )}
 
@@ -158,18 +160,14 @@ const makeStyles = (t: Theme) =>
       alignItems: 'center',
       gap: 6,
     },
-    dot: {
-      width: 6,
-      height: 6,
-      borderRadius: t.radii.pill,
-      borderCurve: 'continuous',
+    chip: {
+      flexShrink: 1,
     },
-    cat: {
-      fontFamily: t.fontFamilies.ui.semibold,
-      fontSize: 10,
-      letterSpacing: 0.7,
-      textTransform: 'uppercase',
-      flex: 1,
+    badgeWrap: {
+      marginBottom: 2,
+    },
+    badgeRight: {
+      marginLeft: 'auto',
     },
     title: {
       fontFamily: t.fontFamilies.display.semibold,

@@ -4,20 +4,21 @@ import { ResearchPaper } from '../types/domain';
 import { formatDate, getPrimaryAuthorName, paperDate } from '../utils/format';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
+import { CategoryChip, PublishedBadge } from './ui';
 
 interface ResearchTileProps {
   paper: ResearchPaper;
-  /** Pre-resolved category name (UUID-guarded upstream); null hides the eyebrow. */
+  /** Pre-resolved category name (UUID-guarded upstream); null hides the chip. */
   category?: string | null;
-  /** Dot + label color; defaults to navy. Gold is reserved for the Browse hero. */
+  /** Category accent hue; the chip palette derives from it. */
   categoryColor?: string;
   onPress?: () => void;
 }
 
 /**
- * Compact 2-column tile for the Browse Hybrid grid. Display-serif title, color-dot
- * category eyebrow, author, and views · date footer. `ResearchCard` remains the
- * single-column card used elsewhere (My Papers, etc.).
+ * Compact 2-column tile for the Browse Hybrid grid. Display-serif title,
+ * contrast-safe category chip, formal-publication badge, author, and
+ * views · date footer on a fixed-height card so grid rows stay uniform.
  */
 export const ResearchTile = memo(function ResearchTile({
   paper,
@@ -37,24 +38,28 @@ export const ResearchTile = memo(function ResearchTile({
       onPress={onPress}
       style={({ pressed }) => [styles.tile, pressed ? styles.pressed : null]}
     >
-      {category ? (
-        <View style={styles.catRow}>
-          <View style={[styles.dot, { backgroundColor: dotColor }]} />
-          <Text style={[styles.cat, { color: dotColor }]} numberOfLines={1}>
-            {category}
-          </Text>
-        </View>
-      ) : null}
-      <Text style={styles.title} numberOfLines={3}>
+      <View style={styles.catRow}>
+        {category ? <CategoryChip label={category} accent={dotColor} style={styles.chip} /> : null}
+        {paper.status === 'published' ? (
+          <View style={styles.badgeRight}>
+            <PublishedBadge size="sm" />
+          </View>
+        ) : null}
+      </View>
+
+      <Text style={styles.title} numberOfLines={2}>
         {paper.title}
       </Text>
-      <Text style={styles.author} numberOfLines={1}>
-        {authorName}
-      </Text>
-      <View style={styles.foot}>
-        <Text style={styles.footText}>{paper.view_count || 0} views</Text>
-        <Text style={styles.footSep}>·</Text>
-        <Text style={styles.footText}>{formatDate(paperDate(paper))}</Text>
+
+      <View style={styles.footerWrap}>
+        <Text style={styles.author} numberOfLines={1}>
+          {authorName}
+        </Text>
+        <View style={styles.foot}>
+          <Text style={styles.footText}>{paper.view_count || 0} views</Text>
+          <Text style={styles.footSep}>·</Text>
+          <Text style={styles.footText}>{formatDate(paperDate(paper))}</Text>
+        </View>
       </View>
     </Pressable>
   );
@@ -63,8 +68,7 @@ export const ResearchTile = memo(function ResearchTile({
 const makeStyles = (t: Theme) =>
   StyleSheet.create({
     tile: {
-      flex: 1,
-      minHeight: 132,
+      height: 148,
       backgroundColor: t.colors.surface.raised,
       borderRadius: t.radii.lg,
       borderCurve: 'continuous',
@@ -81,24 +85,24 @@ const makeStyles = (t: Theme) =>
     catRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: t.spacing.xs,
+      gap: 6,
     },
-    dot: {
-      width: 6,
-      height: 6,
-      borderRadius: t.radii.pill,
+    chip: {
+      flexShrink: 1,
     },
-    cat: {
-      fontFamily: t.fontFamilies.ui.semibold,
-      fontSize: 10,
-      letterSpacing: 0.6,
-      textTransform: 'uppercase',
+    badgeRight: {
+      marginLeft: 'auto',
     },
     title: {
       fontFamily: t.fontFamilies.display.semibold,
       fontSize: 14,
       lineHeight: 19,
       color: t.colors.text.primary,
+      marginTop: 2,
+    },
+    footerWrap: {
+      marginTop: 'auto',
+      gap: t.spacing.xs,
     },
     author: {
       ...t.typography.caption,
@@ -108,7 +112,6 @@ const makeStyles = (t: Theme) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: t.spacing.xs,
-      marginTop: 'auto',
     },
     footText: {
       ...t.typography.caption,
