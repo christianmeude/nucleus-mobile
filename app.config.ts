@@ -59,6 +59,12 @@ export default ({ config }: ConfigContext): any => {
         projectId: 'cfc58fb4-9bdc-4fd8-91ed-44a201032d8d',
       },
     },
+    updates: {
+      url: 'https://u.expo.dev/cfc58fb4-9bdc-4fd8-91ed-44a201032d8d',
+    },
+    runtimeVersion: {
+      policy: 'appVersion',
+    },
     owner: 'christianmeude',
   };
 };
