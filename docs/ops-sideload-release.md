@@ -31,8 +31,10 @@ deleted, capped, or made private, your download breaks and you cannot fix it.
 | `preview`     | `com.christianmeude.nucleus.preview` | `preview`     | APK      | QA, installs side-by-side with dev |
 | `production`  | `com.christianmeude.nucleus`         | `production`  | APK      | Real users (sideload)       |
 
-`production` is `distribution: internal` + `android.buildType: apk` + `autoIncrement: true` in `eas.json`.
+`production` is `distribution: internal` + `android.buildType: apk` in `eas.json`.
 Do NOT switch it back to store/AAB or sideload breaks.
+`versionCode` (currently `1` in `app.config.ts`) must be bumped manually per
+native release — EAS `autoIncrement` does not support dynamic `app.config.ts`.
 
 ## Credentials — do not touch after launch
 
@@ -98,8 +100,8 @@ Any of: `app.config.ts` plugins/permissions/icon/splash, Expo SDK bump,
 `react-native` bump, `runtimeVersion` change.
 
 ```powershell
-# 1. bump version in app.config.ts (e.g. 1.0.0 -> 1.1.0). versionCode starts at 1,
-#    EAS autoIncrement handles subsequent bumps on production profile.
+# 1. bump version in app.config.ts (e.g. 1.0.0 -> 1.1.0) AND versionCode +1
+#    (manual — autoIncrement is unsupported with app.config.ts).
 # 2. quick QA
 eas build -p android --profile preview
 # 3. launch build
