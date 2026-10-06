@@ -23,9 +23,10 @@ export default ({ config }: ConfigContext): any => {
       : IS_PREVIEW
         ? 'NUcleus Mobile (Preview)'
         : 'NUcleus Mobile',
-    slug: 'nucleus-student-mobile',
+    slug: 'nucleus-mobile',
     version: '1.0.0',
     orientation: 'portrait',
+    scheme: 'nucleus-mobile',
     icon: './assets/icon.png',
     userInterfaceStyle: 'automatic',
     newArchEnabled: true,
@@ -37,10 +38,10 @@ export default ({ config }: ConfigContext): any => {
     ios: {
       supportsTablet: true,
       bundleIdentifier: IS_DEV
-        ? 'com.christianmeude.nucleus.dev'
+        ? 'com.christianmeude.nucleusmobile.dev'
         : IS_PREVIEW
-          ? 'com.christianmeude.nucleus.preview'
-          : 'com.christianmeude.nucleus',
+          ? 'com.christianmeude.nucleusmobile.preview'
+          : 'com.christianmeude.nucleusmobile',
     },
     android: {
       googleServicesFile: './google-services.json',
@@ -49,10 +50,10 @@ export default ({ config }: ConfigContext): any => {
         backgroundColor: '#ffffff',
       },
       package: IS_DEV
-        ? 'com.christianmeude.nucleus.dev'
+        ? 'com.christianmeude.nucleusmobile.dev'
         : IS_PREVIEW
-          ? 'com.christianmeude.nucleus.preview'
-          : 'com.christianmeude.nucleus',
+          ? 'com.christianmeude.nucleusmobile.preview'
+          : 'com.christianmeude.nucleusmobile',
       // Starting versionCode. EAS `autoIncrement: true` on the production
       // profile bumps this per build so Android accepts APK-over-APK updates.
       versionCode: 1,
@@ -65,11 +66,11 @@ export default ({ config }: ConfigContext): any => {
     plugins,
     extra: {
       eas: {
-        projectId: 'cfc58fb4-9bdc-4fd8-91ed-44a201032d8d',
+        projectId: '9bf6aa26-5736-4539-8ea8-a1b43b95b7b5',
       },
     },
     updates: {
-      url: 'https://u.expo.dev/cfc58fb4-9bdc-4fd8-91ed-44a201032d8d',
+      url: 'https://u.expo.dev/9bf6aa26-5736-4539-8ea8-a1b43b95b7b5',
       // Sideloaded apps get no Play Store auto-update, so check for EAS
       // Update on every launch and fall back to cached bundle offline.
       enabled: true,

@@ -10,12 +10,12 @@ Users only ever see the GH Pages download page. Never send them expo.dev links.
 - **APK shelf (GitHub Releases, repo you own):** each production APK is attached
   to a Release as a versioned asset (e.g. `nucleus-1.0.0-b1.apk`) plus a stable
   alias named exactly `nucleus-latest.apk`. Button URL never changes:
-  `https://github.com/christianmeude/capstone-nucleus-rn/releases/latest/download/nucleus-latest.apk`
+  `https://github.com/christianmeude/nucleus-mobile/releases/latest/download/nucleus-latest.apk`
 - **Landing page (GH Pages, same repo):** source is `download/index.html` +
   `download/latest.json`, auto-deployed by
   `.github/workflows/deploy-download-page.yml` on every `main` push touching
   `download/**`. Public URL after first deploy:
-  `https://christianmeude.github.io/capstone-nucleus-rn/download/`
+  `https://christianmeude.github.io/nucleus-mobile/download/`
   Print/QR this page URL, never the APK or expo.dev URL directly.
 - **Small fixes (EAS Update on Expo):** invisible to users, still served by Expo
   on app restart. No reinstall.
@@ -27,9 +27,9 @@ deleted, capped, or made private, your download breaks and you cannot fix it.
 
 | Profile       | Package                             | Channel       | Artifact | Used for                    |
 | ------------- | ----------------------------------- | ------------- | -------- | --------------------------- |
-| `development` | `com.christianmeude.nucleus.dev`     | `development` | APK (dev client) | Local dev, needs `expo start` |
-| `preview`     | `com.christianmeude.nucleus.preview` | `preview`     | APK      | QA, installs side-by-side with dev |
-| `production`  | `com.christianmeude.nucleus`         | `production`  | APK      | Real users (sideload)       |
+| `development` | `com.christianmeude.nucleusmobile.dev`     | `development` | APK (dev client) | Local dev, needs `expo start` |
+| `preview`     | `com.christianmeude.nucleusmobile.preview` | `preview`     | APK      | QA, installs side-by-side with dev |
+| `production`  | `com.christianmeude.nucleusmobile`         | `production`  | APK      | Real users (sideload)       |
 
 `production` is `distribution: internal` + `android.buildType: apk` in `eas.json`.
 Do NOT switch it back to store/AAB or sideload breaks.
@@ -41,7 +41,7 @@ native release — EAS `autoIncrement` does not support dynamic `app.config.ts`.
 - Android keystore is EAS-managed. Owner: Expo account `christianmeude`.
 - Never run `eas credentials:reset` / delete the keystore after v1 ships.
   Symptom if you do: `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, users must uninstall + lose data.
-- Package name `com.christianmeude.nucleus` is frozen after v1.
+- Package name `com.christianmeude.nucleusmobile` is frozen after v1.
 
 ## First launch
 

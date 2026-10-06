@@ -1,7 +1,7 @@
 # Appendix F (Mobile) — Functionality Inventory
 
 Source of truth for the mobile-centric test document. Web draft
-(`capstone-nucleus` repo) trimmed to what `capstone-nucleus-rn` actually ships.
+(`capstone-nucleus` repo) trimmed to what `nucleus-mobile` actually ships.
 Decisions applied: Dean/Chair/Staff/Admin excluded (mobile shows
 `UnsupportedRole`), Resubmit wired in, Chat/Download recorded as N/A with reason.
 

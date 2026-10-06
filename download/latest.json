@@ -3,7 +3,7 @@
   "build": 1,
   "date": "2026-10-07",
   "notes": "Initial sideload release.",
-  "apkUrl": "https://github.com/christianmeude/capstone-nucleus-rn/releases/latest/download/nucleus-latest.apk",
+  "apkUrl": "https://github.com/christianmeude/nucleus-mobile/releases/latest/download/nucleus-latest.apk",
   "minAndroid": "Android 8.0+",
   "requiresReinstall": false
 }
