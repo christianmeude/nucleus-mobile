@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NUcleus Mobile — Download for Android</title>
+    <meta
+      name="description"
+      content="Download NUcleus Mobile for Android. Official sideload install page."
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #ffffff;
+        --ink: #111827;
+        --muted: #6b7280;
+        --brand: #1d4ed8;
+        --brand-dark: #1e40af;
+        --card: #f8fafc;
+        --line: #e5e7eb;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family:
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+      }
+      .wrap {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 32px 20px 64px;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--brand);
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        padding: 4px 10px;
+        border-radius: 999px;
+      }
+      h1 {
+        font-size: 32px;
+        margin: 16px 0 8px;
+      }
+      p {
+        line-height: 1.6;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+      .download-btn {
+        display: block;
+        text-align: center;
+        background: var(--brand);
+        color: #fff;
+        font-size: 18px;
+        font-weight: 700;
+        text-decoration: none;
+        padding: 16px;
+        border-radius: 12px;
+        margin: 12px 0;
+      }
+      .download-btn:hover {
+        background: var(--brand-dark);
+      }
+      ol li,
+      ul li {
+        margin: 8px 0;
+        line-height: 1.6;
+      }
+      code {
+        background: #f3f4f6;
+        padding: 2px 6px;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+      .version {
+        font-size: 14px;
+      }
+      footer {
+        margin-top: 32px;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <span class="badge">Official download</span>
+      <h1>NUcleus Mobile for Android</h1>
+      <p class="muted">
+        This app is distributed directly by us — it is not on the Google Play
+        Store. Download and install it from this page only.
+      </p>
+
+      <div class="card">
+        <!-- Maintainer: APKs live on GitHub Releases (repo you own), never on
+             expo.dev or a colleague's Supabase project. Upload each production
+             APK as a versioned asset (e.g. nucleus-1.0.0-b1.apk) plus a stable
+             alias named nucleus-latest.apk. The button below uses the stable
+             "latest" URL so posters/QR never break. -->
+        <div class="version muted" id="version-line">
+          Version 1.0.0 (build 1) · Updated <span id="release-date">—</span>
+        </div>
+        <a
+          class="download-btn"
+          id="download-btn"
+          href="https://github.com/christianmeude/capstone-nucleus-rn/releases/latest/download/nucleus-latest.apk"
+        >
+          Download for Android (.apk)
+        </a>
+        <div class="muted version" id="changelog">
+          What&rsquo;s new: Initial sideload release.
+        </div>
+      </div>
+
+      <h2>How to install</h2>
+      <ol>
+        <li>
+          Tap <strong>Download for Android</strong> above on your Android phone.
+        </li>
+        <li>
+          Open the downloaded <code>.apk</code> file. Android will ask to allow
+          <code>Install unknown apps</code> — tap <strong>Allow</strong>. This is
+          normal for apps installed outside the Play Store.
+        </li>
+        <li>
+          If you see <strong>“Unknown app — Install anyway?”</strong>, tap
+          <strong>Install anyway</strong>. The file comes from us, so it is safe
+          to install.
+        </li>
+        <li>Tap <strong>Open</strong> to launch NUcleus Mobile.</li>
+      </ol>
+
+      <div class="card">
+        <h3 style="margin-top: 0">Classroom / orientation install</h3>
+        <p class="muted">
+          Scan the QR code on the poster with your phone camera — it opens this
+          page. Then follow the steps above.
+        </p>
+        <!-- Maintainer: generate a QR code pointing at THIS page (not expo.dev)
+             and print it for posters. Free generators or `npx qrcode` work. -->
+      </div>
+
+      <h2>Updates</h2>
+      <p>
+        Small fixes download automatically — just close and reopen the app. If we
+        release a big update, this page will say
+        <strong>“Please re-download”</strong> and you will need to install the new
+        <code>.apk</code> over the old one (no uninstall needed).
+      </p>
+
+      <h2>Having trouble?</h2>
+      <ul>
+        <li>
+          <strong>“App not installed”:</strong> you may have a very old test copy.
+          Uninstall any copy named <code>NUcleus Mobile (Dev)</code> or
+          <code>NUcleus Mobile (Preview)</code> first, then reinstall. The real app
+          is just <strong>NUcleus Mobile</strong>.
+        </li>
+        <li>
+          <strong>“Blocked by Play Protect”:</strong> tap
+          <strong>More details → Install anyway</strong>. This warning appears for
+          all sideloaded apps.
+        </li>
+        <li>
+          <strong>Download won’t open:</strong> look in Files → Downloads for the
+          <code>.apk</code>, or re-download using Chrome.
+        </li>
+        <li>
+          <strong>Still stuck?</strong> Contact support at
+          <a href="mailto:nucleus-support@nu-dasma.edu.ph"
+            >nucleus-support@nu-dasma.edu.ph</a
+          >.
+        </li>
+      </ul>
+
+      <footer class="muted">
+        Only download NUcleus Mobile from this page. Do not install APKs forwarded
+        over chat from unknown sources.
+      </footer>
+    </main>
+
+    <script>
+      // Version info is co-hosted as ./latest.json on GH Pages and updated
+      // per release alongside the GitHub Release assets.
+      fetch('./latest.json')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (!d) return;
+          if (d.apkUrl) document.getElementById('download-btn').href = d.apkUrl;
+          const line =
+            'Version ' +
+            (d.version || '?') +
+            ' (build ' +
+            (d.build || '?') +
+            ') · Updated ' +
+            (d.date || '');
+          document.getElementById('version-line').textContent = line;
+          if (d.notes)
+            document.getElementById('changelog').textContent =
+              "What's new: " + d.notes;
+        })
+        .catch(() => {});
+    </script>
+  </body>
+</html>
