@@ -5,6 +5,12 @@
  */
 import { supabase } from '../lib/supabase';
 import { User, UserRole } from '../types/domain';
+import { TimeoutError, withTimeout } from '../utils/withTimeout';
+
+/** Upper bound for the profile lookup. Exceeded on a stalled socket (no
+ *  resolution at all), in which case the caller must fail closed to the
+ *  logged-out state instead of spinning the app loader forever. */
+export const PROFILE_QUERY_TIMEOUT_MS = 15000;
 
 export type FetchAppUserProfileError = 'not_provisioned' | 'suspended' | 'query_failed' | 'rls_blocked';
 
@@ -33,7 +39,8 @@ function buildFullName(row: {
 }
 
 export async function fetchAppUserProfile(
-  authUser: SupabaseAuthUserSnapshot
+  authUser: SupabaseAuthUserSnapshot,
+  timeoutMs: number = PROFILE_QUERY_TIMEOUT_MS,
 ): Promise<FetchAppUserProfileResult> {
   const authEmail = authUser.email?.trim().toLowerCase();
 
@@ -53,11 +60,21 @@ export async function fetchAppUserProfile(
   console.log(`[fetchAppUserProfile] Looking up user by email: ${normalized}`);
 
   try {
-    const { data, error } = await supabase
+    const query = supabase
       .from('users')
       .select(selectColumns)
       .ilike('email', normalized)
       .maybeSingle();
+
+    // The query builder is thenable, not a real promise — assimilate it so
+    // Promise.race can bound it. A stalled socket never settles, so without
+    // this the app loader spins forever (seen on-device after a killed
+    // mid-auth restart: "Looking up user" with no follow-up line).
+    const { data, error } = await withTimeout(
+      Promise.resolve(query),
+      timeoutMs,
+      'Profile lookup',
+    );
 
     if (error) {
       console.error(`[fetchAppUserProfile] Query error:`, error.code, error.message);
@@ -112,6 +129,13 @@ export async function fetchAppUserProfile(
     return { user };
   } catch (err) {
     console.error(`[fetchAppUserProfile] Caught exception:`, err);
+    if (err instanceof TimeoutError) {
+      return {
+        user: null,
+        error: 'query_failed',
+        message: 'Profile lookup timed out. Check your connection and try again.',
+      };
+    }
     return {
       user: null,
       error: 'query_failed',

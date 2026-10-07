@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { clearAuthTokens } from '../storage/authStorage';
 import { User } from '../types/domain';
 import { apiCache } from '../utils/apiCache';
+import { withTimeout } from '../utils/withTimeout';
 
 interface SignInResult {
   success: boolean;
@@ -21,6 +22,14 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+/**
+ * Upper bound for the whole startup auth sequence (stored-session read +
+ * profile lookup). Without this a stalled socket leaves `loading` true
+ * forever and the app sits on the loader — seen on-device after a kill
+ * mid-auth. Exceeding it fails closed to the logged-out state.
+ */
+export const AUTH_BOOTSTRAP_TIMEOUT_MS = 20000;
 
 async function loadProfileFromSession(session: Session | null): Promise<User | null> {
   if (!session?.user) {
@@ -62,7 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        await finishApply(session);
+        await withTimeout(finishApply(session), AUTH_BOOTSTRAP_TIMEOUT_MS, 'Session bootstrap');
       } catch (error) {
         // Backend unreachable or unconfigured (e.g. release built without
         // EAS env vars): land on the logged-out state instead of crashing.
@@ -90,7 +99,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      await finishApply(session);
+      try {
+        // Bounded for the same reason as bootstrap: a stall here must not
+        // wedge the session. Unlike bootstrap, a timeout keeps the current
+        // user rather than logging out — the stall is likely transient.
+        await withTimeout(finishApply(session), AUTH_BOOTSTRAP_TIMEOUT_MS, 'Session refresh');
+      } catch (error) {
+        console.warn('[auth] Session refresh failed, keeping current user:', error);
+      }
     }));
     } catch (error) {
       console.warn('[auth] Auth state subscription failed:', error);

@@ -14,6 +14,7 @@ import {
   SettingsRow,
 } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
+import { withTimeout } from '../../utils/withTimeout';
 
 import { initialsFor } from '../../utils/format';
 import { Mail, Lock, Moon, LogOut } from 'lucide-react-native';
@@ -107,27 +108,46 @@ export const ProfileScreen = () => {
 
     setPasswordLoading(true);
     setPasswordError('');
-    const { error: verificationError } = await supabase.auth.signInWithPassword({
-      email: user.email,
-      password: currentPassword,
-    });
-    if (verificationError) {
+    setPasswordStatus('');
+    try {
+      // Both calls are bounded and the spinner is cleared in `finally`: an
+      // exception from either (stalled socket throws rather than returning an
+      // error) previously left the sheet spinning forever.
+      const { error: verificationError } = await withTimeout(
+        supabase.auth.signInWithPassword({
+          email: user.email,
+          password: currentPassword,
+        }),
+        20000,
+        'Password verification',
+      );
+      if (verificationError) {
+        setPasswordError('Your current password is incorrect.');
+        return;
+      }
+
+      const { error } = await withTimeout(
+        supabase.auth.updateUser({ password: newPassword }),
+        20000,
+        'Password update',
+      );
+      if (error) {
+        setPasswordError('We could not change your password. Please try again.');
+        return;
+      }
+
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordStatus('Password changed successfully.');
+    } catch {
+      setPasswordError(
+        'The request timed out. Check your connection and try again. ' +
+          'If your password did change, sign in again with the new one.',
+      );
+    } finally {
       setPasswordLoading(false);
-      setPasswordError('Your current password is incorrect.');
-      return;
     }
-
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    setPasswordLoading(false);
-    if (error) {
-      setPasswordError('We could not change your password. Please try again.');
-      return;
-    }
-
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setPasswordStatus('Password changed successfully.');
   };
 
   return (
