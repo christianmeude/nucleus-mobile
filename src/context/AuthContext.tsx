@@ -60,14 +60,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const bootstrap = async () => {
       setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      await finishApply(session);
-      if (!cancelled) setLoading(false);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        await finishApply(session);
+      } catch (error) {
+        // Backend unreachable or unconfigured (e.g. release built without
+        // EAS env vars): land on the logged-out state instead of crashing.
+        console.warn('[auth] Session bootstrap failed:', error);
+        if (!cancelled) applyUser(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
 
     bootstrap();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    let subscription: { unsubscribe: () => void } | null = null;
+    try {
+      ({ data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'TOKEN_REFRESHED') {
         return;
       }
@@ -81,11 +91,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       await finishApply(session);
-    });
+    }));
+    } catch (error) {
+      console.warn('[auth] Auth state subscription failed:', error);
+    }
 
     return () => {
       cancelled = true;
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
 
