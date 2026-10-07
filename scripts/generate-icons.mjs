@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
-const src = path.join(root, 'assets/images/nucleus-mark.png');
+const src = path.join(root, 'assets/images/nucleus-logo.png');
 const OUT = 1024;
 // Mark occupies ~68% of canvas side (fits adaptive 66% circle with margin)
 const MARK_SIZE = Math.round(OUT * 0.68);

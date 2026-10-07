@@ -25,7 +25,7 @@ export const Logo = ({ size = 'md', showWordmark = true, wordmarkStyle }: LogoPr
   return (
     <View style={styles.container}>
       <Image
-        source={require('../../../assets/images/nucleus-mark.png')}
+        source={require('../../../assets/images/nucleus-logo.png')}
         style={{ width: token.mark, height: token.mark }}
         resizeMode="contain"
         accessibilityIgnoresInvertColors

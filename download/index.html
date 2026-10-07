@@ -6,18 +6,43 @@
     <title>NUcleus Mobile — Download for Android</title>
     <meta
       name="description"
-      content="Download NUcleus Mobile for Android. Official sideload install page."
+      content="Official download for NUcleus Mobile (Android) for National University–Dasmariñas students and faculty. Browse, submit, and track research."
     />
+    <meta name="theme-color" content="#1B3A8C" />
+    <meta property="og:title" content="NUcleus Mobile — Download for Android" />
+    <meta
+      property="og:description"
+      content="Official install page for NU-Dasmariñas. Free, 2-minute install, Android 8.0+."
+    />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:image"
+      content="https://christianmeude.github.io/nucleus-mobile/nucleus-logo.png"
+    />
+    <link rel="icon" href="./nucleus-logo.png" />
+    <script>
+      document.documentElement.classList.add('js');
+    </script>
     <style>
       :root {
         color-scheme: light;
-        --bg: #ffffff;
-        --ink: #111827;
-        --muted: #6b7280;
-        --brand: #1d4ed8;
-        --brand-dark: #1e40af;
-        --card: #f8fafc;
-        --line: #e5e7eb;
+        --primary: #1b3a8c;
+        --primary-hover: #16307a;
+        --primary-pressed: #102560;
+        --primary-soft: #d2def5;
+        --primary-surface: #eaf0fb;
+        --accent: #cda434;
+        --accent-hover: #ae8829;
+        --accent-surface: #fbf6e8;
+        --text: #0f172a;
+        --text-2: #475569;
+        --on-brand: #ffffff;
+        --on-brand-soft: #d2def5;
+        --surface: #f8fafc;
+        --raised: #ffffff;
+        --sunken: #f1f5f9;
+        --line: #e2e8f0;
+        --focus: #2e5bc9;
       }
       * {
         box-sizing: border-box;
@@ -25,199 +50,951 @@
       body {
         margin: 0;
         font-family:
+          Inter,
           system-ui,
           -apple-system,
-          Segoe UI,
+          "Segoe UI",
           Roboto,
           sans-serif;
-        background: var(--bg);
-        color: var(--ink);
+        background: var(--surface);
+        color: var(--text);
+        font-size: 15px;
+        line-height: 1.6;
       }
       .wrap {
-        max-width: 640px;
+        max-width: 960px;
         margin: 0 auto;
-        padding: 32px 20px 64px;
+        padding: 24px 16px 64px;
       }
-      .badge {
-        display: inline-block;
+      .narrow {
+        max-width: 640px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .site-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 0;
+      }
+      .mark {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        flex: none;
+      }
+      .seal {
+        height: 40px;
+        width: auto;
+        margin-left: auto;
+        flex: none;
+      }
+      .org {
         font-size: 13px;
         font-weight: 600;
-        color: var(--brand);
-        background: #eff6ff;
-        border: 1px solid #bfdbfe;
-        padding: 4px 10px;
-        border-radius: 999px;
+        color: var(--text-2);
+        letter-spacing: 0.1px;
+      }
+      .prod {
+        font-size: 13px;
+        color: var(--text-2);
       }
       h1 {
-        font-size: 32px;
-        margin: 16px 0 8px;
+        font-size: 28px;
+        line-height: 36px;
+        font-weight: 600;
+        letter-spacing: 0.15px;
+        text-wrap: balance;
+        margin: 0 0 8px;
+      }
+      h2 {
+        font-size: 20px;
+        line-height: 28px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        text-wrap: balance;
+        margin: 32px 0 8px;
       }
       p {
-        line-height: 1.6;
-      }
-      .muted {
-        color: var(--muted);
-      }
-      .card {
-        background: var(--card);
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        padding: 20px;
-        margin: 20px 0;
-      }
-      .download-btn {
-        display: block;
-        text-align: center;
-        background: var(--brand);
-        color: #fff;
-        font-size: 18px;
-        font-weight: 700;
-        text-decoration: none;
-        padding: 16px;
-        border-radius: 12px;
-        margin: 12px 0;
-      }
-      .download-btn:hover {
-        background: var(--brand-dark);
-      }
-      ol li,
-      ul li {
         margin: 8px 0;
-        line-height: 1.6;
+        max-width: 65ch;
       }
-      code {
-        background: #f3f4f6;
-        padding: 2px 6px;
-        border-radius: 6px;
-        font-size: 14px;
+      .lede {
+        color: var(--text-2);
+      }
+      /* Hero: drenched Navy, one Gold orbit line from the mark's swoosh */
+      .hero {
+        position: relative;
+        background: linear-gradient(160deg, #1b3a8c 0%, #102560 100%);
+        border-radius: 18px;
+        color: var(--on-brand);
+        margin: 16px 0 8px;
+        overflow: hidden;
+      }
+      .orbit {
+        position: absolute;
+        right: -120px;
+        top: -80px;
+        width: 420px;
+        height: 420px;
+        pointer-events: none;
+      }
+      .hero-grid {
+        position: relative;
+        display: grid;
+        gap: 24px;
+        padding: 24px 16px;
+      }
+      .hero h1 {
+        color: var(--on-brand);
+      }
+      .hero .lede {
+        color: var(--on-brand-soft);
+      }
+      .rule {
+        width: 40px;
+        height: 4px;
+        border-radius: 999px;
+        background: var(--accent);
+        margin: 12px 0 0;
+      }
+      .cta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        margin-top: 16px;
+      }
+      .btn-gold {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 52px;
+        background: var(--accent);
+        color: var(--text);
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        text-decoration: none;
+        padding: 14px 24px;
+        border-radius: 999px;
+        transition: background 160ms ease-out;
+      }
+      .btn-gold:hover {
+        background: var(--accent-hover);
+      }
+      .btn-ghost {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        color: var(--on-brand);
+        font-weight: 600;
+        font-size: 15px;
+        text-decoration: underline;
+        text-underline-offset: 4px;
+        padding: 10px 4px;
+      }
+      .hero-meta {
+        font-size: 13px;
+        color: var(--on-brand-soft);
+        margin-top: 12px;
+      }
+      /* Device mockup (illustrated preview, geometric only) */
+      .phone {
+        width: 240px;
+        margin: 0 auto;
+        background: var(--text);
+        border-radius: 18px;
+        padding: 10px;
+      }
+      .screen {
+        background: var(--surface);
+        border-radius: 14px;
+        padding: 12px;
+        color: var(--text);
+        min-height: 320px;
+      }
+      .screen img {
+        display: block;
+        width: 100%;
+        border-radius: 10px;
+      }
+      .notch {
+        width: 88px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--text);
+        margin: 0 auto 10px;
+        opacity: 0.9;
+      }
+      .screen-title {
+        font-size: 17px;
+        line-height: 24px;
+        font-weight: 600;
+        margin: 0 0 8px;
+      }
+      .fake-search {
+        background: var(--sunken);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        font-size: 12px;
+        color: var(--text-2);
+        padding: 8px 12px;
+        margin-bottom: 8px;
+      }
+      .paper {
+        background: var(--raised);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 12px;
+        margin-top: 8px;
+      }
+      .paper b {
+        display: block;
+        font-size: 13px;
+      }
+      .paper span {
+        font-size: 12px;
+        color: var(--text-2);
+      }
+      .status {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 2px 8px;
+        margin-top: 8px;
+      }
+      .status.review {
+        background: var(--accent-surface);
+        color: var(--text);
+      }
+      .status.ok {
+        background: var(--primary-surface);
+        color: var(--primary);
+      }
+      .mock-caption {
+        text-align: center;
+        font-size: 12px;
+        color: var(--on-brand-soft);
+        margin-top: 8px;
+      }
+      /* Trust strip */
+      .trust {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+        align-items: center;
+        font-size: 13px;
+        color: var(--text-2);
+        margin: 16px 0 0;
+      }
+      .chip {
+        background: var(--accent-surface);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 2px 8px;
+        font-weight: 600;
+        font-size: 12px;
+      }
+      /* Screenshot gallery (appears only when real shots land) */
+      .shots {
+        display: grid;
+        gap: 12px;
+        margin-top: 16px;
+      }
+      .shots img {
+        display: block;
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+      }
+      /* Features */
+      .features {
+        display: grid;
+        gap: 12px;
+        margin-top: 16px;
+      }
+      .feature {
+        background: var(--raised);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px;
+      }
+      .feature h3 {
+        font-size: 17px;
+        line-height: 24px;
+        font-weight: 600;
+        margin: 12px 0 4px;
+      }
+      .feature p {
+        font-size: 13px;
+        color: var(--text-2);
+        margin: 0;
+      }
+      .icon-well {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: var(--primary-surface);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .icon-well svg {
+        width: 24px;
+        height: 24px;
+      }
+      /* Download card */
+      .card {
+        background: var(--raised);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px;
+        margin: 16px 0;
       }
       .version {
-        font-size: 14px;
+        font-size: 13px;
+        color: var(--text-2);
+      }
+      .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 8px 0 4px;
+        font-size: 13px;
+        color: var(--text-2);
+      }
+      .download-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 52px;
+        text-align: center;
+        background: var(--primary);
+        color: #fff;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        text-decoration: none;
+        padding: 14px 24px;
+        border-radius: 999px;
+        margin: 12px 0 8px;
+        transition: background 160ms ease-out;
+      }
+      .download-btn:hover {
+        background: var(--primary-hover);
+      }
+      .download-btn:active {
+        background: var(--primary-pressed);
+      }
+      .download-btn:focus-visible,
+      .btn-gold:focus-visible,
+      .btn-ghost:focus-visible,
+      a:focus-visible,
+      button:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+      }
+      .hero .download-btn:focus-visible,
+      .hero .btn-gold:focus-visible,
+      .hero .btn-ghost:focus-visible {
+        outline-color: var(--accent);
+      }
+      .reassure {
+        font-size: 13px;
+        color: var(--text-2);
+        margin: 4px 0 0;
+      }
+      /* Steps */
+      ol.steps {
+        list-style: none;
+        padding: 0;
+        margin: 16px 0;
+        counter-reset: step;
+      }
+      ol.steps li {
+        counter-increment: step;
+        display: flex;
+        gap: 12px;
+        margin: 12px 0;
+        max-width: 65ch;
+      }
+      ol.steps li::before {
+        content: counter(step);
+        flex: none;
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        background: var(--primary);
+        color: var(--on-brand);
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 2px;
+      }
+      ul.trouble {
+        padding-left: 22px;
+      }
+      ul.trouble li {
+        margin: 10px 0;
+        max-width: 65ch;
+      }
+      details {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--raised);
+        padding: 12px 16px;
+        margin: 12px 0;
+      }
+      summary {
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 15px;
+      }
+      .share-box {
+        background: var(--sunken);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 13px;
+        word-break: break-all;
+        margin: 8px 0;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+      .btn-secondary {
+        appearance: none;
+        border: 1px solid var(--line);
+        background: var(--raised);
+        color: var(--primary);
+        font-weight: 600;
+        font-size: 15px;
+        border-radius: 999px;
+        padding: 10px 18px;
+        min-height: 44px;
+        cursor: pointer;
+        transition: background 160ms ease-out;
+      }
+      .btn-secondary:hover {
+        background: var(--primary-surface);
+      }
+      .final-cta {
+        text-align: center;
+        margin: 32px 0 0;
+      }
+      .final-cta p {
+        margin-left: auto;
+        margin-right: auto;
       }
       footer {
         margin-top: 32px;
         font-size: 13px;
+        color: var(--text-2);
+      }
+      .share-status {
+        font-size: 13px;
+        color: var(--text-2);
+        min-height: 20px;
+      }
+      /* One authored moment: sections rise once on entry.
+         Pre-state applies only when JS is present (html.js), so no-JS
+         visitors always see full content. */
+      .js .reveal {
+        opacity: 0;
+        transform: translateY(12px);
+        transition:
+          opacity 350ms ease-out,
+          transform 350ms cubic-bezier(0.2, 0.7, 0.3, 1);
+      }
+      .js .reveal.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .js .reveal {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+        * {
+          transition: none !important;
+        }
+      }
+      @media (min-width: 760px) {
+        .wrap {
+          padding-left: 24px;
+          padding-right: 24px;
+        }
+        .hero-grid {
+          grid-template-columns: 1fr 280px;
+          align-items: center;
+          padding: 32px;
+        }
+        .features,
+        .shots {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
       }
     </style>
   </head>
   <body>
+    <!-- THESIS: the fastest path from poster QR to installed app; refuses airy landing sprawl. OWN-WORLD: drenched Navy hero, one Gold orbit line from the mark, Inter Display 28, pill CTAs, hairline cards. STORY: visitor believes official and desirable, taps Download, installs in 2 minutes. FIRST VIEWPORT: navy hero with lockup, headline, gold rule, gold Download CTA, phone carrying orbit ring; real screenshots auto-wire when files land. FORM: grounded candidate 7 (compact-confident), seed bc1ef07b; catalog challengers lost on audience and product clarity. FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md. -->
     <main class="wrap">
-      <span class="badge">Official download</span>
-      <h1>NUcleus Mobile for Android</h1>
-      <p class="muted">
-        This app is distributed directly by us — it is not on the Google Play
-        Store. Download and install it from this page only.
-      </p>
-
-      <div class="card">
-        <!-- Maintainer: APKs live on GitHub Releases (repo you own), never on
-             expo.dev or a colleague's Supabase project. Upload each production
-             APK as a versioned asset (e.g. nucleus-1.0.0-b1.apk) plus a stable
-             alias named nucleus-latest.apk. The button below uses the stable
-             "latest" URL so posters/QR never break. -->
-        <div class="version muted" id="version-line">
-          Version 1.0.0 (build 1) · Updated <span id="release-date">—</span>
+      <header class="site-header">
+        <img
+          class="mark"
+          src="./nucleus-logo.png"
+          alt="NUcleus logo"
+          width="44"
+          height="44"
+        />
+        <div>
+          <div class="org">National University — Dasmariñas</div>
+          <div class="prod">NUcleus Mobile · Official install page</div>
         </div>
+        <img
+          class="seal"
+          src="./nu-logo.png"
+          alt="National University seal"
+        />
+      </header>
+
+      <section class="hero">
+        <svg
+          class="orbit"
+          viewBox="0 0 420 420"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <circle
+            cx="210"
+            cy="210"
+            r="150"
+            fill="none"
+            stroke="#CDA434"
+            stroke-width="2"
+          />
+          <circle cx="340" cy="130" r="8" fill="#CDA434" />
+        </svg>
+        <div class="hero-grid">
+          <div>
+            <h1>Your research, in your pocket.</h1>
+            <div class="rule" aria-hidden="true"></div>
+            <p class="lede">
+              NUcleus Mobile is the official research companion for
+              NU-Dasmariñas students and faculty. Browse the library, submit
+              papers, and track every review. Free, in about 2 minutes.
+            </p>
+            <div class="cta-row">
+              <a
+                class="btn-gold apk-link"
+                href="https://github.com/christianmeude/nucleus-mobile/releases/latest/download/nucleus-latest.apk"
+              >
+                Download for Android
+              </a>
+              <a class="btn-ghost" href="#install">How to install</a>
+            </div>
+            <p class="hero-meta" id="hero-meta">
+              Android 8.0+ · APK · Size shown by browser
+            </p>
+          </div>
+          <div>
+            <div class="phone">
+              <div class="screen" id="phone-screen">
+                <div class="notch" aria-hidden="true"></div>
+                <p class="screen-title">Browse</p>
+                <div class="fake-search" aria-hidden="true">Search papers…</div>
+                <div class="paper">
+                  <b>Research title</b>
+                  <span>Author name · 2026</span>
+                  <br />
+                  <span class="status review">Under review</span>
+                </div>
+                <div class="paper">
+                  <b>Research title</b>
+                  <span>Author name · 2026</span>
+                  <br />
+                  <span class="status ok">Approved</span>
+                </div>
+              </div>
+            </div>
+            <p class="mock-caption" id="mock-caption">Illustrated preview</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="trust narrow">
+        <span class="chip">Official release</span>
+        <span id="version-line">Version 1.0.0 (build 1) · Updated Oct 7, 2026</span>
+        <span>Only from this page. Never install forwarded APKs.</span>
+      </div>
+
+      <section class="narrow reveal" id="shots-section" hidden aria-label="Screenshots">
+        <h2>Take a look inside</h2>
+        <div class="shots" id="shots"></div>
+      </section>
+
+      <section class="narrow reveal" aria-label="Features">
+        <h2>Why install it</h2>
+        <div class="features">
+          <div class="feature">
+            <div class="icon-well" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z" />
+                <path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z" />
+              </svg>
+            </div>
+            <h3>Browse the library</h3>
+            <p>Find published research from across the university.</p>
+          </div>
+          <div class="feature">
+            <div class="icon-well" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <path d="M17 8l-5-5-5 5" />
+                <path d="M12 3v12" />
+              </svg>
+            </div>
+            <h3>Submit in minutes</h3>
+            <p>Send your paper from your phone. No web portal needed.</p>
+          </div>
+          <div class="feature">
+            <div class="icon-well" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+              </svg>
+            </div>
+            <h3>Track every step</h3>
+            <p>Students follow submissions; faculty clear the Review Queue.</p>
+          </div>
+        </div>
+        <p class="lede">
+          NUcleus Mobile is sideloaded: it is not on the Play Store, and this
+          page is the only official source.
+        </p>
+      </section>
+
+      <section class="narrow reveal" aria-label="Download">
+        <h2>Get the app</h2>
+        <div class="card">
+          <div class="meta-row">
+            <span class="chip">Official release</span>
+            <span id="compat-line">Android 8.0+ · APK · Size shown by browser</span>
+          </div>
+          <a
+            class="download-btn apk-link"
+            id="download-btn"
+            href="https://github.com/christianmeude/nucleus-mobile/releases/latest/download/nucleus-latest.apk"
+          >
+            Download NUcleus Mobile for Android
+          </a>
+          <p class="reassure">
+            The file downloads from our GitHub releases page. When it
+            finishes, follow the steps below. Only install files you got from
+            this page.
+          </p>
+          <details>
+            <summary>What&rsquo;s new</summary>
+            <p class="version" id="changelog">Initial sideload release.</p>
+          </details>
+        </div>
+      </section>
+
+      <section class="narrow reveal" aria-label="Install steps">
+        <h2 id="install">How to install</h2>
+        <ol class="steps">
+          <li>
+            <span
+              >On your Android phone, tap
+              <strong>Download for Android</strong> above.</span
+            >
+          </li>
+          <li>
+            <span
+              >Open the downloaded file. If Android asks to allow
+              <strong>Install unknown apps</strong>, tap
+              <strong>Allow</strong> for the app that downloaded it (usually
+              Chrome or Files). This is normal outside the Play Store.</span
+            >
+          </li>
+          <li>
+            <span
+              >If you see <strong>Unknown app — Install anyway?</strong>, that
+              warning appears for every app installed outside the Play Store,
+              including ours. If you came from this official page, tap
+              <strong>Install anyway</strong>.</span
+            >
+          </li>
+          <li>
+            <span>Tap <strong>Open</strong> to launch NUcleus Mobile.</span>
+          </li>
+        </ol>
+      </section>
+
+      <section class="narrow reveal" aria-label="Share">
+        <h2>Share with a seatmate</h2>
+        <p class="lede">
+          Already here? Don&rsquo;t send them to the poster across the room.
+          Let them type the address or share this screen.
+        </p>
+        <div class="share-box" id="share-url">
+          https://christianmeude.github.io/nucleus-mobile/
+        </div>
+        <div class="row">
+          <button class="btn-secondary" id="copy-btn" type="button">
+            Copy link
+          </button>
+          <button class="btn-secondary" id="share-btn" type="button">
+            Share
+          </button>
+        </div>
+        <div
+          class="share-status"
+          id="share-status"
+          role="status"
+          aria-live="polite"
+        ></div>
+      </section>
+
+      <section class="narrow reveal" aria-label="Troubleshooting">
+        <h2>Having trouble?</h2>
+        <ul class="trouble">
+          <li>
+            <strong>App not installed:</strong> you may have an old test copy.
+            Uninstall any copy named
+            <strong>NUcleus Mobile (Dev)</strong> or
+            <strong>NUcleus Mobile (Preview)</strong> first, then reinstall.
+            The real app is just <strong>NUcleus Mobile</strong>.
+          </li>
+          <li>
+            <strong>Blocked by Play Protect:</strong> tap
+            <strong>More details, then Install anyway</strong>. If your phone
+            offers no Install-anyway option, update Play Protect / Android and
+            retry.
+          </li>
+          <li>
+            <strong>Download won&rsquo;t open:</strong> open Files, then
+            Downloads, and tap the file. If it stalls, re-download using Chrome
+            on Wi-Fi.
+          </li>
+          <li>
+            <strong>On iPhone?</strong> This release is Android-only.
+          </li>
+        </ul>
+
+        <details>
+          <summary>About updates</summary>
+          <p class="version">
+            Small fixes arrive automatically when you reopen the app. If a big
+            update needs a fresh file, this page will say
+            <strong>Please re-download</strong>. Install the new file over the
+            old one, no uninstall needed.
+          </p>
+        </details>
+      </section>
+
+      <div class="final-cta narrow">
+        <h2>Ready when you are.</h2>
+        <p class="lede">
+          Free for NU-Dasmariñas students and faculty. Two minutes, one tap.
+        </p>
         <a
-          class="download-btn"
-          id="download-btn"
+          class="download-btn apk-link"
           href="https://github.com/christianmeude/nucleus-mobile/releases/latest/download/nucleus-latest.apk"
         >
-          Download for Android (.apk)
+          Download NUcleus Mobile for Android
         </a>
-        <div class="muted version" id="changelog">
-          What&rsquo;s new: Initial sideload release.
-        </div>
       </div>
 
-      <h2>How to install</h2>
-      <ol>
-        <li>
-          Tap <strong>Download for Android</strong> above on your Android phone.
-        </li>
-        <li>
-          Open the downloaded <code>.apk</code> file. Android will ask to allow
-          <code>Install unknown apps</code> — tap <strong>Allow</strong>. This is
-          normal for apps installed outside the Play Store.
-        </li>
-        <li>
-          If you see <strong>“Unknown app — Install anyway?”</strong>, tap
-          <strong>Install anyway</strong>. The file comes from us, so it is safe
-          to install.
-        </li>
-        <li>Tap <strong>Open</strong> to launch NUcleus Mobile.</li>
-      </ol>
-
-      <div class="card">
-        <h3 style="margin-top: 0">Classroom / orientation install</h3>
-        <p class="muted">
-          Scan the QR code on the poster with your phone camera — it opens this
-          page. Then follow the steps above.
-        </p>
-        <!-- Maintainer: generate a QR code pointing at THIS page (not expo.dev)
-             and print it for posters. Free generators or `npx qrcode` work. -->
-      </div>
-
-      <h2>Updates</h2>
-      <p>
-        Small fixes download automatically — just close and reopen the app. If we
-        release a big update, this page will say
-        <strong>“Please re-download”</strong> and you will need to install the new
-        <code>.apk</code> over the old one (no uninstall needed).
-      </p>
-
-      <h2>Having trouble?</h2>
-      <ul>
-        <li>
-          <strong>“App not installed”:</strong> you may have a very old test copy.
-          Uninstall any copy named <code>NUcleus Mobile (Dev)</code> or
-          <code>NUcleus Mobile (Preview)</code> first, then reinstall. The real app
-          is just <strong>NUcleus Mobile</strong>.
-        </li>
-        <li>
-          <strong>“Blocked by Play Protect”:</strong> tap
-          <strong>More details → Install anyway</strong>. This warning appears for
-          all sideloaded apps.
-        </li>
-        <li>
-          <strong>Download won’t open:</strong> look in Files → Downloads for the
-          <code>.apk</code>, or re-download using Chrome.
-        </li>
-        <li>
-          <strong>Still stuck?</strong> Contact support at
-          <a href="mailto:nucleus-support@nu-dasma.edu.ph"
-            >nucleus-support@nu-dasma.edu.ph</a
-          >.
-        </li>
-      </ul>
-
-      <footer class="muted">
-        Only download NUcleus Mobile from this page. Do not install APKs forwarded
-        over chat from unknown sources.
+      <footer class="narrow">
+        Only download NUcleus Mobile from this page. Do not install files
+        forwarded over chat from unknown sources.
       </footer>
     </main>
 
     <script>
-      // Version info is co-hosted as ./latest.json on GH Pages and updated
-      // per release alongside the GitHub Release assets.
-      fetch('./latest.json')
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => {
-          if (!d) return;
-          if (d.apkUrl) document.getElementById('download-btn').href = d.apkUrl;
-          const line =
-            'Version ' +
-            (d.version || '?') +
-            ' (build ' +
-            (d.build || '?') +
-            ') · Updated ' +
-            (d.date || '');
-          document.getElementById('version-line').textContent = line;
-          if (d.notes)
-            document.getElementById('changelog').textContent =
-              "What's new: " + d.notes;
-        })
-        .catch(() => {});
+      (function () {
+        var btns = document.querySelectorAll('.apk-link');
+        var line = document.getElementById('version-line');
+        var notes = document.getElementById('changelog');
+        var compat = document.getElementById('compat-line');
+        var heroMeta = document.getElementById('hero-meta');
+        var fallback = line.textContent;
+
+        fetch('./latest.json')
+          .then(function (r) {
+            return r.ok ? r.json() : null;
+          })
+          .then(function (d) {
+            if (!d) return;
+            if (d.apkUrl) {
+              for (var i = 0; i < btns.length; i++) btns[i].href = d.apkUrl;
+            }
+            var parts = [];
+            if (d.version)
+              parts.push(
+                'Version ' + d.version + (d.build ? ' (build ' + d.build + ')' : '')
+              );
+            else parts.push(fallback);
+            if (d.date) {
+              var months = [
+                'Jan',
+                'Feb',
+                'Mar',
+                'Apr',
+                'May',
+                'Jun',
+                'Jul',
+                'Aug',
+                'Sep',
+                'Oct',
+                'Nov',
+                'Dec',
+              ];
+              var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d.date);
+              parts.push(
+                'Updated ' +
+                  (m
+                    ? months[parseInt(m[2], 10) - 1] +
+                      ' ' +
+                      parseInt(m[3], 10) +
+                      ', ' +
+                      m[1]
+                    : d.date)
+              );
+            }
+            line.textContent = parts.join(' · ') || fallback;
+            if (d.notes) notes.textContent = d.notes;
+            var compatParts = [];
+            if (d.minAndroid) compatParts.push(d.minAndroid);
+            compatParts.push('APK');
+            compatParts.push(d.size ? d.size : 'Size shown by browser');
+            var compatText = compatParts.join(' · ');
+            compat.textContent = compatText;
+            heroMeta.textContent = compatText;
+          })
+          .catch(function () {
+            /* keep hardcoded fallback visible */
+          });
+
+        /* Real screenshots auto-wire when they land in download/shots/.
+           Drop portrait PNGs (phone width, 1080px+ recommended):
+             01-browse.png -> replaces the hero phone preview
+             02-submit.png, 03-track.png -> appear in the gallery below */
+        var shots = [
+          { file: '01-browse.png', alt: 'NUcleus Mobile Browse screen' },
+          { file: '02-submit.png', alt: 'NUcleus Mobile submit screen' },
+          { file: '03-track.png', alt: 'NUcleus Mobile submission status screen' },
+        ];
+        var screen = document.getElementById('phone-screen');
+        var caption = document.getElementById('mock-caption');
+        var gallerySection = document.getElementById('shots-section');
+        var gallery = document.getElementById('shots');
+        var loaded = 0;
+        shots.forEach(function (s, i) {
+          var probe = new Image();
+          probe.onload = function () {
+            loaded++;
+            var img = document.createElement('img');
+            img.src = './shots/' + s.file;
+            img.alt = s.alt;
+            if (i === 0) {
+              screen.innerHTML = '';
+              var notch = document.createElement('div');
+              notch.className = 'notch';
+              notch.setAttribute('aria-hidden', 'true');
+              screen.appendChild(notch);
+              screen.appendChild(img);
+              caption.textContent = 'Actual app screenshot';
+            }
+            var g = document.createElement('img');
+            g.src = './shots/' + s.file;
+            g.alt = s.alt;
+            g.loading = 'lazy';
+            gallery.appendChild(g);
+            if (loaded === 1) gallerySection.hidden = false;
+          };
+          probe.src = './shots/' + s.file;
+        });
+
+        var copyBtn = document.getElementById('copy-btn');
+        var shareBtn = document.getElementById('share-btn');
+        var status = document.getElementById('share-status');
+        var url = 'https://christianmeude.github.io/nucleus-mobile/';
+
+        copyBtn.addEventListener('click', function () {
+          function done() {
+            status.textContent = 'Link copied. Paste it to your seatmate.';
+          }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(done, function () {
+              status.textContent =
+                'Copy failed. Long-press the address above to copy.';
+            });
+          } else {
+            status.textContent = 'Long-press the address above to copy.';
+          }
+        });
+
+        if (!navigator.share) {
+          shareBtn.style.display = 'none';
+        } else {
+          shareBtn.addEventListener('click', function () {
+            navigator.share({ title: 'NUcleus Mobile', url: url }).catch(function () {});
+          });
+        }
+
+        if ('IntersectionObserver' in window) {
+          var io = new IntersectionObserver(
+            function (entries) {
+              for (var i = 0; i < entries.length; i++) {
+                if (entries[i].isIntersecting) {
+                  entries[i].target.classList.add('in');
+                  io.unobserve(entries[i].target);
+                }
+              }
+            },
+            { threshold: 0.12 }
+          );
+          var els = document.querySelectorAll('.reveal');
+          for (var j = 0; j < els.length; j++) io.observe(els[j]);
+        } else {
+          var fallbackEls = document.querySelectorAll('.reveal');
+          for (var k = 0; k < fallbackEls.length; k++)
+            fallbackEls[k].classList.add('in');
+        }
+      })();
     </script>
   </body>
 </html>

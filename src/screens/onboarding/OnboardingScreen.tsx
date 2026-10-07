@@ -136,7 +136,7 @@ export const OnboardingScreen = ({ onDone }: OnboardingScreenProps) => {
       {/* NUcleus mark as an oversized translucent-white silhouette (the mark tinted
           onBrand + low opacity keeps its alpha, so the logo shape reads). */}
       <Image
-        source={require('../../../assets/images/nucleus-mark.png')}
+        source={require('../../../assets/images/nucleus-logo.png')}
         style={styles.watermark}
         resizeMode="contain"
         accessibilityIgnoresInvertColors
