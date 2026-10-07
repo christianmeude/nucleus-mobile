@@ -1,4 +1,4 @@
-# Capstone Nucleus
+# NUcleus Mobile
 
 The unified mobile client for students and faculty to manage, submit, and review research papers at National University Dasmariñas.
 

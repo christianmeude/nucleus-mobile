@@ -15,7 +15,7 @@ Users only ever see the GH Pages download page. Never send them expo.dev links.
   `download/latest.json`, auto-deployed by
   `.github/workflows/deploy-download-page.yml` on every `main` push touching
   `download/**`. Public URL after first deploy:
-  `https://christianmeude.github.io/nucleus-mobile/download/`
+  `https://christianmeude.github.io/nucleus-mobile/`
   Print/QR this page URL, never the APK or expo.dev URL directly.
 - **Small fixes (EAS Update on Expo):** invisible to users, still served by Expo
   on app restart. No reinstall.
@@ -74,7 +74,7 @@ eas build -p android --profile production
 5. Push to `main`. The Pages workflow redeploys the landing page automatically.
    Enable Pages once: repo Settings → Pages → Source: GitHub Actions.
 6. Generate/print QR encoding the Pages URL
-   (`https://christianmeude.github.io/capstone-nucleus-rn/download/`).
+   (`https://christianmeude.github.io/nucleus-mobile/`).
 7. Smoke test on a real phone with no Expo login: open page → Download →
    allow `Install unknown apps` → `Install anyway` → Open.
 
