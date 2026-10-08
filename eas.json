@@ -15,6 +15,7 @@
     "preview": {
       "distribution": "internal",
       "channel": "preview",
+      "environment": "production",
       "env": {
         "APP_VARIANT": "preview"
       }
