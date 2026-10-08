@@ -39,5 +39,7 @@ export { Input } from './Input';
 export { SearchField } from './SearchField';
 export { PasswordInput } from './PasswordInput';
 export { SegmentedControl } from './SegmentedControl';
+export { FilterPills } from './FilterPills';
+export type { FilterPillOption } from './FilterPills';
 export { PublishedBadge } from './PublishedBadge';
 export { CategoryChip } from './CategoryChip';

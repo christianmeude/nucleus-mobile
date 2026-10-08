@@ -30,7 +30,6 @@ import { Plus } from 'lucide-react-native';
 import {
   REVISE_REQUIRED_STATUSES,
   ACTIVE_STATUSES,
-  PUBLISHED_STATUSES,
 } from '../../components/PaperStatusChip';
 import {
   EmptyState,
@@ -38,7 +37,7 @@ import {
   InlineNotice,
   Screen,
   SearchField,
-  SegmentedControl,
+  FilterPills,
   Skeleton,
   TopBar,
   Button,
@@ -46,12 +45,13 @@ import {
   Input,
 } from '../../components/ui';
 
-type FilterKey = 'all' | 'active' | 'published' | 'action';
+type FilterKey = 'all' | 'active' | 'action' | 'approved' | 'published';
 
 const isFilterMatch = (status: PaperStatus, filter: FilterKey) => {
   if (filter === 'all') return true;
   if (filter === 'active') return ACTIVE_STATUSES.has(status);
-  if (filter === 'published') return PUBLISHED_STATUSES.has(status);
+  if (filter === 'approved') return status === 'approved';
+  if (filter === 'published') return status === 'published';
   return REVISE_REQUIRED_STATUSES.has(status);
 };
 
@@ -254,15 +254,17 @@ export const MyPapersScreen = () => {
             accessibilityHint="Filters your papers by title, abstract, or keywords"
           />
 
-          <SegmentedControl
+          <FilterPills
             options={[
               { key: 'all', label: 'All' },
               { key: 'active', label: 'In Review' },
               { key: 'action', label: 'Needs Revision' },
-              { key: 'published', label: 'Approved' },
+              { key: 'approved', label: 'Approved' },
+              { key: 'published', label: 'Published' },
             ]}
             value={activeFilter}
             onValueChange={(k) => setActiveFilter(k as FilterKey)}
+            accessibilityLabel="Filter your papers by status"
           />
         </View>
 
@@ -370,7 +372,7 @@ const makeStyles = (t: Theme) =>
       fontSize: 12,
       letterSpacing: 0.6,
       textTransform: 'uppercase',
-      color: t.colors.text.disabled,
+      color: t.colors.text.muted,
     },
     titleWrap: {
       flex: 1,
