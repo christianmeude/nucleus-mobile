@@ -8,7 +8,7 @@
       name="description"
       content="Official download for NUcleus Mobile (Android) for National University–Dasmariñas students and faculty. Browse, submit, and track research."
     />
-    <meta name="theme-color" content="#1B3A8C" />
+    <meta name="theme-color" content="#102560" />
     <meta property="og:title" content="NUcleus Mobile — Download for Android" />
     <meta
       property="og:description"
@@ -20,9 +20,12 @@
       content="https://christianmeude.github.io/nucleus-mobile/nucleus-logo.png"
     />
     <link rel="icon" href="./nucleus-logo.png" />
-    <script>
-      document.documentElement.classList.add('js');
-    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <style>
       :root {
         color-scheme: light;
@@ -32,602 +35,405 @@
         --primary-soft: #d2def5;
         --primary-surface: #eaf0fb;
         --accent: #cda434;
-        --accent-hover: #ae8829;
+        --accent-hover: #b08a28;
         --accent-surface: #fbf6e8;
-        --text: #0f172a;
+        --ink: #0f172a;
         --text-2: #475569;
+        --muted: #64748b;
         --on-brand: #ffffff;
-        --on-brand-soft: #d2def5;
+        --on-brand-soft: #c9d6f2;
         --surface: #f8fafc;
         --raised: #ffffff;
         --sunken: #f1f5f9;
         --line: #e2e8f0;
         --focus: #2e5bc9;
+        --success: #047857;
+        --success-surface: #d9f2e6;
+        --warning: #b45309;
+        --warning-surface: #fbeed3;
+        --radius-lg: 14px;
+        --radius-xl: 18px;
+        --shadow-1: 0 1px 3px rgba(16, 37, 96, 0.1);
+        --shadow-2: 0 4px 12px rgba(16, 37, 96, 0.12);
+        --shadow-hero: 0 24px 80px rgba(4, 12, 40, 0.55);
       }
-      * {
-        box-sizing: border-box;
-      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
       body {
         margin: 0;
-        font-family:
-          Inter,
-          system-ui,
-          -apple-system,
-          "Segoe UI",
-          Roboto,
-          sans-serif;
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
         background: var(--surface);
-        color: var(--text);
+        color: var(--ink);
         font-size: 15px;
         line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
       }
-      .wrap {
-        max-width: 960px;
+      /* ---------- sticky nav ---------- */
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        background: rgba(248, 250, 252, 0.86);
+        border-bottom: 1px solid var(--line);
+      }
+      .nav-inner {
+        max-width: 1120px;
         margin: 0 auto;
-        padding: 24px 16px 64px;
-      }
-      .narrow {
-        max-width: 640px;
-        margin-left: auto;
-        margin-right: auto;
-      }
-      .site-header {
+        padding: 10px 20px;
         display: flex;
         align-items: center;
         gap: 12px;
-        margin-bottom: 0;
       }
-      .mark {
-        width: 44px;
-        height: 44px;
-        border-radius: 10px;
-        flex: none;
-      }
-      .seal {
-        height: 40px;
-        width: auto;
+      .nav-mark { width: 38px; height: 38px; border-radius: 10px; flex: none; }
+      .nav-org { font-size: 13px; font-weight: 700; letter-spacing: 0.1px; line-height: 1.3; }
+      .nav-prod { font-size: 12px; color: var(--text-2); line-height: 1.3; }
+      .nav-seal { height: 34px; width: auto; margin-left: 4px; }
+      .nav-cta {
         margin-left: auto;
-        flex: none;
-      }
-      .org {
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--text-2);
-        letter-spacing: 0.1px;
-      }
-      .prod {
-        font-size: 13px;
-        color: var(--text-2);
-      }
-      h1 {
-        font-size: 28px;
-        line-height: 36px;
-        font-weight: 600;
-        letter-spacing: 0.15px;
-        text-wrap: balance;
-        margin: 0 0 8px;
-      }
-      h2 {
-        font-size: 20px;
-        line-height: 28px;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-        text-wrap: balance;
-        margin: 32px 0 8px;
-      }
-      p {
-        margin: 8px 0;
-        max-width: 65ch;
-      }
-      .lede {
-        color: var(--text-2);
-      }
-      /* Hero: drenched Navy, one Gold orbit line from the mark's swoosh */
-      .hero {
-        position: relative;
-        background: linear-gradient(160deg, #1b3a8c 0%, #102560 100%);
-        border-radius: 18px;
-        color: var(--on-brand);
-        margin: 16px 0 8px;
-        overflow: hidden;
-      }
-      .orbit {
-        position: absolute;
-        right: -120px;
-        top: -80px;
-        width: 420px;
-        height: 420px;
-        pointer-events: none;
-      }
-      .hero-grid {
-        position: relative;
-        display: grid;
-        gap: 24px;
-        padding: 24px 16px;
-      }
-      .hero h1 {
-        color: var(--on-brand);
-      }
-      .hero .lede {
-        color: var(--on-brand-soft);
-      }
-      .rule {
-        width: 40px;
-        height: 4px;
-        border-radius: 999px;
-        background: var(--accent);
-        margin: 12px 0 0;
-      }
-      .cta-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        align-items: center;
-        margin-top: 16px;
-      }
-      .btn-gold {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 52px;
-        background: var(--accent);
-        color: var(--text);
-        font-size: 15px;
-        font-weight: 600;
-        letter-spacing: 0.2px;
-        text-decoration: none;
-        padding: 14px 24px;
-        border-radius: 999px;
-        transition: background 160ms ease-out;
-      }
-      .btn-gold:hover {
-        background: var(--accent-hover);
-      }
-      .btn-ghost {
         display: inline-flex;
         align-items: center;
         min-height: 44px;
-        color: var(--on-brand);
-        font-weight: 600;
-        font-size: 15px;
-        text-decoration: underline;
-        text-underline-offset: 4px;
-        padding: 10px 4px;
-      }
-      .hero-meta {
-        font-size: 13px;
-        color: var(--on-brand-soft);
-        margin-top: 12px;
-      }
-      /* Device mockup (illustrated preview, geometric only) */
-      .phone {
-        width: 240px;
-        margin: 0 auto;
-        background: var(--text);
-        border-radius: 18px;
-        padding: 10px;
-      }
-      .screen {
-        background: var(--surface);
-        border-radius: 14px;
-        padding: 12px;
-        color: var(--text);
-        min-height: 320px;
-      }
-      .screen img {
-        display: block;
-        width: 100%;
-        border-radius: 10px;
-      }
-      .notch {
-        width: 88px;
-        height: 8px;
-        border-radius: 999px;
-        background: var(--text);
-        margin: 0 auto 10px;
-        opacity: 0.9;
-      }
-      .screen-title {
-        font-size: 17px;
-        line-height: 24px;
-        font-weight: 600;
-        margin: 0 0 8px;
-      }
-      .fake-search {
-        background: var(--sunken);
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        font-size: 12px;
-        color: var(--text-2);
-        padding: 8px 12px;
-        margin-bottom: 8px;
-      }
-      .paper {
-        background: var(--raised);
-        border: 1px solid var(--line);
-        border-radius: 14px;
-        padding: 12px;
-        margin-top: 8px;
-      }
-      .paper b {
-        display: block;
-        font-size: 13px;
-      }
-      .paper span {
-        font-size: 12px;
-        color: var(--text-2);
-      }
-      .status {
-        display: inline-block;
-        font-size: 11px;
-        font-weight: 600;
-        border-radius: 8px;
-        padding: 2px 8px;
-        margin-top: 8px;
-      }
-      .status.review {
-        background: var(--accent-surface);
-        color: var(--text);
-      }
-      .status.ok {
-        background: var(--primary-surface);
-        color: var(--primary);
-      }
-      .mock-caption {
-        text-align: center;
-        font-size: 12px;
-        color: var(--on-brand-soft);
-        margin-top: 8px;
-      }
-      /* Trust strip */
-      .trust {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px 16px;
-        align-items: center;
-        font-size: 13px;
-        color: var(--text-2);
-        margin: 16px 0 0;
-      }
-      .chip {
-        background: var(--accent-surface);
-        color: var(--text);
-        border-radius: 8px;
-        padding: 2px 8px;
-        font-weight: 600;
-        font-size: 12px;
-      }
-      /* Screenshot gallery (appears only when real shots land) */
-      .shots {
-        display: grid;
-        gap: 12px;
-        margin-top: 16px;
-      }
-      .shots img {
-        display: block;
-        width: 100%;
-        border: 1px solid var(--line);
-        border-radius: 14px;
-      }
-      /* Features */
-      .features {
-        display: grid;
-        gap: 12px;
-        margin-top: 16px;
-      }
-      .feature {
-        background: var(--raised);
-        border: 1px solid var(--line);
-        border-radius: 14px;
-        padding: 16px;
-      }
-      .feature h3 {
-        font-size: 17px;
-        line-height: 24px;
-        font-weight: 600;
-        margin: 12px 0 4px;
-      }
-      .feature p {
-        font-size: 13px;
-        color: var(--text-2);
-        margin: 0;
-      }
-      .icon-well {
-        width: 48px;
-        height: 48px;
-        border-radius: 14px;
-        background: var(--primary-surface);
-        color: var(--primary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .icon-well svg {
-        width: 24px;
-        height: 24px;
-      }
-      /* Download card */
-      .card {
-        background: var(--raised);
-        border: 1px solid var(--line);
-        border-radius: 14px;
-        padding: 16px;
-        margin: 16px 0;
-      }
-      .version {
-        font-size: 13px;
-        color: var(--text-2);
-      }
-      .meta-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin: 8px 0 4px;
-        font-size: 13px;
-        color: var(--text-2);
-      }
-      .download-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 52px;
-        text-align: center;
         background: var(--primary);
         color: #fff;
-        font-size: 15px;
         font-weight: 600;
-        letter-spacing: 0.2px;
+        font-size: 14px;
         text-decoration: none;
-        padding: 14px 24px;
+        padding: 10px 20px;
         border-radius: 999px;
-        margin: 12px 0 8px;
-        transition: background 160ms ease-out;
+        transition: background 160ms ease-out, transform 160ms ease-out;
+        white-space: nowrap;
       }
-      .download-btn:hover {
-        background: var(--primary-hover);
-      }
-      .download-btn:active {
-        background: var(--primary-pressed);
-      }
-      .download-btn:focus-visible,
-      .btn-gold:focus-visible,
-      .btn-ghost:focus-visible,
-      a:focus-visible,
-      button:focus-visible,
-      summary:focus-visible {
-        outline: 2px solid var(--focus);
-        outline-offset: 2px;
-      }
-      .hero .download-btn:focus-visible,
-      .hero .btn-gold:focus-visible,
-      .hero .btn-ghost:focus-visible {
-        outline-color: var(--accent);
-      }
-      .reassure {
-        font-size: 13px;
-        color: var(--text-2);
-        margin: 4px 0 0;
-      }
-      /* Steps */
-      ol.steps {
-        list-style: none;
-        padding: 0;
-        margin: 16px 0;
-        counter-reset: step;
-      }
-      ol.steps li {
-        counter-increment: step;
-        display: flex;
-        gap: 12px;
-        margin: 12px 0;
-        max-width: 65ch;
-      }
-      ol.steps li::before {
-        content: counter(step);
-        flex: none;
-        width: 28px;
-        height: 28px;
-        border-radius: 999px;
-        background: var(--primary);
+      .nav-cta:hover { background: var(--primary-hover); transform: translateY(-1px); }
+      /* ---------- layout ---------- */
+      .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px 64px; }
+      .narrow { max-width: 720px; margin-left: auto; margin-right: auto; }
+      /* ---------- hero ---------- */
+      .hero {
+        position: relative;
+        background:
+          radial-gradient(1100px 480px at 85% -10%, rgba(205, 164, 52, 0.22), transparent 60%),
+          radial-gradient(800px 500px at -10% 110%, rgba(46, 91, 201, 0.5), transparent 60%),
+          linear-gradient(158deg, #22409a 0%, #1b3a8c 45%, #102560 100%);
+        border-radius: 24px;
         color: var(--on-brand);
-        font-size: 13px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-top: 2px;
+        margin: 20px 0 8px;
+        overflow: hidden;
+        box-shadow: var(--shadow-hero);
       }
-      ul.trouble {
-        padding-left: 22px;
+      .hero-grid-bg {
+        position: absolute; inset: 0; pointer-events: none; opacity: 0.5;
+        background-image:
+          linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+        background-size: 44px 44px;
+        mask-image: radial-gradient(700px 420px at 20% 20%, #000 30%, transparent 75%);
+        -webkit-mask-image: radial-gradient(700px 420px at 20% 20%, #000 30%, transparent 75%);
       }
-      ul.trouble li {
-        margin: 10px 0;
-        max-width: 65ch;
+      .orbit { position: absolute; right: -140px; top: -100px; width: 480px; height: 480px; pointer-events: none; opacity: 0.9; }
+      .orbit-2 { position: absolute; left: -160px; bottom: -180px; width: 420px; height: 420px; pointer-events: none; opacity: 0.35; }
+      .hero-grid { position: relative; display: grid; gap: 28px; padding: 32px 24px 36px; }
+      .hero h1 {
+        color: var(--on-brand);
+        font-size: clamp(30px, 3.6vw, 44px);
+        line-height: 1.08;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        text-wrap: balance;
+        margin: 12px 0 0;
       }
-      details {
-        border: 1px solid var(--line);
-        border-radius: 14px;
-        background: var(--raised);
-        padding: 12px 16px;
-        margin: 12px 0;
+      .hero h1 .gold { color: var(--accent); }
+      .hero .lede { color: var(--on-brand-soft); font-size: 16px; max-width: 46ch; }
+      .hero-badge {
+        display: inline-flex; align-items: center; gap: 8px;
+        font-size: 13px; font-weight: 600;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.18);
+        border-radius: 999px; padding: 7px 14px;
+        color: var(--on-brand);
       }
-      summary {
-        cursor: pointer;
-        font-weight: 600;
-        font-size: 15px;
+      .hero-badge .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+      .rule { width: 48px; height: 5px; border-radius: 999px; background: var(--accent); margin: 18px 0 0; }
+      .cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 18px; }
+      .btn-gold {
+        display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+        min-height: 50px; background: var(--accent); color: var(--ink);
+        font-size: 15px; font-weight: 700; letter-spacing: 0.2px; text-decoration: none;
+        padding: 12px 26px; border-radius: 999px;
+        box-shadow: 0 8px 24px rgba(205, 164, 52, 0.4);
+        transition: transform 160ms ease-out, background 160ms ease-out, box-shadow 160ms ease-out;
       }
-      .share-box {
-        background: var(--sunken);
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        padding: 10px 12px;
-        font-size: 13px;
-        word-break: break-all;
-        margin: 8px 0;
+      .btn-gold:hover { background: var(--accent-hover); color: #fff; transform: translateY(-2px); box-shadow: 0 12px 32px rgba(205,164,52,0.45); }
+      .btn-gold svg { width: 18px; height: 18px; }
+      .btn-ghost {
+        display: inline-flex; align-items: center; min-height: 44px;
+        color: var(--on-brand); font-weight: 600; font-size: 15px;
+        text-decoration: underline; text-underline-offset: 4px; padding: 10px 4px;
       }
-      .row {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        margin-top: 8px;
+      .hero-meta { font-size: 13px; color: var(--on-brand-soft); margin-top: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+      .hero-meta .sep { opacity: 0.5; }
+      /* ---------- phone cluster ---------- */
+      .phone-stage { position: relative; display: flex; justify-content: center; align-items: flex-end; min-height: 480px; }
+      .device {
+        width: 236px; flex: none;
+        background: linear-gradient(180deg, #1e293b, #0b1226);
+        border-radius: 40px; padding: 10px;
+        box-shadow: 0 30px 70px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.25);
+        border: 1px solid rgba(255,255,255,0.14);
       }
-      .btn-secondary {
-        appearance: none;
-        border: 1px solid var(--line);
-        background: var(--raised);
-        color: var(--primary);
-        font-weight: 600;
-        font-size: 15px;
-        border-radius: 999px;
-        padding: 10px 18px;
-        min-height: 44px;
-        cursor: pointer;
-        transition: background 160ms ease-out;
+      .device.hero-main { width: 232px; z-index: 3; }
+      .device.hero-side { position: absolute; width: 188px; opacity: 0.96; }
+      .device.hero-side.left { left: 0; bottom: 20px; transform: rotate(-6deg); z-index: 2; }
+      .device.hero-side.right { right: 0; bottom: 20px; transform: rotate(6deg); z-index: 2; }
+      .d-screen { background: var(--surface); border-radius: 30px; overflow: hidden; height: 440px; position: relative; display: flex; flex-direction: column; }
+      .device.hero-side .d-screen { height: 380px; }
+      .d-notch { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 76px; height: 20px; background: #0b1226; border-radius: 999px; z-index: 5; }
+      .d-status { display: flex; justify-content: space-between; align-items: center; font-size: 9px; font-weight: 600; color: var(--ink); padding: 8px 14px 2px; }
+      .float-chip {
+        position: absolute; z-index: 4;
+        background: rgba(255,255,255,0.96);
+        border: 1px solid var(--line); border-radius: 12px;
+        box-shadow: 0 12px 32px rgba(4,12,40,0.35);
+        padding: 8px 12px; font-size: 12px; font-weight: 700; color: var(--ink);
+        display: flex; align-items: center; gap: 8px; white-space: nowrap;
       }
-      .btn-secondary:hover {
-        background: var(--primary-surface);
-      }
-      .final-cta {
-        text-align: center;
-        margin: 32px 0 0;
-      }
-      .final-cta p {
-        margin-left: auto;
-        margin-right: auto;
-      }
-      footer {
-        margin-top: 32px;
-        font-size: 13px;
-        color: var(--text-2);
-      }
-      .share-status {
-        font-size: 13px;
-        color: var(--text-2);
-        min-height: 20px;
-      }
-      /* One authored moment: sections rise once on entry.
-         Pre-state applies only when JS is present (html.js), so no-JS
-         visitors always see full content. */
-      .js .reveal {
-        opacity: 0;
-        transform: translateY(12px);
-        transition:
-          opacity 350ms ease-out,
-          transform 350ms cubic-bezier(0.2, 0.7, 0.3, 1);
-      }
-      .js .reveal.in {
-        opacity: 1;
-        transform: none;
-      }
+      .float-chip .pill { font-size: 10px; font-weight: 700; border-radius: 999px; padding: 2px 8px; }
+      .pill-review { background: var(--warning-surface); color: var(--warning); }
+      .pill-ok { background: var(--success-surface); color: var(--success); }
+      .float-chip.fc-1 { left: -8px; top: 100px; }
+      .float-chip.fc-2 { right: -6px; bottom: 110px; }
+      /* ----- mini app UI inside phones ----- */
+      .mini-login { flex: 1; background: linear-gradient(180deg, #dfe7f5 0%, #8ea3cf 55%, #1b3a8c 100%); padding: 34px 16px 18px; display: flex; flex-direction: column; align-items: center; }
+      .mini-login img { width: 52px; height: 52px; }
+      .mini-login .word { font-weight: 800; letter-spacing: 4px; font-size: 15px; color: #1b3a8c; margin: 8px 0 0; }
+      .mini-field { width: 100%; margin-top: 10px; }
+      .mini-field label { font-size: 8px; font-weight: 700; letter-spacing: 1px; color: rgba(255,255,255,0.9); }
+      .mini-field .box { background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.4); border-radius: 10px; font-size: 9px; color: #fff; padding: 8px 10px; margin-top: 3px; }
+      .mini-signin { width: 100%; background: var(--accent); border-radius: 999px; text-align: center; font-size: 11px; font-weight: 800; color: #102560; padding: 10px; margin-top: auto; }
+      .mini-head { background: linear-gradient(150deg, #22409a, #102560); color: #fff; padding: 30px 12px 16px; border-radius: 0 0 18px 18px; }
+      .mini-head .hi { font-size: 10px; opacity: 0.85; }
+      .mini-head .name { font-size: 19px; font-weight: 800; letter-spacing: -0.02em; }
+      .mini-head .sub { font-size: 9px; opacity: 0.9; margin-top: 2px; }
+      .mini-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+      .mini-sec { font-size: 11px; font-weight: 800; color: var(--ink); }
+      .mini-card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px; box-shadow: var(--shadow-1); }
+      .mini-chip { display: inline-block; font-size: 7px; font-weight: 800; letter-spacing: 0.6px; background: var(--primary-surface); color: var(--primary); border-radius: 999px; padding: 2px 7px; }
+      .mini-title { font-size: 9px; font-weight: 800; line-height: 1.35; margin-top: 5px; }
+      .mini-meta { font-size: 8px; color: var(--muted); margin-top: 3px; }
+      .mini-progress { display: flex; align-items: center; gap: 0; margin-top: 8px; }
+      .mini-progress .nd { width: 13px; height: 13px; border-radius: 999px; border: 2px solid #cbd5e1; background: #fff; flex: none; font-size: 7px; display: flex; align-items: center; justify-content: center; color: #fff; }
+      .mini-progress .nd.done { background: var(--success); border-color: var(--success); }
+      .mini-progress .nd.now { background: var(--warning); border-color: var(--warning); }
+      .mini-progress .ln { flex: 1; height: 2px; background: #e2e8f0; }
+      .mini-progress .ln.done { background: var(--success); }
+      .mini-flag { text-align: center; font-size: 8px; font-weight: 800; color: var(--warning); margin-top: 7px; letter-spacing: 0.4px; }
+      .mini-cta { text-align: center; font-size: 8px; font-weight: 800; color: var(--primary); margin-top: 4px; letter-spacing: 0.4px; }
+      .mini-row { display: flex; gap: 8px; align-items: flex-start; }
+      .mini-ico { width: 26px; height: 26px; border-radius: 8px; background: var(--success-surface); color: var(--success); flex: none; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
+      .mini-row b { font-size: 9px; display: block; }
+      .mini-row span { font-size: 8px; color: var(--text-2); display: block; line-height: 1.4; }
+      .mini-nav { display: flex; background: #fff; border-top: 1px solid var(--line); border-radius: 16px; margin: 0 8px 8px; padding: 7px 4px; box-shadow: var(--shadow-1); }
+      .mini-nav div { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 7px; color: var(--muted); font-weight: 600; }
+      .mini-nav div.on { color: var(--primary); background: var(--primary-surface); border-radius: 10px; padding: 3px 0 2px; }
+      .mini-nav svg { width: 13px; height: 13px; }
+      .mini-search { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line); border-radius: 999px; font-size: 9px; color: var(--muted); padding: 8px 12px; }
+      .mini-search svg { width: 11px; height: 11px; flex: none; }
+      .mini-tabs { display: flex; background: var(--sunken); border-radius: 999px; padding: 3px; gap: 2px; }
+      .mini-tabs span { flex: 1; font-size: 7px; font-weight: 700; text-align: center; padding: 5px 2px; color: var(--muted); }
+      .mini-tabs span.on { background: #fff; border-radius: 999px; color: var(--primary); box-shadow: var(--shadow-1); }
+      .mini-profile-head { background: linear-gradient(150deg, #22409a, #102560); padding: 26px 12px 30px; text-align: center; color: #fff; border-radius: 0 0 18px 18px; position: relative; }
+      .mini-avatar { width: 44px; height: 44px; border-radius: 14px; background: var(--accent); color: #102560; font-weight: 800; font-size: 14px; display: flex; align-items: center; justify-content: center; margin: -52px auto 0; border: 3px solid #fff; position: relative; z-index: 2; }
+      .mini-prow { display: flex; align-items: center; gap: 8px; padding: 9px 2px; border-bottom: 1px solid var(--line); font-size: 9px; font-weight: 700; }
+      .mini-prow:last-child { border-bottom: none; }
+      .mini-prow .e { width: 24px; height: 24px; border-radius: 7px; background: var(--primary-surface); color: var(--primary); display: flex; align-items: center; justify-content: center; flex: none; }
+      .mini-prow .e svg { width: 13px; height: 13px; }
+      .warn-dot { display: inline-flex; align-items: center; justify-content: center; width: 12px; height: 12px; border-radius: 999px; background: var(--warning); color: #fff; font-size: 8px; font-weight: 800; margin-right: 2px; vertical-align: 1px; }
+      /* ---------- trust ---------- */
+      .trust { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 13px; color: var(--text-2); margin: 18px auto 0; }
+      .chip { background: var(--accent-surface); color: var(--ink); border-radius: 8px; padding: 2px 8px; font-weight: 700; font-size: 12px; }
+      /* ---------- sections ---------- */
+      h2 { font-size: clamp(24px, 3vw, 32px); line-height: 1.2; font-weight: 800; letter-spacing: -0.025em; text-wrap: balance; margin: 56px 0 8px; }
+      .sub { color: var(--text-2); max-width: 65ch; margin: 0; font-size: 16px; }
+      section.block { scroll-margin-top: 80px; }
+      /* showcase */
+      .showcase { display: grid; gap: 20px; margin-top: 24px; }
+      .shot { display: grid; gap: 16px; align-items: center; background: var(--raised); border: 1px solid var(--line); border-radius: var(--radius-xl); padding: 22px; box-shadow: var(--shadow-1); }
+      .shot .device { width: 210px; margin: 0 auto; }
+      .shot .d-screen { height: 440px; }
+      .shot h3 { font-size: 19px; line-height: 1.3; font-weight: 700; margin: 0; letter-spacing: -0.02em; }
+      .shot p { font-size: 14px; color: var(--text-2); margin: 8px 0 0; }
+      .shot .step { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 999px; background: var(--primary); color: #fff; font-weight: 800; font-size: 15px; }
+      .shot ul { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+      .shot ul li { display: flex; gap: 10px; font-size: 14px; color: var(--text-2); align-items: flex-start; }
+      .shot ul li svg { flex: none; width: 18px; height: 18px; color: var(--success); margin-top: 2px; }
+      /* features bento */
+      .features { display: grid; gap: 12px; margin-top: 20px; }
+      .feature { background: var(--raised); border: 1px solid var(--line); border-radius: var(--radius-xl); padding: 22px; box-shadow: var(--shadow-1); transition: transform 180ms ease-out, box-shadow 180ms ease-out; }
+      .feature:hover { transform: translateY(-3px); box-shadow: var(--shadow-2); }
+      .feature h3 { font-size: 18px; line-height: 1.35; font-weight: 700; margin: 14px 0 4px; letter-spacing: -0.02em; }
+      .feature p { font-size: 14px; color: var(--text-2); margin: 0; }
+      .feature.wide { background: linear-gradient(150deg, #1b3a8c, #102560); color: #fff; border: none; }
+      .feature.wide p { color: var(--on-brand-soft); }
+      .icon-well { width: 48px; height: 48px; border-radius: 14px; background: var(--primary-surface); color: var(--primary); display: flex; align-items: center; justify-content: center; }
+      .feature.wide .icon-well { background: rgba(255,255,255,0.12); color: var(--accent); }
+      .icon-well svg { width: 24px; height: 24px; }
+      .stat-row { display: flex; gap: 24px; margin-top: 18px; flex-wrap: wrap; }
+      .stat b { display: block; font-size: 26px; font-weight: 800; letter-spacing: -0.03em; }
+      .stat span { font-size: 13px; color: var(--on-brand-soft); }
+      /* download card */
+      .card { background: var(--raised); border: 1px solid var(--line); border-radius: var(--radius-xl); padding: 22px; margin: 20px 0; box-shadow: var(--shadow-2); }
+      .meta-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; font-size: 13px; color: var(--text-2); align-items: center; }
+      .download-btn { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 54px; text-align: center; background: var(--primary); color: #fff; font-size: 15px; font-weight: 700; letter-spacing: 0.2px; text-decoration: none; padding: 14px 24px; border-radius: 999px; margin: 14px 0 8px; transition: background 160ms ease-out, transform 160ms ease-out; }
+      .download-btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
+      .download-btn:active { background: var(--primary-pressed); }
+      .download-btn:focus-visible, .btn-gold:focus-visible, .btn-ghost:focus-visible, a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+      .hero .download-btn:focus-visible, .hero .btn-gold:focus-visible, .hero .btn-ghost:focus-visible { outline-color: var(--accent); }
+      .reassure { font-size: 13px; color: var(--text-2); margin: 4px 0 0; }
+      ol.steps { list-style: none; padding: 0; margin: 20px 0; counter-reset: step; display: grid; gap: 12px; }
+      ol.steps li { counter-increment: step; display: flex; gap: 14px; background: var(--raised); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-1); }
+      ol.steps li::before { content: counter(step); flex: none; width: 30px; height: 30px; border-radius: 999px; background: var(--primary); color: var(--on-brand); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+      ul.trouble { padding-left: 22px; }
+      ul.trouble li { margin: 10px 0; max-width: 65ch; }
+      details { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--raised); padding: 12px 16px; margin: 12px 0; }
+      summary { cursor: pointer; font-weight: 600; font-size: 15px; }
+      .share-box { background: var(--sunken); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 13px; word-break: break-all; margin: 8px 0; }
+      .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+      .btn-secondary { appearance: none; border: 1px solid var(--line); background: var(--raised); color: var(--primary); font-weight: 600; font-size: 15px; border-radius: 999px; padding: 10px 18px; min-height: 44px; cursor: pointer; transition: background 160ms ease-out; }
+      .btn-secondary:hover { background: var(--primary-surface); }
+      .final-cta { text-align: center; margin: 56px auto 0; background: linear-gradient(158deg, #1b3a8c, #102560); border-radius: 24px; padding: 48px 24px; color: #fff; position: relative; overflow: hidden; }
+      .final-cta h2 { color: #fff; margin-top: 0; }
+      .final-cta .sub { color: var(--on-brand-soft); margin: 0 auto; text-align: center; }
+      .final-cta .download-btn { max-width: 420px; margin-left: auto; margin-right: auto; background: var(--accent); color: var(--ink); }
+      .final-cta .download-btn:hover { background: var(--accent-hover); color: #fff; }
+      footer { margin-top: 32px; font-size: 13px; color: var(--text-2); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+      footer img { width: 28px; height: 28px; border-radius: 7px; }
+      .share-status { font-size: 13px; color: var(--text-2); min-height: 20px; }
+      /* reveal defaults: visible without JS; GSAP sets from-states */
+      .reveal { opacity: 1; }
       @media (prefers-reduced-motion: reduce) {
-        .js .reveal {
-          opacity: 1;
-          transform: none;
-          transition: none;
-        }
-        * {
-          transition: none !important;
-        }
+        * { transition: none !important; animation: none !important; }
+        html { scroll-behavior: auto; }
       }
-      @media (min-width: 760px) {
-        .wrap {
-          padding-left: 24px;
-          padding-right: 24px;
-        }
-        .hero-grid {
-          grid-template-columns: 1fr 280px;
-          align-items: center;
-          padding: 32px;
-        }
-        .features,
-        .shots {
-          grid-template-columns: 1fr 1fr 1fr;
-        }
+      @media (min-width: 860px) {
+        .hero-grid { grid-template-columns: 1.05fr 0.95fr; align-items: center; padding: 36px 44px; }
+        .showcase .shot { grid-template-columns: 240px 1fr; padding: 28px 32px; }
+        .showcase .shot.flip { grid-template-columns: 1fr 240px; }
+        .showcase .shot.flip .device { order: 2; }
+        .features { grid-template-columns: 1.2fr 1fr 1fr; }
+        .device.hero-side.left { left: -6px; }
+        .device.hero-side.right { right: -6px; }
+      }
+      @media (max-width: 859px) {
+        .device.hero-side { display: none; }
+        .phone-stage { min-height: 0; }
+        .nav-prod, .nav-seal { display: none; }
       }
     </style>
   </head>
   <body>
-    <!-- THESIS: the fastest path from poster QR to installed app; refuses airy landing sprawl. OWN-WORLD: drenched Navy hero, one Gold orbit line from the mark, Inter Display 28, pill CTAs, hairline cards. STORY: visitor believes official and desirable, taps Download, installs in 2 minutes. FIRST VIEWPORT: navy hero with lockup, headline, gold rule, gold Download CTA, phone carrying orbit ring; real screenshots auto-wire when files land. FORM: grounded candidate 7 (compact-confident), seed bc1ef07b; catalog challengers lost on audience and product clarity. FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md. -->
-    <main class="wrap">
-      <header class="site-header">
-        <img
-          class="mark"
-          src="./nucleus-logo.png"
-          alt="NUcleus logo"
-          width="44"
-          height="44"
-        />
+    <!-- THESIS: QR-poster to installed APK in 2 minutes; refuses generic SaaS sprawl and leads with the app alive in phone frames. OWN-WORLD: drenched navy hero, one gold orbit, Inter only, pill CTAs, hairline cards. STORY: visitor believes official, sees five real screens, taps Download. FIRST VIEWPORT: sticky nav, headline left with gold Download CTA, three-phone cluster right with floating status chips. FORM: polished replacement of download/index.html, same file. FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md. -->
+    <header class="nav">
+      <div class="nav-inner">
+        <img class="nav-mark" src="./nucleus-logo.png" alt="NUcleus logo" width="38" height="38" />
         <div>
-          <div class="org">National University — Dasmariñas</div>
-          <div class="prod">NUcleus Mobile · Official install page</div>
+          <div class="nav-org">National University — Dasmariñas</div>
+          <div class="nav-prod">NUcleus Mobile · Official install page</div>
         </div>
-        <img
-          class="seal"
-          src="./nu-logo.png"
-          alt="National University seal"
-        />
-      </header>
+        <img class="nav-seal" src="./nu-logo.png" alt="National University seal" />
+        <a class="nav-cta apk-link" href="https://github.com/christianmeude/nucleus-mobile/releases/latest/download/nucleus-latest.apk">Download</a>
+      </div>
+    </header>
 
-      <section class="hero">
-        <svg
-          class="orbit"
-          viewBox="0 0 420 420"
-          aria-hidden="true"
-          focusable="false"
-        >
-          <circle
-            cx="210"
-            cy="210"
-            r="150"
-            fill="none"
-            stroke="#CDA434"
-            stroke-width="2"
-          />
-          <circle cx="340" cy="130" r="8" fill="#CDA434" />
+    <main class="wrap">
+      <section class="hero" id="top">
+        <div class="hero-grid-bg" aria-hidden="true"></div>
+        <svg class="orbit" id="orbit1" viewBox="0 0 420 420" aria-hidden="true" focusable="false">
+          <circle cx="210" cy="210" r="150" fill="none" stroke="#CDA434" stroke-width="2" />
+          <circle cx="210" cy="210" r="108" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-dasharray="4 8" />
+          <circle id="orbit-dot" cx="340" cy="130" r="9" fill="#CDA434" />
+        </svg>
+        <svg class="orbit-2" viewBox="0 0 420 420" aria-hidden="true" focusable="false">
+          <circle cx="210" cy="210" r="150" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
         </svg>
         <div class="hero-grid">
-          <div>
-            <h1>Your research, in your pocket.</h1>
+          <div class="hero-copy">
+            <span class="hero-badge"><span class="dot"></span>Official release · Free for NU-Dasmariñas</span>
+            <h1>Your research, <span class="gold">in your pocket.</span></h1>
             <div class="rule" aria-hidden="true"></div>
             <p class="lede">
               NUcleus Mobile is the official research companion for
               NU-Dasmariñas students and faculty. Browse the library, submit
-              papers, and track every review. Free, in about 2 minutes.
+              papers, and track every review — free, in about 2 minutes.
             </p>
             <div class="cta-row">
-              <a
-                class="btn-gold apk-link"
-                href="https://github.com/christianmeude/nucleus-mobile/releases/latest/download/nucleus-latest.apk"
-              >
+              <a class="btn-gold apk-link" href="https://github.com/christianmeude/nucleus-mobile/releases/latest/download/nucleus-latest.apk">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
                 Download for Android
               </a>
               <a class="btn-ghost" href="#install">How to install</a>
             </div>
-            <p class="hero-meta" id="hero-meta">
-              Android 8.0+ · APK · Size shown by browser
-            </p>
+            <p class="hero-meta" id="hero-meta"><span>Android 8.0+</span><span class="sep">·</span><span>APK</span><span class="sep">·</span><span>Size shown by browser</span></p>
           </div>
-          <div>
-            <div class="phone">
-              <div class="screen" id="phone-screen">
-                <div class="notch" aria-hidden="true"></div>
-                <p class="screen-title">Browse</p>
-                <div class="fake-search" aria-hidden="true">Search papers…</div>
-                <div class="paper">
-                  <b>Research title</b>
-                  <span>Author name · 2026</span>
-                  <br />
-                  <span class="status review">Under review</span>
-                </div>
-                <div class="paper">
-                  <b>Research title</b>
-                  <span>Author name · 2026</span>
-                  <br />
-                  <span class="status ok">Approved</span>
+          <div class="phone-stage" id="phone-stage" aria-label="Preview of the NUcleus Mobile app">
+            <div class="device hero-side left" data-depth="18" aria-hidden="true">
+              <div class="d-screen">
+                <div class="d-notch"></div>
+                <div class="d-status"><span>11:31</span><span>55%</span></div>
+                <div class="mini-login">
+                  <img src="./nucleus-logo.png" alt="" />
+                  <p class="word">NUCLEUS</p>
+                  <div class="mini-field"><label>EMAIL</label><div class="box">you@example.com</div></div>
+                  <div class="mini-field"><label>PASSWORD</label><div class="box">Enter your password</div></div>
+                  <div class="mini-signin">Sign In</div>
                 </div>
               </div>
             </div>
-            <p class="mock-caption" id="mock-caption">Illustrated preview</p>
+            <div class="device hero-main" data-depth="0" aria-hidden="true">
+              <div class="d-screen">
+                <div class="d-notch"></div>
+                <div class="d-status"><span>11:31</span><span>55%</span></div>
+                <div class="mini-head">
+                  <div class="hi">Good morning,</div>
+                  <div class="name">Malfoy</div>
+                  <div class="sub">2 papers require revision</div>
+                </div>
+                <div class="mini-body">
+                  <div class="mini-sec">Up Next</div>
+                  <div class="mini-card">
+                    <span class="mini-chip">COMPUTER SCIENCE</span>
+                    <div class="mini-title">A QUANTITATIVE STUDY OF COURSE GRADES AND RETENTION…</div>
+                    <div class="mini-meta">Submitted Apr 18, 2026</div>
+                    <div class="mini-progress">
+                      <span class="nd now">✓</span><span class="ln"></span><span class="nd"></span><span class="ln"></span><span class="nd"></span><span class="ln"></span><span class="nd"></span><span class="ln"></span><span class="nd"></span>
+                    </div>
+                    <div class="mini-flag"><span class="warn-dot">!</span> REVISION REQUIRED</div>
+                    <div class="mini-cta">RESUBMIT REVISION →</div>
+                  </div>
+                  <div style="flex:1"></div>
+                  <div class="mini-nav">
+                    <div class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Home</div>
+                    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2"/><path d="M4 8h16v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M9 12h6"/></svg>Papers</div>
+                    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Browse</div>
+                    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>Profile</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="device hero-side right" data-depth="30" aria-hidden="true">
+              <div class="d-screen">
+                <div class="d-notch"></div>
+                <div class="d-status"><span>11:32</span><span>56%</span></div>
+                <div class="mini-body">
+                  <div class="mini-sec" style="font-size:15px">Browse</div>
+                  <div class="mini-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Search papers</div>
+                  <div class="mini-card"><span class="mini-chip">COMPUTER SCIENCE</span><div class="mini-title">TEST SCRIPT SAMPLE TEST NO. 1</div><div class="mini-meta">Malfoy James De Vera · Sep 10, 2026 · 2 views</div></div>
+                  <div class="mini-card"><span class="mini-chip">BUSINESS</span><div class="mini-title">Implementation 2</div><div class="mini-meta">Christian Unknown · Aug 07, 2026 · 4 views</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="float-chip fc-1" data-depth="46" aria-hidden="true"><span class="pill pill-review">REVISION</span> Adviser review</div>
+            <div class="float-chip fc-2" data-depth="60" aria-hidden="true"><span class="pill pill-ok">✓ PUBLISHED</span> Track every step</div>
           </div>
         </div>
       </section>
@@ -638,85 +444,165 @@
         <span>Only from this page. Never install forwarded APKs.</span>
       </div>
 
-      <section class="narrow reveal" id="shots-section" hidden aria-label="Screenshots">
+      <section class="block narrow reveal" aria-label="Inside the app" id="screens">
         <h2>Take a look inside</h2>
-        <div class="shots" id="shots"></div>
+        <p class="sub">Five real screens from the app running today — sign in, dashboard, papers, browse, and profile.</p>
+      </section>
+      <section class="block showcase" aria-label="App screens">
+        <article class="shot reveal">
+          <div class="device" aria-hidden="true"><div class="d-screen"><div class="d-notch"></div>
+            <div class="d-status"><span>11:31</span><span>55%</span></div>
+            <div class="mini-login">
+              <img src="./nucleus-logo.png" alt="" />
+              <p class="word">NUCLEUS</p>
+              <div class="mini-field"><label>EMAIL</label><div class="box">you@example.com</div></div>
+              <div class="mini-field"><label>PASSWORD</label><div class="box">Enter your password</div></div>
+              <div class="mini-signin">Sign In</div>
+            </div>
+          </div></div>
+          <div>
+            <span class="step">1</span>
+            <h3>Sign in with your NU account</h3>
+            <p>Navy-grade login with recovery email, forgot-password codes, and dark-mode support from the first screen.</p>
+            <ul>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Institutional email + password, error states included</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Forgot-password verification codes by email</li>
+            </ul>
+          </div>
+        </article>
+        <article class="shot flip reveal">
+          <div class="device" aria-hidden="true"><div class="d-screen"><div class="d-notch"></div>
+            <div class="d-status"><span>11:31</span><span>55%</span></div>
+            <div class="mini-head"><div class="hi">Good morning,</div><div class="name">Malfoy</div><div class="sub">2 papers require revision</div></div>
+            <div class="mini-body">
+              <div class="mini-sec">Up Next</div>
+              <div class="mini-card"><span class="mini-chip">COMPUTER SCIENCE</span><div class="mini-title">A QUANTITATIVE STUDY OF COURSE GRADES…</div><div class="mini-meta">Submitted Apr 18, 2026</div>
+                <div class="mini-progress"><span class="nd now">✓</span><span class="ln"></span><span class="nd"></span><span class="ln"></span><span class="nd"></span><span class="ln"></span><span class="nd"></span><span class="ln"></span><span class="nd"></span></div>
+                <div class="mini-flag"><span class="warn-dot">!</span> REVISION REQUIRED</div><div class="mini-cta">RESUBMIT REVISION →</div></div>
+              <div class="mini-card"><div class="mini-row"><span class="mini-ico">✓</span><div><b>Research Approved</b><span>Approved by the Research Editor… · 28d ago</span></div></div></div>
+            </div>
+          </div></div>
+          <div>
+            <span class="step">2</span>
+            <h3>A dashboard that tells you what to do</h3>
+            <p>Up Next surfaces the single paper needing you, with the full Adviser → Chair → Editor → Admin → Approved journey.</p>
+            <ul>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Revision flags you can act on in one tap</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Recent activity with push notifications</li>
+            </ul>
+          </div>
+        </article>
+        <article class="shot reveal">
+          <div class="device" aria-hidden="true"><div class="d-screen"><div class="d-notch"></div>
+            <div class="d-status"><span>11:32</span><span>56%</span></div>
+            <div class="mini-body">
+              <div class="mini-sec" style="font-size:15px">My Papers</div>
+              <div class="mini-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Search your papers</div>
+              <div class="mini-tabs"><span class="on">All</span><span>In Review</span><span>Needs Revision</span><span>Approved</span></div>
+              <div class="mini-card"><span class="mini-chip">EDUCATION</span><div class="mini-title">hello world</div><div class="mini-meta">Submitted Sep 29, 2026</div>
+                <div class="mini-progress"><span class="nd" style="border-color:#1b3a8c"></span><span class="ln"></span><span class="nd"></span><span class="ln"></span><span class="nd"></span><span class="ln"></span><span class="nd"></span><span class="ln"></span><span class="nd"></span></div></div>
+              <div class="mini-card"><span class="mini-chip">COMPUTER SCIENCE</span><div class="mini-title">TEST SCRIPT SAMPLE TEST NO. 1</div><div class="mini-meta">Approved Sep 10, 2026</div>
+                <div class="mini-progress"><span class="nd done">✓</span><span class="ln done"></span><span class="nd done">✓</span><span class="ln done"></span><span class="nd done">✓</span><span class="ln done"></span><span class="nd done">✓</span><span class="ln done"></span><span class="nd done">✓</span></div>
+                <div class="mini-cta">REQUEST FORMAL PUBLICATION →</div></div>
+            </div>
+          </div></div>
+          <div>
+            <span class="step">3</span>
+            <h3>Every submission, every stage</h3>
+            <p>My Papers filters All, In Review, Needs Revision, and Approved across all 33 papers with per-stage progress.</p>
+            <ul>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Instant search across your own library</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>One-tap formal publication requests</li>
+            </ul>
+          </div>
+        </article>
+        <article class="shot flip reveal">
+          <div class="device" aria-hidden="true"><div class="d-screen"><div class="d-notch"></div>
+            <div class="d-status"><span>11:32</span><span>56%</span></div>
+            <div class="mini-body">
+              <div class="mini-sec" style="font-size:15px">Browse</div>
+              <div class="mini-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Search papers</div>
+              <div class="mini-card"><span class="mini-chip">COMPUTER SCIENCE</span><div class="mini-title">Test number 1</div><div class="mini-meta">Christian Unknown · Aug 07, 2026 · 36 views</div></div>
+              <div class="mini-card"><span class="mini-chip">BUSINESS</span><div class="mini-title">Implementation 2</div><div class="mini-meta">Christian Unknown · Aug 07, 2026 · 4 views</div></div>
+              <div class="mini-card"><span class="mini-chip">COMPUTER SCIENCE</span><div class="mini-title">Implementation 1</div><div class="mini-meta">Malfoy James De Vera · Aug 07, 2026 · 12 views</div></div>
+            </div>
+          </div></div>
+          <div>
+            <span class="step">4</span>
+            <h3>The whole university library</h3>
+            <p>Browse 15+ published papers across departments with list and grid views, filters, and view counts.</p>
+            <ul>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Department filters and full-text search</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Published badges and reading stats</li>
+            </ul>
+          </div>
+        </article>
+        <article class="shot reveal">
+          <div class="device" aria-hidden="true"><div class="d-screen"><div class="d-notch"></div>
+            <div class="d-status"><span>11:32</span><span>56%</span></div>
+            <div class="mini-profile-head"></div>
+            <div class="mini-avatar">MV</div>
+            <div style="text-align:center;padding:4px 10px"><div style="font-size:11px;font-weight:800">Malfoy James De Vera</div><div style="font-size:7px;color:#64748b">School of Engineering, Computing, and Architecture</div></div>
+            <div class="mini-body"><div class="mini-card">
+              <div class="mini-prow"><span class="e"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span>Recovery email</div>
+              <div class="mini-prow"><span class="e"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>Password</div>
+              <div class="mini-prow"><span class="e"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span>Dark mode</div>
+              <div class="mini-prow"><span class="e"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></span>Sign out</div>
+            </div></div>
+          </div></div>
+          <div>
+            <span class="step">5</span>
+            <h3>Your profile, under your control</h3>
+            <p>Recovery email, password, dark mode, and sign-out — plus faculty Review Queue tooling on staff accounts.</p>
+            <ul>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Self-serve account recovery</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Student and faculty roles, one app</li>
+            </ul>
+          </div>
+        </article>
       </section>
 
-      <section class="narrow reveal" aria-label="Features">
+      <section class="block narrow reveal" aria-label="Features" id="features">
         <h2>Why install it</h2>
+        <p class="sub">NUcleus Mobile is sideloaded: it is not on the Play Store, and this page is the only official source.</p>
         <div class="features">
-          <div class="feature">
+          <div class="feature wide">
             <div class="icon-well" aria-hidden="true">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z" />
-                <path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z" />
-              </svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/></svg>
             </div>
             <h3>Browse the library</h3>
             <p>Find published research from across the university.</p>
+            <div class="stat-row">
+              <div class="stat"><b data-count="33">33</b><span>papers tracked</span></div>
+              <div class="stat"><b data-count="15">15</b><span>browsable now</span></div>
+              <div class="stat"><b>5</b><span>review stages</span></div>
+            </div>
           </div>
           <div class="feature">
             <div class="icon-well" aria-hidden="true">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <path d="M17 8l-5-5-5 5" />
-                <path d="M12 3v12" />
-              </svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
             </div>
             <h3>Submit in minutes</h3>
             <p>Send your paper from your phone. No web portal needed.</p>
           </div>
           <div class="feature">
             <div class="icon-well" aria-hidden="true">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-              </svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
             </div>
             <h3>Track every step</h3>
             <p>Students follow submissions; faculty clear the Review Queue.</p>
           </div>
         </div>
-        <p class="lede">
-          NUcleus Mobile is sideloaded: it is not on the Play Store, and this
-          page is the only official source.
-        </p>
       </section>
 
-      <section class="narrow reveal" aria-label="Download">
+      <section class="block narrow reveal" aria-label="Download" id="download">
         <h2>Get the app</h2>
         <div class="card">
           <div class="meta-row">
             <span class="chip">Official release</span>
             <span id="compat-line">Android 8.0+ · APK · Size shown by browser</span>
           </div>
-          <a
-            class="download-btn apk-link"
-            id="download-btn"
-            href="https://github.com/christianmeude/nucleus-mobile/releases/latest/download/nucleus-latest.apk"
-          >
+          <a class="download-btn apk-link" id="download-btn" href="https://github.com/christianmeude/nucleus-mobile/releases/latest/download/nucleus-latest.apk">
             Download NUcleus Mobile for Android
           </a>
           <p class="reassure">
@@ -726,173 +612,82 @@
           </p>
           <details>
             <summary>What&rsquo;s new</summary>
-            <p class="version" id="changelog">Initial sideload release.</p>
+            <p class="reassure" id="changelog">Initial sideload release.</p>
           </details>
         </div>
       </section>
 
-      <section class="narrow reveal" aria-label="Install steps">
-        <h2 id="install">How to install</h2>
+      <section class="block narrow reveal" aria-label="Install steps" id="install">
+        <h2>How to install</h2>
         <ol class="steps">
-          <li>
-            <span
-              >On your Android phone, tap
-              <strong>Download for Android</strong> above.</span
-            >
-          </li>
-          <li>
-            <span
-              >Open the downloaded file. If Android asks to allow
-              <strong>Install unknown apps</strong>, tap
-              <strong>Allow</strong> for the app that downloaded it (usually
-              Chrome or Files). This is normal outside the Play Store.</span
-            >
-          </li>
-          <li>
-            <span
-              >If you see <strong>Unknown app — Install anyway?</strong>, that
-              warning appears for every app installed outside the Play Store,
-              including ours. If you came from this official page, tap
-              <strong>Install anyway</strong>.</span
-            >
-          </li>
-          <li>
-            <span>Tap <strong>Open</strong> to launch NUcleus Mobile.</span>
-          </li>
+          <li><span>On your Android phone, tap <strong>Download for Android</strong> above.</span></li>
+          <li><span>Open the downloaded file. If Android asks to allow <strong>Install unknown apps</strong>, tap <strong>Allow</strong> for the app that downloaded it (usually Chrome or Files). This is normal outside the Play Store.</span></li>
+          <li><span>If you see <strong>Unknown app — Install anyway?</strong>, that warning appears for every app installed outside the Play Store, including ours. If you came from this official page, tap <strong>Install anyway</strong>.</span></li>
+          <li><span>Tap <strong>Open</strong> to launch NUcleus Mobile.</span></li>
         </ol>
       </section>
 
-      <section class="narrow reveal" aria-label="Share">
+      <section class="block narrow reveal" aria-label="Share">
         <h2>Share with a seatmate</h2>
-        <p class="lede">
-          Already here? Don&rsquo;t send them to the poster across the room.
-          Let them type the address or share this screen.
-        </p>
-        <div class="share-box" id="share-url">
-          https://christianmeude.github.io/nucleus-mobile/
-        </div>
+        <p class="sub">Already here? Don&rsquo;t send them to the poster across the room. Let them type the address or share this screen.</p>
+        <div class="share-box" id="share-url">https://christianmeude.github.io/nucleus-mobile/</div>
         <div class="row">
-          <button class="btn-secondary" id="copy-btn" type="button">
-            Copy link
-          </button>
-          <button class="btn-secondary" id="share-btn" type="button">
-            Share
-          </button>
+          <button class="btn-secondary" id="copy-btn" type="button">Copy link</button>
+          <button class="btn-secondary" id="share-btn" type="button">Share</button>
         </div>
-        <div
-          class="share-status"
-          id="share-status"
-          role="status"
-          aria-live="polite"
-        ></div>
+        <div class="share-status" id="share-status" role="status" aria-live="polite"></div>
       </section>
 
-      <section class="narrow reveal" aria-label="Troubleshooting">
+      <section class="block narrow reveal" aria-label="Troubleshooting">
         <h2>Having trouble?</h2>
         <ul class="trouble">
-          <li>
-            <strong>App not installed:</strong> you may have an old test copy.
-            Uninstall any copy named
-            <strong>NUcleus Mobile (Dev)</strong> or
-            <strong>NUcleus Mobile (Preview)</strong> first, then reinstall.
-            The real app is just <strong>NUcleus Mobile</strong>.
-          </li>
-          <li>
-            <strong>Blocked by Play Protect:</strong> tap
-            <strong>More details, then Install anyway</strong>. If your phone
-            offers no Install-anyway option, update Play Protect / Android and
-            retry.
-          </li>
-          <li>
-            <strong>Download won&rsquo;t open:</strong> open Files, then
-            Downloads, and tap the file. If it stalls, re-download using Chrome
-            on Wi-Fi.
-          </li>
-          <li>
-            <strong>On iPhone?</strong> This release is Android-only.
-          </li>
+          <li><strong>App not installed:</strong> you may have an old test copy. Uninstall any copy named <strong>NUcleus Mobile (Dev)</strong> or <strong>NUcleus Mobile (Preview)</strong> first, then reinstall. The real app is just <strong>NUcleus Mobile</strong>.</li>
+          <li><strong>Blocked by Play Protect:</strong> tap <strong>More details, then Install anyway</strong>. If your phone offers no Install-anyway option, update Play Protect / Android and retry.</li>
+          <li><strong>Download won&rsquo;t open:</strong> open Files, then Downloads, and tap the file. If it stalls, re-download using Chrome on Wi-Fi.</li>
+          <li><strong>On iPhone?</strong> This release is Android-only.</li>
         </ul>
-
         <details>
           <summary>About updates</summary>
-          <p class="version">
-            Small fixes arrive automatically when you reopen the app. If a big
-            update needs a fresh file, this page will say
-            <strong>Please re-download</strong>. Install the new file over the
-            old one, no uninstall needed.
-          </p>
+          <p class="reassure">Small fixes arrive automatically when you reopen the app. If a big update needs a fresh file, this page will say <strong>Please re-download</strong>. Install the new file over the old one, no uninstall needed.</p>
         </details>
       </section>
 
-      <div class="final-cta narrow">
+      <div class="final-cta narrow reveal">
         <h2>Ready when you are.</h2>
-        <p class="lede">
-          Free for NU-Dasmariñas students and faculty. Two minutes, one tap.
-        </p>
-        <a
-          class="download-btn apk-link"
-          href="https://github.com/christianmeude/nucleus-mobile/releases/latest/download/nucleus-latest.apk"
-        >
-          Download NUcleus Mobile for Android
-        </a>
+        <p class="sub">Free for NU-Dasmariñas students and faculty. Two minutes, one tap.</p>
+        <a class="download-btn apk-link" href="https://github.com/christianmeude/nucleus-mobile/releases/latest/download/nucleus-latest.apk">Download NUcleus Mobile for Android</a>
       </div>
 
       <footer class="narrow">
-        Only download NUcleus Mobile from this page. Do not install files
-        forwarded over chat from unknown sources.
+        <img src="./nucleus-logo.png" alt="" />
+        <span>Only download NUcleus Mobile from this page. Do not install files forwarded over chat from unknown sources.</span>
       </footer>
     </main>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
     <script>
       (function () {
+        var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        /* ---- version wiring (unchanged behavior) ---- */
         var btns = document.querySelectorAll('.apk-link');
         var line = document.getElementById('version-line');
         var notes = document.getElementById('changelog');
         var compat = document.getElementById('compat-line');
         var heroMeta = document.getElementById('hero-meta');
         var fallback = line.textContent;
-
         fetch('./latest.json')
-          .then(function (r) {
-            return r.ok ? r.json() : null;
-          })
+          .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (d) {
             if (!d) return;
-            if (d.apkUrl) {
-              for (var i = 0; i < btns.length; i++) btns[i].href = d.apkUrl;
-            }
+            if (d.apkUrl) { for (var i = 0; i < btns.length; i++) btns[i].href = d.apkUrl; }
             var parts = [];
-            if (d.version)
-              parts.push(
-                'Version ' + d.version + (d.build ? ' (build ' + d.build + ')' : '')
-              );
+            if (d.version) parts.push('Version ' + d.version + (d.build ? ' (build ' + d.build + ')' : ''));
             else parts.push(fallback);
             if (d.date) {
-              var months = [
-                'Jan',
-                'Feb',
-                'Mar',
-                'Apr',
-                'May',
-                'Jun',
-                'Jul',
-                'Aug',
-                'Sep',
-                'Oct',
-                'Nov',
-                'Dec',
-              ];
+              var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
               var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d.date);
-              parts.push(
-                'Updated ' +
-                  (m
-                    ? months[parseInt(m[2], 10) - 1] +
-                      ' ' +
-                      parseInt(m[3], 10) +
-                      ', ' +
-                      m[1]
-                    : d.date)
-              );
+              parts.push('Updated ' + (m ? months[parseInt(m[2],10)-1] + ' ' + parseInt(m[3],10) + ', ' + m[1] : d.date));
             }
             line.textContent = parts.join(' · ') || fallback;
             if (d.notes) notes.textContent = d.notes;
@@ -902,98 +697,78 @@
             compatParts.push(d.size ? d.size : 'Size shown by browser');
             var compatText = compatParts.join(' · ');
             compat.textContent = compatText;
-            heroMeta.textContent = compatText;
+            heroMeta.innerHTML = '';
+            compatParts.forEach(function (p, idx) {
+              if (idx > 0) { var s = document.createElement('span'); s.className = 'sep'; s.textContent = '·'; heroMeta.appendChild(s); }
+              var t = document.createElement('span'); t.textContent = p; heroMeta.appendChild(t);
+            });
           })
-          .catch(function () {
-            /* keep hardcoded fallback visible */
-          });
-
-        /* Real screenshots auto-wire when they land in download/shots/.
-           Drop portrait PNGs (phone width, 1080px+ recommended):
-             01-browse.png -> replaces the hero phone preview
-             02-submit.png, 03-track.png -> appear in the gallery below */
-        var shots = [
-          { file: '01-browse.png', alt: 'NUcleus Mobile Browse screen' },
-          { file: '02-submit.png', alt: 'NUcleus Mobile submit screen' },
-          { file: '03-track.png', alt: 'NUcleus Mobile submission status screen' },
-        ];
-        var screen = document.getElementById('phone-screen');
-        var caption = document.getElementById('mock-caption');
-        var gallerySection = document.getElementById('shots-section');
-        var gallery = document.getElementById('shots');
-        var loaded = 0;
-        shots.forEach(function (s, i) {
-          var probe = new Image();
-          probe.onload = function () {
-            loaded++;
-            var img = document.createElement('img');
-            img.src = './shots/' + s.file;
-            img.alt = s.alt;
-            if (i === 0) {
-              screen.innerHTML = '';
-              var notch = document.createElement('div');
-              notch.className = 'notch';
-              notch.setAttribute('aria-hidden', 'true');
-              screen.appendChild(notch);
-              screen.appendChild(img);
-              caption.textContent = 'Actual app screenshot';
-            }
-            var g = document.createElement('img');
-            g.src = './shots/' + s.file;
-            g.alt = s.alt;
-            g.loading = 'lazy';
-            gallery.appendChild(g);
-            if (loaded === 1) gallerySection.hidden = false;
-          };
-          probe.src = './shots/' + s.file;
-        });
-
+          .catch(function () {});
+        /* ---- share ---- */
         var copyBtn = document.getElementById('copy-btn');
         var shareBtn = document.getElementById('share-btn');
         var status = document.getElementById('share-status');
         var url = 'https://christianmeude.github.io/nucleus-mobile/';
-
         copyBtn.addEventListener('click', function () {
-          function done() {
-            status.textContent = 'Link copied. Paste it to your seatmate.';
-          }
+          function done() { status.textContent = 'Link copied. Paste it to your seatmate.'; }
           if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(url).then(done, function () {
-              status.textContent =
-                'Copy failed. Long-press the address above to copy.';
+              status.textContent = 'Copy failed. Long-press the address above to copy.';
             });
-          } else {
-            status.textContent = 'Long-press the address above to copy.';
-          }
+          } else { status.textContent = 'Long-press the address above to copy.'; }
         });
-
-        if (!navigator.share) {
-          shareBtn.style.display = 'none';
-        } else {
-          shareBtn.addEventListener('click', function () {
-            navigator.share({ title: 'NUcleus Mobile', url: url }).catch(function () {});
+        if (!navigator.share) { shareBtn.style.display = 'none'; }
+        else { shareBtn.addEventListener('click', function () { navigator.share({ title: 'NUcleus Mobile', url: url }).catch(function () {}); }); }
+        /* ---- GSAP: one authored hero moment + scroll reveals ---- */
+        if (!window.gsap || reduceMotion) return;
+        gsap.registerPlugin(ScrollTrigger);
+        var tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
+        tl.from('.hero-copy > *', { y: 34, opacity: 0, duration: 0.9, stagger: 0.09 })
+          .from('.device.hero-main', { y: 90, opacity: 0, rotate: 2, duration: 1.1 }, '-=0.7')
+          .from('.device.hero-side.left', { x: -70, opacity: 0, rotate: -14, duration: 1 }, '-=0.9')
+          .from('.device.hero-side.right', { x: 70, opacity: 0, rotate: 14, duration: 1 }, '-=0.9')
+          .from('.float-chip', { scale: 0.6, opacity: 0, duration: 0.6, stagger: 0.12, ease: 'back.out(1.8)' }, '-=0.6')
+          .from('.trust', { y: 16, opacity: 0, duration: 0.6 }, '-=0.4');
+        gsap.to('#orbit-dot', { rotation: 360, duration: 14, repeat: -1, ease: 'none', svgOrigin: '210 210' });
+        gsap.to('.float-chip.fc-1', { y: -10, duration: 2.4, repeat: -1, yoyo: true, ease: 'sine.inOut' });
+        gsap.to('.float-chip.fc-2', { y: 10, duration: 2.8, repeat: -1, yoyo: true, ease: 'sine.inOut' });
+        /* mouse parallax on hero */
+        var stage = document.getElementById('phone-stage');
+        var hero = document.querySelector('.hero');
+        if (window.matchMedia('(pointer: fine)').matches && stage) {
+          hero.addEventListener('mousemove', function (e) {
+            var r = hero.getBoundingClientRect();
+            var nx = (e.clientX - r.left) / r.width - 0.5;
+            var ny = (e.clientY - r.top) / r.height - 0.5;
+            stage.querySelectorAll('[data-depth]').forEach(function (el) {
+              var d = parseFloat(el.getAttribute('data-depth')) || 0;
+              gsap.to(el, { x: nx * d, y: ny * d * 0.6, duration: 0.6, ease: 'power2.out', overwrite: 'auto' });
+            });
+          });
+          hero.addEventListener('mouseleave', function () {
+            stage.querySelectorAll('[data-depth]').forEach(function (el) {
+              gsap.to(el, { x: 0, y: 0, duration: 0.8, ease: 'expo.out' });
+            });
           });
         }
-
-        if ('IntersectionObserver' in window) {
-          var io = new IntersectionObserver(
-            function (entries) {
-              for (var i = 0; i < entries.length; i++) {
-                if (entries[i].isIntersecting) {
-                  entries[i].target.classList.add('in');
-                  io.unobserve(entries[i].target);
-                }
-              }
-            },
-            { threshold: 0.12 }
-          );
-          var els = document.querySelectorAll('.reveal');
-          for (var j = 0; j < els.length; j++) io.observe(els[j]);
-        } else {
-          var fallbackEls = document.querySelectorAll('.reveal');
-          for (var k = 0; k < fallbackEls.length; k++)
-            fallbackEls[k].classList.add('in');
-        }
+        /* scroll reveals */
+        gsap.utils.toArray('.reveal').forEach(function (el) {
+          gsap.from(el, {
+            y: 36, opacity: 0, duration: 0.9, ease: 'expo.out',
+            scrollTrigger: { trigger: el, start: 'top 88%', once: true }
+          });
+        });
+        /* stat counters */
+        gsap.utils.toArray('[data-count]').forEach(function (el) {
+          var target = parseInt(el.getAttribute('data-count'), 10) || 0;
+          var obj = { v: 0 };
+          ScrollTrigger.create({
+            trigger: el, start: 'top 90%', once: true,
+            onEnter: function () {
+              gsap.to(obj, { v: target, duration: 1.4, ease: 'expo.out', onUpdate: function () { el.textContent = Math.round(obj.v); } });
+            }
+          });
+        });
       })();
     </script>
   </body>
