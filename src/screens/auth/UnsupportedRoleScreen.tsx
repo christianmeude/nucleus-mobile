@@ -1,20 +1,10 @@
 import { Icon } from '../../components/ui/Icon';
-import { useEffect } from 'react';
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { useThemedStyles, useTheme } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { Button } from '../../components/ui';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withRepeat,
-  withSequence,
-  Easing,
-} from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
 import { TriangleAlert } from 'lucide-react-native';
 
 export const UnsupportedRoleScreen = () => {
@@ -23,68 +13,20 @@ export const UnsupportedRoleScreen = () => {
   const styles = useThemedStyles(makeStyles);
   const portalUrl = 'https://nu-cleus.app';
 
-  // Background Blob Animations (Matching Liquid Glass aesthetic)
-  const blob1Y = useSharedValue(0);
-  const blob1X = useSharedValue(0);
-  const blob2Y = useSharedValue(0);
-  const blob2X = useSharedValue(0);
-
-  useEffect(() => {
-    blob1Y.value = withRepeat(
-      withSequence(
-        withTiming(-30, { duration: 4500, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 4500, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      true,
-    );
-    blob1X.value = withRepeat(
-      withSequence(
-        withTiming(30, { duration: 5500, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 5500, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      true,
-    );
-    blob2Y.value = withRepeat(
-      withSequence(
-        withTiming(40, { duration: 5000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 5000, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      true,
-    );
-    blob2X.value = withRepeat(
-      withSequence(
-        withTiming(-40, { duration: 6000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 6000, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      true,
-    );
-  }, []);
-
-  const animatedBlob1Style = useAnimatedStyle(() => ({
-    transform: [{ translateY: blob1Y.value }, { translateX: blob1X.value }, { scale: 1.3 }],
-  }));
-
-  const animatedBlob2Style = useAnimatedStyle(() => ({
-    transform: [{ translateY: blob2Y.value }, { translateX: blob2X.value }, { scale: 1.4 }],
-  }));
-
   return (
     <SafeAreaView style={styles.safeArea}>
-      <Animated.View style={[styles.blobTop, animatedBlob1Style]} />
-      <Animated.View style={[styles.blobBottom, animatedBlob2Style]} />
+      <View style={styles.watermarkWrap} pointerEvents="none">
+        <Image
+          source={require('../../../assets/images/nucleus-logo.png')}
+          style={[styles.watermark, { opacity: scheme === 'dark' ? 0.14 : 0.08 }]}
+          resizeMode="contain"
+          accessible={false}
+          accessibilityIgnoresInvertColors
+        />
+      </View>
 
       <View style={styles.container}>
         <View style={styles.glassContainer}>
-          <BlurView
-            intensity={60}
-            style={StyleSheet.absoluteFill}
-            tint={scheme === 'dark' ? 'dark' : 'light'}
-          />
-
           <View style={styles.content}>
             <View style={styles.iconCircle}>
               <Icon icon={TriangleAlert} size={36} color={theme.colors.state.warning} />
@@ -128,27 +70,18 @@ const makeStyles = (theme: Theme) =>
       backgroundColor: theme.colors.surface.base,
       overflow: 'hidden',
     },
-    blobTop: {
+    watermarkWrap: {
       position: 'absolute',
-      top: -120,
-      right: -100,
-      width: 450,
-      height: 450,
-      borderRadius: 225,
-      borderCurve: 'continuous',
-      backgroundColor: theme.colors.brand.primarySoft,
-      opacity: 0.8,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
-    blobBottom: {
-      position: 'absolute',
-      bottom: -150,
-      left: -120,
-      width: 480,
-      height: 480,
-      borderRadius: 240,
-      borderCurve: 'continuous',
-      backgroundColor: theme.colors.state.warningSurface,
-      opacity: 0.85,
+    watermark: {
+      width: 320,
+      height: 320,
     },
     container: {
       flex: 1,
@@ -160,14 +93,14 @@ const makeStyles = (theme: Theme) =>
       borderCurve: 'continuous',
       overflow: 'hidden',
       borderWidth: 1,
-      borderColor: theme.colors.border.strong,
+      borderColor: theme.colors.border.subtle,
+      backgroundColor: theme.colors.surface.raised,
       ...theme.shadows.level2,
     },
     content: {
       padding: theme.spacing['2xl'],
       alignItems: 'center',
       gap: theme.spacing.xl,
-      zIndex: 1,
     },
     iconCircle: {
       width: 80,

@@ -1,5 +1,6 @@
 import { useState, type ElementType } from 'react';
 import {
+  Platform,
   Pressable,
   StyleSheet,
   TextInput,
@@ -62,7 +63,7 @@ export const PasswordInput = ({
         secureTextEntry={!visible}
         placeholder={placeholder}
         placeholderTextColor={placeholderTextColor ?? theme.colors.text.muted}
-        style={[styles.input, inputStyle]}
+        style={[styles.input, inputStyle, styles.secureFix]}
         accessibilityLabel={accessibilityLabel}
         textContentType="password"
         autoComplete="password"
@@ -90,6 +91,16 @@ const makeStyles = (t: Theme) =>
   StyleSheet.create({
     input: {
       flex: 1,
+    },
+    // Inter renders the dots itself (verified • U+2022 in our TTF), so
+    // metrics are constant and the locked row heights alone keep things
+    // stable. No font overrides here — password text must render exactly
+    // like the email field. Center is kept only as a no-op guard.
+    secureFix: {
+      ...Platform.select({
+        android: { textAlignVertical: 'center' },
+        default: {},
+      }),
     },
     toggle: {
       padding: t.spacing.xs,

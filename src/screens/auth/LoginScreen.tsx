@@ -294,7 +294,7 @@ export const LoginScreen = () => {
             <Icon
               icon={isDark ? Moon : Sun}
               size={14}
-              color={isDark ? 'rgba(255,255,255,0.95)' : '#FFFFFF'}
+              color={isDark ? 'rgba(255,255,255,0.95)' : theme.colors.brand.primary}
             />
           </View>
         </Pressable>
@@ -395,7 +395,7 @@ export const LoginScreen = () => {
                       }}
                       placeholder="Enter your password"
                       placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                      inputStyle={styles.input}
+                      inputStyle={[styles.input, styles.passwordInput]}
                       iconColor="rgba(255, 255, 255, 0.6)"
                       accessibilityLabel="Password"
                       returnKeyType="done"
@@ -551,7 +551,7 @@ export const LoginScreen = () => {
                     onChangeText={setNewPassword}
                     placeholder="Enter new password"
                     placeholderTextColor={theme.colors.text.muted}
-                    inputStyle={styles.sheetInput}
+                    inputStyle={[styles.sheetInput, styles.sheetPasswordInput]}
                     accessibilityLabel="New password"
                     onFocus={() => setFocused('newPassword')}
                     onBlur={() => setFocused(null)}
@@ -692,6 +692,12 @@ const makeStyles = (theme: Theme) =>
       color: theme.colors.text.onBrand,
       zIndex: 2,
     },
+    // Locks the password row to the exact content height of the email row
+    // (padding + body line box) so the last-keystroke preview of tall/short
+    // glyphs (digits, parens, underscores…) can't remeasure the box.
+    passwordInput: {
+      height: theme.spacing.md * 2 + (theme.typography.body.lineHeight ?? 0),
+    },
     errorBox: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -773,6 +779,11 @@ const makeStyles = (theme: Theme) =>
       ...theme.typography.body,
       color: theme.colors.text.primary,
     },
+    // Same height lock as the login password row, for the reset-sheet
+    // password row (content height = its padding + body line box).
+    sheetPasswordInput: {
+      height: (theme.spacing.sm + 2) * 2 + (theme.typography.body.lineHeight ?? 0),
+    },
     sheetErrorBox: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -830,7 +841,7 @@ const makeStyles = (theme: Theme) =>
     },
     ghostToggleTrackLight: {
       backgroundColor: '#FFFFFF',
-      borderColor: theme.colors.border.strong,
+      borderColor: theme.colors.brand.primary,
     },
     ghostToggleThumb: {
       width: 22,
@@ -842,7 +853,9 @@ const makeStyles = (theme: Theme) =>
       backgroundColor: 'rgba(255,255,255,0.22)',
     },
     ghostToggleThumbLight: {
-      backgroundColor: theme.colors.brand.primary,
+      backgroundColor: theme.colors.brand.primarySoft,
+      borderWidth: 1,
+      borderColor: theme.colors.brand.primary,
     },
     ghostThumbLight: {
       alignSelf: 'flex-start',

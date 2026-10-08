@@ -336,7 +336,7 @@ const makeStyles = (t: Theme) =>
     passwordWrap: {
       flexDirection: 'row',
       alignItems: 'center',
-      minHeight: 48,
+      height: 48,
       borderWidth: 1,
       borderColor: t.colors.border.strong,
       borderRadius: t.radii.md,
