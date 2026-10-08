@@ -190,7 +190,7 @@ export const dark: ColorScheme = {
     primary: palette.navy[50],
     secondary: palette.navy[200],
     muted: '#8394B4',
-    disabled: '#586688',
+    disabled: '#6B7DA3',
     onBrand: palette.slate[0],
     onAccent: palette.slate[900],
     link: palette.navy[300],
@@ -202,8 +202,8 @@ export const dark: ColorScheme = {
     overlay: 'rgba(3, 8, 20, 0.60)',
   },
   border: {
-    subtle: 'rgba(163, 187, 233, 0.14)',
-    strong: 'rgba(163, 187, 233, 0.26)',
+    subtle: 'rgba(163, 187, 233, 0.18)',
+    strong: 'rgba(163, 187, 233, 0.38)',
     focus: palette.navy[300],
   },
   state: {

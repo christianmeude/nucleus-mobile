@@ -39,7 +39,7 @@ const resolveScheme = (preference: ThemePreference, systemScheme: SchemeName): S
 };
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const [preference, setPreferenceState] = useState<ThemePreference>('system');
+  const [preference, setPreferenceState] = useState<ThemePreference>('light');
   const [systemScheme, setSystemScheme] = useState<SchemeName>(() =>
     normalizeScheme(Appearance.getColorScheme()),
   );

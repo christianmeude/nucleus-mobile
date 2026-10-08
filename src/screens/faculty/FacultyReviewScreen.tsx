@@ -1,14 +1,6 @@
 import { Icon } from '../../components/ui/Icon';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
 import Animated from 'react-native-reanimated';
 import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -16,7 +8,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { EmptyState, InlineNotice, Screen, Skeleton, TopBar } from '../../components/ui';
+import { EmptyState, InlineNotice, Screen, SearchField, Skeleton, TopBar } from '../../components/ui';
 import { FacultyPaperCard } from '../../components/FacultyPaperCard';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
 import { facultyApi, type FacultyAssignedPaper } from '../../api/faculty';
@@ -25,7 +17,7 @@ import { FacultyTabsParamList, FacultyTabNavigationProp } from '../../navigation
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { listEpochKey } from '../../utils/listEpochKey';
-import { Search, X, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 
 export const FacultyReviewScreen = () => {
   const navigation = useNavigation<FacultyTabNavigationProp>();
@@ -157,23 +149,13 @@ export const FacultyReviewScreen = () => {
           </View>
         </TopBar>
 
-        <View style={styles.searchContainer}>
-          <Icon icon={Search} size={20} color={theme.colors.text.muted} style={styles.searchIcon} />
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Search submissions"
-            placeholderTextColor={theme.colors.text.muted}
-            style={styles.search}
-            returnKeyType="search"
-            autoCapitalize="none"
-          />
-          {search.length > 0 && (
-            <Pressable onPress={() => setSearch('')} hitSlop={8} style={styles.clearButton}>
-              <Icon icon={X} size={16} color={theme.colors.text.muted} />
-            </Pressable>
-          )}
-        </View>
+        <SearchField
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Search submissions"
+          accessibilityLabel="Search submissions"
+          accessibilityHint="Filters review queue by title, author, or keyword"
+        />
 
         <View style={styles.pillContainerOuter}>
           <ScrollView
@@ -343,28 +325,6 @@ const makeStyles = (theme: Theme) =>
       lineHeight: 32,
       color: theme.colors.text.primary,
     },
-    searchContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: theme.colors.surface.sunken,
-      borderRadius: theme.radii.md,
-      borderCurve: 'continuous',
-      paddingHorizontal: theme.spacing.md,
-      height: 44,
-    },
-    searchIcon: {
-      marginRight: theme.spacing.sm,
-    },
-    search: {
-      ...theme.typography.body,
-      flex: 1,
-      color: theme.colors.text.primary,
-      height: '100%',
-    },
-    clearButton: {
-      marginLeft: theme.spacing.sm,
-      padding: theme.spacing.xs,
-    },
     pillScrollWrapper: {
       flexGrow: 0,
     },
@@ -450,7 +410,7 @@ const makeStyles = (theme: Theme) =>
       fontSize: 12,
       letterSpacing: 0.6,
       textTransform: 'uppercase',
-      color: theme.colors.text.disabled,
+      color: theme.colors.text.muted,
     },
     list: {
       gap: theme.spacing.md,

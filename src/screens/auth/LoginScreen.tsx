@@ -17,7 +17,7 @@ import { usePrivacy } from '../../context/PrivacyContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { type Theme } from '../../theme';
-import { Logo, Button, BottomSheet } from '../../components/ui';
+import { Logo, Button, BottomSheet, PasswordInput } from '../../components/ui';
 import { DevResetModal } from '../../components/dev/DevResetModal';
 import Animated, {
   useSharedValue,
@@ -282,15 +282,20 @@ export const LoginScreen = () => {
           accessibilityLabel={`Theme: ${scheme}. Tap to switch to ${isDark ? 'light' : 'dark'}`}
           accessibilityState={{ checked: isDark }}
           hitSlop={12}
-          style={styles.ghostToggleTrack}
+          style={[styles.ghostToggleTrack, !isDark && styles.ghostToggleTrackLight]}
         >
           <View
             style={[
               styles.ghostToggleThumb,
               isDark ? styles.ghostThumbDark : styles.ghostThumbLight,
+              !isDark && styles.ghostToggleThumbLight,
             ]}
           >
-            <Icon icon={isDark ? Moon : Sun} size={14} color="rgba(255,255,255,0.95)" />
+            <Icon
+              icon={isDark ? Moon : Sun}
+              size={14}
+              color={isDark ? 'rgba(255,255,255,0.95)' : '#FFFFFF'}
+            />
           </View>
         </Pressable>
       </View>
@@ -382,16 +387,18 @@ export const LoginScreen = () => {
                         }
                       />
                     </View>
-                    <TextInput
-                      secureTextEntry
-                      placeholder="Enter your password"
-                      placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                      style={styles.input}
+                    <PasswordInput
                       value={password}
                       onChangeText={(text: string) => {
                         setPassword(text);
                         if (error) setError('');
                       }}
+                      placeholder="Enter your password"
+                      placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                      inputStyle={styles.input}
+                      iconColor="rgba(255, 255, 255, 0.6)"
+                      accessibilityLabel="Password"
+                      returnKeyType="done"
                       onFocus={() => setFocused('password')}
                       onBlur={() => setFocused(null)}
                     />
@@ -485,7 +492,7 @@ export const LoginScreen = () => {
                   autoCapitalize="none"
                   keyboardType="email-address"
                   placeholder="you@example.com"
-                  placeholderTextColor={theme.colors.text.disabled}
+                  placeholderTextColor={theme.colors.text.muted}
                   style={styles.sheetInput}
                   value={forgotEmail}
                   onChangeText={setForgotEmail}
@@ -514,7 +521,7 @@ export const LoginScreen = () => {
                     autoCapitalize="none"
                     keyboardType="number-pad"
                     placeholder="Enter 6-digit code"
-                    placeholderTextColor={theme.colors.text.disabled}
+                    placeholderTextColor={theme.colors.text.muted}
                     style={styles.sheetInput}
                     value={code}
                     onChangeText={setCode}
@@ -538,13 +545,14 @@ export const LoginScreen = () => {
                     color={iconColor('newPassword')}
                     style={styles.sheetInputIcon}
                   />
-                  <BottomSheetTextInput
-                    secureTextEntry
-                    placeholder="Enter new password"
-                    placeholderTextColor={theme.colors.text.disabled}
-                    style={styles.sheetInput}
+                  <PasswordInput
+                    component={BottomSheetTextInput}
                     value={newPassword}
                     onChangeText={setNewPassword}
+                    placeholder="Enter new password"
+                    placeholderTextColor={theme.colors.text.muted}
+                    inputStyle={styles.sheetInput}
+                    accessibilityLabel="New password"
                     onFocus={() => setFocused('newPassword')}
                     onBlur={() => setFocused(null)}
                   />
@@ -820,6 +828,10 @@ const makeStyles = (theme: Theme) =>
       padding: 3,
       justifyContent: 'center',
     },
+    ghostToggleTrackLight: {
+      backgroundColor: '#FFFFFF',
+      borderColor: theme.colors.border.strong,
+    },
     ghostToggleThumb: {
       width: 22,
       height: 22,
@@ -828,6 +840,9 @@ const makeStyles = (theme: Theme) =>
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: 'rgba(255,255,255,0.22)',
+    },
+    ghostToggleThumbLight: {
+      backgroundColor: theme.colors.brand.primary,
     },
     ghostThumbLight: {
       alignSelf: 'flex-start',

@@ -105,7 +105,7 @@ const AppShell = () => {
 
   return (
     <View style={{ flex: 1 }}>
-      <StatusBar style="light" />
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <AuthProvider>
         <PrivacyProvider>
           <CoachmarkProvider>

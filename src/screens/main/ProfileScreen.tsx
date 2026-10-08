@@ -9,6 +9,7 @@ import {
   BottomSheetScrollView,
   BottomSheetTextInput,
   Button,
+  PasswordInput,
   ProfileHeader,
   Screen,
   SettingsRow,
@@ -250,29 +251,38 @@ export const ProfileScreen = () => {
             Choose a new password with at least 8 characters.
           </Text>
           <Text style={styles.sheetLabel}>Current password</Text>
-          <BottomSheetTextInput
-            style={styles.sheetInput}
-            value={currentPassword}
-            onChangeText={setCurrentPassword}
-            secureTextEntry
-            accessibilityLabel="Current password"
-          />
+          <View style={styles.passwordWrap}>
+            <PasswordInput
+              component={BottomSheetTextInput}
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+              inputStyle={styles.passwordInput}
+              placeholderTextColor={theme.colors.text.muted}
+              accessibilityLabel="Current password"
+            />
+          </View>
           <Text style={styles.sheetLabel}>New password</Text>
-          <BottomSheetTextInput
-            style={styles.sheetInput}
-            value={newPassword}
-            onChangeText={setNewPassword}
-            secureTextEntry
-            accessibilityLabel="New password"
-          />
+          <View style={styles.passwordWrap}>
+            <PasswordInput
+              component={BottomSheetTextInput}
+              value={newPassword}
+              onChangeText={setNewPassword}
+              inputStyle={styles.passwordInput}
+              placeholderTextColor={theme.colors.text.muted}
+              accessibilityLabel="New password"
+            />
+          </View>
           <Text style={styles.sheetLabel}>Confirm new password</Text>
-          <BottomSheetTextInput
-            style={styles.sheetInput}
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-            accessibilityLabel="Confirm new password"
-          />
+          <View style={styles.passwordWrap}>
+            <PasswordInput
+              component={BottomSheetTextInput}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              inputStyle={styles.passwordInput}
+              placeholderTextColor={theme.colors.text.muted}
+              accessibilityLabel="Confirm new password"
+            />
+          </View>
           {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
           {passwordStatus ? <Text style={styles.successText}>{passwordStatus}</Text> : null}
           <Button label="Change password" onPress={savePassword} loading={passwordLoading} />
@@ -323,8 +333,24 @@ const makeStyles = (t: Theme) =>
       color: t.colors.text.primary,
       backgroundColor: t.colors.surface.sunken,
     },
+    passwordWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      minHeight: 48,
+      borderWidth: 1,
+      borderColor: t.colors.border.strong,
+      borderRadius: t.radii.md,
+      borderCurve: 'continuous',
+      paddingHorizontal: t.spacing.md,
+      backgroundColor: t.colors.surface.sunken,
+    },
+    passwordInput: {
+      flex: 1,
+      ...t.typography.body,
+      color: t.colors.text.primary,
+    },
     placeholder: {
-      color: t.colors.text.disabled,
+      color: t.colors.text.muted,
     },
     errorText: {
       ...t.typography.bodySmall,

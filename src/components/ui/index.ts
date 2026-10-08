@@ -37,6 +37,7 @@ export { Icon } from './Icon';
 export { WorkloadChart } from './WorkloadChart';
 export { Input } from './Input';
 export { SearchField } from './SearchField';
+export { PasswordInput } from './PasswordInput';
 export { SegmentedControl } from './SegmentedControl';
 export { PublishedBadge } from './PublishedBadge';
 export { CategoryChip } from './CategoryChip';

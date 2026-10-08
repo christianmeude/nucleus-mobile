@@ -1,6 +1,6 @@
 import { Icon } from '../../components/ui/Icon';
 import { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { useThemedStyles, useTheme } from '../../context/ThemeContext';
@@ -19,8 +19,9 @@ import { TriangleAlert } from 'lucide-react-native';
 
 export const UnsupportedRoleScreen = () => {
   const { user, signOut } = useAuth();
-  const { theme } = useTheme();
+  const { theme, scheme } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const portalUrl = 'https://nu-cleus.app';
 
   // Background Blob Animations (Matching Liquid Glass aesthetic)
   const blob1Y = useSharedValue(0);
@@ -78,7 +79,11 @@ export const UnsupportedRoleScreen = () => {
 
       <View style={styles.container}>
         <View style={styles.glassContainer}>
-          <BlurView intensity={60} style={StyleSheet.absoluteFill} tint="light" />
+          <BlurView
+            intensity={60}
+            style={StyleSheet.absoluteFill}
+            tint={scheme === 'dark' ? 'dark' : 'light'}
+          />
 
           <View style={styles.content}>
             <View style={styles.iconCircle}>
@@ -88,8 +93,19 @@ export const UnsupportedRoleScreen = () => {
             <View style={styles.textContainer}>
               <Text style={styles.title}>Unsupported Role</Text>
               <Text style={styles.description}>
-                This mobile app is optimized for Student and Faculty workflows.
+                This mobile app supports Student and Faculty accounts only.
               </Text>
+              <Text style={styles.description}>
+                Admin and other roles aren&apos;t supported here. Continue on the web portal:
+              </Text>
+              <Pressable
+                onPress={() => Linking.openURL(portalUrl)}
+                accessibilityRole="link"
+                accessibilityLabel="Open nu-cleus.app web portal"
+                hitSlop={8}
+              >
+                <Text style={styles.link}>nu-cleus.app</Text>
+              </Pressable>
               <Text style={styles.roleText}>
                 Signed in as: <Text style={{ fontWeight: '700' }}>{user?.role}</Text>
               </Text>
@@ -144,7 +160,7 @@ const makeStyles = (theme: Theme) =>
       borderCurve: 'continuous',
       overflow: 'hidden',
       borderWidth: 1,
-      borderColor: 'rgba(255, 255, 255, 0.4)',
+      borderColor: theme.colors.border.strong,
       ...theme.shadows.level2,
     },
     content: {
@@ -179,9 +195,15 @@ const makeStyles = (theme: Theme) =>
       color: theme.colors.text.secondary,
       textAlign: 'center',
     },
+    link: {
+      ...theme.typography.body,
+      color: theme.colors.text.link,
+      textDecorationLine: 'underline',
+      textAlign: 'center',
+    },
     roleText: {
       ...theme.typography.bodySmall,
-      color: theme.colors.brand.primary,
+      color: theme.colors.text.primary,
       backgroundColor: theme.colors.brand.primarySurface,
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.xs,
