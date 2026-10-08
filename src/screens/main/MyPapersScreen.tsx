@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useEffect, useState } from 'react';
+import { useCallback, useMemo, useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -22,7 +23,7 @@ import {
 } from '../../utils/category';
 import { listEpochKey } from '../../utils/listEpochKey';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
-import { type Theme } from '../../theme';
+import { motion, type Theme } from '../../theme';
 import { StandardPaperCard } from '../../components/StandardPaperCard';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
 import { Plus } from 'lucide-react-native';
@@ -37,7 +38,7 @@ import {
   InlineNotice,
   Screen,
   SearchField,
-  FilterPills,
+  FilterSelect,
   Skeleton,
   TopBar,
   Button,
@@ -196,6 +197,20 @@ export const MyPapersScreen = () => {
     loadData(true);
   }, [loadData]);
 
+  // Atomic first paint: the list fades in as one motion once laid out,
+  // instead of rows cascading in one-by-one over the stagger delays.
+  const [firstPaintDone, setFirstPaintDone] = useState(false);
+  const paintOpacity = useRef(new Animated.Value(0)).current;
+  const handleListLayout = useCallback(() => {
+    if (firstPaintDone) return;
+    setFirstPaintDone(true);
+    Animated.timing(paintOpacity, {
+      toValue: 1,
+      duration: motion.duration.base,
+      useNativeDriver: true,
+    }).start();
+  }, [firstPaintDone, paintOpacity]);
+
   const keyExtractor = useCallback((item: ResearchPaper) => item.id, []);
 
   return (
@@ -254,7 +269,8 @@ export const MyPapersScreen = () => {
             accessibilityHint="Filters your papers by title, abstract, or keywords"
           />
 
-          <FilterPills
+          <FilterSelect
+            label="Status"
             options={[
               { key: 'all', label: 'All' },
               { key: 'active', label: 'In Review' },
@@ -263,11 +279,15 @@ export const MyPapersScreen = () => {
               { key: 'published', label: 'Published' },
             ]}
             value={activeFilter}
+            defaultValue="all"
             onValueChange={(k) => setActiveFilter(k as FilterKey)}
-            accessibilityLabel="Filter your papers by status"
           />
         </View>
 
+        <Animated.View
+          style={[styles.listPaint, { opacity: paintOpacity }]}
+          onLayout={handleListLayout}
+        >
         <LegendList
           key={listEpochKey(loading || filtered.length === 0)}
           recycleItems={true}
@@ -317,6 +337,7 @@ export const MyPapersScreen = () => {
           estimatedItemSize={220}
           renderItem={renderPaperItem}
         />
+        </Animated.View>
 
         <Pressable
           style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
@@ -337,6 +358,9 @@ const paperDateValue = (paper: ResearchPaper) =>
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({
+    listPaint: {
+      flex: 1,
+    },
     scroll: {
       flex: 1,
     },

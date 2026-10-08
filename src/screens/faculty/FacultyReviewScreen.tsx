@@ -1,14 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
-import { RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
-import Animated from 'react-native-reanimated';
 import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import * as Haptics from 'expo-haptics';
 import {
   EmptyState,
-  FilterPills,
+  FilterSelect,
   InlineNotice,
   Screen,
   SearchField,
@@ -21,7 +20,7 @@ import { facultyApi, type FacultyAssignedPaper } from '../../api/faculty';
 import { FACULTY_QUEUE_FILTERS, type FacultyQueueFilter } from './facultyStatus';
 import { FacultyTabsParamList, FacultyTabNavigationProp } from '../../navigation/types';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
-import { type Theme } from '../../theme';
+import { motion, type Theme } from '../../theme';
 import { listEpochKey } from '../../utils/listEpochKey';
 
 export const FacultyReviewScreen = () => {
@@ -42,7 +41,19 @@ export const FacultyReviewScreen = () => {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [filterPending, setFilterPending] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState(search);
+
+  // Mirror of `papers` for the first-load check inside `load` — kept in a
+  // ref so `load` doesn't depend on `papers` (which re-created it on every
+  // setPapers and re-fired the load effect: one tap, two fetches).
+  const papersRef = useRef<FacultyAssignedPaper[] | null>(null);
+  const requestRef = useRef(0);
+
+  // Sync the mirror after render, before the load effect below reads it.
+  useEffect(() => {
+    papersRef.current = papers;
+  });
 
   // Debounce search input
   useEffect(() => {
@@ -55,7 +66,7 @@ export const FacultyReviewScreen = () => {
       try {
         if (pageNum === 0) {
           setError(null);
-          if (!refreshing && pageNum === 0 && !papers) setPapers(null); // Show skeleton only if no existing papers
+          if (!refreshing && !papersRef.current) setPapers(null); // Show skeleton only if no existing papers
         } else {
           setLoadingMore(true);
         }
@@ -79,12 +90,18 @@ export const FacultyReviewScreen = () => {
         setLoadingMore(false);
       }
     },
-    [refreshing, filter, debouncedSearch, papers],
+    [refreshing, filter, debouncedSearch],
   );
 
-  // Load when filter or debounced search changes
+  // Load when filter or debounced search changes. The pending flag gives
+  // instant tap feedback while the round-trip lands; the generation guard
+  // keeps a stale response from clearing a newer request's flag.
   useEffect(() => {
-    load(0, filter, debouncedSearch);
+    const id = ++requestRef.current;
+    setFilterPending(true);
+    load(0, filter, debouncedSearch).finally(() => {
+      if (requestRef.current === id) setFilterPending(false);
+    });
   }, [filter, debouncedSearch, load]);
 
   const onRefresh = useCallback(async () => {
@@ -105,6 +122,20 @@ export const FacultyReviewScreen = () => {
     },
     [navigation],
   );
+
+  // Atomic first paint: the list fades in as one motion once laid out,
+  // instead of rows cascading in one-by-one over the stagger delays.
+  const [firstPaintDone, setFirstPaintDone] = useState(false);
+  const paintOpacity = useRef(new Animated.Value(0)).current;
+  const handleListLayout = useCallback(() => {
+    if (firstPaintDone) return;
+    setFirstPaintDone(true);
+    Animated.timing(paintOpacity, {
+      toValue: 1,
+      duration: motion.duration.base,
+      useNativeDriver: true,
+    }).start();
+  }, [firstPaintDone, paintOpacity]);
 
   const renderPaperItem = useCallback(
     ({ item: rawItem, index }: { item: any; index: number }) => {
@@ -147,14 +178,16 @@ export const FacultyReviewScreen = () => {
           accessibilityHint="Filters review queue by title, author, or keyword"
         />
 
-        <FilterPills
+        <FilterSelect
+          label="Status"
           options={FACULTY_QUEUE_FILTERS}
           value={filter}
+          defaultValue="all"
           onValueChange={setFilter}
-          accessibilityLabel="Filter review queue by status"
         />
       </View>
 
+      <Animated.View style={[styles.listPaint, { opacity: paintOpacity }]} onLayout={handleListLayout}>
       <LegendList
         key={listEpochKey((papers ?? []).length === 0)}
         recycleItems={true}
@@ -176,6 +209,13 @@ export const FacultyReviewScreen = () => {
                 <Text style={styles.resultCount}>
                   {papers.length} {papers.length === 1 ? 'Submission' : 'Submissions'}
                 </Text>
+                {filterPending && (
+                  <ActivityIndicator
+                    size="small"
+                    color={theme.colors.brand.primary}
+                    accessibilityLabel="Updating review queue"
+                  />
+                )}
               </View>
             ) : null}
 
@@ -207,12 +247,16 @@ export const FacultyReviewScreen = () => {
         ListFooterComponent={renderFooter}
         renderItem={renderPaperItem}
       />
+      </Animated.View>
     </Screen>
   );
 };
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
+    listPaint: {
+      flex: 1,
+    },
     header: {
       paddingHorizontal: theme.spacing.lg,
       paddingTop: theme.spacing.xl,
