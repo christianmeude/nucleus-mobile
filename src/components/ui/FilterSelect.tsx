@@ -1,11 +1,12 @@
 import { useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { Check, ChevronDown } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { BottomSheet } from './BottomSheet';
+import { FilterTrigger } from './FilterTrigger';
 import { Icon } from './Icon';
 
 export interface FilterSelectOption<K extends string> {
@@ -24,10 +25,11 @@ interface FilterSelectProps<K extends string> {
 }
 
 /**
- * Single-select status filter as one compact trigger row opening a
- * bottom-sheet radio list. Used where a wrapping pill row would cost two
- * rows of header bulk. Speaks the same sheet + check-row language as
- * BrowseFilterSystem; navy-fill active treatment per the Active-Fill Rule.
+ * Single-select status filter as one compact trigger pill opening a
+ * bottom-sheet radio list. Uses the shared FilterTrigger so it matches the
+ * Browse filter button exactly — same chrome and search-row placement, with
+ * the current status value as the adaptive label. Navy-fill active
+ * treatment per the Active-Fill Rule.
  */
 export function FilterSelect<K extends string>({
   label,
@@ -52,22 +54,14 @@ export function FilterSelect<K extends string>({
 
   return (
     <>
-      <Pressable
-        style={({ pressed }) => [styles.trigger, isActive && styles.triggerActive, pressed && styles.pressed]}
+      <FilterTrigger
+        label={label}
+        active={isActive}
+        valueText={current?.label}
         onPress={() => sheetRef.current?.present()}
-        accessibilityRole="button"
         accessibilityLabel={`${label} filter, ${current?.label ?? ''} selected`}
         accessibilityHint={`Opens ${label.toLowerCase()} options`}
-      >
-        <Text style={[styles.triggerPrefix, isActive && styles.triggerPrefixActive]}>
-          {label} · <Text style={[styles.triggerValue, isActive && styles.triggerValueActive]}>{current?.label}</Text>
-        </Text>
-        <Icon
-          icon={ChevronDown}
-          size={18}
-          color={isActive ? theme.colors.text.onBrand : theme.colors.text.secondary}
-        />
-      </Pressable>
+      />
 
       <BottomSheet ref={sheetRef}>
         <Text style={styles.sheetTitle}>{label}</Text>
@@ -100,36 +94,6 @@ export function FilterSelect<K extends string>({
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-    trigger: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: theme.spacing.sm,
-      minHeight: 44,
-      paddingHorizontal: theme.spacing.md,
-      borderRadius: theme.radii.pill,
-      borderCurve: 'continuous',
-      borderWidth: 1,
-      borderColor: theme.colors.border.strong,
-      backgroundColor: theme.colors.surface.raised,
-    },
-    triggerActive: {
-      backgroundColor: theme.colors.brand.primary,
-      borderColor: theme.colors.brand.primary,
-    },
-    triggerPrefix: {
-      ...theme.typography.label,
-      color: theme.colors.text.secondary,
-    },
-    triggerPrefixActive: {
-      color: theme.colors.text.onBrand,
-    },
-    triggerValue: {
-      color: theme.colors.text.primary,
-    },
-    triggerValueActive: {
-      color: theme.colors.text.onBrand,
-    },
     sheetTitle: {
       ...theme.typography.h3,
       color: theme.colors.text.primary,

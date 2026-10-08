@@ -41,5 +41,6 @@ export { PasswordInput } from './PasswordInput';
 export { SegmentedControl } from './SegmentedControl';
 export { FilterSelect } from './FilterSelect';
 export type { FilterSelectOption } from './FilterSelect';
+export { FilterTrigger } from './FilterTrigger';
 export { PublishedBadge } from './PublishedBadge';
 export { CategoryChip } from './CategoryChip';

@@ -2,9 +2,10 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { StyleSheet, Text, View, Keyboard, Pressable } from 'react-native';
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Check, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { Check, ChevronDown, ChevronUp } from 'lucide-react-native';
 
-import { BottomSheet, Button, Icon, Input, PressableScale } from '../../../components/ui';
+import { BottomSheet, Button, Icon, Input } from '../../../components/ui';
+import { FilterTrigger } from '../../../components/ui/FilterTrigger';
 import { useTheme, useThemedStyles } from '../../../context/ThemeContext';
 import { type Theme } from '../../../theme';
 import { Category } from '../../../types/domain';
@@ -107,26 +108,13 @@ export const BrowseFilterSystem = ({
 
   return (
     <>
-      <PressableScale
-        style={[styles.triggerBtn, activeCount > 0 && styles.triggerBtnActive]}
+      <FilterTrigger
+        label="Filters"
+        active={activeCount > 0}
+        badgeCount={activeCount}
         onPress={() => sheetRef.current?.present()}
-        accessibilityRole="button"
         accessibilityLabel={activeCount > 0 ? `Filters, ${activeCount} active` : 'Open filters'}
-      >
-        <Icon
-          icon={SlidersHorizontal}
-          size={18}
-          color={activeCount > 0 ? theme.colors.text.onBrand : theme.colors.text.secondary}
-        />
-        <Text style={[styles.triggerText, activeCount > 0 && styles.triggerTextActive]}>
-          Filters
-        </Text>
-        {activeCount > 0 ? (
-          <View style={styles.triggerBadge}>
-            <Text style={styles.triggerBadgeText}>{activeCount}</Text>
-          </View>
-        ) : null}
-      </PressableScale>
+      />
 
       <BottomSheet ref={sheetRef} snapPoints={['80%', '95%']}>
         <View style={styles.sheetHeader}>
@@ -321,46 +309,6 @@ export const BrowseFilterSystem = ({
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-    triggerBtn: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: theme.spacing.sm,
-      minHeight: 44,
-      paddingHorizontal: theme.spacing.md,
-      borderRadius: theme.radii.pill,
-      borderCurve: 'continuous',
-      borderWidth: 1,
-      borderColor: theme.colors.border.strong,
-      backgroundColor: theme.colors.surface.raised,
-    },
-    triggerBtnActive: {
-      backgroundColor: theme.colors.brand.primary,
-      borderColor: theme.colors.brand.primary,
-    },
-    triggerText: {
-      ...theme.typography.label,
-      color: theme.colors.text.secondary,
-    },
-    triggerTextActive: {
-      color: theme.colors.text.onBrand,
-    },
-    triggerBadge: {
-      minWidth: 20,
-      height: 20,
-      paddingHorizontal: 6,
-      borderRadius: theme.radii.pill,
-      borderCurve: 'continuous',
-      backgroundColor: theme.colors.text.onBrand,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    triggerBadgeText: {
-      fontFamily: theme.fontFamilies.ui.semibold,
-      fontSize: 12,
-      lineHeight: 16,
-      color: theme.colors.brand.primary,
-      fontVariant: ['tabular-nums'],
-    },
     sheetHeader: {
       flexDirection: 'row',
       alignItems: 'center',

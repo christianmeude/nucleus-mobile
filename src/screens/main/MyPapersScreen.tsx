@@ -261,27 +261,31 @@ export const MyPapersScreen = () => {
             </View>
           </TopBar>
 
-          <SearchField
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search your papers"
-            accessibilityLabel="Search your papers"
-            accessibilityHint="Filters your papers by title, abstract, or keywords"
-          />
+          <View style={styles.searchRow}>
+            <View style={styles.searchFlex}>
+              <SearchField
+                value={query}
+                onChangeText={setQuery}
+                placeholder="Search your papers"
+                accessibilityLabel="Search your papers"
+                accessibilityHint="Filters your papers by title, abstract, or keywords"
+              />
+            </View>
 
-          <FilterSelect
-            label="Status"
-            options={[
-              { key: 'all', label: 'All' },
-              { key: 'active', label: 'In Review' },
-              { key: 'action', label: 'Needs Revision' },
-              { key: 'approved', label: 'Approved' },
-              { key: 'published', label: 'Published' },
-            ]}
-            value={activeFilter}
-            defaultValue="all"
-            onValueChange={(k) => setActiveFilter(k as FilterKey)}
-          />
+            <FilterSelect
+              label="Status"
+              options={[
+                { key: 'all', label: 'All' },
+                { key: 'active', label: 'In Review' },
+                { key: 'action', label: 'Needs Revision' },
+                { key: 'approved', label: 'Approved' },
+                { key: 'published', label: 'Published' },
+              ]}
+              value={activeFilter}
+              defaultValue="all"
+              onValueChange={(k) => setActiveFilter(k as FilterKey)}
+            />
+          </View>
         </View>
 
         <Animated.View
@@ -381,6 +385,15 @@ const makeStyles = (t: Theme) =>
       borderBottomColor: t.colors.border.subtle,
       zIndex: 10,
       ...t.shadows.level1,
+    },
+    searchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: t.spacing.sm,
+    },
+    searchFlex: {
+      flex: 1,
+      minWidth: 0,
     },
     listHeader: {
       gap: t.spacing.md,

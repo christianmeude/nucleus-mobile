@@ -170,21 +170,25 @@ export const FacultyReviewScreen = () => {
           </View>
         </TopBar>
 
-        <SearchField
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Search submissions"
-          accessibilityLabel="Search submissions"
-          accessibilityHint="Filters review queue by title, author, or keyword"
-        />
+        <View style={styles.searchRow}>
+          <View style={styles.searchFlex}>
+            <SearchField
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Search submissions"
+              accessibilityLabel="Search submissions"
+              accessibilityHint="Filters review queue by title, author, or keyword"
+            />
+          </View>
 
-        <FilterSelect
-          label="Status"
-          options={FACULTY_QUEUE_FILTERS}
-          value={filter}
-          defaultValue="all"
-          onValueChange={setFilter}
-        />
+          <FilterSelect
+            label="Status"
+            options={FACULTY_QUEUE_FILTERS}
+            value={filter}
+            defaultValue="all"
+            onValueChange={setFilter}
+          />
+        </View>
       </View>
 
       <Animated.View style={[styles.listPaint, { opacity: paintOpacity }]} onLayout={handleListLayout}>
@@ -267,6 +271,15 @@ const makeStyles = (theme: Theme) =>
       borderBottomColor: theme.colors.border.subtle,
       zIndex: 10,
       ...theme.shadows.level1,
+    },
+    searchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+    },
+    searchFlex: {
+      flex: 1,
+      minWidth: 0,
     },
     titleWrap: {
       flex: 1,
