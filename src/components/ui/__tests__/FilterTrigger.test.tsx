@@ -46,7 +46,7 @@ describe('FilterTrigger', () => {
     expect(triggerNode(tree, 'Open filters')).toBeDefined();
   });
 
-  it('renders the adaptive status value alongside the label', () => {
+  it('renders the status value alone, without a group prefix', () => {
     const tree = renderTrigger({
       label: 'Status',
       valueText: 'In Review',
@@ -54,6 +54,11 @@ describe('FilterTrigger', () => {
       accessibilityLabel: 'Status filter, In Review selected',
     });
     expect(triggerNode(tree, 'Status filter, In Review selected')).toBeDefined();
+    const strings = tree.root.findAll(
+      (node) => typeof node.props?.children === 'string',
+    ).map((n) => n.props.children as string);
+    expect(strings).toContain('In Review');
+    expect(strings.some((s) => s.includes('Status'))).toBe(false);
   });
 
   it('renders the count badge only when the count is positive', () => {

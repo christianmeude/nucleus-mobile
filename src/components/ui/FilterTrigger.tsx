@@ -10,7 +10,8 @@ interface FilterTriggerProps {
   /** Navy-fill treatment when a non-default selection is active. */
   active: boolean;
   onPress: () => void;
-  /** Status-style adaptive label — the current value (e.g. "In Review"). */
+  /** Status-style adaptive label — the current value alone (e.g. "In Review").
+   * The value itself is the indication; no group prefix is shown. */
   valueText?: string;
   /** Browse-style count badge. Omitted when zero/undefined. */
   badgeCount?: number;
@@ -38,7 +39,7 @@ export function FilterTrigger({
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
-  const text = valueText ? `${label} · ${valueText}` : label;
+  const text = valueText ?? label;
 
   return (
     <Pressable
