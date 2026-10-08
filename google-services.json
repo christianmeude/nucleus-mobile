@@ -7,63 +7,6 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:85762037447:android:ee70d0e2d0e31f49c9d0e2",
-        "android_client_info": {
-          "package_name": "com.christianmeude.nucleus"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyAN6dbX6p6bwMPm6NcFowm8loshg8JzZ5g"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:85762037447:android:5d18ebaea37a6c3ac9d0e2",
-        "android_client_info": {
-          "package_name": "com.christianmeude.nucleus.dev"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyAN6dbX6p6bwMPm6NcFowm8loshg8JzZ5g"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:85762037447:android:1f33462dc750fe17c9d0e2",
-        "android_client_info": {
-          "package_name": "com.christianmeude.nucleus.preview"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyAN6dbX6p6bwMPm6NcFowm8loshg8JzZ5g"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
         "mobilesdk_app_id": "1:85762037447:android:d838a6898904c874c9d0e2",
         "android_client_info": {
           "package_name": "com.christianmeude.nucleusmobile"
