@@ -11,17 +11,9 @@ export interface BrowseControlsProps {
   resultCount: number;
   viewMode: ViewMode;
   onChangeViewMode: (mode: ViewMode) => void;
-  onClearFilters: () => void;
-  hasActiveFilters: boolean;
 }
 
-export const BrowseControls = ({
-  resultCount,
-  viewMode,
-  onChangeViewMode,
-  onClearFilters,
-  hasActiveFilters,
-}: BrowseControlsProps) => {
+export const BrowseControls = ({ resultCount, viewMode, onChangeViewMode }: BrowseControlsProps) => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -31,14 +23,7 @@ export const BrowseControls = ({
         {resultCount} {resultCount === 1 ? 'Paper' : 'Papers'}
       </Text>
 
-      <View style={styles.actions}>
-        {hasActiveFilters && (
-          <PressableScale onPress={onClearFilters} style={styles.clearBtn}>
-            <Text style={styles.clearText}>Clear Filters</Text>
-          </PressableScale>
-        )}
-
-        <View style={styles.viewToggle}>
+      <View style={styles.viewToggle}>
           <PressableScale
             style={[styles.vt, viewMode === 'list' && styles.vtActive]}
             onPress={() => onChangeViewMode('list')}
@@ -64,7 +49,6 @@ export const BrowseControls = ({
             />
           </PressableScale>
         </View>
-      </View>
     </View>
   );
 };
@@ -82,21 +66,7 @@ export const makeStyles = (theme: Theme) =>
       fontSize: 12,
       letterSpacing: 0.6,
       textTransform: 'uppercase',
-      color: theme.colors.text.disabled,
-    },
-    actions: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: theme.spacing.md,
-    },
-    clearBtn: {
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-    },
-    clearText: {
-      fontFamily: theme.fontFamilies.ui.medium,
-      fontSize: 13,
-      color: theme.colors.text.secondary,
+      color: theme.colors.text.muted,
     },
     viewToggle: {
       flexDirection: 'row',

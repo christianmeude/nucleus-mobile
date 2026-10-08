@@ -108,7 +108,7 @@ export const BrowseFilterSystem = ({
   return (
     <>
       <PressableScale
-        style={styles.triggerBtn}
+        style={[styles.triggerBtn, activeCount > 0 && styles.triggerBtnActive]}
         onPress={() => sheetRef.current?.present()}
         accessibilityRole="button"
         accessibilityLabel={activeCount > 0 ? `Filters, ${activeCount} active` : 'Open filters'}
@@ -116,8 +116,11 @@ export const BrowseFilterSystem = ({
         <Icon
           icon={SlidersHorizontal}
           size={18}
-          color={activeCount > 0 ? theme.colors.brand.primary : theme.colors.text.secondary}
+          color={activeCount > 0 ? theme.colors.text.onBrand : theme.colors.text.secondary}
         />
+        <Text style={[styles.triggerText, activeCount > 0 && styles.triggerTextActive]}>
+          Filters
+        </Text>
         {activeCount > 0 ? (
           <View style={styles.triggerBadge}>
             <Text style={styles.triggerBadgeText}>{activeCount}</Text>
@@ -319,30 +322,43 @@ export const BrowseFilterSystem = ({
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
     triggerBtn: {
-      width: 44,
-      height: 44,
+      flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'center',
-      position: 'relative',
-    },
-    triggerBadge: {
-      position: 'absolute',
-      top: 2,
-      right: 2,
-      minWidth: 16,
-      height: 16,
-      paddingHorizontal: 4,
+      gap: theme.spacing.sm,
+      minHeight: 44,
+      paddingHorizontal: theme.spacing.md,
       borderRadius: theme.radii.pill,
       borderCurve: 'continuous',
+      borderWidth: 1,
+      borderColor: theme.colors.border.strong,
+      backgroundColor: theme.colors.surface.raised,
+    },
+    triggerBtnActive: {
       backgroundColor: theme.colors.brand.primary,
+      borderColor: theme.colors.brand.primary,
+    },
+    triggerText: {
+      ...theme.typography.label,
+      color: theme.colors.text.secondary,
+    },
+    triggerTextActive: {
+      color: theme.colors.text.onBrand,
+    },
+    triggerBadge: {
+      minWidth: 20,
+      height: 20,
+      paddingHorizontal: 6,
+      borderRadius: theme.radii.pill,
+      borderCurve: 'continuous',
+      backgroundColor: theme.colors.text.onBrand,
       alignItems: 'center',
       justifyContent: 'center',
     },
     triggerBadgeText: {
       fontFamily: theme.fontFamilies.ui.semibold,
-      fontSize: 10,
-      lineHeight: 13,
-      color: theme.colors.text.onBrand,
+      fontSize: 12,
+      lineHeight: 16,
+      color: theme.colors.brand.primary,
       fontVariant: ['tabular-nums'],
     },
     sheetHeader: {

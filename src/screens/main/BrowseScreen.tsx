@@ -42,7 +42,7 @@ import { listEpochKey } from '../../utils/listEpochKey';
 import { BrowseHeader } from './browse/BrowseHeader';
 import { BrowseControls } from './browse/BrowseControls';
 import { BrowseFilterSystem } from './browse/BrowseFilterSystem';
-import { BrowseFilterState, INITIAL_FILTER_STATE, getActiveFilterCount } from './browse/types';
+import { BrowseFilterState, INITIAL_FILTER_STATE } from './browse/types';
 import { StandardPaperCard } from '../../components/StandardPaperCard';
 import { BrowseGridCell } from './browse/BrowseGridCell';
 import { Button } from '../../components/ui/Button';
@@ -179,8 +179,6 @@ export const BrowseScreen = () => {
     [categoryColorById],
   );
 
-  const hasActiveFilters = getActiveFilterCount(filters) > 0;
-
   const matched = useMemo(() => {
     let rows = useServerSearch ? (serverResults ?? []) : papers;
 
@@ -296,10 +294,6 @@ export const BrowseScreen = () => {
 
   const showClear = Boolean(query.trim());
 
-  const handleClearFilters = useCallback(() => {
-    setFilters(INITIAL_FILTER_STATE);
-  }, []);
-
   const listHeaderElement = (
     <>
       <View style={styles.listHeader}>
@@ -307,8 +301,6 @@ export const BrowseScreen = () => {
           resultCount={sorted.length}
           viewMode={viewMode}
           onChangeViewMode={setViewMode}
-          onClearFilters={handleClearFilters}
-          hasActiveFilters={hasActiveFilters}
         />
 
         {error ? <InlineNotice tone="danger" message={error} /> : null}
