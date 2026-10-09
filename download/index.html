@@ -17,7 +17,7 @@
     <meta property="og:type" content="website" />
     <meta
       property="og:image"
-      content="https://christianmeude.github.io/nucleus-mobile/nucleus-logo.png"
+      content="https://download.nu-cleus.app/nucleus-logo.png"
     />
     <link rel="icon" href="./nucleus-logo.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -630,7 +630,7 @@
       <section class="block narrow reveal" aria-label="Share">
         <h2>Share with a seatmate</h2>
         <p class="sub">Already here? Don&rsquo;t send them to the poster across the room. Let them type the address or share this screen.</p>
-        <div class="share-box" id="share-url">https://christianmeude.github.io/nucleus-mobile/</div>
+        <div class="share-box" id="share-url">https://download.nu-cleus.app/</div>
         <div class="row">
           <button class="btn-secondary" id="copy-btn" type="button">Copy link</button>
           <button class="btn-secondary" id="share-btn" type="button">Share</button>
@@ -708,7 +708,7 @@
         var copyBtn = document.getElementById('copy-btn');
         var shareBtn = document.getElementById('share-btn');
         var status = document.getElementById('share-status');
-        var url = 'https://christianmeude.github.io/nucleus-mobile/';
+        var url = 'https://download.nu-cleus.app/';
         copyBtn.addEventListener('click', function () {
           function done() { status.textContent = 'Link copied. Paste it to your seatmate.'; }
           if (navigator.clipboard && navigator.clipboard.writeText) {

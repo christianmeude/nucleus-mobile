@@ -11,11 +11,12 @@ Users only ever see the GH Pages download page. Never send them expo.dev links.
   to a Release as a versioned asset (e.g. `nucleus-1.0.0-b1.apk`) plus a stable
   alias named exactly `nucleus-latest.apk`. Button URL never changes:
   `https://github.com/christianmeude/nucleus-mobile/releases/latest/download/nucleus-latest.apk`
-- **Landing page (GH Pages, same repo):** source is `download/index.html` +
-  `download/latest.json`, auto-deployed by
+- **Landing page (GH Pages, same repo, custom domain):** source is `download/index.html` +
+  `download/latest.json` (+ `download/CNAME` claiming the domain), auto-deployed by
   `.github/workflows/deploy-download-page.yml` on every `main` push touching
-  `download/**`. Public URL after first deploy:
-  `https://christianmeude.github.io/nucleus-mobile/`
+  `download/**`. Public URL:
+  `https://download.nu-cleus.app/` (DNS: `CNAME download → christianmeude.github.io`,
+  owned by the web-app side; keep DNS-only, never proxied, or the Pages cert breaks).
   Print/QR this page URL, never the APK or expo.dev URL directly.
 - **Small fixes (EAS Update on Expo):** invisible to users, still served by Expo
   on app restart. No reinstall.
