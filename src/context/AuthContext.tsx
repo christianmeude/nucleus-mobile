@@ -166,10 +166,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           error: message,
         };
       }
-    } catch (_error) {
+    } catch (error) {
+      // Surface the underlying reason (network failure vs. missing build-time
+      // env): the generic message hid which branch failed and cost a full
+      // rebuild cycle to diagnose. Thrown messages never include secrets —
+      // only the Error text, truncated.
+      console.error('[AuthContext.signIn] signInWithPassword threw:', error);
+      const detail =
+        error instanceof Error
+          ? error.message?.trim()
+          : typeof error === 'string'
+            ? error.trim()
+            : '';
       return {
         success: false,
-        error: 'Unable to sign in.',
+        error: detail ? `Unable to sign in. (${detail.slice(0, 200)})` : 'Unable to sign in.',
       };
     }
   };

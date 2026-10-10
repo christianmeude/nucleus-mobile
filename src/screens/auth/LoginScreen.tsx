@@ -37,7 +37,7 @@ import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { BottomSheetTextInput, BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { supabase } from '../../lib/supabase';
+import { isSupabaseConfigured, supabase } from '../../lib/supabase';
 
 type FocusField = 'email' | 'password' | 'forgotEmail' | 'code' | 'newPassword' | null;
 
@@ -411,6 +411,14 @@ export const LoginScreen = () => {
                 <Text style={styles.error}>{error}</Text>
               </Animated.View>
 
+              {!isSupabaseConfigured ? (
+                <View style={styles.configBox}>
+                  <Text style={styles.configText}>
+                    Backend not configured in this build (missing EAS environment).
+                  </Text>
+                </View>
+              ) : null}
+
               <View style={styles.actions}>
                 <AnimatedPressable
                   style={[
@@ -706,6 +714,18 @@ const makeStyles = (theme: Theme) =>
       marginTop: -theme.spacing.sm,
     },
     error: {
+      ...theme.typography.bodySmall,
+      color: theme.colors.state.danger,
+      flexShrink: 1,
+      fontWeight: '600',
+    },
+    configBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: theme.spacing.sm,
+      marginTop: -theme.spacing.xs,
+    },
+    configText: {
       ...theme.typography.bodySmall,
       color: theme.colors.state.danger,
       flexShrink: 1,
