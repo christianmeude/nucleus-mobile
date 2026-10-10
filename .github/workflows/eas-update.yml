@@ -38,4 +38,8 @@ jobs:
         run: npm ci
 
       - name: Publish update to Preview channel
-        run: eas update --branch preview --message "${{ github.event.head_commit.message }}"
+        # --environment is load-bearing: without it the OTA bundle ships with
+        # empty EXPO_PUBLIC_* vars (CI has no .env) and overrides the native
+        # build's baked-in env on every preview install. Seen 2026-10-10:
+        # fixed 4b1dbb APK still failed login until republished with env.
+        run: eas update --branch preview --environment production --message "${{ github.event.head_commit.message }}"
