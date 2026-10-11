@@ -10,8 +10,9 @@ name: Release APK (tag)
 #   1. GitHub repo secret GOOGLE_SERVICES_JSON = base64 of google-services.json:
 #        [Convert]::ToBase64String([IO.File]::ReadAllBytes("google-services.json")) | Set-Content gs.b64
 #      then paste the single-line contents into the secret and delete gs.b64.
-#   2. Same value as an EAS secret for local `eas build` runs:
-#        eas secret:create --name GOOGLE_SERVICES_JSON --value-file gs.b64
+#   2. Same value as an EAS *string* secret for `eas build` runs from your PC:
+#        eas secret:create   (name GOOGLE_SERVICES_JSON, paste the base64 text)
+#      app.config.ts restores the file from it when absent on the worker.
 #   3. EXPO_TOKEN must already exist (used by eas-update.yml too).
 
 on:

@@ -1,6 +1,16 @@
 import { ExpoConfig, ConfigContext } from 'expo/config';
+import { existsSync, writeFileSync } from 'fs';
 
 export default ({ config }: ConfigContext): any => {
+  // google-services.json is gitignored (public repo). Local dev keeps the
+  // real file on disk. On EAS workers / fresh clones where the file is
+  // absent, restore it from the GOOGLE_SERVICES_JSON secret (base64 string
+  // secret — EAS secret or CI env). Never logs the value.
+  const GS_PATH = './google-services.json';
+  if (!existsSync(GS_PATH) && process.env.GOOGLE_SERVICES_JSON) {
+    writeFileSync(GS_PATH, Buffer.from(process.env.GOOGLE_SERVICES_JSON, 'base64'));
+  }
+
   const IS_DEV = process.env.APP_VARIANT === 'development';
   const IS_PREVIEW = process.env.APP_VARIANT === 'preview';
 
