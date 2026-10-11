@@ -74,23 +74,44 @@ export const MyPapersScreen = () => {
   const [publishSubmitting, setPublishSubmitting] = useState(false);
   const [publishError, setPublishError] = useState('');
 
+  // Tracks whether we have ever painted data. Drives skeleton-vs-spinner
+  // choice without depending on `papers` state (which would churn the
+  // loadData identity and re-fire mount + focus effects in a loop).
+  const hasDataRef = useRef(false);
+
   const loadData = useCallback(
-    async (silent = false) => {
-      if (!silent && papers.length === 0) {
-        setLoading(true);
-      } else {
+    async (mode?: { refresh?: boolean }) => {
+      const force = mode?.refresh === true;
+      // Cache-aware: without `refresh` the SWR cache serves instantly when
+      // valid (or stale + background revalidate via onUpdate). `refresh`
+      // bypasses cache — pull-to-refresh and post-mutate only.
+      if (hasDataRef.current) {
         setRefreshing(true);
+      } else {
+        setLoading(true);
       }
 
       const [papersResult, categoriesResult] = await Promise.allSettled([
-        researchApi.getMyPapers({ forceRefresh: silent }),
-        researchApi.getCategories({ forceRefresh: silent }),
+        researchApi.getMyPapers({
+          ...(force ? { forceRefresh: true } : {}),
+          onUpdate: (data) => {
+            hasDataRef.current = true;
+            setPapers(data);
+          },
+        }),
+        researchApi.getCategories({
+          ...(force ? { forceRefresh: true } : {}),
+          onUpdate: (data) => setCategories(data),
+        }),
       ]);
 
       if (papersResult.status === 'fulfilled') {
+        hasDataRef.current = true;
         setPapers(papersResult.value);
         setError('');
-      } else {
+      } else if (!hasDataRef.current) {
+        // Only surface failure when there is nothing to show; with cached
+        // rows on screen a failed refresh stays silent (SWR retries next).
         setError('Unable to load your papers.');
       }
       if (categoriesResult.status === 'fulfilled') {
@@ -100,16 +121,18 @@ export const MyPapersScreen = () => {
       setLoading(false);
       setRefreshing(false);
     },
-    [papers.length],
+    [],
   );
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
+  // Refetch-on-return without nuking the list: serves cache instantly and
+  // revalidates in the background (onUpdate paints fresh rows when ready).
   useFocusEffect(
     useCallback(() => {
-      loadData(true);
+      loadData();
     }, [loadData]),
   );
 
@@ -151,7 +174,7 @@ export const MyPapersScreen = () => {
       setPublishTarget(null);
       setDoiInput('');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      loadData(true); // silent refresh
+      loadData({ refresh: true }); // post-mutate: bypass cache
     } catch (err: any) {
       setPublishError(err.message || 'Failed to submit publication request.');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -194,7 +217,7 @@ export const MyPapersScreen = () => {
 
   const handleRefresh = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    loadData(true);
+    loadData({ refresh: true });
   }, [loadData]);
 
   // Atomic first paint: the list fades in as one motion once laid out,

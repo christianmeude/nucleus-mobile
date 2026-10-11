@@ -46,9 +46,11 @@ export const DashboardScreen = () => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
 
+    // Cache-aware (no forceRefresh): SWR serves instantly when valid, or
+    // stale + background revalidate — onUpdate paints fresh rows on arrival.
     const [papersResult, categoriesResult, notificationsResult] = await Promise.allSettled([
-      researchApi.getMyPapers(),
-      researchApi.getCategories(),
+      researchApi.getMyPapers({ onUpdate: (data) => setPapers(data) }),
+      researchApi.getCategories({ onUpdate: (data) => setCategories(data) }),
       notificationsApi.getNotifications(5),
     ]);
 

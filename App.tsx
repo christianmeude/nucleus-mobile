@@ -72,14 +72,31 @@ const AppShell = () => {
     Inter_700Bold,
   });
 
+  // Fallback: a stalled font fetch must never wedge the splash forever
+  // (seen as 5-10s hangs on cold start). Fonts-ready hides first; the timer
+  // only fires if loading stalls — content renders with system font instead.
+  const splashHidden = useRef(false);
+  const hideSplash = () => {
+    if (splashHidden.current) return;
+    splashHidden.current = true;
+    SplashScreen.hideAsync().catch(() => {
+      /* already hidden or detached — not fatal */
+    });
+  };
+
   useEffect(() => {
     if (fontsReady || error) {
       if (error) {
         console.error('Failed to load fonts:', error);
       }
-      SplashScreen.hideAsync();
+      hideSplash();
     }
   }, [fontsReady, error]);
+
+  useEffect(() => {
+    const t = setTimeout(hideSplash, 4000);
+    return () => clearTimeout(t);
+  }, []);
 
   if (!fontsReady && !error) {
     return null;

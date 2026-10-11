@@ -418,33 +418,35 @@ function extractStoragePathFromUrl(fileUrl?: string | null) {
 async function loadResearchRows(selectQuery: string, filters?: ResearchListParams) {
   const profile = await resolveCurrentStudentProfile();
 
-  const { data: primaryData, error: primaryError } = await supabase
-    .from('research_papers')
-    .select(selectQuery)
-    .eq('author_id', profile.id);
+  // Primary papers + co-author ids are independent — fire together to cut
+  // one round trip off every My Papers / Dashboard load (cold-start path).
+  const [primaryResult, coAuthorIdResult] = await Promise.all([
+    supabase
+      .from('research_papers')
+      .select(selectQuery)
+      .eq('author_id', profile.id),
+    supabase
+      .from('research_authors')
+      .select('research_id')
+      .eq('user_id', profile.id)
+      .eq('is_primary', false),
+  ]);
 
-  if (primaryError) {
-    throw new Error(primaryError.message || 'Unable to load research data.');
+  if (primaryResult.error) {
+    throw new Error(primaryResult.error.message || 'Unable to load research data.');
+  }
+  if (coAuthorIdResult.error) {
+    throw new Error(coAuthorIdResult.error.message || 'Unable to load research data.');
   }
 
-  const primaryRows = Array.isArray(primaryData)
-    ? (primaryData as unknown as ResearchPaperRow[])
+  const primaryRows = Array.isArray(primaryResult.data)
+    ? (primaryResult.data as unknown as ResearchPaperRow[])
     : [];
-
-  const { data: coAuthorData, error: coAuthorError } = await supabase
-    .from('research_authors')
-    .select('research_id')
-    .eq('user_id', profile.id)
-    .eq('is_primary', false);
-
-  if (coAuthorError) {
-    throw new Error(coAuthorError.message || 'Unable to load research data.');
-  }
 
   const primaryIds = new Set(primaryRows.map((row) => row.id));
   const coAuthorIds = Array.from(
     new Set(
-      (Array.isArray(coAuthorData) ? coAuthorData : [])
+      (Array.isArray(coAuthorIdResult.data) ? coAuthorIdResult.data : [])
         .map((row: any) => row?.research_id)
         .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0),
     ),

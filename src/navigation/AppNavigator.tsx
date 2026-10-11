@@ -129,8 +129,10 @@ export const AppNavigator = () => {
 
   useEffect(() => {
     if (!needsLoader && !loaderDismissed && !isExiting) {
+      // Brand beat, kept short: the auth bootstrap (not this timer) is the
+      // real gate. Was 1200ms — halved after cold-start complaints.
       const elapsed = Date.now() - startRef.current;
-      const wait = Math.max(0, 1200 - elapsed);
+      const wait = Math.max(0, 600 - elapsed);
       const t = setTimeout(() => setIsExiting(true), wait);
       return () => clearTimeout(t);
     }
