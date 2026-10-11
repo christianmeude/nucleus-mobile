@@ -1,0 +1,151 @@
+name: Release APK (tag)
+
+# Industry-standard sideload flow: push a tag, get a release.
+#   git tag v1.0.0-b2 && git push origin v1.0.0-b2
+# The workflow builds production APK on EAS, attaches it to the GH Release
+# (versioned file + nucleus-latest.apk), and bumps download/latest.json.
+# JS-only fixes never touch this — they ship via EAS Update (eas-update.yml).
+#
+# One-time setup (owner only, never commit values):
+#   1. GitHub repo secret GOOGLE_SERVICES_JSON = base64 of google-services.json:
+#        [Convert]::ToBase64String([IO.File]::ReadAllBytes("google-services.json")) | Set-Content gs.b64
+#      then paste the single-line contents into the secret and delete gs.b64.
+#   2. Same value as an EAS secret for local `eas build` runs:
+#        eas secret:create --name GOOGLE_SERVICES_JSON --value-file gs.b64
+#   3. EXPO_TOKEN must already exist (used by eas-update.yml too).
+
+on:
+  push:
+    tags:
+      - 'v*.*.*-b*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to (re-)release, e.g. v1.0.0-b2'
+        required: true
+      requiresReinstall:
+        description: 'Set true when native code/config changed (page shows Please re-download)'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - name: Check EXPO_TOKEN
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "EXPO_TOKEN secret is required (same as eas-update.yml)."; exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+          packager: npm
+
+      - run: npm ci
+
+      - name: Restore google-services.json from secret
+        # Never committed (public repo). Decoded to disk only for this run.
+        run: |
+          if [ -z "${{ secrets.GOOGLE_SERVICES_JSON }}" ]; then
+            echo "GOOGLE_SERVICES_JSON secret is missing. See header comments for setup."; exit 1
+          fi
+          printf '%s' '${{ secrets.GOOGLE_SERVICES_JSON }}' | base64 -d > google-services.json
+          node -e "JSON.parse(require('fs').readFileSync('google-services.json','utf8')); console.log('google-services.json OK')"
+
+      - name: EAS production build (wait)
+        run: |
+          eas build --platform android --profile production \
+            --message "$TAG" --non-interactive --wait --json > build.json
+          node -e "
+            const fs = require('fs');
+            const raw = JSON.parse(fs.readFileSync('build.json','utf8'));
+            const b = Array.isArray(raw) ? raw[0] : (raw.build || raw);
+            if (!b || !b.id) { console.error('unparseable build.json'); process.exit(1); }
+            fs.writeFileSync('build-id.txt', String(b.id));
+            console.log('build id:', b.id);
+          "
+
+      - name: Download APK + checksum
+        run: |
+          BUILD_ID=$(cat build-id.txt)
+          eas build:view "$BUILD_ID" --json > view.json
+          node -e "
+            const fs = require('fs');
+            const raw = JSON.parse(fs.readFileSync('view.json','utf8'));
+            const b = Array.isArray(raw) ? raw[0] : raw;
+            const url = b.artifacts && b.artifacts.buildUrl;
+            if (!url) { console.error('no buildUrl in build:view output'); process.exit(1); }
+            fs.writeFileSync('artifact-url.txt', url);
+            console.log('artifact ready');
+          "
+          curl -fL "$(cat artifact-url.txt)" -o app.apk
+          sha256sum app.apk | tee apk.sha256
+          ls -l app.apk
+
+      - name: Create GitHub Release
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          cp app.apk "nucleus-${TAG#v}.apk"
+          cp app.apk nucleus-latest.apk
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "nucleus-${TAG#v}.apk" nucleus-latest.apk --clobber
+          else
+            gh release create "$TAG" "nucleus-${TAG#v}.apk" nucleus-latest.apk \
+              --title "NUcleus Mobile ${TAG#v}" \
+              --notes "Production APK built from $TAG ($(cat apk.sha256))."
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump download/latest.json on main
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          REINSTALL="${{ github.event.inputs.requiresReinstall || 'false' }}"
+          git fetch origin main
+          git checkout main
+          node -e "
+            const fs = require('fs');
+            const tag = process.env.TAG;
+            const m = /^v(\d+\.\d+\.\d+)-b(\d+)$/.exec(tag);
+            if (!m) { console.error('tag must look like v1.0.0-b2, got ' + tag); process.exit(1); }
+            const j = JSON.parse(fs.readFileSync('download/latest.json','utf8'));
+            j.version = m[1];
+            j.build = Number(m[2]);
+            j.date = new Date().toISOString().slice(0,10);
+            j.apkUrl = 'https://github.com/${{ github.repository }}/releases/latest/download/nucleus-latest.apk';
+            j.requiresReinstall = (process.env.REINSTALL === 'true');
+            j.easBuildId = require('fs').readFileSync('build-id.txt','utf8').trim();
+            const size = require('fs').statSync('nucleus-latest.apk').size;
+            j.size = (size/1048576).toFixed(1) + ' MB';
+            fs.writeFileSync('download/latest.json', JSON.stringify(j, null, 2) + '\n');
+            console.log('latest.json ->', JSON.stringify({version: j.version, build: j.build, requiresReinstall: j.requiresReinstall}));
+          "
+          git add download/latest.json
+          git -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" \
+            commit -m "chore(release): promote $TAG to download page" || echo "nothing to commit"
+          git push origin main
+        env:
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+          REINSTALL: ${{ github.event.inputs.requiresReinstall || 'false' }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

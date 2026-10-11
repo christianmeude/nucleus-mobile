@@ -54,8 +54,9 @@ export default ({ config }: ConfigContext): any => {
         : IS_PREVIEW
           ? 'com.christianmeude.nucleusmobile.preview'
           : 'com.christianmeude.nucleusmobile',
-      // Starting versionCode. EAS `autoIncrement: true` on the production
-      // profile bumps this per build so Android accepts APK-over-APK updates.
+      // Starting versionCode. EAS `autoIncrement: true` (preview + production
+      // profiles in eas.json) bumps this per build so Android accepts
+      // APK-over-APK updates. Never hardcode a higher value here.
       versionCode: 1,
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,

@@ -602,6 +602,7 @@
             <span class="chip">Official release</span>
             <span id="compat-line">Android 8.0+ · APK · Size shown by browser</span>
           </div>
+          <p class="reassure" id="reinstall-note" hidden><strong>Please re-download:</strong> this update needs a fresh install over your current copy (no uninstall needed).</p>
           <a class="download-btn apk-link" id="download-btn" href="https://github.com/christianmeude/nucleus-mobile/releases/latest/download/nucleus-latest.apk">
             Download NUcleus Mobile for Android
           </a>
@@ -697,6 +698,8 @@
             compatParts.push(d.size ? d.size : 'Size shown by browser');
             var compatText = compatParts.join(' · ');
             compat.textContent = compatText;
+            var reinstall = document.getElementById('reinstall-note');
+            if (reinstall) reinstall.hidden = !d.requiresReinstall;
             heroMeta.innerHTML = '';
             compatParts.forEach(function (p, idx) {
               if (idx > 0) { var s = document.createElement('span'); s.className = 'sep'; s.textContent = '·'; heroMeta.appendChild(s); }

@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      # Release automation bumps download/latest.json on main after a tag
+      # release; shipping an OTA for a page-only change is pointless noise.
+      - 'download/**'
 
 jobs:
   update:
