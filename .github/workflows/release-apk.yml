@@ -209,6 +209,8 @@ jobs:
             j.easBuildId = require('fs').readFileSync('build-id.txt','utf8').trim();
             const size = require('fs').statSync('nucleus-latest.apk').size;
             j.size = (size/1048576).toFixed(1) + ' MB';
+            const sha = require('fs').readFileSync('apk.sha256','utf8').split(/\s+/)[0];
+            if (/^[0-9a-f]{64}$/i.test(sha)) j.sha256 = sha.toLowerCase();
             fs.writeFileSync('download/latest.json', JSON.stringify(j, null, 2) + '\n');
             console.log('latest.json ->', JSON.stringify({version: j.version, build: j.build, requiresReinstall: j.requiresReinstall}));
           "
