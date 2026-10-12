@@ -6,6 +6,13 @@ on:
     paths:
       - 'download/**'
       - '.github/workflows/deploy-download-page.yml'
+  # The release workflow bumps download/latest.json with GITHUB_TOKEN, and
+  # such pushes never trigger `push` workflows (loop protection) — so without
+  # this, the page would never pick up a new release on its own.
+  workflow_run:
+    workflows: ['Release APK (tag)']
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -19,6 +26,8 @@ concurrency:
 
 jobs:
   deploy:
+    # A failed/cancelled release must never redeploy the page.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

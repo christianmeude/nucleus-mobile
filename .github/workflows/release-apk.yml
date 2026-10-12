@@ -202,6 +202,8 @@ jobs:
             j.version = m[1];
             j.build = Number(m[2]);
             j.date = new Date().toISOString().slice(0,10);
+            const relNotes = (process.env.RELEASE_NOTES || '').trim();
+            if (relNotes) j.notes = relNotes;
             j.apkUrl = 'https://github.com/${{ github.repository }}/releases/latest/download/nucleus-latest.apk';
             j.requiresReinstall = (process.env.REINSTALL === 'true');
             j.easBuildId = require('fs').readFileSync('build-id.txt','utf8').trim();
