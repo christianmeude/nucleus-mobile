@@ -14,7 +14,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "release": "node scripts/release.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
