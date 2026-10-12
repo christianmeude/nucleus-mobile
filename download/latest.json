@@ -1,9 +1,11 @@
 {
   "version": "1.0.0",
-  "build": 1,
-  "date": "2026-10-07",
+  "build": 2,
+  "date": "2026-10-12",
   "notes": "Initial sideload release.",
   "apkUrl": "https://github.com/christianmeude/nucleus-mobile/releases/latest/download/nucleus-latest.apk",
   "minAndroid": "Android 8.0+",
-  "requiresReinstall": false
+  "requiresReinstall": true,
+  "easBuildId": "b271584c-4312-4feb-891a-e2c89c643636",
+  "size": "100.1 MB"
 }
