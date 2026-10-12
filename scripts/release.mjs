@@ -12,7 +12,7 @@
  * Never prints secrets. Dry-run changes nothing.
  */
 import { execFileSync } from 'child_process';
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import readline from 'readline/promises';
@@ -165,16 +165,38 @@ try {
 }
 
 let behind = 0;
-let ahead = 0;
 try {
   behind = Number(run('git', ['rev-list', '--count', 'HEAD..origin/main'])) || 0;
-  ahead = Number(run('git', ['rev-list', '--count', 'origin/main..HEAD'])) || 0;
 } catch {
   console.warn('release: warning: could not compare with origin/main — continuing.');
 }
 if (behind > 0) fail(`main is ${behind} commit(s) behind origin/main. Run \`git pull\` first.`);
-if (ahead > 0) {
-  fail(`main is ${ahead} commit(s) ahead of origin/main. Run \`git push origin main\` first.`);
+// Local ahead commits ride along: the bump commit below pushes them too,
+// so the tag always lands on exactly what the build compiles.
+
+// Android versionCode bump. EAS autoIncrement is unsupported with dynamic
+// app.config.ts (build rejected 2026-10-12), so each release carries
+// versionCode+1 — otherwise Android rejects APK-over-APK installs.
+// Committed + pushed here so the release tag lands on top of it.
+const CONFIG_PATH = path.join(root, 'app.config.ts');
+const configSrc = readFileSync(CONFIG_PATH, 'utf8');
+const vcMatch = /versionCode:\s*(\d+)/.exec(configSrc);
+if (!vcMatch) fail('could not find versionCode in app.config.ts.');
+const nextVersionCode = Number(vcMatch[1]) + 1;
+if (args.dryRun) {
+  console.log(
+    `release: dry-run — versionCode ${vcMatch[1]} → ${nextVersionCode} (no change made).`,
+  );
+} else {
+  writeFileSync(CONFIG_PATH, configSrc.replace(/versionCode:\s*\d+/, `versionCode: ${nextVersionCode}`));
+  try {
+    run('git', ['add', 'app.config.ts']);
+    run('git', ['commit', '-m', `chore(release): bump Android versionCode to ${nextVersionCode}`]);
+    run('git', ['push', 'origin', 'main']);
+  } catch (e) {
+    fail(`versionCode bump failed: ${e.message}. Restore app.config.ts, push manually, then re-run.`);
+  }
+  console.log(`release: versionCode bumped to ${nextVersionCode} and pushed.`);
 }
 
 // --- resolve next tag ---
