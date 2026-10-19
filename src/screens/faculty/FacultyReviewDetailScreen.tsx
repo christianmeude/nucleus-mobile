@@ -32,7 +32,7 @@ import { facultyApi, type FacultyApprover, type FacultyReviewDetail } from '../.
 import { RootStackParamList } from '../../navigation/types';
 
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
-import { type Theme } from '../../theme';
+import { readingColumn, type Theme } from '../../theme';
 import {
   formatDate,
   formatRole,
@@ -811,6 +811,8 @@ const makeStyles = (theme: Theme) =>
     content: {
       paddingTop: theme.spacing.lg,
       paddingBottom: theme.spacing['3xl'],
+      // Long-form reading surface: cap the measure on wide viewports.
+      ...readingColumn,
     },
     centered: {
       flex: 1,

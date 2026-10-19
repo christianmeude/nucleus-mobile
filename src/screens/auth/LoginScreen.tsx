@@ -16,7 +16,7 @@ import { useAuth } from '../../context/AuthContext';
 import { usePrivacy } from '../../context/PrivacyContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { type Theme } from '../../theme';
+import { readingColumn, type Theme } from '../../theme';
 import { Logo, Button, BottomSheet, PasswordInput } from '../../components/ui';
 import { DevResetModal } from '../../components/dev/DevResetModal';
 import Animated, {
@@ -659,6 +659,9 @@ const makeStyles = (theme: Theme) =>
     },
     inputsWrapper: {
       gap: theme.spacing.xl, // original gap for inputs
+      // The hero and the gradient scrim behind the form stay full-bleed; only the
+      // field/button column is capped, so it reads as a column on a tablet.
+      ...readingColumn,
     },
     formGroup: {
       gap: theme.spacing.sm,
@@ -733,6 +736,9 @@ const makeStyles = (theme: Theme) =>
     },
     actions: {
       marginTop: 0,
+      // Sibling of `inputsWrapper`, not a child — the Sign In button needs the
+      // same cap or it stays full-bleed against a 600dp field column.
+      ...readingColumn,
     },
     primaryButton: {
       paddingVertical: theme.spacing.md,
@@ -756,6 +762,9 @@ const makeStyles = (theme: Theme) =>
     sheetContent: {
       padding: theme.spacing['2xl'],
       gap: theme.spacing.xl,
+      // Forgot-password sheet: the sheet surface stays full-width, its fields
+      // read as a centered column like the sign-in form.
+      ...readingColumn,
     },
     sheetHeader: {
       gap: theme.spacing.sm,

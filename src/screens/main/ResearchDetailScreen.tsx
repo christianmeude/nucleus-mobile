@@ -18,7 +18,7 @@ import { RootStackParamList } from '../../navigation/types';
 import { Category, ResearchPaper, WorkflowEntry } from '../../types/domain';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
-import { motion, type Theme } from '../../theme';
+import { motion, readingColumn, type Theme } from '../../theme';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
 import {
   Button,
@@ -673,6 +673,8 @@ const makeStyles = (theme: Theme) =>
     content: {
       paddingTop: theme.spacing.xl,
       paddingBottom: theme.spacing['3xl'],
+      // Long-form reading surface: cap the measure on wide viewports.
+      ...readingColumn,
     },
     loaderContainer: {
       flex: 1,

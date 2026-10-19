@@ -17,6 +17,7 @@ import { shadows } from './shadows';
 import { radii } from './radii';
 import { motion } from './motion';
 import { gradients } from './gradients';
+import { layout } from './layout';
 
 const buildTheme = (scheme: SchemeName) => ({
   colors: schemes[scheme],
@@ -29,6 +30,7 @@ const buildTheme = (scheme: SchemeName) => ({
   shadows,
   motion,
   gradients,
+  layout,
 });
 
 /** Full theme objects per scheme — consumed by `ThemeProvider`. */
@@ -56,3 +58,5 @@ export { motion } from './motion';
 export type { Motion } from './motion';
 export { gradients } from './gradients';
 export type { Gradients, GradientKey } from './gradients';
+export { layout, readingColumn } from './layout';
+export type { Layout } from './layout';

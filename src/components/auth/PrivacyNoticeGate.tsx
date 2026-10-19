@@ -18,7 +18,7 @@ import { Icon } from '../../components/ui/Icon';
 import { useAuth } from '../../context/AuthContext';
 import { usePrivacy } from '../../context/PrivacyContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
-import { type Theme } from '../../theme';
+import { readingColumn, type Theme } from '../../theme';
 import { Lock, MapPin, Mail, Shield } from 'lucide-react-native';
 
 const RA_10173_URL = 'https://privacy.gov.ph/data-privacy-act/';
@@ -436,6 +436,9 @@ const makeStyles = (t: Theme) =>
     },
     scrollContent: {
       paddingHorizontal: t.spacing.lg,
+      // Cap the notice at a readable measure on wide viewports (tablets ignore
+      // the portrait request on Android 16+). Inert on phones.
+      ...readingColumn,
     },
     seal: {
       width: 90,
@@ -546,6 +549,10 @@ const makeStyles = (t: Theme) =>
       paddingHorizontal: t.spacing.xl,
       paddingTop: t.spacing.md,
       paddingBottom: t.spacing.xs,
+      // The bar itself spans the full width so its hairline border and translucent
+      // fill reach the edges; the actions inside stay aligned to the reading
+      // column above them rather than stranding at the far right of a tablet.
+      ...readingColumn,
     },
     scrollHint: {
       flexDirection: 'row',

@@ -30,7 +30,7 @@ import {
 } from '../../api/research';
 import { Category, ResearchPaper, SubmissionPolicy } from '../../types/domain';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
-import { type Theme } from '../../theme';
+import { readingColumn, type Theme } from '../../theme';
 import {
   BottomSheet,
   BottomSheetScrollView,
@@ -1291,6 +1291,9 @@ const makeStyles = (theme: Theme) => StyleSheet.create({
     padding: theme.spacing.lg,
     paddingBottom: theme.spacing['3xl'] + 40,
     gap: theme.spacing.lg,
+    // Long-form form: cap the measure on wide viewports rather than stretching
+    // each field across a tablet's full width.
+    ...readingColumn,
   },
   headerRow: {
     gap: theme.spacing.sm,
