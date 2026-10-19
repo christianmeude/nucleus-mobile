@@ -39,6 +39,7 @@ import {
   Chip,
   EmptyState,
   FadeInView,
+  FloatingActionBar,
   Icon,
   InlineNotice,
   Skeleton,
@@ -601,6 +602,10 @@ export const SubmitResearchScreen = () => {
   const submitDisabled =
     bootstrapping || submitting || submitSuccess || !checklistComplete;
 
+  // Continue is gated by the current step's own checklist group.
+  const currentStepComplete =
+    currentStep === 1 ? step1Complete : currentStep === 2 ? step2Complete : step3Complete;
+
   // ─── Render ───
   return (
     <KeyboardAvoidingView
@@ -608,7 +613,9 @@ export const SubmitResearchScreen = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+        // Bottom padding is set inline: it must clear the floating action bar
+        // (56) plus its gap above the safe area, which the static style can't know.
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 96 }]}
         keyboardShouldPersistTaps="handled"
       >
         <View style={[styles.headerRow, { paddingTop: insets.top + theme.spacing.xs }]}>
@@ -977,66 +984,42 @@ export const SubmitResearchScreen = () => {
       </ScrollView>
 
       {!bootstrapping ? (
-        <View style={[styles.footer, { paddingBottom: insets.bottom + theme.spacing.md }]}>
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            {currentStep > 1 && (
-              <Pressable
-                onPress={() => setCurrentStep(prev => prev - 1)}
-                disabled={submitting}
-                style={({ pressed }) => [
-                  styles.submit,
-                  { flex: 1, backgroundColor: theme.colors.surface.sunken, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.border.subtle },
-                  pressed && { opacity: 0.7 }
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel="Back to previous step"
-              >
-                <Text style={[styles.submitText, { color: theme.colors.text.primary }]}>
-                  Back
-                </Text>
-              </Pressable>
-            )}
-            
-            {currentStep < 4 ? (
-              <Pressable
-                onPress={() => setCurrentStep(prev => prev + 1)}
-                disabled={(currentStep === 1 && !step1Complete) || (currentStep === 2 && !step2Complete) || (currentStep === 3 && !step3Complete) || submitting}
-                style={({ pressed }) => [
-                  styles.submit,
-                  { flex: 2 },
-                  ((currentStep === 1 && !step1Complete) || (currentStep === 2 && !step2Complete) || (currentStep === 3 && !step3Complete)) && styles.submitDisabled,
-                  pressed && styles.submitPressed,
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel="Continue to next step"
-              >
-                <Text style={[styles.submitText, ((currentStep === 1 && !step1Complete) || (currentStep === 2 && !step2Complete) || (currentStep === 3 && !step3Complete)) && styles.submitTextDisabled]}>
-                  Continue
-                </Text>
-              </Pressable>
-            ) : (
-              <Pressable
-                onPress={handleSubmitPress}
-                disabled={submitDisabled}
-                style={({ pressed }) => [
-                  styles.submit,
-                  { flex: 2 },
-                  submitDisabled && styles.submitDisabled,
-                  pressed && !submitDisabled && styles.submitPressed,
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel={isResubmit ? 'Review and update' : 'Review and submit'}
-              >
-                {submitting ? (
-                  <ActivityIndicator size="small" color={theme.colors.text.onBrand} />
-                ) : null}
-                <Text style={[styles.submitText, submitDisabled && styles.submitTextDisabled]}>
-                  {isResubmit ? 'Review & update' : 'Review & submit'}
-                </Text>
-              </Pressable>
-            )}
-          </View>
-        </View>
+        <FloatingActionBar row>
+          {currentStep > 1 ? (
+            <Button
+              label="Back"
+              variant="secondary"
+              size="lg"
+              onPress={() => setCurrentStep((prev) => prev - 1)}
+              disabled={submitting}
+              accessibilityLabel="Back to previous step"
+              style={styles.actionBack}
+            />
+          ) : null}
+
+          {currentStep < 4 ? (
+            <Button
+              label="Continue"
+              size="lg"
+              elevated
+              onPress={() => setCurrentStep((prev) => prev + 1)}
+              disabled={submitting || !currentStepComplete}
+              accessibilityLabel="Continue to next step"
+              style={styles.actionPrimary}
+            />
+          ) : (
+            <Button
+              label={isResubmit ? 'Review & update' : 'Review & submit'}
+              size="lg"
+              elevated
+              onPress={handleSubmitPress}
+              disabled={submitDisabled}
+              loading={submitting}
+              accessibilityLabel={isResubmit ? 'Review and update' : 'Review and submit'}
+              style={styles.actionPrimary}
+            />
+          )}
+        </FloatingActionBar>
       ) : null}
 
       {/* Submission success celebration */}
@@ -1289,7 +1272,6 @@ const makeStyles = (theme: Theme) => StyleSheet.create({
   },
   content: {
     padding: theme.spacing.lg,
-    paddingBottom: theme.spacing['3xl'] + 40,
     gap: theme.spacing.lg,
     // Long-form form: cap the measure on wide viewports rather than stretching
     // each field across a tablet's full width.
@@ -1665,36 +1647,13 @@ const makeStyles = (theme: Theme) => StyleSheet.create({
     color: theme.colors.text.muted,
     textAlign: 'center',
   },
-  footer: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.border.subtle,
-    backgroundColor: theme.colors.surface.raised,
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
+  // Layout for the floating action bar's row — Back is the narrower secondary,
+  // the forward action takes the majority of the width.
+  actionBack: {
+    flex: 1,
   },
-  submit: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.sm,
-    backgroundColor: theme.colors.brand.primary,
-    borderRadius: theme.radii.pill,
-    borderCurve: 'continuous',
-    paddingVertical: theme.spacing.md,
-  },
-  submitDisabled: {
-    backgroundColor: theme.colors.border.subtle,
-  },
-  submitPressed: {
-    opacity: 0.9,
-  },
-  submitText: {
-    fontFamily: theme.fontFamilies.ui.semibold,
-    fontSize: 15,
-    color: theme.colors.text.onBrand,
-  },
-  submitTextDisabled: {
-    color: theme.colors.text.muted,
+  actionPrimary: {
+    flex: 2,
   },
   successOverlay: {
     position: 'absolute',
