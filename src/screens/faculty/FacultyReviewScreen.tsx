@@ -114,6 +114,17 @@ export const FacultyReviewScreen = () => {
     });
   }, [filter, debouncedSearch, load]);
 
+  // First paint proxy for the [perf] log: mark the moment rows first land.
+  // Deliberately an effect on `papers`, not the list's onLayout — the list
+  // lays out immediately with skeletons while `papers === null`, so a layout
+  // hook would measure skeleton appearance, not the data.
+  const paintMarkedRef = useRef(false);
+  useEffect(() => {
+    if (paintMarkedRef.current || !papers || papers.length === 0) return;
+    paintMarkedRef.current = true;
+    perfMark('list:queue:paint', { rows: papers.length });
+  }, [papers]);
+
   const onRefresh = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setRefreshing(true);
@@ -137,16 +148,9 @@ export const FacultyReviewScreen = () => {
   // instead of rows cascading in one-by-one over the stagger delays.
   const [firstPaintDone, setFirstPaintDone] = useState(false);
   const paintOpacity = useRef(new Animated.Value(0)).current;
-  const paintMarkedRef = useRef(false);
   const handleListLayout = useCallback(() => {
     if (firstPaintDone) return;
     setFirstPaintDone(true);
-    // Mount→first-list-layout for the [perf] log. Only meaningful next to a
-    // `list:queue` clock-reset line (warm switches don't reset the clock).
-    if (!paintMarkedRef.current) {
-      paintMarkedRef.current = true;
-      perfMark('list:queue:paint');
-    }
     Animated.timing(paintOpacity, {
       toValue: 1,
       duration: motion.duration.base,

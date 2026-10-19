@@ -241,23 +241,26 @@ export const MyPapersScreen = () => {
   // instead of rows cascading in one-by-one over the stagger delays.
   const [firstPaintDone, setFirstPaintDone] = useState(false);
   const paintOpacity = useRef(new Animated.Value(0)).current;
-  const paintMarkedRef = useRef(false);
   const handleListLayout = useCallback(() => {
     if (firstPaintDone) return;
     setFirstPaintDone(true);
-    // Marks mount→first-list-layout for the cold path. Warm tab switches
-    // don't reset the clock, so only read this next to a `list:papers`
-    // clock-reset line in the log.
-    if (!paintMarkedRef.current) {
-      paintMarkedRef.current = true;
-      perfMark('list:papers:paint');
-    }
     Animated.timing(paintOpacity, {
       toValue: 1,
       duration: motion.duration.base,
       useNativeDriver: true,
     }).start();
   }, [firstPaintDone, paintOpacity]);
+
+  // First paint proxy for the [perf] log: mark the moment rows first become
+  // available to render. Deliberately an effect on `papers`, not the list's
+  // onLayout — the list lays out immediately with skeletons while loading, so
+  // a layout hook would measure skeleton appearance, not the data.
+  const paintMarkedRef = useRef(false);
+  useEffect(() => {
+    if (paintMarkedRef.current || papers.length === 0) return;
+    paintMarkedRef.current = true;
+    perfMark('list:papers:paint', { rows: papers.length });
+  }, [papers]);
 
   const keyExtractor = useCallback((item: ResearchPaper) => item.id, []);
 
