@@ -216,7 +216,7 @@ Hairlines separate; shadows lift. Cards read as distinct from the background thr
 - **Level 0 (Flat)** (`shadowOpacity: 0, elevation: 0`): Resting cards and list rows.
 - **Level 1 (Subtle Lift)** (`0 1px 3px rgba(11,27,71,0.08), elevation: 1`): Tiles, secondary cards, scroll-hint buttons.
 - **Level 2 (Raised)** (`0 4px 12px rgba(11,27,71,0.13), elevation: 4`): Primary paper cards once settled, floating bars.
-- **Tinted Primary** (`0 14px 34px -14px rgba(11,27,71,0.6)`): Floating nav elements.
+- **Tinted Primary** (`0 14px 34px -14px rgba(11,27,71,0.6)`): Floating elements — the nav bar and floating action bars.
 - **Tinted Accent** (`0 8px 12px rgba(74,56,0,0.45)`): The Submit FAB.
 
 ### Named Rules
@@ -240,6 +240,8 @@ Precise and calm: pill-shaped, 44pt minimum height, `button`-weight labels, navy
 - **Shape:** Pill (999px) with continuous curve.
 - **Primary:** Navy fill (#1B3A8C) with white text; padding `8px 16px`; pressed steps to `primary-pressed` with a 0.98 scale.
 - **Hover / Focus:** Hover steps to #16307A; focus carries the navy ring.
+- **Sizes:** `md` (44pt, default), `sm` (44pt, tighter padding), `lg` (56pt). `lg` is the hero size for the single floating action on a screen — never for inline or secondary actions, and never more than one per screen.
+- **Elevation:** `elevated` lifts the button onto the `tinted primary` shadow. Reserved for the button inside a floating action bar, per the elevation rule — an inline button never floats.
 - **Secondary / Soft / Subtle:** Raised-surface or tint fills with navy text and navy or subtle borders. State variants (warning/danger/success) stay tonal in both modes — never solid bright fills side by side.
 
 ### Chips
@@ -265,6 +267,18 @@ Two jobs, two treatments — never mixed.
 ### Navigation
 
 Tab bars for 2–5 top-level sections per role (student vs faculty), stacks for hierarchy, bottom sheets for self-contained filter and form tasks. The signature animated selection pill uses the nav spring (`cubic-bezier(0.34, 1.3, 0.4, 1)`).
+
+### Floating Action Bar
+
+The one treatment for a screen's primary action when it must stay reachable while the content scrolls (the reader's "View Full Paper"; submit-step controls). Built as `FloatingActionBar` — a bare positioning wrapper holding one `lg` `elevated` button.
+
+- **Placement:** absolute, `lg` side insets, `md` above the bottom safe area — the same resting offset as the nav bar, so a lifted CTA and the nav bar sit on one line.
+- **Depth:** the action carries `tinted primary`; the wrapper has no background, no hairline, no border.
+- **Actions:** one `lg` action at full width, or two in a row — the forward action takes `flex: 2`, the secondary `flex: 1`. Only the forward action is `elevated`; a two-action bar never doubles the shadow.
+- **Keyboard:** the bar lifts over the software keyboard itself on iOS; Android resizes the window, so an absolute-bottom bar already clears it there.
+- **Mount:** a sibling of the scrolling content, so its offset is measured against the screen rather than the content's padding.
+
+**The No-Footer-Slab Rule.** Never wrap the action in a full-width footer `View` with a `border-top` hairline and a raised fill. A hairline slab under a primary action makes the action read as chrome bolted to the screen edge instead of something floating over the page.
 
 ## Do's and Don'ts
 

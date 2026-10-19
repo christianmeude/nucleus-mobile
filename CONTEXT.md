@@ -51,3 +51,11 @@ _Avoid_: Published repository, local archive
 **Formal Publication**:
 The final state of a paper that has been accepted by an external publisher and assigned a DOI, moving its status from 'approved' to 'published'.
 _Avoid_: Official release, external publication
+
+**Owner Workspace**:
+The author's own view of their paper, reached from My Papers or Dashboard. It is the only context where Review Progress, reviewer feedback, and the Formal Publication request are visible.
+_Avoid_: Author view, my submission view
+
+**Repository View**:
+The public Browse rendering of a published paper. It is never an owner context: even the paper's own author sees no Review Progress, no reviewer feedback, and no Formal Publication request there.
+_Avoid_: Public page, archive view

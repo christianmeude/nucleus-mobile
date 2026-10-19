@@ -34,6 +34,15 @@ The faculty navigator uses the **same** floating bar. There is one shared `Float
 - **No Submit FAB** (faculty don't submit). Four tabs fill the bar evenly — `[Home] [Review] [Browse] [Profile]`, no center gap.
 - **Review** takes the student's _Papers_ slot. **Browse** is exactly the shared repository screen both roles use.
 
+### Floating action bar (shared)
+
+The one treatment for a screen's single primary action when it must stay reachable while content scrolls — the reader's **View Full Paper**, and (later) the submit flow's step controls. Built as the `FloatingActionBar` primitive.
+
+- **Bar:** `position: absolute`, `left/right: 16`, `bottom: safe-area + 12` — no background, no hairline. A bare positioning wrapper.
+- **Action:** one `lg` button (56pt) carrying the `tinted primary` shadow — the same shadow as the nav bar, so a lifted CTA belongs to the nav's elevation family rather than reading as a one-off. A two-action bar (the submit steps) uses `row`: forward action `flex: 2`, secondary `flex: 1`, and only the forward action is lifted.
+- **Mount:** a sibling of the scrolling content, never inside it, so the offset is measured against the screen.
+- **Never:** a full-width footer slab (`border-top` hairline + raised fill) with a flat pill inside. That is the pattern this primitive exists to replace.
+
 ### Dashboard (A3)
 
 Task-first Home — a focused view of papers requiring action and recent notifications.
