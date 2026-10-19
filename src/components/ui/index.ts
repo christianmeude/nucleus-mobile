@@ -44,3 +44,4 @@ export type { FilterSelectOption } from './FilterSelect';
 export { FilterTrigger } from './FilterTrigger';
 export { PublishedBadge } from './PublishedBadge';
 export { CategoryChip } from './CategoryChip';
+export { FloatingActionBar } from './FloatingActionBar';

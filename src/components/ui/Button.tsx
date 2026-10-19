@@ -1,10 +1,10 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, Pressable, StyleProp, StyleSheet, Text, ViewStyle } from 'react-native';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { palette, type Theme } from '../../theme';
 
 type ButtonVariant =
   'primary' | 'secondary' | 'subtle' | 'soft' | 'accent' | 'warning' | 'danger' | 'success';
-type ButtonSize = 'md' | 'sm';
+type ButtonSize = 'md' | 'sm' | 'lg';
 
 interface ButtonProps {
   label: string;
@@ -15,6 +15,18 @@ interface ButtonProps {
   size?: ButtonSize;
   accessibilityLabel?: string;
   icon?: React.ReactNode;
+  /**
+   * Lift the button onto the floating navy shadow. Reserved for CTAs that float
+   * above content — floating action bars and hero actions — per DESIGN.md's
+   * elevation rule ("shadow is reserved for content that floats").
+   */
+  elevated?: boolean;
+  /**
+   * Layout only — flex weight when the button sits in a row of actions (e.g. a
+   * floating action bar's Back/Continue pair). Appearance belongs to `variant`
+   * and `size`, never here.
+   */
+  style?: StyleProp<ViewStyle>;
 }
 
 export const Button = ({
@@ -26,6 +38,8 @@ export const Button = ({
   size = 'md',
   accessibilityLabel,
   icon,
+  elevated = false,
+  style,
 }: ButtonProps) => {
   const { theme, scheme } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -87,6 +101,8 @@ export const Button = ({
         styles[size],
         styles[`${variant}Base`],
         isStateVariant ? stateStyle : null,
+        elevated ? styles.elevated : null,
+        style,
         isBlocked ? styles.blocked : null,
         pressed && !isBlocked ? styles[`${variant}Pressed`] : null,
         pressed && !isBlocked && isStateVariant ? statePressedStyle : null,
@@ -145,6 +161,11 @@ const makeStyles = (t: Theme) =>
       flexDirection: 'row',
       gap: t.spacing.sm,
     },
+    // The floating navy shadow — the same token the nav bar floats on, so a
+    // lifted CTA and the nav bar read as members of one elevation family.
+    elevated: {
+      ...t.shadows.tinted.primary,
+    },
     md: {
       minHeight: 44,
       paddingVertical: t.spacing.sm,
@@ -152,6 +173,13 @@ const makeStyles = (t: Theme) =>
     sm: {
       minHeight: 44,
       paddingVertical: t.spacing.xs,
+    },
+    // Hero size for floating action bars: taller and roomier than the standard
+    // control, sized to read as the one primary action on the screen.
+    lg: {
+      minHeight: 56,
+      paddingVertical: t.spacing.md,
+      paddingHorizontal: t.spacing.xl,
     },
     primaryBase: {
       backgroundColor: t.colors.brand.primary,
