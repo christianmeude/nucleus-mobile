@@ -1,9 +1,10 @@
-import { fetchAppUserProfile } from '../auth/fetchAppUserProfile';
+import * as currentProfile from '../auth/currentProfile';
 import { PUBLISHED_STATUSES, PaperAnnotation } from './research';
 import { AnnotationType, AnnotationRect, AnnotationPoint } from '../utils/annotation';
 import { supabase } from '../lib/supabase';
 import { NotificationItem, PaperStatus } from '../types/domain';
 import { apiCache, SWROptions } from '../utils/apiCache';
+import { extractStoragePathFromUrl, getSignedStorageUrl } from '../utils/signedStorageUrl';
 
 // =============================================================================
 // Faculty API (read-only v1)
@@ -334,33 +335,6 @@ function toFacultyReviewDetail(row: FacultyDetailRow): FacultyReviewDetail {
   };
 }
 
-function extractStoragePathFromUrl(fileUrl?: string | null): string | null {
-  if (!fileUrl) return null;
-  const trimmed = fileUrl.trim();
-  if (!trimmed) return null;
-
-  if (!/^https?:\/\//i.test(trimmed)) {
-    return trimmed.replace(/^\/+/, '') || null;
-  }
-
-  try {
-    const parsed = new URL(trimmed);
-    const marker = '/object/public/research-papers/';
-    const markerIndex = parsed.pathname.indexOf(marker);
-    if (markerIndex >= 0) {
-      return parsed.pathname.slice(markerIndex + marker.length).replace(/^\//, '') || null;
-    }
-    const segments = parsed.pathname.split('/research-papers/');
-    if (segments.length > 1) {
-      return segments[1].replace(/^\//, '') || null;
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
-}
-
 function paperSortTime(paper: FacultyAssignedPaper): number {
   return new Date(paper.submissionDate || paper.createdAt || 0).getTime();
 }
@@ -385,29 +359,13 @@ function toFacultyApprover(row: DeanChairRow): FacultyApprover {
   };
 }
 
-async function resolveCurrentFacultyProfile() {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+// Identity resolution for this facade. Memoized app-wide and read from the
+// locally-stored session instead of the network — see src/auth/currentProfile.ts.
+// `roleNoun` keeps this facade's own wording for the role-rejection message.
+const PROFILE_SURFACE = { label: 'faculty data', roleNoun: 'assigned papers' } as const;
 
-  if (userError) {
-    throw new Error(userError.message || 'Unable to resolve the current session.');
-  }
-
-  if (!userData.user) {
-    throw new Error('Sign in required to load faculty data.');
-  }
-
-  const profileResult = await fetchAppUserProfile(userData.user);
-
-  if (!profileResult.user) {
-    throw new Error(profileResult.message || 'Your account is not provisioned for faculty access.');
-  }
-
-  if (profileResult.user.role !== 'faculty') {
-    throw new Error('Faculty access is required to load assigned papers.');
-  }
-
-  return profileResult.user;
-}
+const resolveCurrentFacultyProfile = () =>
+  currentProfile.resolveCurrentFacultyProfile(PROFILE_SURFACE);
 
 /** Pure summary of a faculty member's assigned-paper workload (computed client-side). */
 export function summarizeFacultyWorkload(papers: FacultyAssignedPaper[]): FacultyWorkloadSummary {
@@ -890,11 +848,9 @@ export const facultyApi = {
     const storagePath = extractStoragePathFromUrl(fileUrl);
 
     if (storagePath) {
-      const signed = await supabase.storage
-        .from('research-papers')
-        .createSignedUrl(storagePath, 3600);
-      if (!signed.error && signed.data?.signedUrl) {
-        return { fileUrl: signed.data.signedUrl, isSigned: true };
+      const signedUrl = await getSignedStorageUrl(storagePath);
+      if (signedUrl) {
+        return { fileUrl: signedUrl, isSigned: true };
       }
     }
 

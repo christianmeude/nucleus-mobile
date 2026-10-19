@@ -1,4 +1,4 @@
-import { fetchAppUserProfile } from '../auth/fetchAppUserProfile';
+import * as currentProfile from '../auth/currentProfile';
 import { supabase } from '../lib/supabase';
 import { CoAuthorInvitation, PaperAuthor } from '../types/domain';
 
@@ -59,29 +59,12 @@ const INVITATION_SELECT = `
   )
 `;
 
-async function resolveCurrentStudentProfile() {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+// Identity resolution for this facade. Memoized app-wide and read from the
+// locally-stored session instead of the network — see src/auth/currentProfile.ts.
+const PROFILE_SURFACE = { label: 'invitations' } as const;
 
-  if (userError) {
-    throw new Error(userError.message || 'Unable to resolve the current session.');
-  }
-
-  if (!userData.user) {
-    throw new Error('Sign in required to load invitations.');
-  }
-
-  const profileResult = await fetchAppUserProfile(userData.user);
-
-  if (!profileResult.user) {
-    throw new Error(profileResult.message || 'Your account is not provisioned for invitations.');
-  }
-
-  if (profileResult.user.role !== 'student') {
-    throw new Error('Student access is required to load invitations.');
-  }
-
-  return profileResult.user;
-}
+const resolveCurrentStudentProfile = () =>
+  currentProfile.resolveCurrentStudentProfile(PROFILE_SURFACE);
 
 function pickUser(row?: InvitationUserRelation): InvitationUserRow | null {
   if (!row) return null;

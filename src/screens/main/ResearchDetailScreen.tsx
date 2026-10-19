@@ -43,6 +43,7 @@ import {
   statusToLabel,
 } from '../../utils/format';
 import { buildCategoryNameById, resolveCategoryName } from '../../utils/category';
+import { perfMark, perfStart } from '../../utils/perfLog';
 import { PUBLISHED_STATUSES } from '../../components/PaperStatusChip';
 import {
   File,
@@ -143,53 +144,76 @@ export const ResearchDetailScreen = () => {
   }, [navigation, pdfOpen]);
 
   useEffect(() => {
+    let active = true;
+
     const run = async () => {
+      perfStart('open');
       setLoading(true);
       setError('');
 
-      try {
-        const detail = await researchApi.getResearchById(paperId);
+      // Everything the first paint needs resolves together: the paper (which now
+      // carries the reader's file URL, so there is no second `research_papers`
+      // query and no second identity resolution), the SWR-cached categories, the
+      // local saved-ids read, and the feedback fetch. Previously the paper was
+      // awaited alone and the rest followed it *serially*, doubling the time to
+      // first paint.
+      const detailPromise = researchApi.getResearchById(paperId, { withFile: true });
+      const supportingPromise = Promise.all([
+        researchApi.getCategories().catch(() => [] as Category[]),
+        getSavedPaperIds().catch(() => [] as string[]),
+        researchApi.fetchAnnotations(paperId).catch(() => []),
+      ]);
 
-        const [categoryRows, relatedRows, savedIds, fetchedAnns] = await Promise.all([
-          researchApi.getCategories(),
-          researchApi.getRelatedPapers(detail.paper, MAX_RELATED).catch(() => []),
-          getSavedPaperIds().catch(() => [] as string[]),
-          researchApi.fetchAnnotations(paperId).catch(() => []),
+      try {
+        const [detail, [categoryRows, savedIds, fetchedAnns]] = await Promise.all([
+          detailPromise,
+          supportingPromise,
         ]);
+
+        if (!active) return;
+
+        perfMark('open:detail');
 
         setPaper(detail.paper);
         setWorkflow(detail.workflowHistory || []);
+        setFileUri(detail.file?.fileUrl || null);
+        setFileError(detail.file?.fileUrl ? '' : 'Unable to load the paper file.');
         setCategories(categoryRows);
-        setRelated(relatedRows);
         setSaved(savedIds.includes(paperId));
         setAnnotations(fetchedAnns);
+        setLoading(false);
+        perfMark('open:painted', { hasFile: !!detail.file?.fileUrl });
+
+        // Below the fold only. `getRelatedPapers` runs a semantic search Edge
+        // Function (embedding the query server-side, then re-fetching rows) that
+        // costs seconds on a cold model — it must never gate the reader.
+        const relatedRows = await researchApi
+          .getRelatedPapers(detail.paper, MAX_RELATED)
+          .catch(() => [] as ResearchPaper[]);
+
+        if (!active) return;
+
+        perfMark('open:secondary');
+        setRelated(relatedRows);
       } catch (_error) {
+        if (!active) return;
         setError('Unable to load paper details.');
-      } finally {
         setLoading(false);
       }
     };
 
     run();
-  }, [paperId]);
 
-  // Resolve the (possibly signed) file URL on mount so the inline PdfViewer can render it.
-  // trackView is deferred to the viewer's first-render callback (see onFirstLoad below).
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        setFileError('');
-        const resolved = await researchApi.getResearchFile(paperId);
-        if (active) setFileUri(resolved.fileUrl);
-      } catch (_error) {
-        if (active) setFileError('Unable to load the paper file.');
-      }
-    })();
     return () => {
       active = false;
     };
   }, [paperId]);
+
+  // Resets the perf clock at the moment the reader sheet opens, so the WebView's
+  // own marks measure from the user's tap rather than from screen mount.
+  useEffect(() => {
+    if (pdfOpen) perfStart('reader');
+  }, [pdfOpen]);
 
   const categoryNameById = useMemo(() => buildCategoryNameById(categories), [categories]);
 
@@ -473,7 +497,11 @@ export const ResearchDetailScreen = () => {
                   accessibilityState={{ disabled: !fileUri }}
                 >
                   <View style={styles.previewCardInner}>
-                    {fileUri ? (
+                    {/* The preview is torn down while the reader sheet is open: the sheet
+                        mounts its own full WebView, and keeping a second live WebView (plus
+                        its rasterised page) behind it only competes for memory and for the
+                        WebView render thread. */}
+                    {fileUri && !pdfOpen ? (
                       <View style={StyleSheet.absoluteFill} pointerEvents="none">
                         <PdfViewer
                           uri={fileUri}

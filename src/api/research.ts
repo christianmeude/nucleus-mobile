@@ -1,5 +1,6 @@
-import { fetchAppUserProfile } from '../auth/fetchAppUserProfile';
+import * as currentProfile from '../auth/currentProfile';
 import { supabase } from '../lib/supabase';
+import { extractStoragePathFromUrl, getSignedStorageUrl } from '../utils/signedStorageUrl';
 import {
   Category,
   PaperAuthor,
@@ -23,6 +24,8 @@ import {
 interface ResearchDetailPayload {
   paper: ResearchPaper;
   workflowHistory: WorkflowEntry[];
+  /** Present only when the caller asked for the reader's file URL (`withFile`). */
+  file?: ResearchFilePayload;
 }
 
 interface ResearchFilePayload {
@@ -349,70 +352,49 @@ function filterPublishedRows(rows: ResearchPaperRow[], params?: ResearchListPara
   });
 }
 
-// Resolves the current authenticated app profile regardless of role. Use for
-// shared/public read paths (e.g. the published repository, which faculty and
-// students both browse — RLS already grants published rows to any authenticated
-// caller). Role-scoped paths should use resolveCurrentStudentProfile instead.
-async function resolveCurrentProfile() {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+// Identity resolution for this facade. Memoized app-wide and read from the
+// locally-stored session instead of the network — see src/auth/currentProfile.ts
+// for why, and for the staleness contract.
+const PROFILE_SURFACE = { label: 'research data' } as const;
 
-  if (userError) {
-    throw new Error(userError.message || 'Unable to resolve the current session.');
-  }
+const resolveCurrentProfile = () => currentProfile.resolveCurrentProfile(PROFILE_SURFACE);
 
-  if (!userData.user) {
-    throw new Error('Sign in required to load research data.');
-  }
+const resolveCurrentStudentProfile = () =>
+  currentProfile.resolveCurrentStudentProfile(PROFILE_SURFACE);
 
-  const profileResult = await fetchAppUserProfile(userData.user);
+/**
+ * Resolves a paper's stored `file_url` into something the reader WebView can
+ * actually fetch: a short-lived signed URL when the file lives in the
+ * `research-papers` bucket, otherwise the stored URL as-is.
+ *
+ * Called with the `file_url` already in hand (from the detail select) so no
+ * caller needs a second `research_papers` query just to learn the storage path.
+ * The signed URL itself is memoized by storage path in `utils/signedStorageUrl`,
+ * which is what lets the reader WebView hit its own HTTP cache on re-open.
+ */
+async function resolveResearchFile(
+  fileUrl: string | null | undefined,
+): Promise<ResearchFilePayload> {
+  const storagePath = extractStoragePathFromUrl(fileUrl);
 
-  if (!profileResult.user) {
-    throw new Error(
-      profileResult.message || 'Your account is not provisioned for research access.',
-    );
-  }
+  if (storagePath) {
+    const signedUrl = await getSignedStorageUrl(storagePath);
 
-  return profileResult.user;
-}
-
-async function resolveCurrentStudentProfile() {
-  const user = await resolveCurrentProfile();
-
-  if (user.role !== 'student') {
-    throw new Error('Student access is required to load research data.');
-  }
-
-  return user;
-}
-
-function extractStoragePathFromUrl(fileUrl?: string | null) {
-  if (!fileUrl) return null;
-
-  const trimmedValue = fileUrl.trim();
-  if (!trimmedValue) return null;
-
-  if (!/^https?:\/\//i.test(trimmedValue)) {
-    return trimmedValue.replace(/^\/+/, '') || null;
-  }
-
-  try {
-    const parsedUrl = new URL(trimmedValue);
-    const marker = '/object/public/research-papers/';
-    const markerIndex = parsedUrl.pathname.indexOf(marker);
-
-    if (markerIndex >= 0) {
-      return parsedUrl.pathname.slice(markerIndex + marker.length).replace(/^\//, '') || null;
+    if (signedUrl) {
+      return {
+        fileUrl: signedUrl,
+        isSigned: true,
+        source: 'supabase-storage',
+        storagePath,
+      };
     }
-
-    const pathSegments = parsedUrl.pathname.split('/research-papers/');
-    if (pathSegments.length > 1) {
-      return pathSegments[1].replace(/^\//, '') || null;
-    }
-  } catch {
-    return null;
   }
 
-  return null;
+  if (fileUrl) {
+    return { fileUrl, isSigned: false, source: 'public-url' };
+  }
+
+  return { fileUrl: '', isSigned: false, source: 'no-file' };
 }
 
 async function loadResearchRows(selectQuery: string, filters?: ResearchListParams) {
@@ -421,10 +403,7 @@ async function loadResearchRows(selectQuery: string, filters?: ResearchListParam
   // Primary papers + co-author ids are independent — fire together to cut
   // one round trip off every My Papers / Dashboard load (cold-start path).
   const [primaryResult, coAuthorIdResult] = await Promise.all([
-    supabase
-      .from('research_papers')
-      .select(selectQuery)
-      .eq('author_id', profile.id),
+    supabase.from('research_papers').select(selectQuery).eq('author_id', profile.id),
     supabase
       .from('research_authors')
       .select('research_id')
@@ -719,7 +698,16 @@ export const researchApi = {
     );
   },
 
-  getResearchById: async (paperId: string) => {
+  /**
+   * Paper detail for the reader screen.
+   *
+   * `withFile` also resolves the reader's file URL. It is opt-in and resolved
+   * from the *same row* — the detail select already carries `file_url`, so the
+   * reader no longer needs a second `research_papers` round trip (plus its own
+   * identity resolution) just to learn the storage path. Callers that only want
+   * metadata (e.g. the post-publish refresh) skip it.
+   */
+  getResearchById: async (paperId: string, options?: { withFile?: boolean }) => {
     // Role-agnostic: the repository detail is shared by students and faculty
     // (faculty open the same ResearchDetail from the shared Browse). RLS gates
     // which papers each caller can read, so no student assertion here.
@@ -748,69 +736,17 @@ export const researchApi = {
         })
       : [];
 
+    if (!options?.withFile) {
+      return { paper: toResearchPaper(row), workflowHistory } satisfies ResearchDetailPayload;
+    }
+
+    const file = await resolveResearchFile(row.file_url);
+
     return {
       paper: toResearchPaper(row),
       workflowHistory,
+      file,
     } satisfies ResearchDetailPayload;
-  },
-
-  getResearchFile: async (paperId: string) => {
-    // Role-agnostic (see getResearchById): faculty open the shared ResearchDetail,
-    // which resolves the same signed file URL. RLS gates file access per caller.
-    await resolveCurrentProfile();
-
-    // Load paper metadata to resolve file path.
-    const { data: paperRow, error: paperError } = await supabase
-      .from('research_papers')
-      .select('id, file_url')
-      .eq('id', paperId)
-      .maybeSingle();
-
-    if (paperError) {
-      throw new Error(paperError.message || 'Unable to load paper.');
-    }
-
-    if (!paperRow) {
-      throw new Error('Paper not found.');
-    }
-
-    const storagePath = extractStoragePathFromUrl(paperRow.file_url);
-
-    // If we have a storage path, create a signed URL; otherwise use file_url as fallback.
-    if (storagePath) {
-      try {
-        const signedUrlData = await supabase.storage
-          .from('research-papers')
-          .createSignedUrl(storagePath, 3600);
-
-        if (signedUrlData.error) {
-          throw signedUrlData.error;
-        }
-
-        return {
-          fileUrl: signedUrlData.data?.signedUrl || '',
-          isSigned: true,
-          source: 'supabase-storage',
-          storagePath,
-        } satisfies ResearchFilePayload;
-      } catch (error) {
-        console.warn('[getResearchFile] Signed URL creation failed:', error);
-      }
-    }
-
-    if (paperRow.file_url) {
-      return {
-        fileUrl: paperRow.file_url,
-        isSigned: false,
-        source: 'public-url',
-      } satisfies ResearchFilePayload;
-    }
-
-    return {
-      fileUrl: '',
-      isSigned: false,
-      source: 'no-file',
-    } satisfies ResearchFilePayload;
   },
 
   trackView: async (paperId: string) => {

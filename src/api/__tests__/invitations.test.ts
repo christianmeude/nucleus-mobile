@@ -12,6 +12,7 @@ jest.mock('../../lib/supabase', () => {
 
 import { supabase } from '../../lib/supabase';
 import { invitationsApi } from '../invitations';
+import { clearCurrentProfileCache } from '../../auth/currentProfile';
 import {
   createQueryBuilder,
   MockSupabaseClient,
@@ -35,6 +36,7 @@ function invitationRow(overrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   jest.resetAllMocks();
+  clearCurrentProfileCache();
   mockSupabase.from.mockImplementation(() => createQueryBuilder(queryResult()));
 });
 

@@ -1,4 +1,4 @@
-import { fetchAppUserProfile } from '../auth/fetchAppUserProfile';
+import * as currentProfile from '../auth/currentProfile';
 import { supabase } from '../lib/supabase';
 import { NotificationItem } from '../types/domain';
 
@@ -13,29 +13,12 @@ interface NotificationRow {
   created_at: string;
 }
 
-async function resolveCurrentStudentProfile() {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+// Identity resolution for this facade. Memoized app-wide and read from the
+// locally-stored session instead of the network — see src/auth/currentProfile.ts.
+const PROFILE_SURFACE = { label: 'notifications' } as const;
 
-  if (userError) {
-    throw new Error(userError.message || 'Unable to resolve the current session.');
-  }
-
-  if (!userData.user) {
-    throw new Error('Sign in required to load notifications.');
-  }
-
-  const profileResult = await fetchAppUserProfile(userData.user);
-
-  if (!profileResult.user) {
-    throw new Error(profileResult.message || 'Your account is not provisioned for notifications.');
-  }
-
-  if (profileResult.user.role !== 'student') {
-    throw new Error('Student access is required to load notifications.');
-  }
-
-  return profileResult.user;
-}
+const resolveCurrentStudentProfile = () =>
+  currentProfile.resolveCurrentStudentProfile(PROFILE_SURFACE);
 
 function toNotificationItem(row: NotificationRow): NotificationItem {
   return {

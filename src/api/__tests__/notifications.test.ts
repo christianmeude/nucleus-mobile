@@ -12,6 +12,7 @@ jest.mock('../../lib/supabase', () => {
 
 import { supabase } from '../../lib/supabase';
 import { notificationsApi } from '../notifications';
+import { clearCurrentProfileCache } from '../../auth/currentProfile';
 import {
   createQueryBuilder,
   MockSupabaseClient,
@@ -33,6 +34,7 @@ function notificationRow(overrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   jest.resetAllMocks();
+  clearCurrentProfileCache();
   mockSupabase.from.mockImplementation(() => createQueryBuilder(queryResult()));
 });
 

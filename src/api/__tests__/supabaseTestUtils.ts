@@ -81,17 +81,17 @@ export function createQueryBuilder<T>(result: QueryResult<T>): MockQueryBuilder 
 }
 
 export interface MockSupabaseClient {
-  auth: { getUser: jest.Mock<(...args: any[]) => Promise<any>> };
+  auth: { getSession: jest.Mock<(...args: any[]) => Promise<any>> };
   from: jest.Mock<(...args: any[]) => MockQueryBuilder>;
   rpc: jest.Mock<(...args: any[]) => Promise<any>>;
   storage: { from: jest.Mock<(...args: any[]) => any> };
   functions: { invoke: jest.Mock<(...args: any[]) => Promise<any>> };
 }
 
-/** A fresh, empty Supabase client mock. Configure `.from`/`.rpc`/`.auth.getUser` per test. */
+/** A fresh, empty Supabase client mock. Configure `.from`/`.rpc`/`.auth.getSession` per test. */
 export function createSupabaseClientMock(): MockSupabaseClient {
   return {
-    auth: { getUser: jest.fn() },
+    auth: { getSession: jest.fn() },
     from: jest.fn(() => createQueryBuilder(queryResult())),
     rpc: jest.fn(),
     storage: { from: jest.fn() },
@@ -144,10 +144,18 @@ export function fakeProfileRow(overrides: Partial<FakeProfileRow> = {}): FakePro
 }
 
 /**
- * Queues the auth.getUser() + `.from('users')...maybeSingle()` sequence that every facade's
+ * Queues the `auth.getSession()` + `.from('users')...maybeSingle()` sequence that every facade's
  * `resolveCurrent*Profile()` helper performs via the real (unmocked) `fetchAppUserProfile`.
  * Call this first, before queuing any of the facade's own `.from()`/`.rpc()` results, since it
  * consumes the first `from` call in the sequence.
+ *
+ * The session is queued as a *persistent* return (`mockResolvedValue`, not `...Once`): identity is
+ * memoized per session in `src/auth/currentProfile.ts`, so a facade call still consults
+ * `getSession()` even on a cache hit, and an exhausted one-shot queue would resolve `undefined`.
+ * The `users` row stays one-shot because it is a query in the caller's per-test `from` sequence.
+ *
+ * Tests must call `clearCurrentProfileCache()` in `beforeEach` — otherwise a profile queued by one
+ * test is still memoized for the next, which shares the default `fakeAuthUser()` id.
  */
 export function queueProfileLookup(
   client: MockSupabaseClient,
@@ -156,8 +164,8 @@ export function queueProfileLookup(
   const authUser = fakeAuthUser(opts.authUser);
   const profileRow = opts.profileRow === null ? null : fakeProfileRow(opts.profileRow ?? {});
 
-  client.auth.getUser.mockResolvedValueOnce({
-    data: { user: authUser },
+  client.auth.getSession.mockResolvedValue({
+    data: { session: { user: authUser } },
     error: null,
   });
 

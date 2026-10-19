@@ -7,7 +7,7 @@
  * `fetchAppUserProfile` (src/auth/, also frozen) is intentionally NOT mocked — it runs
  * for real against the faked Supabase client, so these tests exercise the actual
  * email-based identity resolution path described in CLAUDE.md's Critical Architecture
- * section (auth.getUser() -> `users` table lookup by email -> role gate).
+ * section (auth.getSession() -> `users` table lookup by email -> role gate).
  */
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
@@ -19,6 +19,8 @@ jest.mock('../../lib/supabase', () => {
 import { supabase } from '../../lib/supabase';
 import { researchApi, submitApi } from '../research';
 import { apiCache } from '../../utils/apiCache';
+import { clearCurrentProfileCache } from '../../auth/currentProfile';
+import { clearSignedUrlCache } from '../../utils/signedStorageUrl';
 import {
   createQueryBuilder,
   MockSupabaseClient,
@@ -49,6 +51,8 @@ function defaultStorageBucket() {
 beforeEach(() => {
   jest.resetAllMocks();
   apiCache.clear();
+  clearCurrentProfileCache();
+  clearSignedUrlCache();
   mockSupabase.from.mockImplementation(() => createQueryBuilder(queryResult()));
   mockSupabase.storage.from.mockImplementation(() => defaultStorageBucket());
 });
@@ -271,7 +275,7 @@ describe('researchApi.getCategories', () => {
     const result = await researchApi.getCategories();
 
     expect(mockSupabase.from).toHaveBeenCalledWith('research_categories');
-    expect(mockSupabase.auth.getUser).not.toHaveBeenCalled();
+    expect(mockSupabase.auth.getSession).not.toHaveBeenCalled();
     expect(result).toEqual([{ id: '1', name: 'Computer Science' }]);
   });
 
@@ -324,19 +328,26 @@ describe('researchApi.getResearchById', () => {
   });
 });
 
-describe('researchApi.getResearchFile', () => {
-  it('returns a signed storage URL when the file lives in the research-papers bucket', async () => {
+describe('researchApi.getResearchById – reader file resolution', () => {
+  const bucketFileUrl =
+    'https://project.supabase.co/storage/v1/object/public/research-papers/student-1/file.pdf';
+
+  it('omits the file entirely unless the caller opts in', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(
-        queryResult({
-          data: {
-            id: 'p1',
-            file_url:
-              'https://project.supabase.co/storage/v1/object/public/research-papers/student-1/file.pdf',
-          },
-        }),
-      ),
+      createQueryBuilder(queryResult({ data: row({ file_url: bucketFileUrl }) })),
+    );
+
+    const result = await researchApi.getResearchById('p1');
+
+    expect(result).not.toHaveProperty('file');
+    expect(mockSupabase.storage.from).not.toHaveBeenCalled();
+  });
+
+  it('resolves a signed storage URL from the row it already fetched', async () => {
+    queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
+    mockSupabase.from.mockReturnValueOnce(
+      createQueryBuilder(queryResult({ data: row({ file_url: bucketFileUrl }) })),
     );
     const createSignedUrl = jest
       .fn<() => Promise<any>>()
@@ -347,30 +358,24 @@ describe('researchApi.getResearchFile', () => {
       getPublicUrl: jest.fn(),
     });
 
-    const result = await researchApi.getResearchFile('p1');
+    const result = await researchApi.getResearchById('p1', { withFile: true });
 
     expect(mockSupabase.storage.from).toHaveBeenCalledWith('research-papers');
     expect(createSignedUrl).toHaveBeenCalledWith('student-1/file.pdf', 3600);
-    expect(result).toEqual({
+    expect(result.file).toEqual({
       fileUrl: 'https://signed.example/file.pdf',
       isSigned: true,
       source: 'supabase-storage',
       storagePath: 'student-1/file.pdf',
     });
+    // The whole point of the merge: one `research_papers` query, not two.
+    expect(mockSupabase.from).toHaveBeenCalledTimes(2); // users, research_papers
   });
 
   it('falls back to the stored public URL when signed-URL creation fails', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(
-        queryResult({
-          data: {
-            id: 'p1',
-            file_url:
-              'https://project.supabase.co/storage/v1/object/public/research-papers/student-1/file.pdf',
-          },
-        }),
-      ),
+      createQueryBuilder(queryResult({ data: row({ file_url: bucketFileUrl }) })),
     );
     mockSupabase.storage.from.mockReturnValueOnce({
       createSignedUrl: jest
@@ -380,29 +385,31 @@ describe('researchApi.getResearchFile', () => {
       getPublicUrl: jest.fn(),
     });
 
-    const result = await researchApi.getResearchFile('p1');
+    const result = await researchApi.getResearchById('p1', { withFile: true });
 
-    expect(result.isSigned).toBe(false);
-    expect(result.source).toBe('public-url');
-    expect(result.fileUrl).toContain('research-papers/student-1/file.pdf');
+    expect(result.file?.isSigned).toBe(false);
+    expect(result.file?.source).toBe('public-url');
+    expect(result.file?.fileUrl).toContain('research-papers/student-1/file.pdf');
   });
 
   it('reports no-file when the paper has no file_url', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
-      createQueryBuilder(queryResult({ data: { id: 'p1', file_url: null } })),
+      createQueryBuilder(queryResult({ data: row({ file_url: null }) })),
     );
 
-    const result = await researchApi.getResearchFile('p1');
+    const result = await researchApi.getResearchById('p1', { withFile: true });
 
-    expect(result).toEqual({ fileUrl: '', isSigned: false, source: 'no-file' });
+    expect(result.file).toEqual({ fileUrl: '', isSigned: false, source: 'no-file' });
   });
 
   it('throws when the paper is not found', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(createQueryBuilder(queryResult({ data: null })));
 
-    await expect(researchApi.getResearchFile('missing')).rejects.toThrow('Paper not found.');
+    await expect(researchApi.getResearchById('missing', { withFile: true })).rejects.toThrow(
+      'Paper not found.',
+    );
   });
 
   it('propagates a Supabase error looking up the paper', async () => {
@@ -411,7 +418,9 @@ describe('researchApi.getResearchFile', () => {
       createQueryBuilder(queryResult({ error: { message: 'read failed' } })),
     );
 
-    await expect(researchApi.getResearchFile('p1')).rejects.toThrow('read failed');
+    await expect(researchApi.getResearchById('p1', { withFile: true })).rejects.toThrow(
+      'read failed',
+    );
   });
 });
 
@@ -647,7 +656,7 @@ describe('submitApi.getFacultyMembers', () => {
 describe('submitApi.searchStudents', () => {
   it('returns an empty list without any Supabase calls for short queries', async () => {
     await expect(submitApi.searchStudents('a')).resolves.toEqual([]);
-    expect(mockSupabase.auth.getUser).not.toHaveBeenCalled();
+    expect(mockSupabase.auth.getSession).not.toHaveBeenCalled();
     expect(mockSupabase.rpc).not.toHaveBeenCalled();
   });
 

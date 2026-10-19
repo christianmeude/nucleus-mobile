@@ -15,6 +15,8 @@ jest.mock('../../lib/supabase', () => {
 import { supabase } from '../../lib/supabase';
 import { facultyApi, summarizeFacultyWorkload } from '../faculty';
 import { apiCache } from '../../utils/apiCache';
+import { clearCurrentProfileCache } from '../../auth/currentProfile';
+import { clearSignedUrlCache } from '../../utils/signedStorageUrl';
 import {
   createQueryBuilder,
   MockSupabaseClient,
@@ -41,6 +43,8 @@ function paperRow(overrides: Record<string, unknown> = {}) {
 beforeEach(() => {
   jest.resetAllMocks();
   apiCache.clear();
+  clearCurrentProfileCache();
+  clearSignedUrlCache();
   mockSupabase.from.mockImplementation(() => createQueryBuilder(queryResult()));
   mockSupabase.storage.from.mockImplementation(() => ({
     createSignedUrl: jest.fn<() => Promise<any>>().mockResolvedValue(queryResult()),

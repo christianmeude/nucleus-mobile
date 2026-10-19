@@ -1,7 +1,9 @@
 import { Session } from '@supabase/supabase-js';
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { fetchAppUserProfile } from '../auth/fetchAppUserProfile';
+import { clearCurrentProfileCache } from '../auth/currentProfile';
 import { mapSupabaseAuthError } from '../auth/mapSupabaseAuthError';
+import { clearSignedUrlCache } from '../utils/signedStorageUrl';
 import { supabase } from '../lib/supabase';
 import { clearAuthTokens } from '../storage/authStorage';
 import { User } from '../types/domain';
@@ -53,8 +55,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // The API cache is scoped to the signed-in user; every identity change (sign-in,
   // sign-out, account switch) must re-scope it so one account's data can never be
   // served to another. Applied before setUser so consumers never read stale data.
+  // The memoized identity resolution and signed file URLs are dropped alongside it,
+  // for the same reason: neither may outlive the session that authorized it.
   const applyUser = (nextUser: User | null) => {
     apiCache.setUserScope(nextUser?.id ?? 'anon');
+    clearCurrentProfileCache();
+    clearSignedUrlCache();
     setUser(nextUser);
   };
 
