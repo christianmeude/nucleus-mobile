@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import * as Haptics from 'expo-haptics';
-import { BlurView } from 'expo-blur';
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -30,8 +29,10 @@ import {
   Screen,
   SheetPresenter,
   PublishedBadge,
+  FloatingActionBar,
 } from '../../components/ui';
 import { PdfViewer, type PdfViewerRef } from '../../components/PdfViewer';
+import { PdfPrewarm } from '../../components/PdfPrewarm';
 import { AnnotationPanel } from '../../components/AnnotationPanel';
 import {
   formatDate,
@@ -49,8 +50,6 @@ import {
   File,
   MessageCircle,
   Bookmark,
-  FileText,
-  Link2,
   ShieldCheck,
   ArrowUpRight,
   ChevronRight,
@@ -71,7 +70,7 @@ export const ResearchDetailScreen = () => {
   const route = useRoute<DetailRouteProp>();
   const navigation = useNavigation<any>();
   const { user } = useAuth();
-  const { theme, scheme } = useTheme();
+  const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { paperId, from } = route.params;
 
@@ -157,11 +156,20 @@ export const ResearchDetailScreen = () => {
       // local saved-ids read, and the feedback fetch. Previously the paper was
       // awaited alone and the rest followed it *serially*, doubling the time to
       // first paint.
-      const detailPromise = researchApi.getResearchById(paperId, { withFile: true });
+      const detailPromise = researchApi.getResearchById(paperId, {
+        withFile: true,
+        // Browse never renders the approval workflow, so skip the row join there.
+        withWorkflow: from !== 'browse',
+      });
       const supportingPromise = Promise.all([
         researchApi.getCategories().catch(() => [] as Category[]),
         getSavedPaperIds().catch(() => [] as string[]),
-        researchApi.fetchAnnotations(paperId).catch(() => []),
+        // Annotations are owner-only (`showFeedback` is `isOwner && isOwnerContext`)
+        // and Browse is never an owner context, so fetching them there is pure
+        // waste inside the paint gate.
+        from === 'browse'
+          ? Promise.resolve([] as any[])
+          : researchApi.fetchAnnotations(paperId).catch(() => []),
       ]);
 
       try {
@@ -177,7 +185,7 @@ export const ResearchDetailScreen = () => {
         setPaper(detail.paper);
         setWorkflow(detail.workflowHistory || []);
         setFileUri(detail.file?.fileUrl || null);
-        setFileError(detail.file?.fileUrl ? '' : 'Unable to load the paper file.');
+        setFileError(detail.file?.fileUrl ? '' : 'No file attached.');
         setCategories(categoryRows);
         setSaved(savedIds.includes(paperId));
         setAnnotations(fetchedAnns);
@@ -207,7 +215,7 @@ export const ResearchDetailScreen = () => {
     return () => {
       active = false;
     };
-  }, [paperId]);
+  }, [paperId, from]);
 
   // Resets the perf clock at the moment the reader sheet opens, so the WebView's
   // own marks measure from the user's tap rather than from screen mount.
@@ -274,16 +282,19 @@ export const ResearchDetailScreen = () => {
   // Deep-links and notifications carry no `from` — fall back to ownership.
   const isOwnerContext =
     from === 'myPapers' || from === 'dashboard' || (from == null && isOwner);
-  // Workflow history carries reviewer↔author comments — owner-gated and never
-  // exposed in Browse, even once approved/published.
-  const showWorkflow = isOwner && isOwnerContext;
+  // The author viewing their own paper in the owner workspace. Browse is the
+  // public repository view and never exposes owner-only controls — reviewer
+  // comments, feedback, or the formal-publication request — even to the author.
+  const isOwnerWorkspace = isOwner && isOwnerContext;
+  // Workflow history carries reviewer↔author comments.
+  const showWorkflow = isOwnerWorkspace;
   // Related papers are a Browse discovery feature — never shown in the owner
   // workspace, even for repository papers.
   const showRelated = isRepositoryPaper && !isOwnerContext;
 
-  // Feedback (annotations) is internal review info. It is visible to the owner
-  // in their own workspace at every status, and never exposed in Browse.
-  const showFeedback = isOwner && isOwnerContext;
+  // Feedback (annotations) is internal review info, visible to the owner in
+  // their own workspace at every status.
+  const showFeedback = isOwnerWorkspace;
 
   const keywords = Array.isArray(paper.keywords) ? paper.keywords.filter(Boolean) : [];
   const categoryName = resolveCategoryName(paper.category, categoryNameById);
@@ -389,9 +400,30 @@ export const ResearchDetailScreen = () => {
             ) : null}
 
             <View style={styles.metaRow}>
-              <Text style={styles.metaText}>{formatDate(displayDate)}</Text>
-              <Text style={styles.metaSep}>·</Text>
-              <Text style={styles.metaText}>{paper.view_count || 0} views</Text>
+              <View style={styles.metaLeft}>
+                <Text style={styles.metaText}>{formatDate(displayDate)}</Text>
+                <Text style={styles.metaSep}>·</Text>
+                <Text style={styles.metaText}>{paper.view_count || 0} views</Text>
+              </View>
+              {/* The save action rides the metadata line instead of owning a row
+                  of its own — a lone right-aligned icon between two blocks read
+                  as an orphan. */}
+              <PressableScale
+                style={styles.bookmarkBtn}
+                onPress={handleToggleSave}
+                disabled={savePending}
+                accessibilityRole="button"
+                accessibilityLabel={saved ? 'Remove from saved' : 'Save paper'}
+              >
+                <Animated.View style={savePopStyle}>
+                  <Icon
+                    icon={Bookmark}
+                    size={22}
+                    color={saved ? theme.colors.brand.accent : theme.colors.text.muted}
+                    fill={saved ? theme.colors.brand.accent : 'none'}
+                  />
+                </Animated.View>
+              </PressableScale>
             </View>
 
             {annotations.length > 0 && showFeedback ? (
@@ -436,7 +468,7 @@ export const ResearchDetailScreen = () => {
             )}
 
             {paper.status === 'approved' &&
-              isOwner &&
+              isOwnerWorkspace &&
               (paper.publish_requested_at ? (
                 <View style={styles.doiCard}>
                   <View style={styles.doiHeader}>
@@ -464,69 +496,11 @@ export const ResearchDetailScreen = () => {
                 </PressableScale>
               ))}
 
-            <View style={styles.readRow}>
-              <PressableScale
-                style={styles.bookmarkBtn}
-                onPress={handleToggleSave}
-                disabled={savePending}
-                accessibilityRole="button"
-                accessibilityLabel={saved ? 'Remove from saved' : 'Save paper'}
-              >
-                <Animated.View style={savePopStyle}>
-                  <Icon
-                    icon={Bookmark}
-                    size={22}
-                    color={saved ? theme.colors.brand.accent : theme.colors.text.muted}
-                    fill={saved ? theme.colors.brand.accent : 'none'}
-                  />
-                </Animated.View>
-              </PressableScale>
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Paper</Text>
-              {fileError ? (
-                <InlineNotice tone="danger" message={fileError} />
-              ) : (
-                <PressableScale
-                  style={styles.previewCard}
-                  onPress={() => setPdfOpen(true)}
-                  disabled={!fileUri}
-                  accessibilityRole="button"
-                  accessibilityLabel="View full paper"
-                  accessibilityState={{ disabled: !fileUri }}
-                >
-                  <View style={styles.previewCardInner}>
-                    {/* The preview is torn down while the reader sheet is open: the sheet
-                        mounts its own full WebView, and keeping a second live WebView (plus
-                        its rasterised page) behind it only competes for memory and for the
-                        WebView render thread. */}
-                    {fileUri && !pdfOpen ? (
-                      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-                        <PdfViewer
-                          uri={fileUri}
-                          variant="preview"
-                          watermarkText={isRepositoryPaper ? '' : undefined}
-                        />
-                      </View>
-                    ) : null}
-                    {/* Frost the page behind the button; a soft scrim guarantees the
-                    button reads even where a platform's blur is weak. */}
-                    <BlurView
-                      intensity={28}
-                      tint={scheme === 'dark' ? 'dark' : 'light'}
-                      style={StyleSheet.absoluteFill}
-                      pointerEvents="none"
-                    />
-                    <View style={styles.previewScrim} pointerEvents="none" />
-                    <View style={styles.previewButton} pointerEvents="none">
-                      <Icon icon={FileText} size={18} color={theme.colors.text.onBrand} />
-                      <Text style={styles.previewButtonText}>View Full Paper</Text>
-                    </View>
-                  </View>
-                </PressableScale>
-              )}
-            </View>
+            {!fileUri ? (
+              <View style={styles.section}>
+                <InlineNotice tone="warning" message={fileError || 'No file attached.'} />
+              </View>
+            ) : null}
 
             {error ? <InlineNotice tone="danger" message={error} /> : null}
 
@@ -667,7 +641,28 @@ export const ResearchDetailScreen = () => {
               </View>
             ) : null}
           </ScrollView>
+
+          {/* Warm the reader's downloads while the user reads the abstract, so the
+              first tap is a cache hit rather than a cold multi-second fetch. Torn
+              down once the reader owns the screen — a second live WebView behind
+              the sheet would only compete for the render thread. */}
+          {fileUri && !pdfOpen ? <PdfPrewarm uri={fileUri} /> : null}
         </Screen>
+
+        {/* Floating entry to the reader — a sibling of `Screen` on purpose (see
+            FloatingActionBar) so it floats over the page instead of sitting in a
+            footer slab under it. */}
+        {fileUri ? (
+          <FloatingActionBar>
+            <Button
+              label="View Full Paper"
+              onPress={() => setPdfOpen(true)}
+              accessibilityLabel="View full paper"
+              size="lg"
+              elevated
+            />
+          </FloatingActionBar>
+        ) : null}
       </SheetPresenter>
     </SheetPresenter>
       {annotations.length > 0 && showFeedback && panelOpen && (
@@ -700,7 +695,8 @@ const makeStyles = (theme: Theme) =>
     },
     content: {
       paddingTop: theme.spacing.xl,
-      paddingBottom: theme.spacing['3xl'],
+      // Clear the floating "View Full Paper" CTA (56 + its gap off the bottom).
+      paddingBottom: theme.spacing['3xl'] + theme.spacing['2xl'],
       // Long-form reading surface: cap the measure on wide viewports.
       ...readingColumn,
     },
@@ -749,12 +745,16 @@ const makeStyles = (theme: Theme) =>
     metaRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      flexWrap: 'wrap',
+      justifyContent: 'space-between',
       gap: theme.spacing.sm,
       marginTop: theme.spacing.md,
-      paddingBottom: theme.spacing.lg,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: theme.colors.border.subtle,
+    },
+    metaLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: theme.spacing.sm,
+      flexShrink: 1,
     },
     metaText: {
       ...theme.typography.metadata,
@@ -763,13 +763,6 @@ const makeStyles = (theme: Theme) =>
     metaSep: {
       ...theme.typography.metadata,
       color: theme.colors.border.strong,
-    },
-    readRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-end',
-      marginTop: theme.spacing.lg,
-      gap: theme.spacing.sm,
     },
     feedbackRow: {
       flexDirection: 'row',
@@ -845,51 +838,11 @@ const makeStyles = (theme: Theme) =>
       marginTop: theme.spacing.xs,
     },
     section: {
-      marginTop: theme.spacing.xl,
+      // A whole content group (keywords, abstract, related, review progress):
+      // separated from its neighbours by 2x the in-group `sm` gap, per the
+      // Spacing Rule — related elements closer than unrelated ones.
+      marginTop: theme.spacing['2xl'],
       gap: theme.spacing.sm,
-    },
-    previewCard: {
-      height: 260,
-      borderRadius: theme.radii.lg,
-      borderCurve: 'continuous',
-      backgroundColor: theme.colors.surface.sunken,
-      ...theme.shadows.level1,
-    },
-    previewCardInner: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      borderRadius: theme.radii.lg,
-      borderCurve: 'continuous',
-      overflow: 'hidden',
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.border.subtle,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    previewScrim: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(15, 23, 42, 0.28)',
-    },
-    previewButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.md,
-      borderRadius: theme.radii.pill,
-      backgroundColor: theme.colors.brand.primary,
-      ...theme.shadows.level2,
-    },
-    previewButtonText: {
-      ...theme.typography.bodyStrong,
-      color: theme.colors.text.onBrand,
     },
     sectionLabel: {
       ...theme.typography.label,

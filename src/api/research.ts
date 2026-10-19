@@ -10,6 +10,7 @@ import {
   WorkflowEntry,
 } from '../types/domain';
 import { getPrimaryAuthorName, paperDate } from '../utils/format';
+import { perfMark } from '../utils/perfLog';
 import { apiCache, SWROptions } from '../utils/apiCache';
 import {
   parseAnnotationMeta,
@@ -706,18 +707,31 @@ export const researchApi = {
    * reader no longer needs a second `research_papers` round trip (plus its own
    * identity resolution) just to learn the storage path. Callers that only want
    * metadata (e.g. the post-publish refresh) skip it.
+   *
+   * `withWorkflow` (default true) controls whether the row join pulls the
+   * approval workflow and its reviewer rows. Browse never renders the workflow,
+   * so the reader skips the join there and the row query stays lean; the
+   * `open:research` / `open:file` marks split the detail fetch into its network
+   * legs for the `[perf]` log.
    */
-  getResearchById: async (paperId: string, options?: { withFile?: boolean }) => {
+  getResearchById: async (
+    paperId: string,
+    options?: { withFile?: boolean; withWorkflow?: boolean },
+  ) => {
     // Role-agnostic: the repository detail is shared by students and faculty
     // (faculty open the same ResearchDetail from the shared Browse). RLS gates
     // which papers each caller can read, so no student assertion here.
     await resolveCurrentProfile();
 
+    const withWorkflow = options?.withWorkflow ?? true;
+
     const { data, error } = await supabase
       .from('research_papers')
-      .select(PAPER_DETAIL_SELECT)
+      .select(withWorkflow ? PAPER_DETAIL_SELECT : PAPER_SELECT)
       .eq('id', paperId)
       .maybeSingle();
+
+    perfMark('open:research', { withWorkflow });
 
     if (error) {
       throw new Error(error.message || 'Unable to load paper details.');
@@ -728,19 +742,22 @@ export const researchApi = {
     }
 
     const row = data as unknown as ResearchPaperRow;
-    const workflowHistory = Array.isArray(row.approval_workflow)
-      ? row.approval_workflow.map(toWorkflowEntry).sort((left, right) => {
-          const leftDate = new Date(left.reviewed_at || left.created_at || 0).getTime();
-          const rightDate = new Date(right.reviewed_at || right.created_at || 0).getTime();
-          return rightDate - leftDate;
-        })
-      : [];
+    const workflowHistory =
+      withWorkflow && Array.isArray(row.approval_workflow)
+        ? row.approval_workflow.map(toWorkflowEntry).sort((left, right) => {
+            const leftDate = new Date(left.reviewed_at || left.created_at || 0).getTime();
+            const rightDate = new Date(right.reviewed_at || right.created_at || 0).getTime();
+            return rightDate - leftDate;
+          })
+        : [];
 
     if (!options?.withFile) {
       return { paper: toResearchPaper(row), workflowHistory } satisfies ResearchDetailPayload;
     }
 
     const file = await resolveResearchFile(row.file_url);
+
+    perfMark('open:file', { isSigned: file.isSigned, source: file.source });
 
     return {
       paper: toResearchPaper(row),

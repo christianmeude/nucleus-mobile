@@ -19,6 +19,7 @@ import { forwardRef, useImperativeHandle } from 'react';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
 import { perfMark } from '../utils/perfLog';
+import { PDFJS_LIB_URL, PDFJS_WORKER_URL } from '../utils/pdfjs';
 import { Button, InlineNotice } from './ui';
 
 // Shared, read-only PDF viewer used by both the student ResearchDetail and the faculty review
@@ -33,8 +34,6 @@ import { Button, InlineNotice } from './ui';
 // of pre-downloading it. The pdf.js *library* loads from a pinned CDN; the PDF bytes themselves
 // never leave the device <-> Supabase channel (no third-party document viewer). If anything
 // fails, it falls back to opening the PDF in the in-app browser and surfaces the error.
-
-const PDFJS_VERSION = '3.11.174';
 
 import { AnnotationType, AnnotationRect, AnnotationPoint } from '../utils/annotation';
 import { MousePointer2, Eye, EyeOff, Maximize, X } from 'lucide-react-native';
@@ -61,8 +60,7 @@ export interface PdfViewerRef {
 
 /** Self-contained HTML that pulls pdf.js from a CDN and renders the signed URL to canvases.
  * Pages are rasterised lazily as they approach the viewport (older engines fall back to
- * rendering everything up front). `firstPageOnly` renders just page 1 with no scroll — used
- * for the tap-to-open preview. */
+ * rendering everything up front). */
 const buildViewerHtml = (
   uri: string,
   themeColors: {
@@ -72,7 +70,6 @@ const buildViewerHtml = (
     accent: string;
     danger: string;
   },
-  firstPageOnly = false,
   watermarkText = 'NU DASMARIÑAS',
 ): string => {
   const encodedWatermark = encodeURIComponent(watermarkText);
@@ -90,8 +87,8 @@ const buildViewerHtml = (
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
 ${pdfOrigin ? `<link rel="preconnect" href="${pdfOrigin}" crossorigin />` : ''}
 <style>
-  html, body { margin: 0; padding: 0; background: ${themeColors.background}; ${firstPageOnly ? 'overflow: hidden;' : ''} }
-  #container { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: ${firstPageOnly ? '0' : '8px'}; position: relative; }
+  html, body { margin: 0; padding: 0; background: ${themeColors.background}; }
+  #container { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px; position: relative; }
   .page-wrapper::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background-repeat: repeat; background-size: 200px 200px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Ctext x='50%25' y='50%25' font-size='28' font-weight='bold' fill='%23000000' fill-opacity='0.08' text-anchor='middle' dominant-baseline='middle' transform='rotate(-45 100 100)'%3E${encodedWatermark}%3C/text%3E%3C/svg%3E"); }
   .page-wrapper { position: relative; width: 100%; background: ${themeColors.canvas}; box-shadow: 0 1px 4px ${themeColors.shadow}; }
   canvas { width: 100%; height: auto; display: block; position: relative; z-index: 0; }
@@ -105,10 +102,10 @@ ${pdfOrigin ? `<link rel="preconnect" href="${pdfOrigin}" crossorigin />` : ''}
 // Kick off the 1MB worker download *now*, in parallel with the pdf.js library
 // below. Both used to be paid in series — the worker only started once the
 // library had parsed, so the two downloads never overlapped.
-window.__pdfWorkerPromise = fetch('https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.js')
+window.__pdfWorkerPromise = fetch('${PDFJS_WORKER_URL}')
   .then(function (r) { return r.text(); });
 </script>
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.min.js"></script>
+<script src="${PDFJS_LIB_URL}"></script>
 <script>
 (function () {
   var post = function (obj) {
@@ -255,7 +252,7 @@ window.__pdfWorkerPromise = fetch('https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDF
       .catch(function () {
         // Prefetch failed (offline blip, blocked); retry in series rather than
         // failing the whole document.
-        return fetch('https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.js')
+        return fetch('${PDFJS_WORKER_URL}')
           .then(function (r) { return r.text(); });
       })
       .then(function (src) {
@@ -266,8 +263,8 @@ window.__pdfWorkerPromise = fetch('https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDF
       .then(function (pdf) {
         var dpr = Math.min(window.devicePixelRatio || 1, 2);
         var width = container.clientWidth || window.innerWidth;
-        var total = ${firstPageOnly ? 1 : 'pdf.numPages'};
-        var lazy = ${firstPageOnly ? 'false' : 'true'};
+        var total = pdf.numPages;
+        var lazy = true;
         var firstDone = false;
         var wrappers = [];
 
@@ -341,8 +338,8 @@ window.__pdfWorkerPromise = fetch('https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDF
             return;
           }
 
-          // Single-page preview, or an engine without IntersectionObserver:
-          // render straight through, oldest behaviour.
+          // An engine without IntersectionObserver: render straight through,
+          // oldest behaviour.
           var chain = Promise.resolve();
           for (var j = 1; j <= total; j++) {
             (function (pageNum) {
@@ -365,10 +362,6 @@ interface PdfSurfaceProps {
   onLoaded?: () => void;
   annotations?: PdfAnnotationOverlay[];
   showAnnotations?: boolean;
-  /** Render only page 1 (for the tap-to-open preview). */
-  firstPageOnly?: boolean;
-  /** Disable WebView scrolling (preview is a fixed, non-scrollable page). */
-  scrollEnabled?: boolean;
   /** When true, a tap on a page reports its position via onPlaceNote (faculty add-note mode). */
   annotationMode?: 'none' | 'note' | 'highlight' | 'draw';
   onPlaceNote?: (pageNumber: number, anchor: { x: number; y: number }) => void;
@@ -386,8 +379,6 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
       onLoaded,
       annotations,
       showAnnotations = false,
-      firstPageOnly = false,
-      scrollEnabled = true,
       annotationMode = 'none',
       onPlaceNote,
       onPlaceHighlight,
@@ -412,8 +403,7 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
     // `loaded` is pdf.js reporting page 1 on screen. The gap between them is the
     // CDN + document download the reader actually waits on.
     useEffect(() => {
-      perfMark('viewer:mounted', { firstPageOnly });
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+      perfMark('viewer:mounted');
     }, []);
 
     useImperativeHandle(ref, () => ({
@@ -476,7 +466,7 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
       }
       if (payload.type === 'loaded') {
         console.log('[PdfViewer] rendered', payload);
-        perfMark('viewer:loaded', { pages: payload.pages, firstPageOnly });
+        perfMark('viewer:loaded', { pages: payload.pages });
         setLoaded(true);
         if (!firedFirstLoad.current) {
           firedFirstLoad.current = true;
@@ -544,7 +534,6 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
                 accent: theme.colors.brand.accent,
                 danger: theme.colors.state.danger,
               },
-              firstPageOnly,
               watermarkText,
             ),
             baseUrl: 'https://localhost/',
@@ -555,7 +544,6 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
           setSupportMultipleWindows={false}
           androidLayerType="hardware"
           nestedScrollEnabled
-          scrollEnabled={scrollEnabled}
           onMessage={handleMessage}
           onError={(e) => {
             setErrored(true);
@@ -568,11 +556,9 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
             <ActivityIndicator size="large" color={theme.colors.brand.primary} />
           </View>
         ) : null}
-        {firstPageOnly ? null : (
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>🔒 Protected document. Copying is disabled.</Text>
-          </View>
-        )}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>🔒 Protected document. Copying is disabled.</Text>
+        </View>
       </View>
     );
   },
@@ -594,10 +580,9 @@ interface PdfViewerProps {
    * 'inline' (default): a fixed-height rounded panel with a fullscreen-expand
    * toggle. 'fill': stretches to fill its parent (e.g. inside `SheetPresenter`) —
    * no expand toggle and no panel chrome, since the host sheet already owns the
-   * full-screen frame. 'preview': fills its parent showing only page 1,
-   * non-scrollable, no controls — for a tap-to-open blurred preview.
+   * full-screen frame.
    */
-  variant?: 'inline' | 'fill' | 'preview';
+  variant?: 'inline' | 'fill';
   /**
    * Faculty review only (#14): enable placing note-pin annotations. When true, a
    * pencil toggle appears; tapping the PDF drops a pin and opens a note composer.
@@ -741,23 +726,6 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
         )}
       </View>
     );
-
-    // Preview: page 1 only, non-scrollable, no controls or fullscreen — the host
-    // (a blurred preview card) owns the frame and the tap-to-open affordance.
-    if (variant === 'preview') {
-      return (
-        <View style={styles.fillRoot}>
-          <PdfSurface
-            ref={ref}
-            uri={uri}
-            onLoaded={onFirstLoad}
-            firstPageOnly
-            scrollEnabled={false}
-            watermarkText={watermarkText}
-          />
-        </View>
-      );
-    }
 
     return (
       <View style={fill ? styles.fillRoot : undefined}>

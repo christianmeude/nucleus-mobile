@@ -309,6 +309,26 @@ describe('researchApi.getResearchById', () => {
     expect(builder.eq).toHaveBeenCalledWith('id', 'p1');
     expect(result.paper.id).toBe('p1');
     expect(result.workflowHistory.map((w) => w.id)).toEqual(['w2', 'w1']);
+    // The default select carries the workflow join.
+    expect(builder.select.mock.calls[0][0] as string).toContain('approval_workflow');
+  });
+
+  it('skips the approval-workflow join when the caller opts out (Browse)', async () => {
+    queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
+    const builder = createQueryBuilder(
+      queryResult({
+        data: row({
+          id: 'p1',
+          approval_workflow: [{ id: 'w1', reviewed_at: '2026-01-01T00:00:00.000Z' }],
+        }),
+      }),
+    );
+    mockSupabase.from.mockReturnValueOnce(builder);
+
+    const result = await researchApi.getResearchById('p1', { withWorkflow: false });
+
+    expect(builder.select.mock.calls[0][0] as string).not.toContain('approval_workflow');
+    expect(result.workflowHistory).toEqual([]);
   });
 
   it('throws when the paper does not exist', async () => {
