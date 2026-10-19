@@ -38,6 +38,7 @@ import {
   resolveCategoryName,
 } from '../../utils/category';
 import { listEpochKey } from '../../utils/listEpochKey';
+import { perfMark, perfSpan, perfStart } from '../../utils/perfLog';
 
 import { BrowseHeader } from './browse/BrowseHeader';
 import { BrowseControls } from './browse/BrowseControls';
@@ -81,16 +82,24 @@ export const BrowseScreen = () => {
     async (silent = false) => {
       if (!silent && papers.length === 0) {
         setLoading(true);
+        // Cold load only: reset the shared clock so the spans below read as
+        // time-since-tab-open. Warm refreshes leave the clock alone.
+        perfStart('list:browse');
       } else {
         setRefreshing(true);
       }
 
+      const papersSpan = perfSpan('list:browse:papers');
+      const categoriesSpan = perfSpan('list:browse:categories');
+      const departmentsSpan = perfSpan('list:browse:departments');
+      const programsSpan = perfSpan('list:browse:programs');
+
       try {
         const [publishedRows, categoryRows, departmentRows, programRows] = await Promise.all([
-          researchApi.getPublishedPapers(undefined, { forceRefresh: silent }),
-          researchApi.getCategories({ forceRefresh: silent }),
-          submitApi.getDepartments(),
-          submitApi.getPrograms(),
+          researchApi.getPublishedPapers(undefined, { forceRefresh: silent }).finally(papersSpan),
+          researchApi.getCategories({ forceRefresh: silent }).finally(categoriesSpan),
+          submitApi.getDepartments().finally(departmentsSpan),
+          submitApi.getPrograms().finally(programsSpan),
         ]);
 
         setPapers(publishedRows);
@@ -98,6 +107,7 @@ export const BrowseScreen = () => {
         setDepartments(departmentRows);
         setPrograms(programRows);
         setError('');
+        perfMark('list:browse:rows-settled', { rows: publishedRows.length });
       } catch (_error) {
         setError('Unable to load published papers.');
       } finally {
@@ -251,6 +261,18 @@ export const BrowseScreen = () => {
   );
 
   const keyExtractor = useCallback((item: ResearchPaper) => item.id, []);
+
+  // First paint proxy for the [perf] log: mark the moment rows first become
+  // available to render (skeleton doesn't count — that's the loading state,
+  // not the data). An effect on `papers` rather than a layout hook, because
+  // the results container is flex:1 and doesn't re-layout when the list's
+  // content changes.
+  const paintMarkedRef = useRef(false);
+  useEffect(() => {
+    if (paintMarkedRef.current || papers.length === 0) return;
+    paintMarkedRef.current = true;
+    perfMark('list:browse:paint', { rows: papers.length });
+  }, [papers]);
 
   const handleRefresh = useCallback(() => {
     haptics.light();

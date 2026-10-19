@@ -22,6 +22,7 @@ import { FacultyTabsParamList, FacultyTabNavigationProp } from '../../navigation
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { motion, type Theme } from '../../theme';
 import { listEpochKey } from '../../utils/listEpochKey';
+import { perfMark, perfSpan, perfStart } from '../../utils/perfLog';
 
 export const FacultyReviewScreen = () => {
   const navigation = useNavigation<FacultyTabNavigationProp>();
@@ -66,18 +67,27 @@ export const FacultyReviewScreen = () => {
       try {
         if (pageNum === 0) {
           setError(null);
-          if (!refreshing && !papersRef.current) setPapers(null); // Show skeleton only if no existing papers
+          // Cold vs warm for the [perf] log: only the first load resets the
+          // shared clock so the span below reads as time-since-tab-open.
+          if (!papersRef.current) {
+            setPapers(null); // Show skeleton only if no existing papers
+            perfStart('list:queue');
+          }
         } else {
           setLoadingMore(true);
         }
 
         const limit = 20;
-        const data = await facultyApi.getReviewQueue(pageNum, limit, currentFilter, currentSearch, {
-          forceRefresh: refreshing,
-        });
+        const rowsSpan = perfSpan(`list:queue:rows:p${pageNum}`);
+        const data = await facultyApi
+          .getReviewQueue(pageNum, limit, currentFilter, currentSearch, {
+            forceRefresh: refreshing,
+          })
+          .finally(rowsSpan);
 
         if (pageNum === 0) {
           setPapers(data);
+          perfMark('list:queue:rows-settled', { rows: data.length, filter: currentFilter });
         } else {
           setPapers((prev) => (prev ? [...prev, ...data] : data));
         }
@@ -127,9 +137,16 @@ export const FacultyReviewScreen = () => {
   // instead of rows cascading in one-by-one over the stagger delays.
   const [firstPaintDone, setFirstPaintDone] = useState(false);
   const paintOpacity = useRef(new Animated.Value(0)).current;
+  const paintMarkedRef = useRef(false);
   const handleListLayout = useCallback(() => {
     if (firstPaintDone) return;
     setFirstPaintDone(true);
+    // Mount→first-list-layout for the [perf] log. Only meaningful next to a
+    // `list:queue` clock-reset line (warm switches don't reset the clock).
+    if (!paintMarkedRef.current) {
+      paintMarkedRef.current = true;
+      perfMark('list:queue:paint');
+    }
     Animated.timing(paintOpacity, {
       toValue: 1,
       duration: motion.duration.base,

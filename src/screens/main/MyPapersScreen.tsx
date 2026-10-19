@@ -22,6 +22,7 @@ import {
   resolveCategoryName,
 } from '../../utils/category';
 import { listEpochKey } from '../../utils/listEpochKey';
+import { perfMark, perfSpan, perfStart } from '../../utils/perfLog';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { motion, type Theme } from '../../theme';
 import { StandardPaperCard } from '../../components/StandardPaperCard';
@@ -89,20 +90,31 @@ export const MyPapersScreen = () => {
         setRefreshing(true);
       } else {
         setLoading(true);
+        // Cold load only: reset the shared clock so the spans below read as
+        // time-since-tap. Warm refreshes don't reset it — they'd skew the
+        // cold-start marks another screen may be writing.
+        perfStart('list:papers');
       }
 
+      const papersSpan = perfSpan('list:papers:rows');
+      const categoriesSpan = perfSpan('list:papers:categories');
+
       const [papersResult, categoriesResult] = await Promise.allSettled([
-        researchApi.getMyPapers({
-          ...(force ? { forceRefresh: true } : {}),
-          onUpdate: (data) => {
-            hasDataRef.current = true;
-            setPapers(data);
-          },
-        }),
-        researchApi.getCategories({
-          ...(force ? { forceRefresh: true } : {}),
-          onUpdate: (data) => setCategories(data),
-        }),
+        researchApi
+          .getMyPapers({
+            ...(force ? { forceRefresh: true } : {}),
+            onUpdate: (data) => {
+              hasDataRef.current = true;
+              setPapers(data);
+            },
+          })
+          .finally(papersSpan),
+        researchApi
+          .getCategories({
+            ...(force ? { forceRefresh: true } : {}),
+            onUpdate: (data) => setCategories(data),
+          })
+          .finally(categoriesSpan),
       ]);
 
       if (papersResult.status === 'fulfilled') {
@@ -117,6 +129,11 @@ export const MyPapersScreen = () => {
       if (categoriesResult.status === 'fulfilled') {
         setCategories(categoriesResult.value);
       }
+
+      perfMark('list:papers:rows-settled', {
+        rows: papersResult.status === 'fulfilled' ? papersResult.value.length : null,
+        ok: papersResult.status === 'fulfilled',
+      });
 
       setLoading(false);
       setRefreshing(false);
@@ -224,9 +241,17 @@ export const MyPapersScreen = () => {
   // instead of rows cascading in one-by-one over the stagger delays.
   const [firstPaintDone, setFirstPaintDone] = useState(false);
   const paintOpacity = useRef(new Animated.Value(0)).current;
+  const paintMarkedRef = useRef(false);
   const handleListLayout = useCallback(() => {
     if (firstPaintDone) return;
     setFirstPaintDone(true);
+    // Marks mount→first-list-layout for the cold path. Warm tab switches
+    // don't reset the clock, so only read this next to a `list:papers`
+    // clock-reset line in the log.
+    if (!paintMarkedRef.current) {
+      paintMarkedRef.current = true;
+      perfMark('list:papers:paint');
+    }
     Animated.timing(paintOpacity, {
       toValue: 1,
       duration: motion.duration.base,

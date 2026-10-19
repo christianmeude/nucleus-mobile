@@ -38,3 +38,19 @@ export function perfMark(stage: string, details?: Record<string, unknown>): void
     ...details,
   });
 }
+
+/**
+ * Starts a standalone stopwatch and returns a function that logs its elapsed
+ * milliseconds. Unlike `perfStart()`/`perfMark()`, a span does not touch the
+ * shared clock — so the concurrent network legs of one list load (rows,
+ * categories, filter lookups) each report their own duration instead of
+ * clobbering each other's origin.
+ */
+export function perfSpan(stage: string): () => void {
+  if (!__DEV__) return () => {};
+  const origin = now();
+  console.log(`[perf] ${stage} (span started)`);
+  return () => {
+    console.log(`[perf] ${stage}`, { spanMs: Math.round(now() - origin) });
+  };
+}

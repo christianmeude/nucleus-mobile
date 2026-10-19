@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useEffect, useState } from 'react';
+import { useCallback, useMemo, useEffect, useRef, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
@@ -23,6 +23,7 @@ import { StandardPaperCard } from '../../components/StandardPaperCard';
 import { NotificationCard } from '../../components/NotificationCard';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
 import { REVISE_REQUIRED_STATUSES, ACTIVE_STATUSES } from '../../components/PaperStatusChip';
+import { perfMark, perfSpan, perfStart } from '../../utils/perfLog';
 
 const ASSEMBLE = { distance: 30, duration: 460, fromScale: 0.94 };
 const ASSEMBLE_STAGGER = 100;
@@ -41,22 +42,41 @@ export const DashboardScreen = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  // True once any load has settled — distinguishes cold from warm for the
+  // [perf] marks (see loadData) without depending on `papers` state.
+  const hasLoadedRef = useRef(false);
 
   const loadData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
 
+    // Cold vs warm for the [perf] log: only the first load resets the shared
+    // clock, so the spans below read as time-since-tab-open on a cold start
+    // and don't skew another screen's marks on pull-to-refresh.
+    if (!hasLoadedRef.current) perfStart('list:dash');
+
+    const papersSpan = perfSpan('list:dash:papers');
+    const categoriesSpan = perfSpan('list:dash:categories');
+    const notificationsSpan = perfSpan('list:dash:notifications');
+
     // Cache-aware (no forceRefresh): SWR serves instantly when valid, or
     // stale + background revalidate — onUpdate paints fresh rows on arrival.
     const [papersResult, categoriesResult, notificationsResult] = await Promise.allSettled([
-      researchApi.getMyPapers({ onUpdate: (data) => setPapers(data) }),
-      researchApi.getCategories({ onUpdate: (data) => setCategories(data) }),
-      notificationsApi.getNotifications(5),
+      researchApi
+        .getMyPapers({ onUpdate: (data) => setPapers(data) })
+        .finally(papersSpan),
+      researchApi
+        .getCategories({ onUpdate: (data) => setCategories(data) })
+        .finally(categoriesSpan),
+      notificationsApi.getNotifications(5).finally(notificationsSpan),
     ]);
+
+    hasLoadedRef.current = true;
 
     if (papersResult.status === 'fulfilled') {
       setPapers(papersResult.value);
       setError('');
+      perfMark('list:dash:papers-settled', { rows: papersResult.value.length });
     } else {
       setError('Failed to load dashboard data.');
     }
@@ -71,6 +91,16 @@ export const DashboardScreen = () => {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // First paint proxy for the [perf] log: the dashboard is a ScrollView, so
+  // there's no list-layout hook — mark the moment the skeleton swaps for
+  // content (loading false after the first load).
+  const paintMarkedRef = useRef(false);
+  useEffect(() => {
+    if (loading || !hasLoadedRef.current || paintMarkedRef.current) return;
+    paintMarkedRef.current = true;
+    perfMark('list:dash:paint');
+  }, [loading]);
 
   const firstName = useMemo(() => {
     const fullName = user?.fullName?.trim();
