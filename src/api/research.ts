@@ -972,41 +972,67 @@ async function getSubmissionPolicy(): Promise<SubmissionPolicy> {
   }
 }
 
+/**
+ * Department / program lookups feed filter dropdowns. Both are cached through
+ * the SWR cache: they change rarely, and Browse was paying two uncached round
+ * trips (~500ms each in the [perf] baseline) on every mount and pull-to-refresh.
+ *
+ * The fetchers below throw on error so the SWR cache stores only successes —
+ * caching an empty list would pin a blank filter dropdown for the whole TTL.
+ * The throw is caught at the wrapper, preserving the "return [] on error, never
+ * throw" contract the screens and tests rely on.
+ */
+async function fetchDepartments(): Promise<DepartmentRow[]> {
+  const { data, error } = await supabase
+    .from('departments')
+    .select('id, name, code')
+    .order('name', { ascending: true });
+
+  if (error) {
+    throw new Error(error.message || 'Unable to load departments.');
+  }
+
+  return (Array.isArray(data) ? data : []) as DepartmentRow[];
+}
+
 async function getDepartments(): Promise<DepartmentRow[]> {
   try {
-    const { data, error } = await supabase
-      .from('departments')
-      .select('id, name, code')
-      .order('name', { ascending: true });
-
-    if (error) {
-      return [];
-    }
-
-    return (Array.isArray(data) ? data : []) as DepartmentRow[];
+    return await apiCache.fetchWithSWR('submit:departments', fetchDepartments, {
+      // Departments change on the order of years; a long TTL keeps them off
+      // the critical path of every Browse load.
+      ttl: 30 * 60 * 1000,
+    });
   } catch {
     return [];
   }
 }
 
+async function fetchPrograms(departmentId?: string | null): Promise<ProgramRow[]> {
+  let query = supabase
+    .from('programs')
+    .select('id, name, code, department_id')
+    .eq('is_active', true);
+
+  if (departmentId) {
+    query = query.eq('department_id', departmentId);
+  }
+
+  const { data, error } = await query.order('name', { ascending: true });
+
+  if (error) {
+    throw new Error(error.message || 'Unable to load programs.');
+  }
+
+  return (Array.isArray(data) ? data : []) as ProgramRow[];
+}
+
 async function getPrograms(departmentId?: string | null): Promise<ProgramRow[]> {
   try {
-    let query = supabase
-      .from('programs')
-      .select('id, name, code, department_id')
-      .eq('is_active', true);
-
-    if (departmentId) {
-      query = query.eq('department_id', departmentId);
-    }
-
-    const { data, error } = await query.order('name', { ascending: true });
-
-    if (error) {
-      return [];
-    }
-
-    return (Array.isArray(data) ? data : []) as ProgramRow[];
+    // Scoped per department: the submit form asks for one department's
+    // programs, Browse loads the full active list. Distinct cache entries.
+    return await apiCache.fetchWithSWR(`submit:programs:${departmentId || 'all'}`, () =>
+      fetchPrograms(departmentId),
+    );
   } catch {
     return [];
   }

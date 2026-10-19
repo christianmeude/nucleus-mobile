@@ -588,6 +588,27 @@ describe('submitApi.getDepartments', () => {
 
     await expect(submitApi.getDepartments()).resolves.toEqual([]);
   });
+
+  it('serves a repeat call from cache without re-querying', async () => {
+    const builder = createQueryBuilder(queryResult({ data: [{ id: 'd1', name: 'CCIS' }] }));
+    mockSupabase.from.mockReturnValue(builder);
+
+    await submitApi.getDepartments();
+    await submitApi.getDepartments();
+
+    // One query for both calls — the second is a cache hit.
+    expect(mockSupabase.from).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not cache a failure, so the next call retries', async () => {
+    const failing = createQueryBuilder(queryResult({ error: { message: 'boom' } }));
+    const succeeding = createQueryBuilder(queryResult({ data: [{ id: 'd1', name: 'CCIS' }] }));
+    mockSupabase.from.mockReturnValueOnce(failing).mockReturnValueOnce(succeeding);
+
+    await expect(submitApi.getDepartments()).resolves.toEqual([]);
+    // The error was not stored: this call must hit Supabase again and succeed.
+    await expect(submitApi.getDepartments()).resolves.toEqual([{ id: 'd1', name: 'CCIS' }]);
+  });
 });
 
 describe('submitApi.getPrograms', () => {

@@ -62,8 +62,20 @@ export const FacultyReviewScreen = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
+  /**
+   * @param opts.refresh Bypasses the SWR cache. Only pull-to-refresh should
+   * pass true. Deliberately a parameter rather than reading the `refreshing`
+   * state: depending on that state recreated `load` on every toggle, which
+   * re-fired the load effect below — so a single pull-to-refresh ran the query
+   * three times (visible in the [perf] baseline as three `rows:p0` spans).
+   */
   const load = useCallback(
-    async (pageNum = 0, currentFilter = filter, currentSearch = debouncedSearch) => {
+    async (
+      pageNum = 0,
+      currentFilter = filter,
+      currentSearch = debouncedSearch,
+      opts?: { refresh?: boolean },
+    ) => {
       try {
         if (pageNum === 0) {
           setError(null);
@@ -81,7 +93,7 @@ export const FacultyReviewScreen = () => {
         const rowsSpan = perfSpan(`list:queue:rows:p${pageNum}`);
         const data = await facultyApi
           .getReviewQueue(pageNum, limit, currentFilter, currentSearch, {
-            forceRefresh: refreshing,
+            forceRefresh: opts?.refresh === true,
           })
           .finally(rowsSpan);
 
@@ -100,7 +112,7 @@ export const FacultyReviewScreen = () => {
         setLoadingMore(false);
       }
     },
-    [refreshing, filter, debouncedSearch],
+    [filter, debouncedSearch],
   );
 
   // Load when filter or debounced search changes. The pending flag gives
@@ -128,8 +140,11 @@ export const FacultyReviewScreen = () => {
   const onRefresh = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setRefreshing(true);
-    await load(0, filter, debouncedSearch);
-    setRefreshing(false);
+    try {
+      await load(0, filter, debouncedSearch, { refresh: true });
+    } finally {
+      setRefreshing(false);
+    }
   }, [load, filter, debouncedSearch]);
 
   const loadMore = useCallback(() => {

@@ -134,12 +134,12 @@ class ApiCache {
 
     // 2. Stale cache hit: return stale immediately, revalidate in background
     if (!forceRefresh && entry) {
-      this.runBackgroundFetch(scoped, fetcher, onUpdate);
+      this.runBackgroundFetch(key, fetcher, onUpdate);
       return entry.data as T;
     }
 
     // 3. No cache or forceRefresh: fetch directly (deduplicating in-flight requests)
-    return this.runForegroundFetch(scoped, fetcher, onUpdate);
+    return this.runForegroundFetch(key, fetcher, onUpdate);
   }
 
   private async runForegroundFetch<T>(
@@ -147,7 +147,13 @@ class ApiCache {
     fetcher: () => Promise<T>,
     onUpdate?: (data: T) => void,
   ): Promise<T> {
-    const existing = this.inFlight.get(key);
+    // `key` is the caller's raw (unscoped) key. Scope once, here, for the
+    // in-flight map — `set()` scopes again for storage. Passing an already
+    // scoped key down (as this once did) double-scoped every write to
+    // `scope:scope:key`, so `fetchWithSWR` never found its own entries and
+    // every "warm" load was a full network round trip.
+    const scoped = this.scopedKey(key);
+    const existing = this.inFlight.get(scoped);
     if (existing) {
       const data = await existing;
       if (onUpdate) onUpdate(data);
@@ -157,16 +163,16 @@ class ApiCache {
     const promise = fetcher()
       .then((data) => {
         this.set(key, data);
-        this.inFlight.delete(key);
+        this.inFlight.delete(scoped);
         if (onUpdate) onUpdate(data);
         return data;
       })
       .catch((err) => {
-        this.inFlight.delete(key);
+        this.inFlight.delete(scoped);
         throw err;
       });
 
-    this.inFlight.set(key, promise);
+    this.inFlight.set(scoped, promise);
     return promise;
   }
 
@@ -175,21 +181,22 @@ class ApiCache {
     fetcher: () => Promise<T>,
     onUpdate?: (data: T) => void,
   ): void {
-    if (this.inFlight.has(key)) return;
+    const scoped = this.scopedKey(key);
+    if (this.inFlight.has(scoped)) return;
 
     const promise = fetcher()
       .then((data) => {
         this.set(key, data);
-        this.inFlight.delete(key);
+        this.inFlight.delete(scoped);
         if (onUpdate) onUpdate(data);
         return data;
       })
       .catch((err) => {
-        this.inFlight.delete(key);
+        this.inFlight.delete(scoped);
         console.warn(`[apiCache] Background revalidation failed for key "${key}":`, err);
       });
 
-    this.inFlight.set(key, promise);
+    this.inFlight.set(scoped, promise);
   }
 }
 

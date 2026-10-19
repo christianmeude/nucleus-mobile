@@ -78,45 +78,56 @@ export const BrowseScreen = () => {
 
   const { addRecent } = useRecentSearches();
 
-  const loadData = useCallback(
-    async (silent = false) => {
-      if (!silent && papers.length === 0) {
-        setLoading(true);
-        // Cold load only: reset the shared clock so the spans below read as
-        // time-since-tab-open. Warm refreshes leave the clock alone.
-        perfStart('list:browse');
-      } else {
-        setRefreshing(true);
-      }
+  // Refs, not state, for the load-mode checks inside `loadData`: depending on
+  // `papers.length` recreated `loadData` the moment the first page painted,
+  // re-firing its effect and running the whole 4-source load twice (visible in
+  // the [perf] baseline as a second set of spans settling ~1.1s after the
+  // first). `hasRowsRef` only answers "is this the first load?".
+  const hasRowsRef = useRef(false);
 
-      const papersSpan = perfSpan('list:browse:papers');
-      const categoriesSpan = perfSpan('list:browse:categories');
-      const departmentsSpan = perfSpan('list:browse:departments');
-      const programsSpan = perfSpan('list:browse:programs');
+  /**
+   * @param refresh Bypasses the SWR cache and refetches. Only pull-to-refresh
+   * should pass true; the mount load and tab re-entries go through the cache.
+   */
+  const loadData = useCallback(async (refresh = false) => {
+    if (!refresh && !hasRowsRef.current) {
+      setLoading(true);
+      // First load only: reset the shared clock so the spans below read as
+      // time-since-tab-open. Warm refreshes leave the clock alone.
+      perfStart('list:browse');
+    } else {
+      setRefreshing(true);
+    }
 
-      try {
-        const [publishedRows, categoryRows, departmentRows, programRows] = await Promise.all([
-          researchApi.getPublishedPapers(undefined, { forceRefresh: silent }).finally(papersSpan),
-          researchApi.getCategories({ forceRefresh: silent }).finally(categoriesSpan),
-          submitApi.getDepartments().finally(departmentsSpan),
-          submitApi.getPrograms().finally(programsSpan),
-        ]);
+    const papersSpan = perfSpan('list:browse:papers');
+    const categoriesSpan = perfSpan('list:browse:categories');
+    const departmentsSpan = perfSpan('list:browse:departments');
+    const programsSpan = perfSpan('list:browse:programs');
 
-        setPapers(publishedRows);
-        setCategories(categoryRows);
-        setDepartments(departmentRows);
-        setPrograms(programRows);
-        setError('');
-        perfMark('list:browse:rows-settled', { rows: publishedRows.length });
-      } catch (_error) {
-        setError('Unable to load published papers.');
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    },
-    [papers.length],
-  );
+    try {
+      const [publishedRows, categoryRows, departmentRows, programRows] = await Promise.all([
+        researchApi.getPublishedPapers(undefined, { forceRefresh: refresh }).finally(papersSpan),
+        researchApi.getCategories({ forceRefresh: refresh }).finally(categoriesSpan),
+        submitApi.getDepartments().finally(departmentsSpan),
+        submitApi.getPrograms().finally(programsSpan),
+      ]);
+
+      hasRowsRef.current = true;
+      // Paint immediately; the previous rows stay on screen through a refresh
+      // instead of being replaced by skeletons.
+      setPapers(publishedRows);
+      setCategories(categoryRows);
+      setDepartments(departmentRows);
+      setPrograms(programRows);
+      setError('');
+      perfMark('list:browse:rows-settled', { rows: publishedRows.length });
+    } catch (_error) {
+      setError('Unable to load published papers.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadData();

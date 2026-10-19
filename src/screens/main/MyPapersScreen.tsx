@@ -141,12 +141,12 @@ export const MyPapersScreen = () => {
     [],
   );
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
   // Refetch-on-return without nuking the list: serves cache instantly and
   // revalidates in the background (onUpdate paints fresh rows when ready).
+  // This is also the mount load — `useFocusEffect` fires on first focus — so
+  // there is deliberately no `useEffect(loadData)` alongside it. A separate
+  // mount effect double-invoked `loadData` on every cold start (visible in the
+  // [perf] baseline as two clock-resets and every span logged twice).
   useFocusEffect(
     useCallback(() => {
       loadData();
