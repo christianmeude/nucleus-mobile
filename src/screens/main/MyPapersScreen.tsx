@@ -86,9 +86,15 @@ export const MyPapersScreen = () => {
       // Cache-aware: without `refresh` the SWR cache serves instantly when
       // valid (or stale + background revalidate via onUpdate). `refresh`
       // bypasses cache — pull-to-refresh and post-mutate only.
-      if (hasDataRef.current) {
+      //
+      // The spinner belongs to an explicit pull-to-refresh, never to a
+      // focus re-entry: this screen refetches on every focus, and flashing
+      // the RefreshControl each time (even when the cache answers in
+      // milliseconds) reads as "refreshing" spam. A focus load with rows
+      // already on screen is silent; only a cold load shows skeletons.
+      if (force) {
         setRefreshing(true);
-      } else {
+      } else if (!hasDataRef.current) {
         setLoading(true);
         // Cold load only: reset the shared clock so the spans below read as
         // time-since-tap. Warm refreshes don't reset it — they'd skew the
