@@ -161,6 +161,55 @@ const PAPER_SELECT = `
   )
 `;
 
+/**
+ * List-row select: what the card surfaces actually render (title, status,
+ * meta line, the Request-Publication button state), plus the filter columns
+ * Browse applies client-side.
+ *
+ * Deliberately omits what list rows never show:
+ * - `abstract` — full text per row, the single largest column. My Papers'
+ *   local search matches title/keywords/author instead (Browse search goes
+ *   through the server-side hybrid path, which re-fetches by id).
+ * - `structured_authors` and its nested `users` join — a per-row second
+ *   query over research_authors plus a join back into users. The primary
+ *   author comes from the single `author:users` join below, which is all the
+ *   cards render.
+ * - `rejection_reason`, `revision_notes`, `publish_requested_by` — detail
+ *   screen only.
+ *
+ * The detail path (`PAPER_DETAIL_SELECT`, and `getResearchById`'s
+ * `withWorkflow: false` Browse variant) keeps the full shape untouched.
+ */
+const PAPER_LIST_SELECT = `
+  id,
+  title,
+  status,
+  category,
+  keywords,
+  created_at,
+  updated_at,
+  submission_date,
+  published_date,
+  file_url,
+  view_count,
+  doi,
+  publish_requested_at,
+  author_id,
+  department,
+  department_id,
+  program_id,
+  program:programs!research_papers_program_id_fkey(
+    id,
+    name,
+    code
+  ),
+  author:users!research_papers_author_id_fkey(
+    first_name,
+    middle_name,
+    last_name
+  )
+`;
+
 const PAPER_DETAIL_SELECT = `
   ${PAPER_SELECT},
   approval_workflow:approval_workflow!approval_workflow_research_id_fkey(
@@ -341,9 +390,11 @@ function filterPublishedRows(rows: ResearchPaperRow[], params?: ResearchListPara
     }
 
     if (normalizedSearch) {
+      // List callers pass PAPER_LIST_SELECT, which carries no abstract —
+      // match title, keywords, and author name (which every row has).
       const keywords = Array.isArray(paper.keywords) ? paper.keywords.join(' ') : '';
       const authorName = getPrimaryAuthorName(paperRecord);
-      const target = `${paper.title} ${paper.abstract} ${keywords} ${authorName}`.toLowerCase();
+      const target = `${paper.title} ${keywords} ${authorName}`.toLowerCase();
       if (!target.includes(normalizedSearch)) {
         return false;
       }
@@ -576,7 +627,7 @@ export const researchApi = {
     return apiCache.fetchWithSWR(
       'research:myPapers',
       async () => {
-        const rows = await loadResearchRows(PAPER_SELECT);
+        const rows = await loadResearchRows(PAPER_LIST_SELECT);
         return rows.map(toResearchPaper).sort((left, right) => {
           const leftDate = new Date(paperDate(left) || 0).getTime();
           const rightDate = new Date(paperDate(right) || 0).getTime();
@@ -602,7 +653,7 @@ export const researchApi = {
 
         const { data, error } = await supabase
           .from('research_papers')
-          .select(PAPER_SELECT)
+          .select(PAPER_LIST_SELECT)
           .in('status', Array.from(PUBLISHED_STATUSES));
 
         if (error) {
@@ -656,7 +707,7 @@ export const researchApi = {
 
     const { data: rows, error: rowsError } = await supabase
       .from('research_papers')
-      .select(PAPER_SELECT)
+      .select(PAPER_LIST_SELECT)
       .in('id', ids)
       .in('status', Array.from(PUBLISHED_STATUSES));
 

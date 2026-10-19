@@ -240,9 +240,10 @@ export const BrowseScreen = () => {
       if (!flags.hybridSearch) {
         const normalized = query.trim().toLowerCase();
         if (normalized) {
+          // No abstract on list rows (PAPER_LIST_SELECT) — match title/keywords/author.
           const keywords = Array.isArray(paper.keywords) ? paper.keywords.join(' ') : '';
           const authorName = getPrimaryAuthorName(paper);
-          const target = `${paper.title} ${paper.abstract} ${keywords} ${authorName}`.toLowerCase();
+          const target = `${paper.title} ${keywords} ${authorName}`.toLowerCase();
           if (!target.includes(normalized)) return false;
         }
       }

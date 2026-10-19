@@ -103,6 +103,23 @@ describe('researchApi.getMyPapers', () => {
     expect(mockSupabase.from).toHaveBeenCalledTimes(3); // users, research_papers, research_authors
   });
 
+  it('uses the lean list select: no abstract, no structured_authors join', async () => {
+    queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
+    const primaryBuilder = createQueryBuilder(queryResult({ data: [row({ id: 'p1' })] }));
+    mockSupabase.from
+      .mockReturnValueOnce(primaryBuilder)
+      .mockReturnValueOnce(createQueryBuilder(queryResult({ data: [] })));
+
+    await researchApi.getMyPapers();
+
+    const select = primaryBuilder.select.mock.calls[0][0] as string;
+    expect(select).not.toContain('abstract');
+    expect(select).not.toContain('structured_authors');
+    // The card meta line still needs the primary author and the program name.
+    expect(select).toContain('author:users!research_papers_author_id_fkey');
+    expect(select).toContain('program:programs!research_papers_program_id_fkey');
+  });
+
   it('propagates a Supabase error from the primary papers query', async () => {
     queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
     mockSupabase.from.mockReturnValueOnce(
@@ -329,6 +346,18 @@ describe('researchApi.getResearchById', () => {
 
     expect(builder.select.mock.calls[0][0] as string).not.toContain('approval_workflow');
     expect(result.workflowHistory).toEqual([]);
+  });
+
+  it('uses the full detail select (abstract + structured_authors) for the reader', async () => {
+    queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
+    const builder = createQueryBuilder(queryResult({ data: row() }));
+    mockSupabase.from.mockReturnValueOnce(builder);
+
+    await researchApi.getResearchById('p1');
+
+    const select = builder.select.mock.calls[0][0] as string;
+    expect(select).toContain('abstract');
+    expect(select).toContain('structured_authors');
   });
 
   it('throws when the paper does not exist', async () => {

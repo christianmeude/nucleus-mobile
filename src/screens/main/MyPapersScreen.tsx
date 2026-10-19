@@ -21,6 +21,7 @@ import {
   resolveCategoryColor,
   resolveCategoryName,
 } from '../../utils/category';
+import { getPrimaryAuthorName } from '../../utils/format';
 import { listEpochKey } from '../../utils/listEpochKey';
 import { perfMark, perfSpan, perfStart } from '../../utils/perfLog';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
@@ -169,8 +170,10 @@ export const MyPapersScreen = () => {
       .filter((paper) => isFilterMatch(paper.status, activeFilter))
       .filter((paper) => {
         if (!normalized) return true;
+        // List rows carry no abstract (see PAPER_LIST_SELECT) — search
+        // matches title, keywords, and author name instead.
         const keywords = Array.isArray(paper.keywords) ? paper.keywords.join(' ') : '';
-        const target = `${paper.title} ${paper.abstract} ${keywords}`.toLowerCase();
+        const target = `${paper.title} ${keywords} ${getPrimaryAuthorName(paper)}`.toLowerCase();
         return target.includes(normalized);
       })
       .sort((left, right) => {
@@ -325,7 +328,7 @@ export const MyPapersScreen = () => {
                 onChangeText={setQuery}
                 placeholder="Search your papers"
                 accessibilityLabel="Search your papers"
-                accessibilityHint="Filters your papers by title, abstract, or keywords"
+                accessibilityHint="Filters your papers by title, author, or keyword"
               />
             </View>
 
