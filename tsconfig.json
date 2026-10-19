@@ -3,5 +3,17 @@
   "compilerOptions": {
     "strict": true
   },
-  "exclude": ["node_modules", "supabase"]
+  // NOTE: a local `exclude` REPLACES the one inherited from `expo/tsconfig.base`
+  // (arrays don't merge across `extends`), so the base's `android`/`ios` entries
+  // must be repeated here or they get typechecked. `dist` is a build output —
+  // with `allowJs` on, a stray `dist/_expo/.../web/index-*.js` export is an
+  // unminifiable single-file bundle that overflows the checker's stack
+  // ("Maximum call stack size exceeded"), breaking `npm run typecheck`.
+  "exclude": [
+    "node_modules",
+    "supabase",
+    "dist",
+    "android",
+    "ios"
+  ]
 }
