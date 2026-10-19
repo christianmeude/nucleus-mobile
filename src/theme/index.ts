@@ -10,7 +10,7 @@
  * consumer still doing `import { theme } from '../theme'` keeps compiling and
  * renders light until it migrates to `useTheme()` / `useThemedStyles()`.
  */
-import { palette, schemes, platformColors, type SchemeName } from './colors';
+import { palette, schemes, type SchemeName } from './colors';
 import { families, fontWeightToKey, typography } from './typography';
 import { spacing } from './spacing';
 import { shadows } from './shadows';
@@ -20,7 +20,6 @@ import { gradients } from './gradients';
 
 const buildTheme = (scheme: SchemeName) => ({
   colors: schemes[scheme],
-  platformColors,
   palette,
   typography,
   fontFamilies: families,
@@ -43,7 +42,7 @@ export const theme = themes.light;
 
 export type Theme = typeof themes.light;
 
-export { colors, palette, schemes, platformColors } from './colors';
+export { colors, palette, schemes } from './colors';
 export type { Colors, Palette, SchemeName } from './colors';
 export { families as fontFamilies, fontWeightToKey as fontWeights, typography } from './typography';
 export type { FontFamilyKey, FontWeightKey, TypographyKey, TypographyScale } from './typography';
