@@ -18,6 +18,7 @@ import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { forwardRef, useImperativeHandle } from 'react';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
+import { perfMark } from '../utils/perfLog';
 import { Button, InlineNotice } from './ui';
 
 // Shared, read-only PDF viewer used by both the student ResearchDetail and the faculty review
@@ -59,7 +60,9 @@ export interface PdfViewerRef {
 }
 
 /** Self-contained HTML that pulls pdf.js from a CDN and renders the signed URL to canvases.
- * `firstPageOnly` renders just page 1 with no scroll — used for the tap-to-open preview. */
+ * Pages are rasterised lazily as they approach the viewport (older engines fall back to
+ * rendering everything up front). `firstPageOnly` renders just page 1 with no scroll — used
+ * for the tap-to-open preview. */
 const buildViewerHtml = (
   uri: string,
   themeColors: {
@@ -73,23 +76,38 @@ const buildViewerHtml = (
   watermarkText = 'NU DASMARIÑAS',
 ): string => {
   const encodedWatermark = encodeURIComponent(watermarkText);
+  // Warm the connections the reader is about to need: the pdf.js CDN and the
+  // storage origin serving the PDF itself. On a phone hotspot the DNS + TCP +
+  // TLS handshake for the document fetch is otherwise paid in series, right in
+  // the middle of "opening the paper".
+  const pdfOriginMatch = /^(https?:\/\/[^/]+)/i.exec(uri);
+  const pdfOrigin = pdfOriginMatch ? pdfOriginMatch[1] : '';
   return `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=4, user-scalable=yes" />
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+${pdfOrigin ? `<link rel="preconnect" href="${pdfOrigin}" crossorigin />` : ''}
 <style>
   html, body { margin: 0; padding: 0; background: ${themeColors.background}; ${firstPageOnly ? 'overflow: hidden;' : ''} }
   #container { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: ${firstPageOnly ? '0' : '8px'}; position: relative; }
   .page-wrapper::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background-repeat: repeat; background-size: 200px 200px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Ctext x='50%25' y='50%25' font-size='28' font-weight='bold' fill='%23000000' fill-opacity='0.08' text-anchor='middle' dominant-baseline='middle' transform='rotate(-45 100 100)'%3E${encodedWatermark}%3C/text%3E%3C/svg%3E"); }
-  .page-wrapper { position: relative; width: 100%; }
-  canvas { width: 100%; height: auto; background: ${themeColors.canvas}; box-shadow: 0 1px 4px ${themeColors.shadow}; display: block; position: relative; z-index: 0; }
+  .page-wrapper { position: relative; width: 100%; background: ${themeColors.canvas}; box-shadow: 0 1px 4px ${themeColors.shadow}; }
+  canvas { width: 100%; height: auto; display: block; position: relative; z-index: 0; }
   .ann-overlay { position: absolute; pointer-events: none; display: none; z-index: 2; }
   .ann-pin { border-radius: 50%; border: 2px solid rgba(255,255,255,0.85); width: 16px; height: 16px; transform: translate(-50%,-50%); }
 </style>
 </head>
 <body>
 <div id="container"></div>
+<script>
+// Kick off the 1MB worker download *now*, in parallel with the pdf.js library
+// below. Both used to be paid in series — the worker only started once the
+// library had parsed, so the two downloads never overlapped.
+window.__pdfWorkerPromise = fetch('https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.js')
+  .then(function (r) { return r.text(); });
+</script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.min.js"></script>
 <script>
 (function () {
@@ -231,46 +249,108 @@ const buildViewerHtml = (
     var pdfjsLib = window.pdfjsLib;
     if (!pdfjsLib) { fail('pdf.js failed to load'); return; }
     // Browsers block cross-origin Workers, so fetch the worker source (CDN sends CORS *) and run
-    // it as a same-origin Blob URL.
-    fetch('https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.js')
-      .then(function (r) { return r.text(); })
+    // it as a same-origin Blob URL. The download was started in parallel with this
+    // library by the inline script above.
+    window.__pdfWorkerPromise
+      .catch(function () {
+        // Prefetch failed (offline blip, blocked); retry in series rather than
+        // failing the whole document.
+        return fetch('https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.js')
+          .then(function (r) { return r.text(); });
+      })
       .then(function (src) {
         var blob = new Blob([src], { type: 'text/javascript' });
         pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
         return pdfjsLib.getDocument({ url: url }).promise;
       })
       .then(function (pdf) {
-        var container = document.getElementById('container');
         var dpr = Math.min(window.devicePixelRatio || 1, 2);
         var width = container.clientWidth || window.innerWidth;
+        var total = ${firstPageOnly ? 1 : 'pdf.numPages'};
+        var lazy = ${firstPageOnly ? 'false' : 'true'};
         var firstDone = false;
-        var chain = Promise.resolve();
-        var lastPage = ${firstPageOnly ? 1 : 'pdf.numPages'};
-        for (var i = 1; i <= lastPage; i++) {
-          (function (pageNum) {
-            chain = chain.then(function () {
-              return pdf.getPage(pageNum).then(function (page) {
-                var unscaled = page.getViewport({ scale: 1 });
-                var viewport = page.getViewport({ scale: (width / unscaled.width) * dpr });
-                var wrapper = document.createElement('div');
-                wrapper.className = 'page-wrapper';
-                var canvas = document.createElement('canvas');
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
-                wrapper.appendChild(canvas);
-                container.appendChild(wrapper);
-                return page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise
-                  .then(function () {
-                    if (!firstDone) { firstDone = true; post({ type: 'loaded', pages: pdf.numPages }); }
-                  })
-                  .then(function () {
-                    post({ type: 'pageReady', pageNumber: pageNum, pages: pdf.numPages });
-                  });
+        var wrappers = [];
+
+        var markFirst = function () {
+          if (firstDone) return;
+          firstDone = true;
+          post({ type: 'loaded', pages: pdf.numPages });
+        };
+
+        // Render one page into the placeholder reserved for it. Guarded so a page
+        // is rasterised at most once; re-armed if its render fails.
+        var renderPage = function (pageNum) {
+          var wrapper = wrappers[pageNum - 1];
+          if (!wrapper || wrapper.getAttribute('data-rendered') === '1') return Promise.resolve();
+          wrapper.setAttribute('data-rendered', '1');
+          return pdf.getPage(pageNum).then(function (page) {
+            var unscaled = page.getViewport({ scale: 1 });
+            var viewport = page.getViewport({ scale: (width / unscaled.width) * dpr });
+            // Reserve the exact box this page needs BEFORE rasterising, so the
+            // page size is right even if the document mixes page sizes.
+            wrapper.style.height = (width * (unscaled.height / unscaled.width)) + 'px';
+            var canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            canvas.style.display = 'block';
+            wrapper.appendChild(canvas);
+            return page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise
+              .then(function () {
+                markFirst();
+                post({ type: 'pageReady', pageNumber: pageNum, pages: pdf.numPages });
               });
-            });
-          })(i);
-        }
-        return chain;
+          }).catch(function (e) {
+            wrapper.setAttribute('data-rendered', '0');
+            fail(e);
+          });
+        };
+
+        // Reserve every page's box up front from page 1's aspect ratio, then let
+        // the observer below decide what to actually rasterise.
+        //
+        // This replaces an eager loop that rendered every page on open. For a long
+        // paper that meant dozens of canvases at up to 2x DPR, all paid for before
+        // the reader had scrolled past page 1 — saturating the WebView thread and
+        // holding the whole document's worth of bitmap memory for the session.
+        return pdf.getPage(1).then(function (firstPage) {
+          var firstViewport = firstPage.getViewport({ scale: 1 });
+          var placeholderHeight = width * (firstViewport.height / firstViewport.width);
+
+          for (var i = 1; i <= total; i++) {
+            var wrapper = document.createElement('div');
+            wrapper.className = 'page-wrapper';
+            wrapper.setAttribute('data-page', String(i));
+            wrapper.style.height = placeholderHeight + 'px';
+            container.appendChild(wrapper);
+            wrappers.push(wrapper);
+          }
+
+          if (lazy && typeof IntersectionObserver === 'function') {
+            // Rasterise a page only once it comes near the viewport, with a
+            // generous margin so scrolling stays ahead of rendering.
+            var observer = new IntersectionObserver(function (entries) {
+              entries.forEach(function (entry) {
+                if (!entry.isIntersecting) return;
+                observer.unobserve(entry.target);
+                renderPage(parseInt(entry.target.getAttribute('data-page'), 10));
+              });
+            }, { root: null, rootMargin: '150% 0px 150% 0px', threshold: 0 });
+            wrappers.forEach(function (item) { observer.observe(item); });
+            return;
+          }
+
+          // Single-page preview, or an engine without IntersectionObserver:
+          // render straight through, oldest behaviour.
+          var chain = Promise.resolve();
+          for (var j = 1; j <= total; j++) {
+            (function (pageNum) {
+              chain = chain.then(function () { return renderPage(pageNum); });
+            })(j);
+          }
+          return chain;
+        });
       })
       .catch(fail);
   } catch (e) { fail(e); }
@@ -327,6 +407,14 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
     // Bumps every time another page finishes rendering, so overlays for later
     // pages are (re)built once their wrappers exist.
     const [renderedPages, setRenderedPages] = useState(0);
+
+    // Timing spine for the reader: `mounted` is the WebView being created,
+    // `loaded` is pdf.js reporting page 1 on screen. The gap between them is the
+    // CDN + document download the reader actually waits on.
+    useEffect(() => {
+      perfMark('viewer:mounted', { firstPageOnly });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     useImperativeHandle(ref, () => ({
       jumpToPage: (pageNumber: number) => {
@@ -388,6 +476,7 @@ const PdfSurface = forwardRef<PdfViewerRef, PdfSurfaceProps>(
       }
       if (payload.type === 'loaded') {
         console.log('[PdfViewer] rendered', payload);
+        perfMark('viewer:loaded', { pages: payload.pages, firstPageOnly });
         setLoaded(true);
         if (!firedFirstLoad.current) {
           firedFirstLoad.current = true;
@@ -631,10 +720,7 @@ export const PdfViewer = forwardRef<PdfViewerRef, PdfViewerProps>(
             onPress={() => setShowAnnotations((prev) => !prev)}
             accessibilityRole="button"
             accessibilityLabel={overlaysVisible ? 'Hide annotations' : 'Show annotations'}
-            style={[
-              styles.controlButton,
-              overlaysVisible ? styles.controlButtonActive : null,
-            ]}
+            style={[styles.controlButton, overlaysVisible ? styles.controlButtonActive : null]}
           >
             <Icon
               icon={overlaysVisible ? EyeOff : Eye}
