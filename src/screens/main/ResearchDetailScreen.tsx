@@ -339,6 +339,7 @@ export const ResearchDetailScreen = () => {
     >
       <SheetPresenter
         open={!!publishTarget}
+        size="content"
         onClose={() => {
           setPublishTarget(null);
           setDoiInput('');

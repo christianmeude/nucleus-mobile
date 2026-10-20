@@ -276,6 +276,7 @@ export const MyPapersScreen = () => {
   return (
     <SheetPresenter
       open={!!publishTarget}
+      size="content"
       onClose={() => {
         setPublishTarget(null);
         setDoiInput('');
