@@ -1,6 +1,6 @@
 # List Loading Performance — Papers, Review Queue, Browse
 
-Status: **Phases 0–4 DONE** (Phase 4 not device-verified yet). Phase 5 next.
+Status: **Phases 0–4.5 DONE** (4.5 not device-verified yet). Phase 5 next.
 Started 2026-10-19. Continues the reader perf work in ADR 0005/0006.
 
 Goal: time-to-first-row on the three list surfaces. Reader path is done —
@@ -14,11 +14,12 @@ do not reopen it.
 | 1 — Instrument the lists | Done | `0a6e990` `b473b55` |
 | 2 — Kill duplicate fetches | Done, device-verified | `95b44c7` `61c14e3` |
 | 3 — Lean list select | Done, partly measured (see Baselines) | `cbe9bf5` |
-| 4 — Disk persistence (ADR 0007) | Done, **not device-verified** | `8566147` |
+| 4 — Disk persistence (ADR 0007) | Done, device-verified | `8566147` |
+| 4.5 — Dashboard paint gate + profile seed | Done, **not device-verified** | `1b9d894` `f3e7648` |
 | 5 — Browse server filtering | Next | — |
 | 6 — Faculty head-count queries | Last | — |
 
-Gates each phase: `npx jest` (now 17 suites / 196 tests), `eslint src`
+Gates each phase: `npx jest` (now 17 suites / 198 tests), `eslint src`
 (0 errors), `npx tsc --noEmit` (22 pre-existing jest-globals errors only).
 Never `prettier --write` on `ResearchDetailScreen.tsx`. Never push unless asked.
 
@@ -44,6 +45,16 @@ cold launch**, so treat as directional:
 - Owed still: visual check of Browse card author names and the My Papers
   Request-Publication button, plus one force-stopped cold launch.
 
+Phase 4 capture (2026-10-20, module reload = cold cache; snapshots written by
+the preceding session):
+
+- `cache:hydrate` **5 entries / 19 ms** — the write/read round trip works.
+- `dash:papers` **171 ms** (was 2895 ms in the same session with an empty
+  disk); `browse:papers` 577 ms (was 1079).
+- `papers-settled` / `paint` still landed at 1714 / 2781 ms because the
+  notifications leg (1705 ms) gated the whole body — fixed in Phase 4.5.
+- Browse card author names confirmed on-device.
+
 ## Deviations from the original plan
 
 - **`apiCache` double-scoping** (`95b44c7`) — not in the plan; the largest
@@ -63,6 +74,11 @@ cold launch**, so treat as directional:
   mid-flight.
 - **Phase 4 moved the persistence seam** from `persistentSwr.ts` into
   `ApiCache` + `apiCacheStorage.ts`; see the Phase 4 section for why.
+- **Phase 4.5 was added** (not in the original plan): the dashboard body was
+  gated on the notifications leg, so rows ready at 171 ms painted at 2781 ms.
+  Paint now gates on papers + categories. The same pass seeds the identity memo
+  from the profile `applyUser` already resolved, removing one `public.users`
+  lookup on cold start and the duplicate hydrate in the sign-in flow.
 
 ## Phase 4 — Disk persistence for list snapshots (ADR 0007)
 
@@ -102,6 +118,27 @@ process. AsyncStorage@2.2.0 is already a dependency.
 
 Commits: `feat(api): persist list snapshots to disk for instant cold start`
 + `docs(adr): record list snapshot persistence contract`.
+
+## Phase 4.5 — Dashboard paint gate + profile seeding
+
+Added 2026-10-20 after the Phase 4 capture, when rows arrived at 171 ms but the
+screen painted at 2781 ms.
+
+- `DashboardScreen.loadData` awaits **papers + categories only**. Notifications
+  run in parallel and fill Recent Activity when they land; they never hold the
+  body on skeletons. Pull-to-refresh ends with the rows too.
+  `list:dash:papers-settled` is emitted at the papers leg, so the mark reports
+  rows-ready rather than all-legs-settled.
+- `seedCurrentProfile(authUser, user)` feeds the profile `applyUser` already
+  resolved into `currentProfile`'s memo. Keyed by the **auth** session user
+  (id + email), not `public.users.id`. `applyUser` now hydrates and clears only
+  on an actual scope change, so the second apply in the sign-in flow cannot
+  re-read disk or drop the memo it just seeded.
+- Effect: one `public.users` lookup on cold start (was two), two on sign-in
+  (was three), one `cache:hydrate` line per identity change.
+
+Commits: `perf(auth): seed the identity memo from the resolved profile`
++ `perf(dash): stop gating the dashboard body on notifications`.
 
 ## Phase 5 — Browse server-side filtering + pagination
 
@@ -150,8 +187,9 @@ User verifies on a physical phone dev build. Ask for a `[perf]` excerpt:
 `Select-String -Path .expo\dev\logs\start.log -Pattern '\[perf\]' | ForEach-Object Line`
 — the raw log contains `EXPO_PUBLIC_SUPABASE_*`; never paste verbatim.
 
-Next capture owed: one **force-stopped cold launch** after Phase 4 — it settles
-both Phase 3's Dashboard leg and Phase 4's hydration (expect a `cache:hydrate`
-span and list rows before any paper fetch settles). Plus the Phase 3 visual
-check: Browse card author names, and the My Papers Request-Publication button
-on approved rows.
+Next capture owed: one cold launch after 4.5 — expect a **single**
+`cache:hydrate` line, `dash:paint` well under a second with Recent Activity
+arriving after paint, and one `fetchAppUserProfile` at startup instead of two.
+Still owed: the My Papers Request-Publication visual check on approved rows.
+Browse author names are confirmed; those two were the only surfaces the Phase 3
+lean select touched.
