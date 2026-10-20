@@ -57,8 +57,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // served to another. Applied before setUser so consumers never read stale data.
   // The memoized identity resolution and signed file URLs are dropped alongside it,
   // for the same reason: neither may outlive the session that authorized it.
-  const applyUser = (nextUser: User | null) => {
+  //
+  // Disk hydration is awaited here, before `setUser`, so the tab navigator's first
+  // mount already has the list snapshots in memory (rows instead of skeletons).
+  // The scope is `public.users.id`, so this cannot start before the profile
+  // lookup; `hydrateFromDisk` is bounded and non-throwing, so a stuck native
+  // store cannot trip the auth-bootstrap timeout below.
+  const applyUser = async (nextUser: User | null) => {
     apiCache.setUserScope(nextUser?.id ?? 'anon');
+    await apiCache.hydrateFromDisk(nextUser?.id ?? 'anon');
     clearCurrentProfileCache();
     clearSignedUrlCache();
     setUser(nextUser);
@@ -70,7 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const finishApply = async (session: Session | null) => {
       const nextUser = await loadProfileFromSession(session);
       if (cancelled) return;
-      applyUser(nextUser);
+      await applyUser(nextUser);
     };
 
     const bootstrap = async () => {
@@ -82,7 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Backend unreachable or unconfigured (e.g. release built without
         // EAS env vars): land on the logged-out state instead of crashing.
         console.warn('[auth] Session bootstrap failed:', error);
-        if (!cancelled) applyUser(null);
+        if (!cancelled) await applyUser(null);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -101,7 +108,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (!session) {
-        if (!cancelled) applyUser(null);
+        if (!cancelled) await applyUser(null);
         return;
       }
 
@@ -161,7 +168,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             error: errorMsg,
           };
         }
-        applyUser(profile);
+        await applyUser(profile);
         return { success: true };
       } catch (profileError) {
         await supabase.auth.signOut();
@@ -194,17 +201,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     await clearAuthTokens();
     await supabase.auth.signOut();
-    applyUser(null);
+    await applyUser(null);
   };
 
   const refreshCurrentUser = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const profile = await loadProfileFromSession(session);
-      applyUser(profile);
+      await applyUser(profile);
     } catch (_error) {
       await supabase.auth.signOut();
-      applyUser(null);
+      await applyUser(null);
     }
   };
 

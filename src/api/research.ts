@@ -634,7 +634,9 @@ export const researchApi = {
           return rightDate - leftDate;
         });
       },
-      options,
+      // Disk-backed: Dashboard and My Papers share this key, and the snapshot
+      // is what lets a killed process paint rows before the network answers.
+      { ...options, persist: true },
     );
   },
 
@@ -669,7 +671,7 @@ export const researchApi = {
             return rightDate - leftDate;
           });
       },
-      options,
+      { ...options, persist: true },
     );
   },
 
@@ -746,7 +748,7 @@ export const researchApi = {
 
         return (Array.isArray(data) ? data : []) as Category[];
       },
-      options,
+      { ...options, persist: true },
     );
   },
 
@@ -1052,6 +1054,7 @@ async function getDepartments(): Promise<DepartmentRow[]> {
       // Departments change on the order of years; a long TTL keeps them off
       // the critical path of every Browse load.
       ttl: 30 * 60 * 1000,
+      persist: true,
     });
   } catch {
     return [];
@@ -1081,8 +1084,10 @@ async function getPrograms(departmentId?: string | null): Promise<ProgramRow[]> 
   try {
     // Scoped per department: the submit form asks for one department's
     // programs, Browse loads the full active list. Distinct cache entries.
-    return await apiCache.fetchWithSWR(`submit:programs:${departmentId || 'all'}`, () =>
-      fetchPrograms(departmentId),
+    return await apiCache.fetchWithSWR(
+      `submit:programs:${departmentId || 'all'}`,
+      () => fetchPrograms(departmentId),
+      { persist: true },
     );
   } catch {
     return [];
