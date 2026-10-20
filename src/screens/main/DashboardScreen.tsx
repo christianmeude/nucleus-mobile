@@ -59,16 +59,27 @@ export const DashboardScreen = () => {
     const categoriesSpan = perfSpan('list:dash:categories');
     const notificationsSpan = perfSpan('list:dash:notifications');
 
+    // Notifications are the slowest leg (measured ~1.7 s) and never gate the
+    // body: rows paint as soon as papers + categories settle, and Recent
+    // Activity fills in whenever the feed arrives. Awaiting all three held the
+    // whole screen on skeletons — 2781 ms paint for rows ready at 171 ms.
+    const notificationsPromise = notificationsApi
+      .getNotifications(5)
+      .finally(notificationsSpan)
+      .then((items) => setNotifications(items))
+      .catch(() => {
+        /* the activity section is optional; leave it empty */
+      });
+
     // Cache-aware (no forceRefresh): SWR serves instantly when valid, or
     // stale + background revalidate — onUpdate paints fresh rows on arrival.
-    const [papersResult, categoriesResult, notificationsResult] = await Promise.allSettled([
+    const [papersResult, categoriesResult] = await Promise.allSettled([
       researchApi
         .getMyPapers({ onUpdate: (data) => setPapers(data) })
         .finally(papersSpan),
       researchApi
         .getCategories({ onUpdate: (data) => setCategories(data) })
         .finally(categoriesSpan),
-      notificationsApi.getNotifications(5).finally(notificationsSpan),
     ]);
 
     hasLoadedRef.current = true;
@@ -76,16 +87,22 @@ export const DashboardScreen = () => {
     if (papersResult.status === 'fulfilled') {
       setPapers(papersResult.value);
       setError('');
+      // Emitted at the papers leg, not after notifications — this mark is the
+      // rows-ready time the [perf] log compares across phases.
       perfMark('list:dash:papers-settled', { rows: papersResult.value.length });
     } else {
       setError('Failed to load dashboard data.');
     }
 
     if (categoriesResult.status === 'fulfilled') setCategories(categoriesResult.value);
-    if (notificationsResult.status === 'fulfilled') setNotifications(notificationsResult.value);
 
+    // Pull-to-refresh ends with the rows too; the feed updates in place.
     setLoading(false);
     setRefreshing(false);
+
+    // Keep the promise referenced so a pull-to-refresh that unmounts cannot
+    // leave a floating rejection; it is already caught above.
+    void notificationsPromise;
   }, []);
 
   useEffect(() => {
