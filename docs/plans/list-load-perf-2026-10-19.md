@@ -1,6 +1,6 @@
 # List Loading Performance — Papers, Review Queue, Browse
 
-Status: **Phases 0–3 DONE** (see §Status). Phase 4 next.
+Status: **Phases 0–4 DONE** (Phase 4 not device-verified yet). Phase 5 next.
 Started 2026-10-19. Continues the reader perf work in ADR 0005/0006.
 
 Goal: time-to-first-row on the three list surfaces. Reader path is done —
@@ -14,11 +14,11 @@ do not reopen it.
 | 1 — Instrument the lists | Done | `0a6e990` `b473b55` |
 | 2 — Kill duplicate fetches | Done, device-verified | `95b44c7` `61c14e3` |
 | 3 — Lean list select | Done, partly measured (see Baselines) | `cbe9bf5` |
-| 4 — Disk persistence (ADR 0007) | Next | — |
-| 5 — Browse server filtering | After 4 | — |
+| 4 — Disk persistence (ADR 0007) | Done, **not device-verified** | `8566147` |
+| 5 — Browse server filtering | Next | — |
 | 6 — Faculty head-count queries | Last | — |
 
-Gates each phase: `npx jest` (now 16 suites / 184 tests), `eslint src`
+Gates each phase: `npx jest` (now 17 suites / 196 tests), `eslint src`
 (0 errors), `npx tsc --noEmit` (22 pre-existing jest-globals errors only).
 Never `prettier --write` on `ResearchDetailScreen.tsx`. Never push unless asked.
 
@@ -57,6 +57,12 @@ cold launch**, so treat as directional:
 - **Phase 1 grew**: added `perfSpan` (standalone stopwatch for concurrent
   legs); fixed first-paint marks that measured skeleton layout, not rows
   (`b473b55`).
+- **Phase 4 also closed a scoping hole**: a fetch that outlived an account
+  switch used to write the previous account's rows into the new scope (memory;
+  with persistence, disk too). It is now dropped when the scope changed
+  mid-flight.
+- **Phase 4 moved the persistence seam** from `persistentSwr.ts` into
+  `ApiCache` + `apiCacheStorage.ts`; see the Phase 4 section for why.
 
 ## Phase 4 — Disk persistence for list snapshots (ADR 0007)
 
@@ -89,8 +95,9 @@ process. AsyncStorage@2.2.0 is already a dependency.
 - Persists: `research:myPapers`, `research:published:*`,
   `research:categories`, `submit:departments`, `submit:programs:*`.
   **Not** faculty (always revalidate).
-- ADR `docs/adr/0007-list-snapshot-disk-persistence.md`. Official
-  AsyncStorage jest mock via `jest.setup.js`; cold-start tests construct a
+- ADR `docs/adr/0007-list-snapshot-disk-persistence.md`. AsyncStorage manual
+  mock at `__mocks__/@react-native-async-storage/async-storage.js` (plain
+  functions — survives `jest.resetAllMocks`); cold-start tests construct a
   second `ApiCache` (class exported for tests).
 
 Commits: `feat(api): persist list snapshots to disk for instant cold start`
