@@ -1,6 +1,6 @@
 # List Loading Performance — Papers, Review Queue, Browse
 
-Status: **Phases 0–4.5 DONE** (4.5 not device-verified yet). Phase 5 next.
+Status: **Phases 0–4.5 DONE, device-verified.** Phase 5 next.
 Started 2026-10-19. Continues the reader perf work in ADR 0005/0006.
 
 Goal: time-to-first-row on the three list surfaces. Reader path is done —
@@ -15,7 +15,7 @@ do not reopen it.
 | 2 — Kill duplicate fetches | Done, device-verified | `95b44c7` `61c14e3` |
 | 3 — Lean list select | Done, partly measured (see Baselines) | `cbe9bf5` |
 | 4 — Disk persistence (ADR 0007) | Done, device-verified | `8566147` |
-| 4.5 — Dashboard paint gate + profile seed | Done, **not device-verified** | `1b9d894` `f3e7648` |
+| 4.5 — Dashboard paint gate + profile seed | Done, device-verified | `1b9d894` `f3e7648` |
 | 5 — Browse server filtering | Next | — |
 | 6 — Faculty head-count queries | Last | — |
 
@@ -54,6 +54,21 @@ the preceding session):
 - `papers-settled` / `paint` still landed at 1714 / 2781 ms because the
   notifications leg (1705 ms) gated the whole body — fixed in Phase 4.5.
 - Browse card author names confirmed on-device.
+
+Phase 4.5 capture (2026-10-20, cold launch with snapshots on disk):
+
+- `cache:hydrate` **2 entries / 15 ms**; one `fetchAppUserProfile` lookup at
+  startup.
+- `dash:papers` **148 ms**, `papers-settled` **156 ms**, `paint` **547 ms**
+  (was 2685 ms on the sign-in launch, where rows took 2195 ms with an empty
+  disk).
+- `notifications` **1100 ms**, i.e. **after** paint — the feed no longer gates
+  the body.
+- Sign-in launch still shows two `fetchAppUserProfile` lookups (auth listener
+  + `signIn`); that duplicate needs the auth-flow refactor and stays out of
+  scope. The third lookup — the first list read — is gone.
+- My Papers Request-Publication flow confirmed working on approved rows; the
+  two Phase 3 surfaces are now both checked.
 
 ## Deviations from the original plan
 
@@ -187,9 +202,6 @@ User verifies on a physical phone dev build. Ask for a `[perf]` excerpt:
 `Select-String -Path .expo\dev\logs\start.log -Pattern '\[perf\]' | ForEach-Object Line`
 — the raw log contains `EXPO_PUBLIC_SUPABASE_*`; never paste verbatim.
 
-Next capture owed: one cold launch after 4.5 — expect a **single**
-`cache:hydrate` line, `dash:paint` well under a second with Recent Activity
-arriving after paint, and one `fetchAppUserProfile` at startup instead of two.
-Still owed: the My Papers Request-Publication visual check on approved rows.
-Browse author names are confirmed; those two were the only surfaces the Phase 3
-lean select touched.
+Next: Phase 5. Its `browse_papers` SQL is in `docs/sql/` and must be deployed
+by the user before the client switches to the RPC; the client-side filter stays
+as the fallback.
