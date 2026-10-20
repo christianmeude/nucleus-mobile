@@ -22,9 +22,11 @@ import {
   resolveCurrentFacultyProfile,
   resolveCurrentProfile,
   resolveCurrentStudentProfile,
+  seedCurrentProfile,
 } from '../currentProfile';
 import { createQueryBuilder, queryResult, queueProfileLookup } from '../../api/__tests__/supabaseTestUtils';
 import type { MockSupabaseClient } from '../../api/__tests__/supabaseTestUtils';
+import type { User } from '../../types/domain';
 
 const mockSupabase = supabase as unknown as MockSupabaseClient;
 
@@ -131,6 +133,41 @@ describe('resolveCurrentProfile', () => {
     await expect(resolveCurrentProfile({ label: 'research data' })).rejects.toThrow(
       'Sign in required to load research data.',
     );
+  });
+});
+
+describe('seedCurrentProfile', () => {
+  const appUser = (id: string, email: string): User => ({
+    id,
+    email,
+    fullName: 'Seeded Student',
+    role: 'student',
+  });
+
+  it('serves a seeded profile without a users query', async () => {
+    const { authUser } = queueProfileLookup(mockSupabase, {
+      authUser: { id: 'auth-seeded', email: 'seeded@nu-dasma.edu.ph' },
+    });
+
+    seedCurrentProfile(authUser, appUser('app-seeded', authUser.email));
+
+    await expect(resolveCurrentProfile(SURFACE)).resolves.toMatchObject({ id: 'app-seeded' });
+    expect(mockSupabase.from).not.toHaveBeenCalled();
+  });
+
+  it('ignores a seed from a different session', async () => {
+    seedCurrentProfile(
+      { id: 'auth-a', email: 'a@nu-dasma.edu.ph' },
+      appUser('app-a', 'a@nu-dasma.edu.ph'),
+    );
+
+    queueProfileLookup(mockSupabase, {
+      authUser: { id: 'auth-b', email: 'b@nu-dasma.edu.ph' },
+      profileRow: { id: 'app-b', email: 'b@nu-dasma.edu.ph' },
+    });
+
+    await expect(resolveCurrentProfile(SURFACE)).resolves.toMatchObject({ id: 'app-b' });
+    expect(mockSupabase.from).toHaveBeenCalledTimes(1);
   });
 });
 

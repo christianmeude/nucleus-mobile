@@ -84,6 +84,22 @@ export function clearCurrentProfileCache(): void {
   inFlight = null;
 }
 
+/**
+ * Seeds the memo with a profile the caller already resolved (auth bootstrap,
+ * sign-in). Without this, `applyUser` clears the memo and the first list read
+ * immediately re-queries `public.users` by email — a serial round trip in front
+ * of the dashboard's revalidation.
+ *
+ * `authUser` must be the Supabase session user: the memo key is built from the
+ * auth id, which is not necessarily `public.users.id`.
+ */
+export function seedCurrentProfile(
+  authUser: { id: string; email?: string | null },
+  user: User,
+): void {
+  cached = { key: cacheKeyFor(authUser), user, resolvedAt: Date.now() };
+}
+
 /** Stable cache key for an auth user: id plus normalized email. */
 function cacheKeyFor(authUser: { id: string; email?: string | null }): string {
   return `${authUser.id}:${(authUser.email ?? '').trim().toLowerCase()}`;

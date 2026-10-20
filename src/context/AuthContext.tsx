@@ -1,7 +1,7 @@
 import { Session } from '@supabase/supabase-js';
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { fetchAppUserProfile } from '../auth/fetchAppUserProfile';
-import { clearCurrentProfileCache } from '../auth/currentProfile';
+import { clearCurrentProfileCache, seedCurrentProfile } from '../auth/currentProfile';
 import { mapSupabaseAuthError } from '../auth/mapSupabaseAuthError';
 import { clearSignedUrlCache } from '../utils/signedStorageUrl';
 import { supabase } from '../lib/supabase';
@@ -63,11 +63,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // The scope is `public.users.id`, so this cannot start before the profile
   // lookup; `hydrateFromDisk` is bounded and non-throwing, so a stuck native
   // store cannot trip the auth-bootstrap timeout below.
-  const applyUser = async (nextUser: User | null) => {
-    apiCache.setUserScope(nextUser?.id ?? 'anon');
-    await apiCache.hydrateFromDisk(nextUser?.id ?? 'anon');
-    clearCurrentProfileCache();
-    clearSignedUrlCache();
+  //
+  // `signIn` applies the profile twice (its own path plus the auth listener), so
+  // disk reads and cache clears are gated on an actual scope change. Re-seeding
+  // is not: the just-resolved profile is handed to `currentProfile` so the first
+  // list read does not re-query `public.users` by email.
+  const appliedScopeRef = useRef<string | null>(null);
+  const applyUser = async (
+    nextUser: User | null,
+    authUser?: { id: string; email?: string | null },
+  ) => {
+    const scope = nextUser?.id ?? 'anon';
+    const scopeChanged = appliedScopeRef.current !== scope;
+    appliedScopeRef.current = scope;
+
+    apiCache.setUserScope(scope);
+
+    if (scopeChanged) {
+      await apiCache.hydrateFromDisk(scope);
+      clearCurrentProfileCache();
+      clearSignedUrlCache();
+    }
+
+    if (nextUser && authUser) {
+      seedCurrentProfile(authUser, nextUser);
+    }
+
     setUser(nextUser);
   };
 
@@ -77,7 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const finishApply = async (session: Session | null) => {
       const nextUser = await loadProfileFromSession(session);
       if (cancelled) return;
-      await applyUser(nextUser);
+      await applyUser(nextUser, session?.user ?? undefined);
     };
 
     const bootstrap = async () => {
@@ -168,7 +189,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             error: errorMsg,
           };
         }
-        await applyUser(profile);
+        await applyUser(profile, data.session.user);
         return { success: true };
       } catch (profileError) {
         await supabase.auth.signOut();
@@ -208,7 +229,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const profile = await loadProfileFromSession(session);
-      await applyUser(profile);
+      await applyUser(profile, session?.user ?? undefined);
     } catch (_error) {
       await supabase.auth.signOut();
       await applyUser(null);
