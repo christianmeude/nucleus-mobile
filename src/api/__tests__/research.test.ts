@@ -282,6 +282,98 @@ describe('researchApi.getPublishedPapers', () => {
   });
 });
 
+describe('researchApi.browsePapers', () => {
+  it('calls browse_papers with array facets and paging, then maps the jsonb payload', async () => {
+    queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
+    mockSupabase.rpc.mockResolvedValueOnce({
+      data: {
+        items: [
+          row({
+            id: 'p2',
+            published_date: '2026-02-01T00:00:00.000Z',
+            program: { id: 'prog-1', name: 'BSIT', code: 'BSIT' },
+            author: { first_name: 'Ada', last_name: 'Lovelace', middle_name: null },
+          }),
+        ],
+        total: 21,
+      },
+      error: null,
+    });
+
+    const page = await researchApi.browsePapers(
+      {
+        categories: ['cs'],
+        departments: ['CCIS'],
+        programs: ['prog-1'],
+        yearFrom: 2026,
+        yearTo: 2026,
+      },
+      { page: 2 },
+    );
+
+    expect(mockSupabase.rpc).toHaveBeenCalledWith('browse_papers', {
+      p_categories: ['cs'],
+      p_departments: ['CCIS'],
+      p_programs: ['prog-1'],
+      p_year_from: 2026,
+      p_year_to: 2026,
+      p_limit: 20,
+      p_offset: 40,
+    });
+    expect(page.total).toBe(21);
+    expect(page.serverFiltered).toBe(true);
+    expect(page.items.map((paper) => paper.id)).toEqual(['p2']);
+    expect(page.items[0].program?.code).toBe('BSIT');
+    expect(page.items[0].users?.fullName).toBe('Ada Lovelace');
+    expect(mockSupabase.from).not.toHaveBeenCalledWith('research_papers');
+  });
+
+  it('sends null facets when the filter sheet is empty', async () => {
+    queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
+    mockSupabase.rpc.mockResolvedValueOnce({ data: { items: [], total: 0 }, error: null });
+
+    await researchApi.browsePapers();
+
+    expect(mockSupabase.rpc).toHaveBeenCalledWith('browse_papers', {
+      p_categories: null,
+      p_departments: null,
+      p_programs: null,
+      p_year_from: null,
+      p_year_to: null,
+      p_limit: 20,
+      p_offset: 0,
+    });
+  });
+
+  it('falls back to the fetch-all path when the RPC is unavailable', async () => {
+    queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
+    mockSupabase.rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Could not find the function public.browse_papers' },
+    });
+    mockSupabase.from.mockReturnValueOnce(
+      createQueryBuilder(queryResult({ data: [row({ id: 'p1' })] })),
+    );
+
+    const page = await researchApi.browsePapers();
+
+    expect(page.serverFiltered).toBe(false);
+    expect(page.total).toBe(1);
+    expect(page.items.map((paper) => paper.id)).toEqual(['p1']);
+  });
+
+  it('propagates an RPC error for pages after the first instead of refetching everything', async () => {
+    queueProfileLookup(mockSupabase, { profileRow: { id: 'student-1' } });
+    mockSupabase.rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'timeout' },
+    });
+
+    await expect(researchApi.browsePapers(undefined, { page: 1 })).rejects.toThrow('timeout');
+    expect(mockSupabase.from).not.toHaveBeenCalledWith('research_papers');
+  });
+});
+
 describe('researchApi.getCategories', () => {
   it('returns the categories list without resolving a profile', async () => {
     const builder = createQueryBuilder(

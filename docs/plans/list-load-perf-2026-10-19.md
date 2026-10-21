@@ -1,6 +1,6 @@
 # List Loading Performance — Papers, Review Queue, Browse
 
-Status: **Phases 0–4.5 DONE, device-verified.** Phase 5 next.
+Status: **Phases 0–5 DONE.** Phase 6 next.
 Started 2026-10-19. Continues the reader perf work in ADR 0005/0006.
 
 Goal: time-to-first-row on the three list surfaces. Reader path is done —
@@ -124,7 +124,8 @@ process. AsyncStorage@2.2.0 is already a dependency.
 - `setUserScope` change drops the **previous** scope's disk keys;
   `invalidate()`/`clear()` also clear disk.
 - Persists: `research:myPapers`, `research:published:*`,
-  `research:categories`, `submit:departments`, `submit:programs:*`.
+  `research:browse:*` (unfiltered page 0 only), `research:categories`,
+  `submit:departments`, `submit:programs:*`.
   **Not** faculty (always revalidate).
 - ADR `docs/adr/0007-list-snapshot-disk-persistence.md`. AsyncStorage manual
   mock at `__mocks__/@react-native-async-storage/async-storage.js` (plain
@@ -157,16 +158,53 @@ Commits: `perf(auth): seed the identity memo from the resolved profile`
 
 ## Phase 5 — Browse server-side filtering + pagination
 
-- `docs/sql/browse_papers_rpc.sql`:
-  `browse_papers(p_category, p_department, p_program, p_year_from, p_year_to, p_limit, p_offset)`
-  — SECURITY DEFINER, `status IN ('approved','published')` + eq-filters +
-  `date_part('year', coalesce(published_date, submission_date, created_at))`
-  range, `ORDER BY coalesce(...) DESC`, returns rows + `count(*)`.
-  **User deploys to Supabase.**
-- `getPublishedPapers` switches to the RPC with 50/page paging; the current
-  client-filter path stays as fallback if the RPC errors.
-- BrowseScreen: infinite scroll via `onEndReached`; filters/year trigger a
-  fresh paged query; the `matched` memo only filters server-search results.
+Implemented 2026-10-21.
+
+- `docs/sql/browse_papers_rpc.sql` (deployed as migration `browse_papers_rpc`):
+  `browse_papers(p_categories text[], p_departments text[], p_programs uuid[],
+  p_year_from int, p_year_to int, p_limit int, p_offset int)` returns
+  `jsonb { items, total }`.
+  - Status gate `approved`/`published`, `deleted_at is null`, year range on
+    `coalesce(published_date, submission_date, created_at)` (same key as
+    `paperDate()`), `ORDER BY` that key `desc nulls last, id asc` for stable
+    paging. `LIMIT`/`OFFSET` clamped 1–100 / ≥0.
+  - Items are shaped exactly like `PAPER_LIST_SELECT` (including nested
+    `program` and `author`), so `toResearchPaper` is reused unchanged.
+  - `total` comes from one `count(*)` over the same CTE — one round trip.
+  - Partial index `idx_research_papers_browse_sort` on the sort key.
+- `researchApi.browsePapers(filters, { page })` calls the RPC. Page 0 goes
+  through SWR and persists **only when unfiltered** (filter combinations would
+  multiply disk snapshots); later pages are plain reads the screen appends.
+- `BrowseScreen`: 20/page (`BROWSE_PAGE_SIZE`), `onEndReached` infinite scroll
+  with a footer spinner, filter changes debounced 250 ms and reset to page 0,
+  result count shows `total` rather than the loaded-row count. In-flight
+  responses are invalidated by a load token, and a page append is blocked while
+  the filter key is changing (no mixed result sets).
+- Fallback: if the RPC errors on page 0, `browsePapers` uses the pre-Phase-5
+  fetch-all path and reports `serverFiltered: false`; the screen then filters,
+  sorts and skips paging as before. Later-page errors just retry on the next
+  scroll.
+
+Deviations from the original plan:
+
+1. **`security invoker`, not definer.** The existing policies already expose
+   `approved` publicly and `published` to authenticated users, so running as
+   the caller keeps exactly today's row visibility. `execute` is revoked from
+   `public`/`anon` and granted to `authenticated`.
+2. **Array facets.** The filter sheet is multi-select, so single-value params
+   would have silently dropped selections.
+3. **Departments are matched by name**, not id, because that is what the sheet
+   stores (`department_id` is also denormalized on every row but unused here).
+   Comparison is `lower(btrim(...))` on both sides.
+4. **jsonb return** instead of a row set with a per-row `count(*) over()`;
+   avoids repeating the total on every item.
+5. **20/page**, not 50 — one comfortable screen of rows, and the table is 19
+   rows today.
+6. **Local query filtering when `flags.hybridSearch` is off** now only sees
+   loaded pages. Accepted: the flag is `true`, so non-empty queries go through
+   hybrid search (unpaged, limit 20) and never hit this path.
+7. The old `research:published:{}` disk snapshot is orphaned by the new
+   `research:browse:*` key and is dropped by hydration's 24 h age-out.
 
 Commit: `perf(browse): filter and paginate published papers server-side`.
 
@@ -190,7 +228,8 @@ transferring rows`.
 3. Browse will grow past a few hundred papers → server filtering mandatory.
 4. Review Queue always revalidates; no disk snapshot for faculty.
 5. Drop abstract from list rows; My Papers search = title/keywords/author.
-6. Browse filtering via RPC + SQL file, deployed by the user.
+6. Browse filtering via RPC + SQL file, deployed 2026-10-21 (migration
+   `browse_papers_rpc`).
 
 ## Out of scope
 
@@ -202,6 +241,5 @@ User verifies on a physical phone dev build. Ask for a `[perf]` excerpt:
 `Select-String -Path .expo\dev\logs\start.log -Pattern '\[perf\]' | ForEach-Object Line`
 — the raw log contains `EXPO_PUBLIC_SUPABASE_*`; never paste verbatim.
 
-Next: Phase 5. Its `browse_papers` SQL is in `docs/sql/` and must be deployed
-by the user before the client switches to the RPC; the client-side filter stays
-as the fallback.
+Next: Phase 6 (faculty counts). Phase 5's RPC is deployed; the client uses it
+on page 0 and falls back to the old fetch-all path if it is ever missing.

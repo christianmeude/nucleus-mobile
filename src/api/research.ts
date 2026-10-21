@@ -111,6 +111,36 @@ interface ResearchListParams {
   program?: string;
 }
 
+/**
+ * Browse facets in the shape the filter sheet already stores: multi-select
+ * category ids, department *names*, program ids, and free-text years.
+ */
+export interface BrowsePaperFilters {
+  categories?: string[];
+  departments?: string[];
+  programs?: string[];
+  yearFrom?: number | null;
+  yearTo?: number | null;
+}
+
+export interface BrowsePapersPage {
+  items: ResearchPaper[];
+  total: number;
+  /**
+   * False when the `browse_papers` RPC was unavailable and the pre-Phase-5
+   * fetch-all path answered instead. Paging and client sorting only apply then.
+   */
+  serverFiltered: boolean;
+}
+
+export interface BrowsePapersOptions extends SWROptions<BrowsePapersPage> {
+  /** Zero-based page. Page 0 goes through SWR/persistence; later pages don't. */
+  page?: number;
+}
+
+/** Browse page size. Keep the screen's `hasMore` math in sync with this. */
+export const BROWSE_PAGE_SIZE = 20;
+
 export const PUBLISHED_STATUSES = new Set(['approved', 'published']);
 
 const PAPER_SELECT = `
@@ -404,6 +434,43 @@ function filterPublishedRows(rows: ResearchPaperRow[], params?: ResearchListPara
   });
 }
 
+/**
+ * Normalizes Browse's filter sheet state into `browse_papers` arguments.
+ * Empty selections become `null` so the RPC's `(is null or ...)` guards skip
+ * that facet entirely. Departments stay names (what the sheet stores); the RPC
+ * compares them case- and whitespace-insensitively.
+ */
+function toBrowseRpcParams(filters?: BrowsePaperFilters) {
+  const clean = (values?: string[]) => (values ?? []).map((value) => value.trim()).filter(Boolean);
+
+  const categories = clean(filters?.categories);
+  const departments = clean(filters?.departments);
+  const programs = clean(filters?.programs);
+
+  const yearFrom =
+    typeof filters?.yearFrom === 'number' && Number.isFinite(filters.yearFrom)
+      ? filters.yearFrom
+      : null;
+  const yearTo =
+    typeof filters?.yearTo === 'number' && Number.isFinite(filters.yearTo) ? filters.yearTo : null;
+
+  return {
+    params: {
+      p_categories: categories.length > 0 ? categories : null,
+      p_departments: departments.length > 0 ? departments : null,
+      p_programs: programs.length > 0 ? programs : null,
+      p_year_from: yearFrom,
+      p_year_to: yearTo,
+    },
+    hasFilters:
+      categories.length > 0 ||
+      departments.length > 0 ||
+      programs.length > 0 ||
+      yearFrom !== null ||
+      yearTo !== null,
+  };
+}
+
 // Identity resolution for this facade. Memoized app-wide and read from the
 // locally-stored session instead of the network — see src/auth/currentProfile.ts
 // for why, and for the staleness contract.
@@ -672,6 +739,67 @@ export const researchApi = {
           });
       },
       { ...options, persist: true },
+    );
+  },
+
+  /**
+   * Browse's paged, server-filtered repository (Phase 5).
+   *
+   * One `browse_papers` call returns a page plus the total match count, so the
+   * screen never fetches the whole table to filter it client-side. Page 0 goes
+   * through the SWR cache (and keeps the unfiltered snapshot on disk for
+   * instant cold-start paint); later pages are plain network reads that the
+   * screen appends.
+   *
+   * If the RPC is missing (schema drift — e.g. an older database), page 0
+   * falls back to the pre-Phase-5 fetch-all path and reports
+   * `serverFiltered: false`, which tells the screen to filter, sort and page
+   * client-side exactly as it used to.
+   */
+  browsePapers: async (
+    filters?: BrowsePaperFilters,
+    options?: BrowsePapersOptions,
+  ): Promise<BrowsePapersPage> => {
+    const { page: requestedPage = 0, ...swrOptions } = options ?? {};
+    const page = Math.max(0, Math.floor(requestedPage));
+    const { params, hasFilters } = toBrowseRpcParams(filters);
+
+    const loadPage = async (): Promise<BrowsePapersPage> => {
+      await resolveCurrentProfile();
+
+      const { data, error } = await supabase.rpc('browse_papers', {
+        ...params,
+        p_limit: BROWSE_PAGE_SIZE,
+        p_offset: page * BROWSE_PAGE_SIZE,
+      });
+
+      if (!error) {
+        const payload = (data ?? {}) as { items?: ResearchPaperRow[]; total?: number };
+        const rows = Array.isArray(payload.items) ? payload.items : [];
+        return {
+          items: rows.map(toResearchPaper),
+          total: typeof payload.total === 'number' ? payload.total : rows.length,
+          serverFiltered: true,
+        };
+      }
+
+      if (page > 0) {
+        throw new Error(error.message || 'Unable to load more papers.');
+      }
+
+      // Page 0 fallback: never leave Browse blank because the RPC isn't there.
+      const all = await researchApi.getPublishedPapers();
+      return { items: all, total: all.length, serverFiltered: false };
+    };
+
+    if (page > 0) return loadPage();
+
+    return apiCache.fetchWithSWR(
+      `research:browse:${JSON.stringify({ ...params, page })}`,
+      loadPage,
+      // Filtered result sets are cheap to refetch and would multiply disk
+      // snapshots; only the unfiltered first page is worth surviving a kill.
+      { ...swrOptions, persist: !hasFilters },
     );
   },
 

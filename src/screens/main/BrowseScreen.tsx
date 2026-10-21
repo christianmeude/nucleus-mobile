@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { Keyboard, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Keyboard,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import type { ListRenderItem } from 'react-native';
 import Animated, { LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,7 +18,14 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { LegendList } from '@legendapp/list/react-native';
 import { ListEntranceItem } from '../../components/ListEntranceItem';
 
-import { researchApi, submitApi, type DepartmentRow, type ProgramRow } from '../../api/research';
+import {
+  BROWSE_PAGE_SIZE,
+  researchApi,
+  submitApi,
+  type BrowsePaperFilters,
+  type DepartmentRow,
+  type ProgramRow,
+} from '../../api/research';
 import { useAuth } from '../../context/AuthContext';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useRecentSearches } from '../../hooks/useRecentSearches';
@@ -62,6 +77,10 @@ export const BrowseScreen = () => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [papers, setPapers] = useState<ResearchPaper[]>([]);
+  const [total, setTotal] = useState(0);
+  const [serverFiltered, setServerFiltered] = useState(true);
+  const [hasMorePages, setHasMorePages] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [departments, setDepartments] = useState<DepartmentRow[]>([]);
   const [programs, setPrograms] = useState<ProgramRow[]>([]);
@@ -78,60 +97,126 @@ export const BrowseScreen = () => {
 
   const { addRecent } = useRecentSearches();
 
-  // Refs, not state, for the load-mode checks inside `loadData`: depending on
-  // `papers.length` recreated `loadData` the moment the first page painted,
-  // re-firing its effect and running the whole 4-source load twice (visible in
-  // the [perf] baseline as a second set of spans settling ~1.1s after the
-  // first). `hasRowsRef` only answers "is this the first load?".
+  // Refs, not state, for the load-mode checks inside `loadPapers`: depending on
+  // `papers.length` recreated the loader the moment the first page painted,
+  // re-firing its effect and running the load twice (visible in the [perf]
+  // baseline as a second set of spans settling ~1.1s after the first).
+  // `hasRowsRef` only answers "is this the first load?".
   const hasRowsRef = useRef(false);
 
-  /**
-   * @param refresh Bypasses the SWR cache and refetches. Only pull-to-refresh
-   * should pass true; the mount load and tab re-entries go through the cache.
-   */
-  const loadData = useCallback(async (refresh = false) => {
-    if (!refresh && !hasRowsRef.current) {
-      setLoading(true);
-      // First load only: reset the shared clock so the spans below read as
-      // time-since-tab-open. Warm refreshes leave the clock alone.
-      perfStart('list:browse');
-    } else {
-      setRefreshing(true);
-    }
+  // Paging bookkeeping. `pageRef` is the last page successfully appended;
+  // `loadTokenRef` invalidates in-flight responses when filters change, and
+  // `activeFiltersKeyRef` stops a scroll firing during a filter refetch.
+  const pageRef = useRef(0);
+  const loadTokenRef = useRef(0);
+  const loadingMoreRef = useRef(false);
+  const activeFiltersKeyRef = useRef('');
 
-    const papersSpan = perfSpan('list:browse:papers');
+  // The filter sheet commits on every tap, so debounce the network read
+  // instead: toggling three categories costs one query, not three.
+  const filtersKey = JSON.stringify(filters);
+  const debouncedFiltersKey = useDebouncedValue(filtersKey, 250);
+
+  const browseFilters = useMemo<BrowsePaperFilters>(() => {
+    const parsed = JSON.parse(debouncedFiltersKey) as BrowseFilterState;
+    const toYear = (value: string) => {
+      const parsedYear = parseInt(value, 10);
+      return Number.isFinite(parsedYear) ? parsedYear : null;
+    };
+
+    return {
+      categories: parsed.categories,
+      departments: parsed.departments,
+      programs: parsed.programs,
+      yearFrom: parsed.yearFrom ? toYear(parsed.yearFrom) : null,
+      yearTo: parsed.yearTo ? toYear(parsed.yearTo) : null,
+    };
+  }, [debouncedFiltersKey]);
+
+  /** Categories/departments/programs power the filter sheet; they rarely change. */
+  const loadReferenceData = useCallback(async (refresh = false) => {
     const categoriesSpan = perfSpan('list:browse:categories');
     const departmentsSpan = perfSpan('list:browse:departments');
     const programsSpan = perfSpan('list:browse:programs');
 
     try {
-      const [publishedRows, categoryRows, departmentRows, programRows] = await Promise.all([
-        researchApi.getPublishedPapers(undefined, { forceRefresh: refresh }).finally(papersSpan),
+      const [categoryRows, departmentRows, programRows] = await Promise.all([
         researchApi.getCategories({ forceRefresh: refresh }).finally(categoriesSpan),
         submitApi.getDepartments().finally(departmentsSpan),
         submitApi.getPrograms().finally(programsSpan),
       ]);
 
-      hasRowsRef.current = true;
-      // Paint immediately; the previous rows stay on screen through a refresh
-      // instead of being replaced by skeletons.
-      setPapers(publishedRows);
       setCategories(categoryRows);
       setDepartments(departmentRows);
       setPrograms(programRows);
-      setError('');
-      perfMark('list:browse:rows-settled', { rows: publishedRows.length });
     } catch (_error) {
-      setError('Unable to load published papers.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+      // Facets degrade gracefully: the paper list still renders without them.
     }
   }, []);
 
+  /**
+   * Loads page 0 for the current (debounced) filters.
+   *
+   * @param refresh Bypasses the SWR cache and refetches. Only pull-to-refresh
+   * should pass true; the mount load, filter changes and tab re-entries go
+   * through the cache.
+   */
+  const loadPapers = useCallback(
+    async (refresh = false) => {
+      const token = ++loadTokenRef.current;
+
+      if (!refresh && !hasRowsRef.current) {
+        setLoading(true);
+        // First load only: reset the shared clock so the spans below read as
+        // time-since-tab-open. Warm refreshes leave the clock alone.
+        perfStart('list:browse');
+      } else if (refresh) {
+        setRefreshing(true);
+      }
+
+      const papersSpan = perfSpan('list:browse:papers');
+
+      try {
+        const page = await researchApi
+          .browsePapers(browseFilters, { page: 0, forceRefresh: refresh })
+          .finally(papersSpan);
+
+        if (token !== loadTokenRef.current) return;
+
+        hasRowsRef.current = true;
+        pageRef.current = 0;
+        activeFiltersKeyRef.current = debouncedFiltersKey;
+        loadingMoreRef.current = false;
+        setLoadingMore(false);
+        // Paint immediately; the previous rows stay on screen through a refresh
+        // instead of being replaced by skeletons.
+        setPapers(page.items);
+        setTotal(page.total);
+        setServerFiltered(page.serverFiltered);
+        setHasMorePages(
+          page.serverFiltered && page.items.length > 0 && BROWSE_PAGE_SIZE < page.total,
+        );
+        setError('');
+        perfMark('list:browse:rows-settled', { rows: page.items.length, total: page.total });
+      } catch (_error) {
+        if (token !== loadTokenRef.current) return;
+        setError('Unable to load published papers.');
+      } finally {
+        if (token !== loadTokenRef.current) return;
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [browseFilters, debouncedFiltersKey],
+  );
+
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    loadReferenceData();
+  }, [loadReferenceData]);
+
+  useEffect(() => {
+    loadPapers();
+  }, [loadPapers]);
 
   const paramCategoryId: string | undefined = route.params?.categoryId;
   useEffect(() => {
@@ -201,7 +286,11 @@ export const BrowseScreen = () => {
   );
 
   const matched = useMemo(() => {
-    let rows = useServerSearch ? (serverResults ?? []) : papers;
+    const rows = useServerSearch ? (serverResults ?? []) : papers;
+
+    // The paged RPC already applied every facet; only hybrid-search results
+    // (which come back unfiltered) and the fetch-all fallback need a pass here.
+    if (!useServerSearch && serverFiltered) return rows;
 
     const yFrom = filters.yearFrom ? parseInt(filters.yearFrom, 10) : null;
     const yTo = filters.yearTo ? parseInt(filters.yearTo, 10) : null;
@@ -250,14 +339,16 @@ export const BrowseScreen = () => {
 
       return true;
     });
-  }, [useServerSearch, serverResults, filters, papers, query]);
+  }, [useServerSearch, serverResults, serverFiltered, filters, papers, query]);
 
   const sorted = useMemo(() => {
-    if (useServerSearch) return matched;
+    // The RPC returns rows pre-sorted by paperDate() with a stable id
+    // tie-break; only the fallback path still sorts here.
+    if (useServerSearch || serverFiltered) return matched;
     const arr = [...matched];
     arr.sort((left, right) => timeOf(right) - timeOf(left));
     return arr;
-  }, [useServerSearch, matched]);
+  }, [useServerSearch, serverFiltered, matched]);
 
   const gridItems = sorted;
 
@@ -288,8 +379,47 @@ export const BrowseScreen = () => {
 
   const handleRefresh = useCallback(() => {
     haptics.light();
-    loadData(true);
-  }, [loadData]);
+    loadReferenceData(true);
+    loadPapers(true);
+  }, [loadPapers, loadReferenceData]);
+
+  const loadMore = useCallback(async () => {
+    if (
+      loading ||
+      loadingMoreRef.current ||
+      !serverFiltered ||
+      !hasMorePages ||
+      // A scroll can land while new filters are still debouncing/refetching;
+      // appending that page would mix two result sets.
+      activeFiltersKeyRef.current !== debouncedFiltersKey
+    ) {
+      return;
+    }
+
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+
+    const token = loadTokenRef.current;
+    const nextPage = pageRef.current + 1;
+
+    try {
+      const page = await researchApi.browsePapers(browseFilters, { page: nextPage });
+      if (token !== loadTokenRef.current) return;
+
+      pageRef.current = nextPage;
+      setPapers((prev) => {
+        const seen = new Set(prev.map((paper) => paper.id));
+        return prev.concat(page.items.filter((paper) => !seen.has(paper.id)));
+      });
+      setTotal(page.total);
+      setHasMorePages(page.items.length > 0 && (nextPage + 1) * BROWSE_PAGE_SIZE < page.total);
+    } catch (_error) {
+      // Keep the pages already on screen; the next scroll retries.
+    } finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
+  }, [browseFilters, debouncedFiltersKey, hasMorePages, loading, serverFiltered]);
 
   const renderGridItem = useCallback(
     ({ item, index }: { item: ResearchPaper; index: number }) => {
@@ -328,11 +458,13 @@ export const BrowseScreen = () => {
 
   const showClear = Boolean(query.trim());
 
+  const resultCount = useServerSearch ? sorted.length : serverFiltered ? total : sorted.length;
+
   const listHeaderElement = (
     <>
       <View style={styles.listHeader}>
         <BrowseControls
-          resultCount={sorted.length}
+          resultCount={resultCount}
           viewMode={viewMode}
           onChangeViewMode={setViewMode}
         />
@@ -341,6 +473,12 @@ export const BrowseScreen = () => {
       </View>
     </>
   );
+
+  const listFooterElement = loadingMore ? (
+    <View style={styles.loadingMore}>
+      <ActivityIndicator size="small" color={theme.colors.brand.primary} />
+    </View>
+  ) : null;
 
   const listEmptyElement =
     loading || (useServerSearch && (searchLoading || isTyping)) ? (
@@ -440,7 +578,10 @@ export const BrowseScreen = () => {
                 numColumns={2}
                 columnWrapperStyle={{ gap: theme.spacing.md }}
                 ListHeaderComponent={listHeaderElement}
+                ListFooterComponent={listFooterElement}
                 ListEmptyComponent={listEmptyElement}
+                onEndReached={useServerSearch ? undefined : loadMore}
+                onEndReachedThreshold={0.6}
                 keyboardShouldPersistTaps="handled"
                 keyboardDismissMode="on-drag"
                 refreshControl={
@@ -467,7 +608,10 @@ export const BrowseScreen = () => {
                 renderItem={renderListItem}
                 numColumns={1}
                 ListHeaderComponent={listHeaderElement}
+                ListFooterComponent={listFooterElement}
                 ListEmptyComponent={listEmptyElement}
+                onEndReached={useServerSearch ? undefined : loadMore}
+                onEndReachedThreshold={0.6}
                 keyboardShouldPersistTaps="handled"
                 keyboardDismissMode="on-drag"
                 refreshControl={
@@ -536,6 +680,10 @@ const makeStyles = (theme: Theme) =>
     listHeader: {
       gap: theme.spacing.lg,
       marginBottom: theme.spacing.lg,
+    },
+    loadingMore: {
+      alignItems: 'center',
+      paddingVertical: theme.spacing.lg,
     },
     loadingWrap: {
       gap: theme.spacing.md,
