@@ -29,7 +29,7 @@ interface SheetPresenterProps {
   /** Sheet content — only mounted while presenting, so heavy content (e.g. a PDF
    * WebView) never loads until the sheet opens. */
   sheet: ReactNode;
-  /** The presenting screen; scales down + rounds its corners behind the sheet. */
+  /** The presenting screen; dims behind the sheet (it does not zoom out). */
   children: ReactNode;
   sheetAccessibilityLabel?: string;
   /**
@@ -41,12 +41,18 @@ interface SheetPresenterProps {
 }
 
 /**
- * iOS-style card sheet presentation (DESIGN.md Motion → Sheet presentation).
- * When `open`, `sheet` slides up from the bottom while `children` (the presenting
- * screen) scales down + rounds its corners behind a dim scrim — the same zoom-out
- * a native iOS modal sheet does. `sheet` is only mounted while presenting, so its
- * content never loads until opened. Drag the grabber down, tap the scrim, or press
- * Android back to dismiss. Reduced-motion → instant, no scale or slide.
+ * Sheet presentation (DESIGN.md Motion → Sheet presentation).
+ * When `open`, `sheet` slides up from the bottom over a dim scrim; the
+ * presenting screen stays put and dims behind it. `sheet` is only mounted while
+ * presenting, so its content never loads until opened. Drag the grabber down,
+ * tap the scrim, or press Android back to dismiss. Reduced-motion → instant, no
+ * fade or slide.
+ *
+ * The screen does **not** zoom out. A scaled presenter was tried and dropped
+ * (2026-10-21): rounding/scaling the live screen exposed the root's black
+ * background at the top and clipped the bottom of the tab bar mid-animation, and
+ * it fought the scroll views during the spring. The sheet and scrim carry the
+ * depth instead.
  *
  * The scrim and the sheet live in a React Native `Modal`, not just in the
  * screen's view tree: the tab bar is a sibling of the screen inside the
@@ -59,10 +65,7 @@ interface SheetPresenterProps {
  */
 const SHEET_SPRING = { damping: 22, stiffness: 240, mass: 0.9 } as const;
 const CLOSE_DURATION = 260;
-const PRESENTER_MIN_SCALE = 0.92;
-const PRESENTER_RADIUS = 14;
 const SCRIM_MAX_OPACITY = 0.45;
-const PRESENTER_DIM_OPACITY = 0.35;
 /** Fraction of the sheet's height it must be dragged past to dismiss on release. */
 const DISMISS_FRACTION = 0.28;
 const DISMISS_VELOCITY = 900;
@@ -131,25 +134,11 @@ export const SheetPresenter = ({
 
   // `reveal` is the sheet's live progress up the screen (1 fully up, 0 hidden),
   // computed from the sheet's own height — the open/close spring *and* any active
-  // drag. Driving the zoom-out, dim, and scrim off it (not off `progress` alone)
-  // makes the presenter pan smoothly back in as the sheet is dragged down, and
-  // the scrim lighten with it, instead of staying fully zoomed until release.
-  const presenterStyle = useAnimatedStyle(() => {
-    const translateY = interpolate(progress.value, [0, 1], [height, 0]) + drag.value;
-    const reveal = Math.min(1, Math.max(0, 1 - translateY / Math.max(sheetHeight.value, 1)));
-    return {
-      transform: [{ scale: interpolate(reveal, [0, 1], [1, PRESENTER_MIN_SCALE]) }],
-      borderRadius: interpolate(reveal, [0, 1], [0, PRESENTER_RADIUS]),
-      borderCurve: 'continuous',
-    };
-  });
-
-  const dimStyle = useAnimatedStyle(() => {
-    const translateY = interpolate(progress.value, [0, 1], [height, 0]) + drag.value;
-    const reveal = Math.min(1, Math.max(0, 1 - translateY / Math.max(sheetHeight.value, 1)));
-    return { opacity: interpolate(reveal, [0, 1], [0, PRESENTER_DIM_OPACITY]) };
-  });
-
+  // drag. Driving the scrim off it (not off `progress` alone) makes the scrim
+  // lighten in proportion as the sheet is dragged down, instead of staying fully
+  // dark until release. The screen itself does not move, scale, or take a second
+  // dim layer: one scrim over the whole screen (tab bar and status bar included)
+  // keeps the darkness uniform.
   const scrimStyle = useAnimatedStyle(() => {
     const translateY = interpolate(progress.value, [0, 1], [height, 0]) + drag.value;
     const reveal = Math.min(1, Math.max(0, 1 - translateY / Math.max(sheetHeight.value, 1)));
@@ -177,10 +166,7 @@ export const SheetPresenter = ({
 
   return (
     <View style={styles.root}>
-      <Animated.View style={[styles.presenter, presenterStyle]}>
-        {children}
-        <Animated.View pointerEvents="none" style={[styles.dim, dimStyle]} />
-      </Animated.View>
+      <View style={styles.presenter}>{children}</View>
 
       {mounted ? (
         <Modal
@@ -252,14 +238,6 @@ const makeStyles = (t: Theme) =>
       flex: 1,
       overflow: 'hidden',
       backgroundColor: t.colors.surface.base,
-    },
-    dim: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: '#000',
     },
     modalRoot: {
       flex: 1,
