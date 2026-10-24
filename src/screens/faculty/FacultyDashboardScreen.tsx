@@ -22,7 +22,6 @@ import {
 } from '../../api/faculty';
 import { NotificationItem } from '../../types/domain';
 import { NotificationCard } from '../../components/NotificationCard';
-import { ListEntranceItem } from '../../components/ListEntranceItem';
 import { FacultyTabNavigationProp } from '../../navigation/types';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
@@ -169,19 +168,18 @@ export const FacultyDashboardScreen = () => {
                     />
                   )}
 
-                  {notifications.map((item, index) => (
-                    <ListEntranceItem key={item.id} index={upNextPaper ? index + 1 : index}>
-                      <NotificationCard
-                        notification={item}
-                        onPress={() => {
-                          if (item.research_id) {
-                            navigation.navigate('FacultyReviewDetail', {
-                              paperId: item.research_id,
-                            });
-                          }
-                        }}
-                      />
-                    </ListEntranceItem>
+                  {notifications.map((item) => (
+                    <NotificationCard
+                      key={item.id}
+                      notification={item}
+                      onPress={() => {
+                        if (item.research_id) {
+                          navigation.navigate('FacultyReviewDetail', {
+                            paperId: item.research_id,
+                          });
+                        }
+                      }}
+                    />
                   ))}
                 </View>
 

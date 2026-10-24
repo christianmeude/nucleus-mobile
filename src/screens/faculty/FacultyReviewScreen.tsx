@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import * as Haptics from 'expo-haptics';
 import {
+  AtomicListPaint,
   EmptyState,
   FilterSelect,
   InlineNotice,
@@ -15,12 +16,11 @@ import {
   TopBar,
 } from '../../components/ui';
 import { FacultyPaperCard } from '../../components/FacultyPaperCard';
-import { ListEntranceItem } from '../../components/ListEntranceItem';
 import { facultyApi, type FacultyAssignedPaper } from '../../api/faculty';
 import { FACULTY_QUEUE_FILTERS, type FacultyQueueFilter } from './facultyStatus';
 import { FacultyTabsParamList, FacultyTabNavigationProp } from '../../navigation/types';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
-import { motion, type Theme } from '../../theme';
+import { type Theme } from '../../theme';
 import { listEpochKey } from '../../utils/listEpochKey';
 import { perfMark, perfSpan, perfStart } from '../../utils/perfLog';
 
@@ -159,27 +159,11 @@ export const FacultyReviewScreen = () => {
     [navigation],
   );
 
-  // Atomic first paint: the list fades in as one motion once laid out,
-  // instead of rows cascading in one-by-one over the stagger delays.
-  const [firstPaintDone, setFirstPaintDone] = useState(false);
-  const paintOpacity = useRef(new Animated.Value(0)).current;
-  const handleListLayout = useCallback(() => {
-    if (firstPaintDone) return;
-    setFirstPaintDone(true);
-    Animated.timing(paintOpacity, {
-      toValue: 1,
-      duration: motion.duration.base,
-      useNativeDriver: true,
-    }).start();
-  }, [firstPaintDone, paintOpacity]);
-
   const renderPaperItem = useCallback(
-    ({ item: rawItem, index }: { item: any; index: number }) => {
+    ({ item: rawItem }: { item: any }) => {
       const item = rawItem as FacultyAssignedPaper;
       return (
-        <ListEntranceItem index={index}>
-          <FacultyPaperCard paper={item} index={index} onPress={() => handlePaperPress(item.id)} />
-        </ListEntranceItem>
+        <FacultyPaperCard paper={item} onPress={() => handlePaperPress(item.id)} />
       );
     },
     [handlePaperPress],
@@ -227,7 +211,7 @@ export const FacultyReviewScreen = () => {
         </View>
       </View>
 
-      <Animated.View style={[styles.listPaint, { opacity: paintOpacity }]} onLayout={handleListLayout}>
+      <AtomicListPaint ready={papers !== null && papers.length > 0} style={styles.listPaint}>
       <LegendList
         key={listEpochKey((papers ?? []).length === 0)}
         recycleItems={true}
@@ -287,7 +271,7 @@ export const FacultyReviewScreen = () => {
         ListFooterComponent={renderFooter}
         renderItem={renderPaperItem}
       />
-      </Animated.View>
+      </AtomicListPaint>
     </Screen>
   );
 };

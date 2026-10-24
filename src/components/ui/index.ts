@@ -27,6 +27,7 @@ export { SettingsRow } from './SettingsRow';
 export { SheetPresenter } from './SheetPresenter';
 export { PressableScale } from './motion/PressableScale';
 export { FadeInView } from './motion/FadeInView';
+export { AtomicListPaint } from './motion/AtomicListPaint';
 export { AnimatedListItem } from './motion/AnimatedListItem';
 export { ParallaxHeader } from './motion/ParallaxHeader';
 export { ShimmerSkeleton } from './motion/ShimmerSkeleton';

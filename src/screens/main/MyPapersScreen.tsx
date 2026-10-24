@@ -1,14 +1,5 @@
 import { useCallback, useMemo, useEffect, useRef, useState } from 'react';
-import {
-  Animated,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  Pressable,
-} from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, TextInput, View, Pressable } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
 
 import * as Haptics from 'expo-haptics';
@@ -25,9 +16,8 @@ import { getPrimaryAuthorName } from '../../utils/format';
 import { listEpochKey } from '../../utils/listEpochKey';
 import { perfMark, perfSpan, perfStart } from '../../utils/perfLog';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
-import { motion, type Theme } from '../../theme';
+import { type Theme } from '../../theme';
 import { StandardPaperCard } from '../../components/StandardPaperCard';
-import { ListEntranceItem } from '../../components/ListEntranceItem';
 import { Plus } from 'lucide-react-native';
 
 import {
@@ -35,6 +25,7 @@ import {
   ACTIVE_STATUSES,
 } from '../../components/PaperStatusChip';
 import {
+  AtomicListPaint,
   EmptyState,
   Icon,
   InlineNotice,
@@ -225,18 +216,16 @@ export const MyPapersScreen = () => {
   );
 
   const renderPaperItem = useCallback(
-    ({ item, index }: { item: ResearchPaper; index: number }) => (
-      <ListEntranceItem index={index}>
-        <StandardPaperCard
-          paper={item}
-          variant="papers"
-          category={resolveCategoryName(item.category, categoryNameById)}
-          categoryColor={resolveCategoryColor(item.category, categoryColorById)}
-          onPress={() => handlePaperPress(item.id)}
-          onRequestPublication={() => setPublishTarget(item)}
-          onResubmit={() => handleResubmitPress(item.id)}
-        />
-      </ListEntranceItem>
+    ({ item }: { item: ResearchPaper }) => (
+      <StandardPaperCard
+        paper={item}
+        variant="papers"
+        category={resolveCategoryName(item.category, categoryNameById)}
+        categoryColor={resolveCategoryColor(item.category, categoryColorById)}
+        onPress={() => handlePaperPress(item.id)}
+        onRequestPublication={() => setPublishTarget(item)}
+        onResubmit={() => handleResubmitPress(item.id)}
+      />
     ),
     [categoryNameById, categoryColorById, handlePaperPress, handleResubmitPress],
   );
@@ -245,20 +234,6 @@ export const MyPapersScreen = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     loadData({ refresh: true });
   }, [loadData]);
-
-  // Atomic first paint: the list fades in as one motion once laid out,
-  // instead of rows cascading in one-by-one over the stagger delays.
-  const [firstPaintDone, setFirstPaintDone] = useState(false);
-  const paintOpacity = useRef(new Animated.Value(0)).current;
-  const handleListLayout = useCallback(() => {
-    if (firstPaintDone) return;
-    setFirstPaintDone(true);
-    Animated.timing(paintOpacity, {
-      toValue: 1,
-      duration: motion.duration.base,
-      useNativeDriver: true,
-    }).start();
-  }, [firstPaintDone, paintOpacity]);
 
   // First paint proxy for the [perf] log: mark the moment rows first become
   // available to render. Deliberately an effect on `papers`, not the list's
@@ -349,10 +324,7 @@ export const MyPapersScreen = () => {
           </View>
         </View>
 
-        <Animated.View
-          style={[styles.listPaint, { opacity: paintOpacity }]}
-          onLayout={handleListLayout}
-        >
+        <AtomicListPaint ready={!loading && filtered.length > 0} style={styles.listPaint}>
         <LegendList
           key={listEpochKey(loading || filtered.length === 0)}
           recycleItems={true}
@@ -402,7 +374,7 @@ export const MyPapersScreen = () => {
           estimatedItemSize={220}
           renderItem={renderPaperItem}
         />
-        </Animated.View>
+        </AtomicListPaint>
 
         <Pressable
           style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}

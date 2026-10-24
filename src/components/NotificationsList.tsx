@@ -10,10 +10,9 @@ import { facultyApi } from '../api/faculty';
 import { useAuth } from '../context/AuthContext';
 import { NotificationItem, CoAuthorInvitation } from '../types/domain';
 import { NotificationCard } from './NotificationCard';
-import { ListEntranceItem } from './ListEntranceItem';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
-import { EmptyState, InlineNotice, Skeleton } from './ui';
+import { AtomicListPaint, EmptyState, InlineNotice, Skeleton } from './ui';
 import { haptics } from '../lib/haptics';
 import { invitationsApi } from '../api/invitations';
 
@@ -180,19 +179,16 @@ export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
   );
 
   const renderNotificationItem = useCallback(
-    ({ item: rawItem, index }: { item: any; index: number }) => {
+    ({ item: rawItem }: { item: any }) => {
       const item = rawItem as NotificationItem;
-      return (
-        <ListEntranceItem key={item.id} index={index}>
-          <NotificationCard notification={item} onPress={() => openNotification(item)} />
-        </ListEntranceItem>
-      );
+      return <NotificationCard notification={item} onPress={() => openNotification(item)} />;
     },
     [openNotification],
   );
 
   return (
-    <LegendSectionList
+    <AtomicListPaint ready={!loading && notifications.length > 0} style={styles.container}>
+      <LegendSectionList
       onScroll={onScroll}
       scrollEventThrottle={16}
       recycleItems={true}
@@ -246,6 +242,7 @@ export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
       renderSectionHeader={renderSectionHeader}
       renderItem={renderNotificationItem}
     />
+    </AtomicListPaint>
   );
 };
 

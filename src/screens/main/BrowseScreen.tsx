@@ -16,7 +16,6 @@ import { Icon } from '../../components/ui/Icon';
 
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { LegendList } from '@legendapp/list/react-native';
-import { ListEntranceItem } from '../../components/ListEntranceItem';
 
 import {
   BROWSE_PAGE_SIZE,
@@ -36,6 +35,7 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { haptics } from '../../lib/haptics';
 import {
+  AtomicListPaint,
   BottomSheet,
   BottomSheetScrollView,
   BottomSheetTextInput,
@@ -438,19 +438,17 @@ export const BrowseScreen = () => {
   );
 
   const renderListItem = useCallback(
-    ({ item, index }: { item: ResearchPaper; index: number }) => {
+    ({ item }: { item: ResearchPaper }) => {
       const categoryColor = colorForCategory(item.category);
       const categoryName = resolveCategoryName(item.category, categoryNameById);
       return (
-        <ListEntranceItem index={index}>
-          <StandardPaperCard
-            paper={item}
-            variant="browse"
-            category={categoryName}
-            categoryColor={categoryColor}
-            onPress={() => openDetail(item.id)}
-          />
-        </ListEntranceItem>
+        <StandardPaperCard
+          paper={item}
+          variant="browse"
+          category={categoryName}
+          categoryColor={categoryColor}
+          onPress={() => openDetail(item.id)}
+        />
       );
     },
     [colorForCategory, categoryNameById, openDetail],
@@ -565,6 +563,7 @@ export const BrowseScreen = () => {
           </View>
 
           <View style={styles.resultsWrap}>
+            <AtomicListPaint ready={!loading && listData.length > 0} style={styles.listPaint}>
             {viewMode === 'grid' ? (
               <LegendList
                 key={`grid-${listEpochKey(listData.length === 0)}`}
@@ -626,6 +625,7 @@ export const BrowseScreen = () => {
                 getItemType={() => 'list'}
               />
             )}
+            </AtomicListPaint>
           </View>
         </View>
       </Screen>
@@ -667,6 +667,9 @@ const makeStyles = (theme: Theme) =>
     resultsWrap: {
       flex: 1,
       overflow: 'hidden',
+    },
+    listPaint: {
+      flex: 1,
     },
     scroll: {
       flex: 1,

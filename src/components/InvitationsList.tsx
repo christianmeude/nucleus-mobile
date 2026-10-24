@@ -8,12 +8,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import { invitationsApi } from '../api/invitations';
 import { CoAuthorInvitation } from '../types/domain';
 import { InvitationCard } from './InvitationCard';
-import { ListEntranceItem } from './ListEntranceItem';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { listEpochKey } from '../utils/listEpochKey';
 import { type Theme } from '../theme';
 import { haptics } from '../lib/haptics';
-import { EmptyState, InlineNotice, Skeleton } from './ui';
+import { AtomicListPaint, EmptyState, InlineNotice, Skeleton } from './ui';
 
 const isExpired = (invitation: CoAuthorInvitation) => {
   if (!invitation.expires_at) return false;
@@ -88,7 +87,7 @@ export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
   const keyExtractor = useCallback((item: any) => item.id, []);
 
   const renderInvitationItem = useCallback(
-    ({ item: rawItem, index }: { item: any; index: number }) => {
+    ({ item: rawItem }: { item: any }) => {
       const item = rawItem as CoAuthorInvitation;
       const calendarExpired = item.status === 'pending' && isExpired(item);
       const cardInvitation: CoAuthorInvitation = calendarExpired
@@ -97,21 +96,20 @@ export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
       const canAct = item.status === 'pending' && !calendarExpired;
 
       return (
-        <ListEntranceItem index={index}>
-          <InvitationCard
-            invitation={cardInvitation}
-            acting={actingToken === item.token}
-            onAccept={canAct ? () => runAction(item.token, 'accept') : undefined}
-            onDecline={canAct ? () => runAction(item.token, 'decline') : undefined}
-          />
-        </ListEntranceItem>
+        <InvitationCard
+          invitation={cardInvitation}
+          acting={actingToken === item.token}
+          onAccept={canAct ? () => runAction(item.token, 'accept') : undefined}
+          onDecline={canAct ? () => runAction(item.token, 'decline') : undefined}
+        />
       );
     },
     [actingToken, runAction],
   );
 
   return (
-    <LegendList
+    <AtomicListPaint ready={!loading && invitations.length > 0} style={styles.container}>
+      <LegendList
       key={listEpochKey(loading || invitations.length === 0)}
       onScroll={onScroll}
       scrollEventThrottle={16}
@@ -156,6 +154,7 @@ export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
       estimatedItemSize={132}
       renderItem={renderInvitationItem}
     />
+    </AtomicListPaint>
   );
 };
 
