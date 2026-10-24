@@ -1,5 +1,5 @@
 import type { CompositeNavigationProp } from '@react-navigation/native';
-import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { MaterialTopTabNavigationProp } from '@react-navigation/material-top-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { FacultyQueueFilter } from '../screens/faculty/facultyStatus';
 
@@ -31,6 +31,6 @@ export type FacultyTabsParamList = {
 };
 
 export type FacultyTabNavigationProp = CompositeNavigationProp<
-  BottomTabNavigationProp<FacultyTabsParamList>,
+  MaterialTopTabNavigationProp<FacultyTabsParamList>,
   NativeStackNavigationProp<RootStackParamList>
 >;

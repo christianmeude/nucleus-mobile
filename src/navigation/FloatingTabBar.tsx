@@ -1,20 +1,13 @@
-import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
-import { LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { Animated, LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { LucideIcon } from 'lucide-react-native';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import type { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
 import { BlurView } from 'expo-blur';
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
 import { FadeInView, Icon } from '../components/ui';
 import { haptics } from '../lib/haptics';
-import { useReduceMotion } from '../hooks/useReduceMotion';
 import { useCoachmarkTarget } from '../components/coachmarks/CoachmarkProvider';
 import { type CoachmarkId } from '../components/coachmarks/sequence';
 import { isFirstEntranceArmed } from '../lib/firstEntrance';
@@ -29,13 +22,6 @@ export type TabMeta = Record<
   string,
   { label: string; icon: LucideIcon; coachmarkId?: CoachmarkId }
 >;
-
-// Faithful port of the visual-direction mockup's `.navind` transition:
-// `left .42s cubic-bezier(.34,1.3,.4,1)` — a spring-overshoot slide.
-const INDICATOR_TIMING = {
-  duration: 420,
-  easing: Easing.bezier(0.34, 1.3, 0.4, 1),
-};
 
 // Inset the sliding pill from each tab's edges so it doesn't sit flush to the
 // bar's inner wall (and leaves a gap between adjacent tabs).
@@ -54,26 +40,16 @@ const BAR_BLUR_INTENSITY = 50;
 const BAR_TINT_OPACITY = 0.9;
 
 interface TabItemProps {
-  routeName: string;
   meta: TabMeta[string];
   focused: boolean;
   onPress: () => void;
-  onLayout: (event: LayoutChangeEvent) => void;
   styles: ReturnType<typeof makeStyles>;
   activeColor: string;
   inactiveColor: string;
 }
 
 /** A single tab: icon + label swap to navy when active (no scale — the moving pill carries the motion). */
-const TabItem = ({
-  meta,
-  focused,
-  onPress,
-  onLayout,
-  styles,
-  activeColor,
-  inactiveColor,
-}: TabItemProps) => {
+const TabItem = ({ meta, focused, onPress, styles, activeColor, inactiveColor }: TabItemProps) => {
   const color = focused ? activeColor : inactiveColor;
   // No-op unless this tab carries a coachmarkId (student Browse tab, #69).
   const coachmarkRef = useCoachmarkTarget(meta.coachmarkId);
@@ -82,7 +58,6 @@ const TabItem = ({
     <Pressable
       ref={coachmarkRef}
       style={styles.tab}
-      onLayout={onLayout}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected: focused }}
@@ -96,104 +71,75 @@ const TabItem = ({
   );
 };
 
-interface FloatingTabBarProps extends BottomTabBarProps {
+interface FloatingTabBarProps extends MaterialTopTabBarProps {
   /** Label + icon pair per route name. Route names come from `state.routes`. */
   tabMeta: TabMeta;
 }
 
 /**
  * Shared floating tab bar built to the visual-direction mockup: a detached
- * rounded frosted bar with a navy-soft **pill that slides on a spring** behind
+ * rounded frosted bar with a navy-soft **pill that tracks the pager** behind
  * the active tab, and a bottom safe-area inset. Both roles render this one
  * primitive (four tabs, evenly spaced).
  * Keeping the blur/pill/motion in one place is what stops the two bars from
  * drifting apart (the failure mode PR #54 had to fix once, for one bar).
+ *
+ * The pill is driven by the pager's own `position` node, so it follows the
+ * finger 1:1 and settles with the page animation. It is deliberately not a
+ * timing animation: there is no overshoot on tap anymore.
  */
-export const FloatingTabBar = ({ state, navigation, tabMeta }: FloatingTabBarProps) => {
+export const FloatingTabBar = ({
+  state,
+  navigation,
+  tabMeta,
+  position,
+  jumpTo,
+}: FloatingTabBarProps) => {
   const insets = useSafeAreaInsets();
   const { theme, scheme } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const reduceMotion = useReduceMotion();
-
-  const activeColor = theme.colors.brand.primary;
-  const inactiveColor = theme.colors.text.muted;
   // One-time "assemble" entrance: the bar slides up on the first launch straight
   // out of onboarding (armed there, student-only), static otherwise.
   const [assemble] = useState(isFirstEntranceArmed);
+  const [barWidth, setBarWidth] = useState(0);
 
-  const layouts = useRef<Record<number, { x: number; width: number }>>({});
-  const indX = useSharedValue(0);
-  const indW = useSharedValue(0);
-  const [measured, setMeasured] = useState(false);
+  const activeColor = theme.colors.brand.primary;
+  const inactiveColor = theme.colors.text.muted;
 
-  const moveIndicator = useCallback(
-    (index: number, animate: boolean) => {
-      const layout = layouts.current[index];
-      if (!layout) return;
-      const x = layout.x + PILL_INSET;
-      const width = layout.width - PILL_INSET * 2;
-      if (animate) {
-        indX.value = withTiming(x, INDICATOR_TIMING);
-        indW.value = withTiming(width, INDICATOR_TIMING);
-      } else {
-        indX.value = x;
-        indW.value = width;
-      }
-    },
-    [indX, indW],
+  // Tabs are flex:1 and equal width, so the pill geometry is continuous.
+  const tabWidth = state.routes.length > 0 ? barWidth / state.routes.length : 0;
+
+  const translateX = useMemo(
+    () =>
+      position.interpolate({
+        inputRange: state.routes.map((_, index) => index),
+        outputRange: state.routes.map((_, index) => index * tabWidth),
+        extrapolate: 'clamp',
+      }),
+    [position, state.routes.length, tabWidth],
   );
 
-  useEffect(() => {
-    moveIndicator(state.index, measured && !reduceMotion);
-  }, [state.index, measured, reduceMotion, moveIndicator]);
+  const handleBarLayout = useCallback((event: LayoutChangeEvent) => {
+    const next = event.nativeEvent.layout.width;
+    setBarWidth((prev) => (Math.abs(prev - next) > 0.5 ? next : prev));
+  }, []);
 
-  const handleTabLayout = (index: number, event: LayoutChangeEvent) => {
-    const { x, width } = event.nativeEvent.layout;
-    layouts.current[index] = { x, width };
-    if (index === state.index) {
-      moveIndicator(index, false);
-      setMeasured(true);
-    }
-  };
-
-  const indicatorStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: indX.value }],
-    width: indW.value,
-  }));
-
-  const onTabPress = (routeKey: string, routeName: string, isFocused: boolean) => {
+  const onTabPress = (routeKey: string, focused: boolean) => {
     const event = navigation.emit({
       type: 'tabPress',
       target: routeKey,
       canPreventDefault: true,
+      data: {
+        behavior: { scrollToTop: focused, popToTop: focused },
+      },
     });
     haptics.light();
-    if (!isFocused && !event.defaultPrevented) {
-      navigation.navigate(routeName as never);
+    // jumpTo is the pager's own key→index path: it animates the page and
+    // dispatches onIndexChange, exactly like tab-view's default TabBar.
+    if (!event.defaultPrevented) {
+      jumpTo(routeKey);
     }
   };
-
-  const renderTab = (index: number) => {
-    const route = state.routes[index];
-    return (
-      <TabItem
-        key={route.key}
-        routeName={route.name}
-        meta={tabMeta[route.name]}
-        focused={state.index === index}
-        onPress={() => onTabPress(route.key, route.name, state.index === index)}
-        onLayout={(event) => handleTabLayout(index, event)}
-        styles={styles}
-        activeColor={activeColor}
-        inactiveColor={inactiveColor}
-      />
-    );
-  };
-
-  const items: ReactNode[] = [];
-  state.routes.forEach((_route, index) => {
-    items.push(renderTab(index));
-  });
 
   return (
     <FadeInView
@@ -205,16 +151,39 @@ export const FloatingTabBar = ({ state, navigation, tabMeta }: FloatingTabBarPro
       style={[styles.wrap, { paddingBottom: insets.bottom || theme.spacing.sm }]}
     >
       <View style={styles.barShadow}>
-        <View style={styles.bar}>
+        <View style={styles.bar} onLayout={handleBarLayout}>
           <BlurView
             intensity={BAR_BLUR_INTENSITY}
             tint={scheme === 'dark' ? 'dark' : 'light'}
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.barTint} pointerEvents="none" />
-          <Animated.View style={[styles.indicator, indicatorStyle]} pointerEvents="none" />
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.indicator,
+              {
+                width: Math.max(0, tabWidth - PILL_INSET * 2),
+                opacity: tabWidth > 0 ? 1 : 0,
+                transform: [{ translateX }],
+              },
+            ]}
+          />
 
-          {items}
+          {state.routes.map((route, index) => {
+            const focused = state.index === index;
+            return (
+              <TabItem
+                key={route.key}
+                meta={tabMeta[route.name]}
+                focused={focused}
+                onPress={() => onTabPress(route.key, focused)}
+                styles={styles}
+                activeColor={activeColor}
+                inactiveColor={inactiveColor}
+              />
+            );
+          })}
         </View>
       </View>
     </FadeInView>
@@ -231,6 +200,9 @@ const makeStyles = (t: Theme) =>
       paddingHorizontal: t.spacing.lg,
       paddingTop: t.spacing.sm,
       backgroundColor: 'transparent',
+      // The bar is a sibling drawn over the pager; the shadow elevation already
+      // helps on Android, this is belt-and-braces.
+      zIndex: 10,
     },
     // Outer shadow container: iOS shadow rendering gets clipped by
     // `overflow: hidden`, so the shadow/elevation live here while the actual
@@ -264,7 +236,7 @@ const makeStyles = (t: Theme) =>
     },
     indicator: {
       position: 'absolute',
-      left: 0,
+      left: PILL_INSET,
       top: 9,
       height: 48,
       borderRadius: 20,

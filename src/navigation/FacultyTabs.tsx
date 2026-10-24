@@ -1,12 +1,14 @@
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Dimensions } from 'react-native';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { FacultyTabsParamList } from './types';
 import { FacultyDashboardScreen } from '../screens/faculty/FacultyDashboardScreen';
 import { FacultyReviewScreen } from '../screens/faculty/FacultyReviewScreen';
 import { BrowseScreen } from '../screens/main/BrowseScreen';
 import { ProfileScreen } from '../screens/main/ProfileScreen';
 import { FacultyTabBar } from './FacultyTabBar';
+import { useTheme } from '../context/ThemeContext';
 
-const Tabs = createBottomTabNavigator<FacultyTabsParamList>();
+const Tabs = createMaterialTopTabNavigator<FacultyTabsParamList>();
 
 /**
  * Faculty tabs: Home, Review, Browse, Profile — the same floating frosted bar
@@ -18,12 +20,24 @@ const Tabs = createBottomTabNavigator<FacultyTabsParamList>();
  * the student pattern. `FacultyTabsParamList` keeps its now-unused
  * `FacultyNotifications` key; leaving it costs nothing and avoids touching the
  * frozen navigation contract.
+ *
+ * Material top tabs with `tabBarPosition: 'bottom'` give true finger-tracked
+ * horizontal paging behind the floating bar.
  */
 export const FacultyTabs = () => {
+  const { theme } = useTheme();
   return (
     <Tabs.Navigator
       tabBar={(props) => <FacultyTabBar {...props} />}
-      screenOptions={{ headerShown: false }}
+      tabBarPosition="bottom"
+      backBehavior="firstRoute"
+      initialLayout={{ width: Dimensions.get('window').width }}
+      screenOptions={{
+        swipeEnabled: true,
+        lazy: true,
+        lazyPreloadDistance: 1,
+        sceneStyle: { backgroundColor: theme.colors.surface.base },
+      }}
     >
       <Tabs.Screen name="FacultyDashboard" component={FacultyDashboardScreen} />
       <Tabs.Screen name="FacultyReview" component={FacultyReviewScreen} />

@@ -1,4 +1,5 @@
 import { House, ClipboardList, Search, CircleUser } from 'lucide-react-native';
+import type { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
 import { FloatingTabBar, type TabMeta } from './FloatingTabBar';
 import { FacultyTabsParamList } from './types';
 
@@ -27,6 +28,6 @@ const TAB_META: Partial<Record<keyof FacultyTabsParamList, TabMeta[string]>> = {
  * Identical frosted bar + sliding-spring pill as the student bar, so the two
  * roles stay visually in lockstep from one source.
  */
-export const FacultyTabBar = (props: any) => (
+export const FacultyTabBar = (props: MaterialTopTabBarProps) => (
   <FloatingTabBar {...props} tabMeta={TAB_META as TabMeta} />
 );

@@ -39,6 +39,16 @@ export const FacultyReviewScreen = () => {
   );
   const [search, setSearch] = useState('');
 
+  // The tab is preloaded by the pager, so it may already be mounted when a
+  // dashboard tile navigates with a new filter. Consume the param and clear it so
+  // a repeated press with the same filter still re-applies.
+  useEffect(() => {
+    const next = route.params?.initialFilter;
+    if (!next) return;
+    setFilter(next);
+    navigation.setParams({ initialFilter: undefined } as never);
+  }, [route.params?.initialFilter, navigation]);
+
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);

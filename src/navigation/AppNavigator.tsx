@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { Dimensions, StyleSheet, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import Animated, {
   Easing,
@@ -10,7 +10,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { useEffect, useRef, useState } from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
@@ -36,13 +36,22 @@ import { OnboardingScreen } from '../screens/onboarding/OnboardingScreen';
 import { PrivacyNoticeGate } from '../components/auth/PrivacyNoticeGate';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
-const Tabs = createBottomTabNavigator<StudentTabsParamList>();
+const Tabs = createMaterialTopTabNavigator<StudentTabsParamList>();
 
 const StudentTabs = () => {
+  const { theme } = useTheme();
   return (
     <Tabs.Navigator
       tabBar={(props) => <StudentTabBar {...props} />}
-      screenOptions={{ headerShown: false }}
+      tabBarPosition="bottom"
+      backBehavior="firstRoute"
+      initialLayout={{ width: Dimensions.get('window').width }}
+      screenOptions={{
+        swipeEnabled: true,
+        lazy: true,
+        lazyPreloadDistance: 1,
+        sceneStyle: { backgroundColor: theme.colors.surface.base },
+      }}
     >
       <Tabs.Screen name="Dashboard" component={DashboardScreen} />
       <Tabs.Screen name="MyPapers" component={MyPapersScreen} />
