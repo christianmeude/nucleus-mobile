@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
@@ -54,7 +54,13 @@ export const DashboardHero = ({
         style={StyleSheet.absoluteFill}
       />
       <View style={[styles.heroGlow, { backgroundColor: theme.colors.brand.accent }]} />
-      <Text style={[styles.heroWatermark, { color: theme.colors.text.onBrand }]}>N</Text>
+      <Image
+        source={require('../../../assets/images/nucleus-logo.png')}
+        style={styles.heroWatermark}
+        resizeMode="contain"
+        accessible={false}
+        accessibilityIgnoresInvertColors
+      />
 
       <View style={[styles.heroContent, { paddingTop: insets.top + theme.spacing.xl }]}>
         <TopBar
@@ -114,12 +120,12 @@ const makeStyles = (t: Theme) =>
     },
     heroWatermark: {
       position: 'absolute',
-      right: -24,
-      bottom: -48,
-      fontSize: 220,
-      lineHeight: 220,
-      fontFamily: t.fontFamilies.display.bold,
+      right: -36,
+      bottom: -84,
+      width: 320,
+      height: 320,
       opacity: 0.08,
+      tintColor: t.colors.text.onBrand,
     },
     heroContent: {
       paddingHorizontal: t.spacing.xl,

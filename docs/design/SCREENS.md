@@ -47,7 +47,7 @@ The one treatment for a screen's single primary action when it must stay reachab
 
 Task-first Home — a focused view of papers requiring action and recent notifications.
 
-- **Navy hero header:** `linear-gradient(158deg, primary, primary-hover)`, bottom radius 28 (bespoke). **Student Home shows only greeting + name + status line**. Faint radial gold glow; a giant translucent "N" watermark bottom-right (`rgba(255,255,255,.05)`). Right side: **profile avatar, then the bell**.
+- **Navy hero header:** `linear-gradient(158deg, primary, primary-hover)`, bottom radius 28 (bespoke). **Student Home shows only greeting + name + status line**. Faint radial gold glow; the nucleus mark silhouette bottom-right (`rgba(255,255,255,.08)`, `tintColor` white). Right side: **profile avatar, then the bell**.
 - **No Submit CTA.** Submitting is handled in the My Papers screen.
 - **Up Next (Action Center):** A single standard paper card showing the highest priority submission needing revision or currently in review.
 - **Recent Activity:** A section list of notifications.
