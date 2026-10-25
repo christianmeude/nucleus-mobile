@@ -1,11 +1,12 @@
 {
   "version": "1.0.0",
-  "build": 2,
-  "date": "2026-10-12",
+  "build": 3,
+  "date": "2026-10-25",
   "notes": "FCM key rotation, login reliability fixes, faster lists and startup.",
   "apkUrl": "https://github.com/christianmeude/nucleus-mobile/releases/latest/download/nucleus-latest.apk",
   "minAndroid": "Android 8.0+",
   "requiresReinstall": true,
-  "easBuildId": "b271584c-4312-4feb-891a-e2c89c643636",
-  "size": "100.1 MB"
+  "easBuildId": "00ec7f74-7389-4e38-903b-56dd326bb4f6",
+  "size": "100.4 MB",
+  "sha256": "126618f38c93c566800c2416f34dc88041326f33968992a077bccf46bccf07a1"
 }
