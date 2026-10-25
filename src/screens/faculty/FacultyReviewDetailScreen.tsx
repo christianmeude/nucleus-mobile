@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, ZoomIn, SlideOutLeft, FadeOut } from 'react-native-reanimated';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { StackNavigationProp } from '@react-navigation/stack';
 import * as Haptics from 'expo-haptics';
 
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
@@ -43,7 +43,7 @@ import { buildCategoryNameById, resolveCategoryName } from '../../utils/category
 import { CircleX, Pencil, CircleCheck, ShieldCheck, ArrowUpRight } from 'lucide-react-native';
 
 type FacultyDetailRoute = RouteProp<RootStackParamList, 'FacultyReviewDetail'>;
-type FacultyNavigation = NativeStackNavigationProp<RootStackParamList>;
+type FacultyNavigation = StackNavigationProp<RootStackParamList>;
 type SheetKind = 'approve' | 'revision' | 'reject';
 
 export const FacultyReviewDetailScreen = () => {

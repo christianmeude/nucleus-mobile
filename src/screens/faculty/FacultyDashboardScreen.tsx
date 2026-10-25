@@ -4,7 +4,6 @@ import { RefreshControl, ScrollView, StyleSheet, Text, View, Pressable } from 'r
 import { usePushNotifications } from '../../hooks/usePushNotifications';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import {
   DashboardHero,

@@ -1,4 +1,4 @@
-import { NativeStackHeaderProps } from '@react-navigation/native-stack';
+import { StackHeaderProps } from '@react-navigation/stack';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '../components/ui/Icon';
 
@@ -7,7 +7,7 @@ import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
 import { ChevronLeft } from 'lucide-react-native';
 
-export const ResearchDetailHeader = ({ navigation, options }: NativeStackHeaderProps) => {
+export const ResearchDetailHeader = ({ navigation, options }: StackHeaderProps) => {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);

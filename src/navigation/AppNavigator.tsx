@@ -11,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useEffect, useRef, useState } from 'react';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { CardStyleInterpolators, createStackNavigator } from '@react-navigation/stack';
 import { useAuth } from '../context/AuthContext';
 import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
@@ -35,7 +35,7 @@ import { useHasOnboarded } from '../hooks/useHasOnboarded';
 import { OnboardingScreen } from '../screens/onboarding/OnboardingScreen';
 import { PrivacyNoticeGate } from '../components/auth/PrivacyNoticeGate';
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const Stack = createStackNavigator<RootStackParamList>();
 const Tabs = createMaterialTopTabNavigator<StudentTabsParamList>();
 
 const StudentTabs = () => {
@@ -168,21 +168,35 @@ export const AppNavigator = () => {
     <NavigationContainer>
       <Stack.Navigator
         screenOptions={{
-          headerStyle: { backgroundColor: theme.colors.surface.base },
-          headerShadowVisible: false,
+          // JS-stack equivalent of hiding the header shadow.
+          headerStyle: {
+            backgroundColor: theme.colors.surface.base,
+            elevation: 0,
+            shadowOpacity: 0,
+            borderBottomWidth: 0,
+          },
           headerTintColor: theme.colors.brand.primary,
           headerTitleStyle: {
             ...theme.typography.h3,
             color: theme.colors.text.primary,
           },
           headerTitleAlign: 'left',
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
+          cardOverlayEnabled: true,
+          // Default activation zone is 50pt from the edge; widen it to the whole
+          // card. Min offset / max vertical delta still filter taps and scrolls.
+          gestureResponseDistance: Dimensions.get('window').width,
+          // Paint the card itself so the surface doesn't flash white mid-drag.
+          cardStyle: { backgroundColor: theme.colors.surface.base },
         }}
       >
         {!user ? (
           <>
             <Stack.Screen 
               name="Login" 
-              options={{ headerShown: false }}
+              options={{ headerShown: false, gestureEnabled: false }}
             >
               {() => (
                 <PrivacyNoticeGate>
@@ -196,7 +210,7 @@ export const AppNavigator = () => {
             <Stack.Screen
               name="StudentTabs"
               component={StudentTabs}
-              options={{ headerShown: false }}
+              options={{ headerShown: false, gestureEnabled: false }}
             />
             <Stack.Screen
               name="ResearchDetail"
@@ -222,7 +236,7 @@ export const AppNavigator = () => {
             <Stack.Screen
               name="FacultyTabs"
               component={FacultyTabs}
-              options={{ headerShown: false }}
+              options={{ headerShown: false, gestureEnabled: false }}
             />
             <Stack.Screen
               name="FacultyReviewDetail"
@@ -250,7 +264,7 @@ export const AppNavigator = () => {
           <Stack.Screen
             name="UnsupportedRole"
             component={UnsupportedRoleScreen}
-            options={{ headerShown: false }}
+            options={{ headerShown: false, gestureEnabled: false }}
           />
         )}
       </Stack.Navigator>
