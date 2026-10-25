@@ -20,6 +20,9 @@ export const motion = {
     sheet: 320,
     sheetClose: 260,
     nav: 420,
+    // First list paint. Shorter than `base`: the skeleton has just been swapped
+    // for real rows, so 240ms reads as lag rather than a settle.
+    listPaint: 200,
   },
 
   // — easing / curves —
