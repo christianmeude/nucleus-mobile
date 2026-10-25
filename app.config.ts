@@ -67,7 +67,7 @@ export default ({ config }: ConfigContext): any => {
       // Android versionCode. EAS `autoIncrement` does NOT support dynamic
       // app.config.ts (proven: build rejected 2026-10-12), so `npm run
       // release` bumps this by 1 per release commit. Never hand-edit.
-      versionCode: 2,
+      versionCode: 3,
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
     } as any,
