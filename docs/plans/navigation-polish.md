@@ -146,68 +146,31 @@ Values should be tuned to feel iOS-native: responsive on flick, weighted on slow
 
 ---
 
-## Stream 4 — Anime.js circular-reveal dark mode toggle (Agent C)
+## Stream 4 — Smooth ease crossfade dark mode toggle
 
-**Problem**: Dark mode toggle has a plain Reanimated thumb slide. User wants a premium Telegram-style circular reveal transition powered by anime.js.
-
-### New packages (install first)
-
-```bash
-npx expo install react-native-view-shot @react-native-masked-view/masked-view
-```
-
-> **WARNING**: `react-native-view-shot` requires a custom dev client (not Expo Go). Verify the build setup. If using Expo Go, fall back to `expo-screen-capture` or a Reanimated-based overlay approach.
+**Pivot / Decision**: The circular reveal / anime.js wave was dropped per user feedback in favor of a clean, silky smooth ease crossfade using native Reanimated, avoiding uncompiled native dependencies and artificial DOM hacks.
 
 ### Architecture
 
-1. **ThemeTransitionOverlay** wraps `App.tsx`'s root (sibling, positioned absolute fullscreen)
-2. When toggle is tapped:
-   - `captureRef` screenshots the app root → image URI
-   - Overlay renders that image fullscreen (old theme frozen)
-   - `setPreference` fires → React re-renders with new theme underneath the overlay
-   - `MaskedView` mask element: a `View` with `borderRadius: 9999` whose `width`/`height` are driven by anime.js from `0` → `diagonal * 2`
-   - Circle's center = toggle's screen position (measured via `measure()`)
-   - anime.js config: `easeOutExpo`, ~600ms duration
-   - On complete: overlay unmounts, haptic feedback fires
-3. Both directions (light→dark, dark→light) use the same reveal
-4. Reduced-motion users: instant swap, no animation
+1. **ThemeTransitionOverlay**: Positioned fullscreen (`StyleSheet.absoluteFillObject`, `pointerEvents="none"`).
+2. When the theme preference is toggled:
+   - React updates the theme colors underneath.
+   - `ThemeTransitionOverlay` detects the scheme change and renders the previous scheme's surface color (`#F1F4FA` for light, `#0A1226` for dark).
+   - In `useLayoutEffect`, the overlay eases its opacity from `0.85` down to `0` over `350ms` using `Easing.bezier(0.25, 0.1, 0.25, 1)`.
+   - The user experiences a silky smooth ease dissolve between light and dark modes with zero jank or flash.
+3. **SettingsRow toggle tuning**:
+   - `ReanimatedToggle` animates both its thumb offset (`16pt`) and its track background color via `interpolateColor` with `Easing.bezier(0.25, 0.1, 0.25, 1)` over `250ms`.
+   - The full row is tappable to toggle dark mode, triggering `Haptics.selectionAsync()`.
+4. **Reduced-motion users**: Instant swap, no animation (`useReduceMotion()`).
 
-### New files
-
-| File | Purpose |
-|------|---------|
-| `src/components/ui/ThemeTransitionOverlay.tsx` | Full-screen overlay: screenshot in `MaskedView` with anime.js-driven expanding circle |
-
-### Modified files
+### Files
 
 | File | Change |
 |------|--------|
-| `src/context/ThemeContext.tsx` | Add `triggerTransition(originXY, callback)` to context value. Overlay listens for transition requests. |
-| `src/components/ui/SettingsRow.tsx` | Dark mode toggle calls `triggerTransition` with its screen position before calling `setPreference` |
-| `src/screens/main/ProfileScreen.tsx` | May need to pass toggle ref/position measurement to SettingsRow |
-| `App.tsx` | Wrap root with `ThemeTransitionOverlay` |
-| `package.json` | Add `react-native-view-shot`, `@react-native-masked-view/masked-view` |
-
-### anime.js usage pattern
-
-```tsx
-import anime from 'animejs';
-
-const circleSize = { value: 0 };
-
-anime({
-  targets: circleSize,
-  value: screenDiagonal * 2,
-  duration: 600,
-  easing: 'easeOutExpo',
-  update: () => {
-    setMaskDiameter(circleSize.value);
-  },
-  complete: () => {
-    setOverlayVisible(false);
-  },
-});
-```
+| `src/components/ui/ThemeTransitionOverlay.tsx` | Full-screen smooth ease dissolve overlay |
+| `src/components/ui/SettingsRow.tsx` | Reanimated toggle with interpolated track color + full-row tap affordance |
+| `App.tsx` | Mount `ThemeTransitionOverlay` at the root sibling |
+| `src/components/ui/index.ts` | Export `ThemeTransitionOverlay` |
 
 ---
 

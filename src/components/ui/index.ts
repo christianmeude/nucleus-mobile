@@ -46,3 +46,4 @@ export { FilterTrigger } from './FilterTrigger';
 export { PublishedBadge } from './PublishedBadge';
 export { CategoryChip } from './CategoryChip';
 export { FloatingActionBar } from './FloatingActionBar';
+export { ThemeTransitionOverlay } from './ThemeTransitionOverlay';

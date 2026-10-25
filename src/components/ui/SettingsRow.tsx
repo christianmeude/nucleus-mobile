@@ -11,6 +11,7 @@ import Animated, {
   withTiming,
   Easing,
   useSharedValue,
+  interpolateColor,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
@@ -47,6 +48,12 @@ export const SettingsRow = ({
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
+  const isToggle = trailing === 'toggle';
+  const handleToggle = () => {
+    Haptics.selectionAsync().catch(() => {});
+    onValueChange?.(!value);
+  };
+
   const content = (
     <View style={[styles.row, divided && styles.rowDivided]}>
       <View style={styles.iconTile}>
@@ -62,15 +69,28 @@ export const SettingsRow = ({
       </View>
       {trailing === 'chevron' ? (
         <Icon icon={ChevronRight} size={18} color={theme.colors.text.disabled} />
-      ) : trailing === 'toggle' ? (
+      ) : isToggle ? (
         <ReanimatedToggle
           value={value}
-          onValueChange={onValueChange}
+          onToggle={handleToggle}
           accessibilityLabel={accessibilityLabel ?? label}
         />
       ) : null}
     </View>
   );
+
+  if (isToggle) {
+    return (
+      <Pressable
+        onPress={handleToggle}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: value }}
+        accessibilityLabel={accessibilityLabel ?? label}
+      >
+        {content}
+      </Pressable>
+    );
+  }
 
   if (!onPress) {
     return content;
@@ -89,42 +109,52 @@ export const SettingsRow = ({
 
 const ReanimatedToggle = ({
   value,
-  onValueChange,
+  onToggle,
   accessibilityLabel,
 }: {
   value: boolean;
-  onValueChange?: (v: boolean) => void;
+  onToggle: () => void;
   accessibilityLabel: string;
 }) => {
   const { theme } = useTheme();
   const progress = useSharedValue(value ? 1 : 0);
+
   useEffect(() => {
     progress.value = withTiming(value ? 1 : 0, {
       duration: 250,
-      easing: Easing.inOut(Easing.quad),
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
     });
-  }, [value]);
+  }, [value, progress]);
+
   const thumbStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: progress.value * 16 }],
   }));
-  const trackStyle = {
-    backgroundColor: value ? theme.colors.brand.primary : theme.colors.border.strong,
-  };
+
+  const trackAnimatedStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(
+      progress.value,
+      [0, 1],
+      [theme.colors.border.strong, theme.colors.brand.primary],
+    ),
+  }));
+
   return (
     <Pressable
-      onPress={() => {
-        Haptics.selectionAsync().catch(() => {});
-        onValueChange?.(!value);
-      }}
+      onPress={onToggle}
       accessibilityRole="switch"
       accessibilityState={{ checked: value }}
       accessibilityLabel={accessibilityLabel}
       hitSlop={8}
-      style={[toggleStyles.track, trackStyle]}
     >
-      <Animated.View
-        style={[toggleStyles.thumb, { backgroundColor: theme.colors.surface.raised }, thumbStyle]}
-      />
+      <Animated.View style={[toggleStyles.track, trackAnimatedStyle]}>
+        <Animated.View
+          style={[
+            toggleStyles.thumb,
+            { backgroundColor: theme.colors.surface.raised },
+            thumbStyle,
+          ]}
+        />
+      </Animated.View>
     </Pressable>
   );
 };
