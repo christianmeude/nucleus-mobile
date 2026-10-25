@@ -1,10 +1,11 @@
 import { useCallback, useMemo, useEffect, useRef, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, TextInput, View, Pressable } from 'react-native';
+import { RefreshControl, StyleSheet, Text, View, Pressable } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
 
 import * as Haptics from 'expo-haptics';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { researchApi } from '../../api/research';
+import { apiCache } from '../../utils/apiCache';
 import { Category, PaperStatus, ResearchPaper } from '../../types/domain';
 import {
   buildCategoryColorById,
@@ -53,11 +54,15 @@ export const MyPapersScreen = () => {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const [papers, setPapers] = useState<ResearchPaper[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+
+  const cachedPapers = apiCache.getStale<ResearchPaper[]>('research:myPapers');
+  const cachedCategories = apiCache.getStale<Category[]>('research:categories');
+
+  const [papers, setPapers] = useState<ResearchPaper[]>(() => cachedPapers ?? []);
+  const [categories, setCategories] = useState<Category[]>(() => cachedCategories ?? []);
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !(cachedPapers && cachedPapers.length > 0));
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
@@ -68,9 +73,8 @@ export const MyPapersScreen = () => {
   const [publishError, setPublishError] = useState('');
 
   // Tracks whether we have ever painted data. Drives skeleton-vs-spinner
-  // choice without depending on `papers` state (which would churn the
-  // loadData identity and re-fire mount + focus effects in a loop).
-  const hasDataRef = useRef(false);
+  // choice without depending on `papers` state.
+  const hasDataRef = useRef(Boolean(cachedPapers && cachedPapers.length > 0));
 
   const loadData = useCallback(
     async (mode?: { refresh?: boolean }) => {
@@ -78,19 +82,9 @@ export const MyPapersScreen = () => {
       // Cache-aware: without `refresh` the SWR cache serves instantly when
       // valid (or stale + background revalidate via onUpdate). `refresh`
       // bypasses cache — pull-to-refresh and post-mutate only.
-      //
-      // The spinner belongs to an explicit pull-to-refresh, never to a
-      // focus re-entry: this screen refetches on every focus, and flashing
-      // the RefreshControl each time (even when the cache answers in
-      // milliseconds) reads as "refreshing" spam. A focus load with rows
-      // already on screen is silent; only a cold load shows skeletons.
       if (force) {
         setRefreshing(true);
       } else if (!hasDataRef.current) {
-        setLoading(true);
-        // Cold load only: reset the shared clock so the spans below read as
-        // time-since-tap. Warm refreshes don't reset it — they'd skew the
-        // cold-start marks another screen may be writing.
         perfStart('list:papers');
       }
 
@@ -103,21 +97,44 @@ export const MyPapersScreen = () => {
             ...(force ? { forceRefresh: true } : {}),
             onUpdate: (data) => {
               hasDataRef.current = true;
-              setPapers(data);
+              setPapers((prev) => {
+                if (
+                  prev.length === data.length &&
+                  prev.every((p, i) => p.id === data[i].id && p.status === data[i].status)
+                ) {
+                  return prev;
+                }
+                return data;
+              });
             },
           })
           .finally(papersSpan),
         researchApi
           .getCategories({
             ...(force ? { forceRefresh: true } : {}),
-            onUpdate: (data) => setCategories(data),
+            onUpdate: (data) =>
+              setCategories((prev) => {
+                if (prev.length === data.length && prev.every((c, i) => c.id === data[i].id)) {
+                  return prev;
+                }
+                return data;
+              }),
           })
           .finally(categoriesSpan),
       ]);
 
       if (papersResult.status === 'fulfilled') {
         hasDataRef.current = true;
-        setPapers(papersResult.value);
+        setPapers((prev) => {
+          const fresh = papersResult.value;
+          if (
+            prev.length === fresh.length &&
+            prev.every((p, i) => p.id === fresh[i].id && p.status === fresh[i].status)
+          ) {
+            return prev;
+          }
+          return fresh;
+        });
         setError('');
       } else if (!hasDataRef.current) {
         // Only surface failure when there is nothing to show; with cached
@@ -125,7 +142,13 @@ export const MyPapersScreen = () => {
         setError('Unable to load your papers.');
       }
       if (categoriesResult.status === 'fulfilled') {
-        setCategories(categoriesResult.value);
+        setCategories((prev) => {
+          const fresh = categoriesResult.value;
+          if (prev.length === fresh.length && prev.every((c, i) => c.id === fresh[i].id)) {
+            return prev;
+          }
+          return fresh;
+        });
       }
 
       perfMark('list:papers:rows-settled', {
@@ -139,15 +162,30 @@ export const MyPapersScreen = () => {
     [],
   );
 
-  // Refetch-on-return without nuking the list: serves cache instantly and
-  // revalidates in the background (onUpdate paints fresh rows when ready).
-  // This is also the mount load — `useFocusEffect` fires on first focus — so
-  // there is deliberately no `useEffect(loadData)` alongside it. A separate
-  // mount effect double-invoked `loadData` on every cold start (visible in the
-  // [perf] baseline as two clock-resets and every span logged twice).
+  // Pre-load data on mount (during pager preloading so it is already painted before tab enter)
+  useEffect(() => {
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      if (!cancelled) void loadData();
+    }, 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [loadData]);
+
+  // Refetch-on-return: if already mounted and painted, defer background revalidation
+  // by 350ms so it doesn't fight the tab swipe animation on the JS thread.
   useFocusEffect(
     useCallback(() => {
-      loadData();
+      if (!hasDataRef.current) {
+        loadData();
+        return;
+      }
+      const timer = setTimeout(() => {
+        loadData();
+      }, 350);
+      return () => clearTimeout(timer);
     }, [loadData]),
   );
 
@@ -248,6 +286,37 @@ export const MyPapersScreen = () => {
 
   const keyExtractor = useCallback((item: ResearchPaper) => item.id, []);
 
+  const listHeaderElement = useMemo(
+    () => (
+      <View style={styles.listHeader}>
+        <View style={styles.subbar}>
+          <Text style={styles.resultCount}>
+            {filtered.length} {filtered.length === 1 ? 'Paper' : 'Papers'}
+          </Text>
+        </View>
+
+        {error ? <InlineNotice tone="danger" message={error} /> : null}
+
+        {loading ? (
+          <View style={styles.skeletonList}>
+            <Skeleton height={140} radius="lg" />
+            <Skeleton height={140} radius="lg" />
+          </View>
+        ) : null}
+
+        {!loading && filtered.length === 0 ? (
+          <EmptyState
+            title="No papers found"
+            message={
+              query ? 'Try adjusting your search terms.' : "You haven't submitted any papers yet."
+            }
+          />
+        ) : null}
+      </View>
+    ),
+    [filtered.length, error, loading, query, styles],
+  );
+
   return (
     <SheetPresenter
       open={!!publishTarget}
@@ -262,7 +331,7 @@ export const MyPapersScreen = () => {
           <Text style={styles.sheetTitle}>Formal publication</Text>
           <Text style={styles.sheetDesc}>
             Your paper is approved for the internal repository. If you have published it externally,
-            enter your journal's DOI to request formal publication.
+            enter your journal&apos;s DOI to request formal publication.
           </Text>
 
           <Input
@@ -340,35 +409,7 @@ export const MyPapersScreen = () => {
               colors={[theme.colors.brand.primary]}
             />
           }
-          ListHeaderComponent={() => (
-            <View style={styles.listHeader}>
-              <View style={styles.subbar}>
-                <Text style={styles.resultCount}>
-                  {filtered.length} {filtered.length === 1 ? 'Paper' : 'Papers'}
-                </Text>
-              </View>
-
-              {error ? <InlineNotice tone="danger" message={error} /> : null}
-
-              {loading ? (
-                <View style={styles.skeletonList}>
-                  <Skeleton height={140} radius="lg" />
-                  <Skeleton height={140} radius="lg" />
-                </View>
-              ) : null}
-
-              {!loading && filtered.length === 0 ? (
-                <EmptyState
-                  title="No papers found"
-                  message={
-                    query
-                      ? 'Try adjusting your search terms.'
-                      : "You haven't submitted any papers yet."
-                  }
-                />
-              ) : null}
-            </View>
-          )}
+          ListHeaderComponent={listHeaderElement}
           data={loading || filtered.length === 0 ? [] : filtered}
           keyExtractor={keyExtractor}
           estimatedItemSize={220}
