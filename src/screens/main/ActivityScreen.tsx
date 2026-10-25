@@ -1,9 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Icon } from '../../components/ui/Icon';
 
 import { useNavigation } from '@react-navigation/native';
-import Animated, { useSharedValue } from 'react-native-reanimated';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
@@ -31,21 +30,11 @@ export const ActivityScreen = () => {
 
   const isFaculty = user?.role === 'faculty';
 
-  const scrollOffset = useSharedValue(0);
-  const scrollHandler = useCallback(
-    (event: any) => {
-      scrollOffset.value = event.nativeEvent.contentOffset.y;
-    },
-    [scrollOffset],
-  );
-
   return (
     <Screen gutter={0}>
       <View style={styles.header}>
         <TopBar
           title="Activity"
-          variant="large"
-          scrollOffset={scrollOffset}
           hideBell
           leftAccessory={
             <PressableScale
@@ -79,9 +68,9 @@ export const ActivityScreen = () => {
       </View>
 
       {isFaculty || tab === 'notifications' ? (
-        <NotificationsList onScroll={scrollHandler} />
+        <NotificationsList />
       ) : (
-        <InvitationsList onScroll={scrollHandler} />
+        <InvitationsList />
       )}
     </Screen>
   );

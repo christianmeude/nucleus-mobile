@@ -6,12 +6,7 @@ import { StudentTabsParamList } from './types';
 const TAB_META: Record<keyof StudentTabsParamList, TabMeta[string]> = {
   Dashboard: { label: 'Home', icon: House },
   MyPapers: { label: 'Papers', icon: Inbox },
-  // `coachmarkId` marks Browse as the third first-run coachmark target (#69).
-  Browse: {
-    label: 'Browse',
-    icon: Search,
-    coachmarkId: 'browseTab',
-  },
+  Browse: { label: 'Browse', icon: Search },
   Profile: {
     label: 'Profile',
     icon: CircleUser,

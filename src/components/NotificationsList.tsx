@@ -28,7 +28,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * grouping, and read-state actions.
  */
 
-export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
+export const NotificationsList = () => {
   const navigation = useNavigation<any>();
   const { user } = useAuth();
   const { theme } = useTheme();
@@ -189,8 +189,6 @@ export const NotificationsList = ({ onScroll }: { onScroll?: any }) => {
   return (
     <AtomicListPaint ready={!loading && notifications.length > 0} style={styles.container}>
       <LegendSectionList
-      onScroll={onScroll}
-      scrollEventThrottle={16}
       recycleItems={true}
       drawDistance={1500}
       stickySectionHeadersEnabled={true}

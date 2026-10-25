@@ -538,7 +538,7 @@ export const BrowseScreen = () => {
       <Screen gutter={0} edges={{ top: false, bottom: false }}>
         <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
           <View style={styles.header}>
-            <TopBar variant="compact">
+            <TopBar hideBell>
               <View style={styles.titleWrap}>
                 <Text style={styles.title}>Browse</Text>
               </View>

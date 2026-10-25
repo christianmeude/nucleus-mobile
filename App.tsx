@@ -24,7 +24,6 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { PrivacyProvider } from './src/context/PrivacyContext';
-import { CoachmarkProvider } from './src/components/coachmarks/CoachmarkProvider';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -125,9 +124,7 @@ const AppShell = () => {
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <AuthProvider>
         <PrivacyProvider>
-          <CoachmarkProvider>
-            <AppNavigator />
-          </CoachmarkProvider>
+          <AppNavigator />
         </PrivacyProvider>
       </AuthProvider>
       <ThemeTransitionOverlay />

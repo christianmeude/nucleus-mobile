@@ -8,8 +8,6 @@ import { X, CheckSquare, Square } from 'lucide-react-native';
 
 const PRIVACY_KEY = '@nucleus_privacy_accepted';
 const ONBOARDING_KEY = 'firstRun.hasOnboarded';
-const COACHMARKS_KEY = 'firstRun.seenCoachmarks';
-const COACHMARK_IDS = ['bell', 'submitFab', 'browseTab'];
 
 export const DevResetModal = ({ visible, onClose }: { visible: boolean; onClose: () => void }) => {
   const { theme } = useTheme();
@@ -17,26 +15,12 @@ export const DevResetModal = ({ visible, onClose }: { visible: boolean; onClose:
 
   const [requirePrivacy, setRequirePrivacy] = useState(false);
   const [requireOnboarding, setRequireOnboarding] = useState(false);
-  const [requireCoachmarks, setRequireCoachmarks] = useState(false);
 
   useEffect(() => {
     if (visible) {
-      AsyncStorage.multiGet([PRIVACY_KEY, ONBOARDING_KEY, COACHMARKS_KEY]).then((stores) => {
+      AsyncStorage.multiGet([PRIVACY_KEY, ONBOARDING_KEY]).then((stores) => {
         setRequirePrivacy(stores[0][1] !== 'true');
         setRequireOnboarding(stores[1][1] !== 'true');
-
-        // If there's no data, or empty array, it means they need to see coachmarks
-        const coachmarksData = stores[2][1];
-        if (!coachmarksData || coachmarksData === '[]') {
-          setRequireCoachmarks(true);
-        } else {
-          try {
-            const parsed = JSON.parse(coachmarksData);
-            setRequireCoachmarks(!Array.isArray(parsed) || parsed.length === 0);
-          } catch {
-            setRequireCoachmarks(true);
-          }
-        }
       });
     }
   }, [visible]);
@@ -50,10 +34,6 @@ export const DevResetModal = ({ visible, onClose }: { visible: boolean; onClose:
       // Onboarding
       if (requireOnboarding) await AsyncStorage.removeItem(ONBOARDING_KEY);
       else await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
-
-      // Coachmarks
-      if (requireCoachmarks) await AsyncStorage.removeItem(COACHMARKS_KEY);
-      else await AsyncStorage.setItem(COACHMARKS_KEY, JSON.stringify(COACHMARK_IDS));
 
       Alert.alert(
         'Dev Settings Saved',
@@ -110,11 +90,6 @@ export const DevResetModal = ({ visible, onClose }: { visible: boolean; onClose:
               label="Require Student Onboarding"
               value={requireOnboarding}
               onChange={setRequireOnboarding}
-            />
-            <CheckboxItem
-              label="Require Coachmarks"
-              value={requireCoachmarks}
-              onChange={setRequireCoachmarks}
             />
           </View>
 

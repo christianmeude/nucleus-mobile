@@ -291,7 +291,7 @@ export const MyPapersScreen = () => {
     >
       <Screen gutter={0} edges={{ bottom: false }}>
         <View style={styles.header}>
-          <TopBar variant="compact">
+          <TopBar hideBell>
             <View style={styles.titleWrap}>
               <Text style={styles.title}>My Papers</Text>
             </View>

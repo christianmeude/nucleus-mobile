@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import * as Haptics from 'expo-haptics';
 import {
@@ -194,7 +193,7 @@ export const FacultyReviewScreen = () => {
   return (
     <Screen gutter={0} edges={{ bottom: false }}>
       <View style={styles.header}>
-        <TopBar variant="compact">
+        <TopBar hideBell>
           <View style={styles.titleWrap}>
             <Text style={styles.title}>Review Queue</Text>
           </View>

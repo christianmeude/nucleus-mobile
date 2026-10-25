@@ -25,7 +25,7 @@ const isExpired = (invitation: CoAuthorInvitation) => {
  * segment. Owns its own fetch and accept/decline actions.
  */
 
-export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
+export const InvitationsList = () => {
   const { theme } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [invitations, setInvitations] = useState<CoAuthorInvitation[]>([]);
@@ -111,8 +111,6 @@ export const InvitationsList = ({ onScroll }: { onScroll?: any }) => {
     <AtomicListPaint ready={!loading && invitations.length > 0} style={styles.container}>
       <LegendList
       key={listEpochKey(loading || invitations.length === 0)}
-      onScroll={onScroll}
-      scrollEventThrottle={16}
       recycleItems={true}
       drawDistance={1500}
       style={styles.container}

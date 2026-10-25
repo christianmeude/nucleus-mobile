@@ -8,20 +8,12 @@ import { useTheme, useThemedStyles } from '../context/ThemeContext';
 import { type Theme } from '../theme';
 import { FadeInView, Icon } from '../components/ui';
 import { haptics } from '../lib/haptics';
-import { useCoachmarkTarget } from '../components/coachmarks/CoachmarkProvider';
-import { type CoachmarkId } from '../components/coachmarks/sequence';
 import { isFirstEntranceArmed } from '../lib/firstEntrance';
 
 /**
- * Per-tab label + icon pair, keyed by route name. An optional
- * `coachmarkId` registers that tab as a first-run coachmark target (#69) — the
- * student bar maps it on Browse; the faculty bar leaves it unset, so nothing
- * registers there.
+ * Per-tab label + icon pair, keyed by route name.
  */
-export type TabMeta = Record<
-  string,
-  { label: string; icon: LucideIcon; coachmarkId?: CoachmarkId }
->;
+export type TabMeta = Record<string, { label: string; icon: LucideIcon }>;
 
 // Inset the sliding pill from each tab's edges so it doesn't sit flush to the
 // bar's inner wall (and leaves a gap between adjacent tabs).
@@ -51,12 +43,9 @@ interface TabItemProps {
 /** A single tab: icon + label swap to navy when active (no scale — the moving pill carries the motion). */
 const TabItem = ({ meta, focused, onPress, styles, activeColor, inactiveColor }: TabItemProps) => {
   const color = focused ? activeColor : inactiveColor;
-  // No-op unless this tab carries a coachmarkId (student Browse tab, #69).
-  const coachmarkRef = useCoachmarkTarget(meta.coachmarkId);
 
   return (
     <Pressable
-      ref={coachmarkRef}
       style={styles.tab}
       onPress={onPress}
       accessibilityRole="button"

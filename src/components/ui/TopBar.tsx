@@ -6,16 +6,7 @@ import { useTheme, useThemedStyles } from '../../context/ThemeContext';
 import { type Theme } from '../../theme';
 import { Icon } from './Icon';
 import { useActivityCount } from '../../hooks/useActivityCount';
-import { useCoachmarkTarget } from '../coachmarks/CoachmarkProvider';
 import { Bell } from 'lucide-react-native';
-
-import Animated, {
-  useAnimatedStyle,
-  interpolate,
-  Extrapolation,
-  SharedValue,
-  useReducedMotion,
-} from 'react-native-reanimated';
 
 interface TopBarProps {
   /** Convenience left content. Ignored when `children` is provided. */
@@ -27,13 +18,6 @@ interface TopBarProps {
    * 'hero' is used on the Dashboard's navy gradient band.
    */
   tone?: 'default' | 'hero';
-  /**
-   * Title size behavior. 'large' uses h1 size (24px) and shrinks to h3 (17px)
-   * if `scrollOffset` is provided. 'compact' is a static h3.
-   */
-  variant?: 'large' | 'compact';
-  /** Shared value from a scrollable component to drive the large title collapse. */
-  scrollOffset?: SharedValue<number>;
   /** Optional accessory rendered to the left of the title (e.g., a back button). */
   leftAccessory?: ReactNode;
   /** Optional content rendered *before* the bell. */
@@ -47,16 +31,14 @@ interface TopBarProps {
 /**
  * Shared screen header: a flexible left slot (title or custom node) and a
  * right-side bell that opens the merged Activity screen with a combined
- * unread-notifications + pending-invitations badge. Adopted by every student
- * tab screen — including the Dashboard hero via `variant="hero"` — so the
- * bell lives in one consistent place with one consistent look.
+ * unread-notifications + pending-invitations badge. The Dashboard hero uses
+ * `tone="hero"`; every other screen hides the bell so it appears on the
+ * Dashboard only.
  */
 export const TopBar = ({
   title,
   children,
   tone = 'default',
-  variant = 'compact',
-  scrollOffset,
   leftAccessory,
   leading,
   trailing,
@@ -67,44 +49,17 @@ export const TopBar = ({
   const styles = useThemedStyles(makeStyles);
   const count = useActivityCount();
   const isHero = tone === 'hero';
-  const isLarge = variant === 'large';
-  const reduceMotion = useReducedMotion();
-
-  const bellCoachmarkRef = useCoachmarkTarget('bell');
-
-  const titleAnimatedStyle = useAnimatedStyle(() => {
-    if (!isLarge || !scrollOffset || reduceMotion) return {};
-    return {
-      fontSize: interpolate(
-        scrollOffset.value,
-        [0, 60],
-        [theme.typography.h1.fontSize, theme.typography.h3.fontSize],
-        Extrapolation.CLAMP,
-      ),
-      lineHeight: interpolate(
-        scrollOffset.value,
-        [0, 60],
-        [theme.typography.h1.lineHeight, theme.typography.h3.lineHeight],
-        Extrapolation.CLAMP,
-      ),
-    };
-  });
 
   return (
-    <View style={[styles.row, isLarge && styles.rowLarge]}>
+    <View style={styles.row}>
       <View style={styles.left}>
         {leftAccessory}
-        {children ?? (
-          <Animated.Text style={[isLarge ? styles.titleLarge : styles.title, titleAnimatedStyle]}>
-            {title}
-          </Animated.Text>
-        )}
+        {children ?? <Text style={styles.title}>{title}</Text>}
       </View>
       <View style={styles.actions} pointerEvents="box-none">
         {leading}
         {!hideBell && (
           <Pressable
-            ref={bellCoachmarkRef}
             onPress={() => navigation.navigate('Activity')}
             style={({ pressed }) => [
               styles.bell,
@@ -143,9 +98,6 @@ const makeStyles = (t: Theme) =>
       minHeight: 44,
       position: 'relative',
     },
-    rowLarge: {
-      alignItems: 'flex-start',
-    },
     left: {
       flex: 1,
       minWidth: 0,
@@ -157,10 +109,6 @@ const makeStyles = (t: Theme) =>
     },
     title: {
       ...t.typography.h3,
-      color: t.colors.text.primary,
-    },
-    titleLarge: {
-      ...t.typography.h1,
       color: t.colors.text.primary,
     },
     actions: {
