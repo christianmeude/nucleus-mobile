@@ -32,8 +32,11 @@ export const FacultyTabs = () => {
       tabBarPosition="bottom"
       backBehavior="firstRoute"
       initialLayout={{ width: Dimensions.get('window').width }}
+      overdrag
+      keyboardDismissMode="on-drag"
       screenOptions={{
         swipeEnabled: true,
+        animationEnabled: true,
         lazy: true,
         lazyPreloadDistance: 1,
         sceneStyle: { backgroundColor: theme.colors.surface.base },

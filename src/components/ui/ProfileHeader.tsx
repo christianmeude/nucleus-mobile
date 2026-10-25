@@ -27,9 +27,7 @@ export const ProfileHeader = ({ initials, name, handle, subhandle }: ProfileHead
 
   return (
     <>
-      <View style={[styles.banner, { height: 120 + insets.top }]}>
-        <Text style={styles.watermark}>N</Text>
-      </View>
+      <View style={[styles.banner, { height: 120 + insets.top }]} />
 
       <View style={styles.avatarWrap}>
         <View style={styles.avatar}>
@@ -51,18 +49,6 @@ const makeStyles = (t: Theme) =>
       borderBottomRightRadius: 26,
       borderCurve: 'continuous',
       overflow: 'hidden',
-    },
-    watermark: {
-      position: 'absolute',
-      right: t.spacing.lg,
-      bottom: -14,
-      // Same faded "N" glyph as the dashboard hero — app display typeface, not
-      // monospace (the atom/mono motif was dropped project-wide).
-      fontFamily: t.fontFamilies.display.bold,
-      fontSize: 96,
-      lineHeight: 96,
-      letterSpacing: -6,
-      color: 'rgba(255, 255, 255, 0.06)',
     },
     avatarWrap: {
       alignItems: 'center',

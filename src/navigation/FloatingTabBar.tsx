@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Animated, LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { LucideIcon } from 'lucide-react-native';
@@ -32,33 +32,114 @@ const BAR_BLUR_INTENSITY = 50;
 const BAR_TINT_OPACITY = 0.9;
 
 interface TabItemProps {
+  routeKey: string;
   meta: TabMeta[string];
+  position: Animated.AnimatedInterpolation<number>;
+  index: number;
+  routeCount: number;
   focused: boolean;
-  onPress: () => void;
+  onPress: (routeKey: string, focused: boolean) => void;
   styles: ReturnType<typeof makeStyles>;
   activeColor: string;
   inactiveColor: string;
 }
 
-/** A single tab: icon + label swap to navy when active (no scale — the moving pill carries the motion). */
-const TabItem = ({ meta, focused, onPress, styles, activeColor, inactiveColor }: TabItemProps) => {
-  const color = focused ? activeColor : inactiveColor;
+/**
+ * A single tab with dual-layer native-threaded crossfade.
+ * Both inactive and active states are rendered overlaid, with their opacities
+ * driven by position.interpolate() on the native thread. No JS re-renders during swipe.
+ */
+const TabItem = React.memo(
+  ({
+    routeKey,
+    meta,
+    position,
+    index,
+    routeCount,
+    focused,
+    onPress,
+    styles,
+    activeColor,
+    inactiveColor,
+  }: TabItemProps) => {
+    const { activeOpacity, inactiveOpacity } = useMemo(() => {
+      if (routeCount <= 1) {
+        return {
+          activeOpacity: new Animated.Value(1),
+          inactiveOpacity: new Animated.Value(0),
+        };
+      }
 
-  return (
-    <Pressable
-      style={styles.tab}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityState={{ selected: focused }}
-      accessibilityLabel={meta.label}
-    >
-      <Icon icon={meta.icon} size={22} color={color} />
-      <Text style={[styles.tabLabel, { color }]} numberOfLines={1}>
-        {meta.label}
-      </Text>
-    </Pressable>
-  );
-};
+      const inputRange =
+        index === 0
+          ? [0, 1]
+          : index === routeCount - 1
+            ? [routeCount - 2, routeCount - 1]
+            : [index - 1, index, index + 1];
+
+      const activeOutputRange =
+        index === 0
+          ? [1, 0]
+          : index === routeCount - 1
+            ? [0, 1]
+            : [0, 1, 0];
+
+      const inactiveOutputRange =
+        index === 0
+          ? [0, 1]
+          : index === routeCount - 1
+            ? [1, 0]
+            : [1, 0, 1];
+
+      return {
+        activeOpacity: position.interpolate({
+          inputRange,
+          outputRange: activeOutputRange,
+          extrapolate: 'clamp',
+        }),
+        inactiveOpacity: position.interpolate({
+          inputRange,
+          outputRange: inactiveOutputRange,
+          extrapolate: 'clamp',
+        }),
+      };
+    }, [position, index, routeCount]);
+
+    const handlePress = useCallback(() => {
+      onPress(routeKey, focused);
+    }, [onPress, routeKey, focused]);
+
+    if (!meta) return null;
+
+    return (
+      <Pressable
+        style={styles.tab}
+        onPress={handlePress}
+        accessibilityRole="button"
+        accessibilityState={{ selected: focused }}
+        accessibilityLabel={meta.label}
+      >
+        <Animated.View style={[styles.tabContent, { opacity: inactiveOpacity }]}>
+          <Icon icon={meta.icon} size={22} color={inactiveColor} />
+          <Text style={[styles.tabLabel, { color: inactiveColor }]} numberOfLines={1}>
+            {meta.label}
+          </Text>
+        </Animated.View>
+        <Animated.View
+          style={[styles.tabContent, styles.tabContentActive, { opacity: activeOpacity }]}
+          pointerEvents="none"
+        >
+          <Icon icon={meta.icon} size={22} color={activeColor} />
+          <Text style={[styles.tabLabel, { color: activeColor }]} numberOfLines={1}>
+            {meta.label}
+          </Text>
+        </Animated.View>
+      </Pressable>
+    );
+  },
+);
+
+TabItem.displayName = 'TabItem';
 
 interface FloatingTabBarProps extends MaterialTopTabBarProps {
   /** Label + icon pair per route name. Route names come from `state.routes`. */
@@ -105,7 +186,7 @@ export const FloatingTabBar = ({
         outputRange: state.routes.map((_, index) => index * tabWidth),
         extrapolate: 'clamp',
       }),
-    [position, state.routes.length, tabWidth],
+    [position, state.routes, tabWidth],
   );
 
   const handleBarLayout = useCallback((event: LayoutChangeEvent) => {
@@ -113,22 +194,25 @@ export const FloatingTabBar = ({
     setBarWidth((prev) => (Math.abs(prev - next) > 0.5 ? next : prev));
   }, []);
 
-  const onTabPress = (routeKey: string, focused: boolean) => {
-    const event = navigation.emit({
-      type: 'tabPress',
-      target: routeKey,
-      canPreventDefault: true,
-      data: {
-        behavior: { scrollToTop: focused, popToTop: focused },
-      },
-    });
-    haptics.light();
-    // jumpTo is the pager's own key→index path: it animates the page and
-    // dispatches onIndexChange, exactly like tab-view's default TabBar.
-    if (!event.defaultPrevented) {
-      jumpTo(routeKey);
-    }
-  };
+  const onTabPress = useCallback(
+    (routeKey: string, focused: boolean) => {
+      const event = navigation.emit({
+        type: 'tabPress',
+        target: routeKey,
+        canPreventDefault: true,
+        data: {
+          behavior: { scrollToTop: focused, popToTop: focused },
+        },
+      });
+      haptics.light();
+      // jumpTo is the pager's own key→index path: it animates the page and
+      // dispatches onIndexChange, exactly like tab-view's default TabBar.
+      if (!event.defaultPrevented) {
+        jumpTo(routeKey);
+      }
+    },
+    [navigation, jumpTo],
+  );
 
   return (
     <FadeInView
@@ -164,9 +248,13 @@ export const FloatingTabBar = ({
             return (
               <TabItem
                 key={route.key}
+                routeKey={route.key}
                 meta={tabMeta[route.name]}
+                position={position}
+                index={index}
+                routeCount={state.routes.length}
                 focused={focused}
-                onPress={() => onTabPress(route.key, focused)}
+                onPress={onTabPress}
                 styles={styles}
                 activeColor={activeColor}
                 inactiveColor={inactiveColor}
@@ -239,7 +327,14 @@ const makeStyles = (t: Theme) =>
       zIndex: 1,
       alignItems: 'center',
       justifyContent: 'center',
+    },
+    tabContent: {
+      alignItems: 'center',
+      justifyContent: 'center',
       gap: 3,
+    },
+    tabContentActive: {
+      position: 'absolute',
     },
     tabLabel: {
       fontFamily: t.fontFamilies.ui.semibold,

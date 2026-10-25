@@ -1,7 +1,8 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    "types": ["jest"]
   },
   // NOTE: a local `exclude` REPLACES the one inherited from `expo/tsconfig.base`
   // (arrays don't merge across `extends`), so the base's `android`/`ios` entries

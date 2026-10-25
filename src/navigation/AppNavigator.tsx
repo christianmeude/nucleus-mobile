@@ -46,8 +46,11 @@ const StudentTabs = () => {
       tabBarPosition="bottom"
       backBehavior="firstRoute"
       initialLayout={{ width: Dimensions.get('window').width }}
+      overdrag
+      keyboardDismissMode="on-drag"
       screenOptions={{
         swipeEnabled: true,
+        animationEnabled: true,
         lazy: true,
         lazyPreloadDistance: 1,
         sceneStyle: { backgroundColor: theme.colors.surface.base },
@@ -185,9 +188,34 @@ export const AppNavigator = () => {
           gestureEnabled: true,
           gestureDirection: 'horizontal',
           cardOverlayEnabled: true,
-          // Default activation zone is 50pt from the edge; widen it to the whole
-          // card. Min offset / max vertical delta still filter taps and scrolls.
-          gestureResponseDistance: Dimensions.get('window').width,
+          // Standard iOS-style 35pt edge-swipe to avoid fighting with scrollable content (Stream 1)
+          gestureResponseDistance: 35,
+          // Tuned spring back-gesture & flick responsiveness (Stream 3C)
+          gestureVelocityImpact: 0.5,
+          transitionSpec: {
+            open: {
+              animation: 'spring',
+              config: {
+                stiffness: 1000,
+                damping: 500,
+                mass: 3,
+                overshootClamping: true,
+                restDisplacementThreshold: 10,
+                restSpeedThreshold: 10,
+              },
+            },
+            close: {
+              animation: 'spring',
+              config: {
+                stiffness: 1000,
+                damping: 500,
+                mass: 3,
+                overshootClamping: true,
+                restDisplacementThreshold: 10,
+                restSpeedThreshold: 10,
+              },
+            },
+          },
           // Paint the card itself so the surface doesn't flash white mid-drag.
           cardStyle: { backgroundColor: theme.colors.surface.base },
         }}
